@@ -87,6 +87,8 @@ export function middleware(req: NextRequest) {
   if (!ADMIN_HOSTS.has(host) && pathname.startsWith('/admin') && OUR_HOSTS.has(host)) {
     const url = req.nextUrl.clone();
     url.host = ADMIN_HOST;
+    url.port = ''; // nextUrl carries the internal :3000 behind the proxy
+    url.protocol = 'https:';
     url.pathname = pathname.replace(/^\/admin/, '') || '/';
     return NextResponse.redirect(url);
   }
