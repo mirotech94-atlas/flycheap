@@ -226,14 +226,14 @@ describe('ops_incidents', () => {
   it('probe read helpers', () => {
     db.queries.logError({ source: 'poller', message: 'boom' });
     expect(db.queries.errorRowsSince('2000-01-01 00:00:00')).toHaveLength(1);
-    const id = db.queries.startJobRun('digest');
+    const id = db.queries.insertJobRun('digest');
     db.queries.finishJobRun(id, false, 12, 'SMTP down');
     expect(db.queries.failedJobRunsSince('2000-01-01 00:00:00')).toEqual([
       expect.objectContaining({ job: 'digest', message: 'SMTP down' }),
     ]);
     expect(db.queries.latestJobRunOk('digest')).toBe(false);
     expect(db.queries.latestJobRunOk('never-ran')).toBeNull();
-    const id2 = db.queries.startJobRun('digest');
+    const id2 = db.queries.insertJobRun('digest');
     db.queries.finishJobRun(id2, true, 5, 'ok');
     expect(db.queries.latestJobRunOk('digest')).toBe(true);
   });
