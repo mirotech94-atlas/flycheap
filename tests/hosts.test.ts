@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-const ENV_KEYS = ['CLIENT_HOST', 'ADMIN_HOST', 'NEXT_PUBLIC_ADMIN_HOST', 'NEXT_PUBLIC_CLIENT_HOST'] as const;
+const ENV_KEYS = ['CLIENT_HOST', 'ADMIN_HOST', 'NEXT_PUBLIC_ADMIN_HOST', 'NEXT_PUBLIC_CLIENT_HOST', 'MARKETING_HOST'] as const;
 let saved: Record<string, string | undefined>;
 
 beforeEach(() => {
@@ -35,6 +35,12 @@ describe('hosts (no env set)', () => {
     expect(isOurHost('localhost:3000')).toBe(true);
     expect(isOurHost('flights.customer.com')).toBe(false);
   });
+
+  it('MARKETING_HOSTS is empty when MARKETING_HOST is unset', async () => {
+    vi.resetModules();
+    const hosts = await import('@/lib/hosts');
+    expect(hosts.MARKETING_HOSTS.size).toBe(0);
+  });
 });
 
 describe('hosts (env override)', () => {
@@ -63,5 +69,14 @@ describe('hosts (env override)', () => {
     vi.resetModules();
     const hosts = await import('@/lib/hosts');
     expect(hosts.PUBLIC_CLIENT_HOST).toBe(hosts.CLIENT_HOST);
+  });
+
+  it('MARKETING_HOST env is cleaned and reflected in MARKETING_HOSTS and OUR_HOSTS', async () => {
+    process.env.MARKETING_HOST = 'https://flycheap.live/';
+    vi.resetModules();
+    const hosts = await import('@/lib/hosts');
+    expect(hosts.MARKETING_HOST).toBe('flycheap.live');
+    expect(hosts.MARKETING_HOSTS.has('www.flycheap.live')).toBe(true);
+    expect(hosts.isOurHost('www.flycheap.live')).toBe(true);
   });
 });

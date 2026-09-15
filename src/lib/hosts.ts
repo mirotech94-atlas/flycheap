@@ -24,11 +24,16 @@ export const PUBLIC_ADMIN_HOST = clean(process.env.NEXT_PUBLIC_ADMIN_HOST) || AD
  */
 export const PUBLIC_CLIENT_HOST = clean(process.env.NEXT_PUBLIC_CLIENT_HOST) || CLIENT_HOST;
 
+/** Public marketing site host (bare domain). Empty = feature off (legacy single-host setup). */
+export const MARKETING_HOST = clean(process.env.MARKETING_HOST) || '';
+export const MARKETING_HOSTS: ReadonlySet<string> = new Set(MARKETING_HOST ? [MARKETING_HOST, `www.${MARKETING_HOST}`] : []);
+
 /** Every hostname the app has ever been served on; used for "is this one of ours" checks. */
 export const OUR_HOSTS: ReadonlySet<string> = new Set([
   CLIENT_HOST, ADMIN_HOST,
   'flycheap.18dn.com', 'admin.flycheap.18dn.com', 'tracker.18dn.com',
   'my.flycheap.live', 'admin.flycheap.live', 'flycheap.live', 'www.flycheap.live',
+  ...MARKETING_HOSTS,
 ]);
 export const ADMIN_HOSTS: ReadonlySet<string> = new Set([ADMIN_HOST, 'admin.flycheap.18dn.com', 'admin.flycheap.live']);
 

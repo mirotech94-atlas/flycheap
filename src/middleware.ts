@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { ADMIN_HOST, ADMIN_HOSTS, CLIENT_HOST, OUR_HOSTS } from '@/lib/hosts';
+import { ADMIN_HOST, ADMIN_HOSTS, CLIENT_HOST, MARKETING_HOST, OUR_HOSTS } from '@/lib/hosts';
+import { marketingDecision } from '@/lib/marketingRoute';
 
 // Hardcoded here (rather than imported from @/lib/auth) so middleware can run
 // in the Edge runtime without pulling in the better-sqlite3 / Node-only deps.
@@ -32,6 +33,31 @@ export function middleware(req: NextRequest) {
     url.pathname = pathname.replace(/^\/landing/, '/welcome') || '/welcome';
     return NextResponse.redirect(url, 308);
   }
+
+  // Marketing-site cutover: bare domain / www serve the public marketing
+  // site (/welcome and friends); everything else on that host redirects to
+  // the client portal host. No-op when MARKETING_HOST is unset.
+  const decision = marketingDecision(host, pathname, { marketingHost: MARKETING_HOST, clientHost: CLIENT_HOST });
+  if (decision.kind === 'canonical-redirect') {
+    const url = req.nextUrl.clone();
+    url.host = decision.host;
+    url.port = '';
+    return NextResponse.redirect(url, 308);
+  }
+  if (decision.kind === 'rewrite') {
+    const url = req.nextUrl.clone();
+    url.pathname = decision.pathname;
+    const reqHeaders = new Headers(req.headers);
+    reqHeaders.set('x-pathname', decision.pathname);
+    return NextResponse.rewrite(url, { request: { headers: reqHeaders } });
+  }
+  if (decision.kind === 'app-redirect') {
+    const url = req.nextUrl.clone();
+    url.host = decision.host;
+    url.port = '';
+    return NextResponse.redirect(url, 307);
+  }
+  // decision.kind === 'pass' | 'none' -> fall through to the existing logic.
 
   // Subdomain rewrite: admin.flycheap.18dn.com/* -> /admin/*
   if (ADMIN_HOSTS.has(host) && !pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/api')) {
