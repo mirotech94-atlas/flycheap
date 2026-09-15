@@ -4,7 +4,6 @@ import { queries } from './db';
 import { pollAll } from './poller';
 import { sendDigest, sendAnomalyDigest } from './digest';
 import { refreshBestDeals } from './bestDeals';
-import { tick as opsTick, productionIO as opsIO, postBootCheck as opsPostBootCheck } from './ops/detector';
 
 let task: cron.ScheduledTask | null = null;
 let digestTask: cron.ScheduledTask | null = null;
@@ -12,6 +11,7 @@ let bestDealsTask: cron.ScheduledTask | null = null;
 let weeklyTask: cron.ScheduledTask | null = null;
 let compactTask: cron.ScheduledTask | null = null;
 let opsTask: cron.ScheduledTask | null = null;
+let opsBootTimer: NodeJS.Timeout | null = null;
 
 function intervalToCron(minutes: number): string {
   const m = Math.max(5, Math.floor(minutes));
@@ -109,11 +109,13 @@ export function startCron() {
   console.log('[cron] DB compaction scheduled — 3:30 AM America/New_York');
 
   // Ops detector — every 5 minutes. Off switch: setting ops_agent_enabled=false.
+  // Dynamic import keeps the Anthropic SDK out of the process's boot path.
   if (opsTask) opsTask.stop();
   opsTask = cron.schedule('*/5 * * * *', async () => {
     if ((queries.getSetting('ops_agent_enabled') ?? 'true') === 'false') return;
     try {
-      const r = await opsTick(opsIO());
+      const { tick, productionIO } = await import('./ops/detector');
+      const r = await tick(productionIO());
       if (r.created || r.resolved || r.posted || r.skipped) console.log(`[ops] tick`, r);
     } catch (e) {
       console.error('[ops] tick threw', e);
@@ -122,10 +124,17 @@ export function startCron() {
   console.log('[cron] ops detector scheduled — every 5 min');
 
   // After a (re)start: confirm health in the threads of incidents we were fixing.
-  setTimeout(() => {
+  if (opsBootTimer) clearTimeout(opsBootTimer);
+  opsBootTimer = setTimeout(async () => {
     if ((queries.getSetting('ops_agent_enabled') ?? 'true') === 'false') return;
-    opsPostBootCheck(opsIO()).catch(e => console.error('[ops] post-boot check threw', e));
-  }, 60_000).unref();
+    try {
+      const { productionIO, postBootCheck } = await import('./ops/detector');
+      await postBootCheck(productionIO());
+    } catch (e) {
+      console.error('[ops] post-boot check threw', e);
+    }
+  }, 60_000);
+  opsBootTimer.unref();
 }
 
 export function restartCron() {
