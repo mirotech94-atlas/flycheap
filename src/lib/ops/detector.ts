@@ -15,6 +15,7 @@ export type DetectorIO = {
   postThread: (ts: string, text: string) => Promise<void>;
   client: MessagesClient | null;
   now?: () => Date;
+  sleep?: (ms: number) => Promise<void>;
 };
 
 const LOCK = 'ops-detector';
@@ -69,17 +70,34 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number | null): Pr
   return { findings: out, maxErrorId, errorCounts };
 }
 
+// Groq's free tier is 8,000 tokens/min/model, and evidence (journal lines)
+// is the single biggest chunk of a diagnosis call's prompt. Cap it well
+// under that budget, keeping the newest lines — the ones most likely to
+// explain the current failure — rather than the oldest.
+const EVIDENCE_MAX_CHARS = 2000;
+const EVIDENCE_TRUNCATED_PREFIX = '…(older lines omitted)\n';
+
+export function trimEvidence(s: string, max = EVIDENCE_MAX_CHARS): string {
+  if (s.length <= max) return s;
+  return EVIDENCE_TRUNCATED_PREFIX + s.slice(-max);
+}
+
 async function evidenceFor(f: Finding, io: DetectorIO): Promise<string> {
   try {
     if (f.source === 'unit') {
       const unit = f.fingerprint.slice('unit:'.length);
-      return (await run(commands.journal(unit, 30), io.runner)).stdout || f.detail;
+      return trimEvidence((await run(commands.journal(unit, 20), io.runner)).stdout || f.detail);
     }
     if (f.source === 'crashloop' || f.source === 'health') {
-      return (await run(commands.journal('egyptair', 40), io.runner)).stdout || f.detail;
+      return trimEvidence((await run(commands.journal('egyptair', 25), io.runner)).stdout || f.detail);
     }
   } catch { /* fall through */ }
-  return f.detail;
+  return trimEvidence(f.detail);
+}
+
+async function sleep(io: DetectorIO, ms: number): Promise<void> {
+  if (io.sleep) return io.sleep(ms);
+  return new Promise<void>(resolve => setTimeout(resolve, ms));
 }
 
 function agentDeps(io: DetectorIO): AgentDeps {
@@ -124,6 +142,11 @@ export async function tick(io: DetectorIO): Promise<{ created: number; resolved:
     }
     const { findings, maxErrorId, errorCounts } = await gather(io, now, lastErrorId);
     const seen = new Set<string>();
+    // Groq's free tier is 8,000 tokens/min/model, and one diagnosis call is
+    // ~5,700 tokens — two back-to-back in the same tick can blow the budget.
+    // Space out diagnoses (not the first one) by 20s so consecutive calls
+    // stay under it.
+    let diagnosesThisTick = 0;
     for (const f of findings) {
       seen.add(f.fingerprint);
       let { row, created: isNew } = queries.upsertIncident(f.fingerprint, f.source, f.title);
@@ -140,6 +163,8 @@ export async function tick(io: DetectorIO): Promise<{ created: number; resolved:
       if (isNew) {
         created += 1;
         try {
+          if (diagnosesThisTick > 0) await sleep(io, 20_000);
+          diagnosesThisTick += 1;
           const r = await openCard(row, f, io);
           if (r.posted) posted += 1;
           if (r.restarted) return { created, resolved, posted, skipped: 'restarting' };
@@ -205,6 +230,7 @@ export async function postBootCheck(io: DetectorIO): Promise<void> {
 export function productionIO(): DetectorIO {
   return {
     runner: defaultRunner,
+    sleep: (ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)),
     fetchHealth: async () => {
       try {
         const r = await fetch('http://127.0.0.1:3000/api/health', { headers: { Host: CLIENT_HOST }, signal: AbortSignal.timeout(8000) });

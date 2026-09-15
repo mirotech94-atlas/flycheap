@@ -134,6 +134,11 @@ describe('tick', () => {
     expect(r.resolved).toBe(1);
     expect(h2.threads).toEqual([['ts.1', expect.stringContaining('✅ Resolved')]]);
     expect(db.queries.incidentById(inc.id)?.status).toBe('resolved');
+    // failedJobRunsSince has no cursor (just a 120-min lookback), so the
+    // failed run inserted above would otherwise keep re-surfacing as a "new"
+    // job:digest finding — and re-diagnosing it — in every later test in
+    // this file that resolves incidents and ticks again.
+    db.getDb().prepare(`DELETE FROM job_runs WHERE job = 'digest'`).run();
   });
 
   it('skips when another tick holds the lock', async () => {
@@ -190,6 +195,56 @@ describe('tick', () => {
     const inc = db.queries.openIncidents().find(i => i.source === 'err');
     expect(inc).toBeTruthy();
     expect(inc?.title).toBe('Errors: poller (1 in window)');
+  });
+
+  it('trimEvidence keeps the tail and adds the omitted-prefix when truncated', () => {
+    const tail = 'B'.repeat(2000);
+    expect(det.trimEvidence('A'.repeat(500) + tail)).toBe('…(older lines omitted)\n' + tail);
+    expect(det.trimEvidence('short')).toBe('short');
+    expect(det.trimEvidence('X'.repeat(10), 5)).toBe('…(older lines omitted)\n' + 'X'.repeat(5));
+  });
+
+  it('caps evidence at 2000 chars, keeping the newest lines, prefixed when truncated', async () => {
+    resetIncidents();
+    // Job runs inserted by earlier tests (e.g. the "digest" job's failed run)
+    // stay within the 120-min lookback and would otherwise re-surface as a
+    // second "new" incident once resetIncidents() clears their status,
+    // stealing the diagnose() call this test asserts on.
+    db.getDb().prepare('DELETE FROM job_runs').run();
+    const tail = 'B'.repeat(2000);
+    const journalOutput = 'A'.repeat(500) + tail;
+    let capturedEvidence = '';
+    const client: import('@/lib/ops/agent').MessagesClient = {
+      messages: {
+        create: async (params: any) => {
+          capturedEvidence = params.messages[0].content;
+          return { id: 'm', type: 'message', role: 'assistant', model: 'x', content: [{ type: 'text', text: 'diagnosed', citations: null }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } as unknown as Anthropic.Message;
+        },
+      },
+    };
+    const h = io({
+      client,
+      runner: async (_f, args) => ({ ok: true, code: 0, stderr: '', stdout: args.includes('--failed') ? '● egyptair-jobs@evidence.service loaded failed failed x' : args.includes('-n') ? journalOutput : 'ok' }),
+    });
+    await det.tick(h.io);
+    expect(capturedEvidence).toContain('…(older lines omitted)\n');
+    expect(capturedEvidence).toContain(tail);
+    expect(capturedEvidence).not.toContain('A'.repeat(500));
+  });
+
+  it('sleeps between diagnoses when more than one new incident opens in a single tick', async () => {
+    resetIncidents();
+    // Same leftover-job-run concern as above — keep this tick's new
+    // incidents limited to exactly the two units this test injects.
+    db.getDb().prepare('DELETE FROM job_runs').run();
+    const sleepCalls: number[] = [];
+    const h = io({
+      failed: '● egyptair-jobs@alpha.service loaded failed failed x\n● egyptair-jobs@beta.service loaded failed failed x',
+      sleep: async (ms: number) => { sleepCalls.push(ms); },
+    });
+    const r = await det.tick(h.io);
+    expect(r.created).toBe(2);
+    expect(sleepCalls).toEqual([20_000]);
   });
 });
 

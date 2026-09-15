@@ -118,3 +118,76 @@ describe('createGroqMessagesClient — response translation', () => {
       .rejects.toThrow(/^Groq 500: /);
   });
 });
+
+describe('createGroqMessagesClient — 429 rate-limit retry', () => {
+  it('waits the parsed retry hint then retries once, returning the retry result', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          ok: false,
+          status: 429,
+          text: async () => 'Rate limit reached … Please try again in 35.115s.',
+          json: async () => ({}),
+        } as unknown as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => '',
+        json: async () => ({ id: 'chatcmpl-ok', choices: [{ message: { content: 'diagnosed' } }], usage: {} }),
+      } as unknown as Response;
+    }) as typeof fetch;
+
+    const sleepCalls: number[] = [];
+    const sleep = async (ms: number) => { sleepCalls.push(ms); };
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl, sleep });
+    const res = await client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming);
+
+    expect(calls).toBe(2);
+    expect(sleepCalls).toEqual([35115]);
+    expect(res.content).toEqual([{ type: 'text', text: 'diagnosed', citations: null }]);
+  });
+
+  it('caps the wait at 60s and defaults to 20s when no hint is present', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return {
+        ok: false,
+        status: 429,
+        text: async () => (calls === 1 ? 'Rate limit reached … Please try again in 987.6s.' : 'Rate limit reached, no hint here'),
+        json: async () => ({}),
+      } as unknown as Response;
+    }) as typeof fetch;
+    const sleepCalls: number[] = [];
+    const sleep = async (ms: number) => { sleepCalls.push(ms); };
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl, sleep });
+
+    await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
+      .rejects.toThrow(/^Groq 429: /);
+    expect(sleepCalls).toEqual([60_000]);
+  });
+
+  it('throws if the retry also fails with 429', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return {
+        ok: false,
+        status: 429,
+        text: async () => 'Please try again in 5s.',
+        json: async () => ({}),
+      } as unknown as Response;
+    }) as typeof fetch;
+    const sleepCalls: number[] = [];
+    const sleep = async (ms: number) => { sleepCalls.push(ms); };
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl, sleep });
+
+    await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
+      .rejects.toThrow(/^Groq 429: /);
+    expect(calls).toBe(2);
+    expect(sleepCalls).toEqual([5000]);
+  });
+});
