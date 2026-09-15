@@ -55,6 +55,20 @@ describe('ops_incidents', () => {
     expect(db.queries.latestJobRunOk('digest')).toBe(true);
   });
 
+  it('markIncidentRestart / markIncidentDeploy set their own columns, independent of last_action', () => {
+    const { row } = db.queries.upsertIncident('unit:egyptair-jobs@bookkeeping.service', 'unit', 'Job failed: bookkeeping');
+    db.queries.markIncidentRestart(row.id, '2026-09-14T10:00:00.000Z');
+    db.queries.markIncidentDeploy(row.id, '2026-09-14T11:00:00.000Z');
+    let r = db.queries.incidentById(row.id)!;
+    expect(r.last_restart_at).toBe('2026-09-14T10:00:00.000Z');
+    expect(r.last_deploy_at).toBe('2026-09-14T11:00:00.000Z');
+    db.queries.setIncidentStatus(row.id, 'fixing', 'STARTED:x');
+    r = db.queries.incidentById(row.id)!;
+    expect(r.last_action).toBe('STARTED:x');
+    expect(r.last_restart_at).toBe('2026-09-14T10:00:00.000Z');
+    expect(r.last_deploy_at).toBe('2026-09-14T11:00:00.000Z');
+  });
+
   it('clearStaleJobLock only removes old locks', () => {
     expect(db.queries.tryAcquireJobLock('poll', 'h1')).toBe(true);
     expect(db.queries.clearStaleJobLock('poll', 30)).toBe(0);   // fresh → kept

@@ -105,11 +105,12 @@ export async function runOpsTool(
         return { content: `recorded proposal: ${tool}` };
       }
       case 'restart_app': {
-        const last = incident.last_action?.startsWith('RESTARTED:') ? Date.parse(incident.last_action.slice(10)) : NaN;
+        const last = incident.last_restart_at ? Date.parse(incident.last_restart_at) : NaN;
         if (Number.isFinite(last) && now.getTime() - last < RESTART_COOLDOWN_MS) {
           return { content: 'already restarted the app for this incident within the last hour; not restarting again', is_error: true };
         }
-        queries.setIncidentStatus(incident.id, 'fixing', `RESTARTED:${now.toISOString()}`);
+        queries.markIncidentRestart(incident.id, now.toISOString());
+        queries.setIncidentStatus(incident.id, 'fixing', 'RESTARTED');
         const r = fmt(await run(commands.restartApp(), deps.runner));
         return { ...r, restarted: true };
       }
@@ -117,7 +118,7 @@ export async function runOpsTool(
         const unit = String(input.unit ?? '');
         const a = await run(commands.resetFailed(unit), deps.runner);
         const b = await run(commands.startUnit(unit), deps.runner);
-        queries.setIncidentStatus(incident.id, 'fixing', `STARTED:${unit}`);
+        if (a.ok && b.ok) queries.setIncidentStatus(incident.id, 'fixing', `STARTED:${unit}`);
         return fmt({ ok: a.ok && b.ok, code: b.code, stdout: `${a.stdout}\n${b.stdout}`, stderr: `${a.stderr}\n${b.stderr}` });
       }
       case 'clear_job_lock': {
@@ -150,8 +151,9 @@ export async function runOpsTool(
           queries.setIncidentStatus(incident.id, 'fixing', `SET:${key}=${value}`);
           return { content: `set ${key}: ${before ?? '(unset)'} → ${value}` };
         }
-        if (incident.last_action?.startsWith('DEPLOYED:')) return { content: 'already redeployed once for this incident', is_error: true };
-        queries.setIncidentStatus(incident.id, 'fixing', `DEPLOYED:${now.toISOString()}`);
+        if (incident.last_deploy_at) return { content: 'already redeployed once for this incident', is_error: true };
+        queries.markIncidentDeploy(incident.id, now.toISOString());
+        queries.setIncidentStatus(incident.id, 'fixing', 'DEPLOYED');
         return { ...fmt(await run(commands.deploy(), deps.runner)), restarted: true };
       }
     }
@@ -183,7 +185,12 @@ async function loop(opts: {
     : opts.mode === 'safe' ? 'MODE: auto-fix. Run the one safe action you were given, check the result, summarise in one or two lines.'
     : 'MODE: conversation with the founder in the incident thread.';
   for (let i = 0; i < MAX_TOOL_CALLS + 1; i++) {
-    const res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: 1200, system: `${SYSTEM}\n\n${modeNote}`, tools: OPS_TOOLS, messages });
+    let res: Anthropic.Message;
+    try {
+      res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: 1200, system: `${SYSTEM}\n\n${modeNote}`, tools: OPS_TOOLS, messages });
+    } catch (e) {
+      return { text: `AI assist error: ${(e as Error).message}`, restarted, toolCalls };
+    }
     const text = res.content.filter((b): b is Anthropic.TextBlock => b.type === 'text').map(b => b.text).join('\n').trim();
     if (res.stop_reason !== 'tool_use') return { text: text || null, restarted, toolCalls };
     messages.push({ role: 'assistant', content: res.content });
@@ -241,7 +248,16 @@ export async function autoFix(incident: OpsIncidentRow, action: { tool: string; 
 export async function handleThreadReply(incident: OpsIncidentRow, thread: ThreadMsg[], latest: string, deps: AgentDeps):
   Promise<{ text: string; restarted: boolean }> {
   const pending = parseProposal(incident.last_action);
-  const approvedProposal = pending && approvalGranted(latest) ? pending : null;
+  let approvedProposal: Proposal | null = null;
+  if (pending && approvalGranted(latest)) {
+    approvedProposal = pending;
+  } else if (pending) {
+    // A pending proposal is approvable only by the very next human reply.
+    // Anything else (a question, a "not yet", small talk) clears it so a
+    // later unrelated "go" can never resurrect a stale proposal.
+    queries.setIncidentStatus(incident.id, 'open', null);
+    incident = queries.incidentById(incident.id) ?? incident;
+  }
   const messages: Anthropic.MessageParam[] = [
     { role: 'user', content: `Incident #${incident.id}: ${incident.title} (status ${incident.status}, seen ${incident.occurrences}× since ${incident.first_seen} UTC).` },
     ...thread.map(m => ({ role: m.role, content: m.content })),

@@ -239,6 +239,8 @@ function init(db: Database.Database) {
       last_seen TEXT NOT NULL DEFAULT (datetime('now')),
       occurrences INTEGER NOT NULL DEFAULT 1,
       last_action TEXT,
+      last_restart_at TEXT,
+      last_deploy_at TEXT,
       resolved_at TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_ops_incidents_status ON ops_incidents(status);
@@ -745,6 +747,8 @@ export type OpsIncidentRow = {
   last_seen: string;
   occurrences: number;
   last_action: string | null;
+  last_restart_at: string | null;
+  last_deploy_at: string | null;
   resolved_at: string | null;
 };
 
@@ -1196,6 +1200,12 @@ export const queries = {
     } else {
       getDb().prepare(`UPDATE ops_incidents SET status = ?, last_action = ? WHERE id = ?`).run(status, lastAction, id);
     }
+  },
+  markIncidentRestart: (id: number, iso: string): void => {
+    getDb().prepare(`UPDATE ops_incidents SET last_restart_at = ? WHERE id = ?`).run(iso, id);
+  },
+  markIncidentDeploy: (id: number, iso: string): void => {
+    getDb().prepare(`UPDATE ops_incidents SET last_deploy_at = ? WHERE id = ?`).run(iso, id);
   },
   /** Marks resolved and suffixes the fingerprint with #id so a recurrence opens a new incident. */
   resolveIncident: (id: number): void => {

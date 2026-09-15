@@ -59,6 +59,32 @@ describe('runOpsTool', () => {
     expect(b.is_error).toBe(true);
     expect(b.content).toContain('already restarted');
   });
+  it('restart_app cooldown survives other bookkeeping (start_job) on the same incident', async () => {
+    const { row } = db.queries.upsertIncident('health:other_bookkeeping', 'health', 't');
+    const a = await agent.runOpsTool('restart_app', {}, { incident: row, mode: 'safe', approvedProposal: null, deps: deps() });
+    expect(a.restarted).toBe(true);
+    await agent.runOpsTool('start_job', { unit: 'egyptair-jobs@digest' }, { incident: db.queries.incidentById(row.id)!, mode: 'safe', approvedProposal: null, deps: deps() });
+    const c = await agent.runOpsTool('restart_app', {}, { incident: db.queries.incidentById(row.id)!, mode: 'safe', approvedProposal: null, deps: deps() });
+    expect(c.is_error).toBe(true);
+    expect(c.content).toContain('already restarted');
+  });
+  it('safe mode refuses redeploy (a gated tool) with an approval-related error', async () => {
+    const { row } = db.queries.upsertIncident('err:g:h', 'err', 't');
+    const r = await agent.runOpsTool('redeploy', { reason: 'x' }, { incident: row, mode: 'safe', approvedProposal: null, deps: deps() });
+    expect(r.is_error).toBe(true);
+    expect(r.content).toContain('approval');
+  });
+  it('redeploy runs once per incident then refuses a second approved redeploy', async () => {
+    const { row } = db.queries.upsertIncident('err:i:j', 'err', 't');
+    const approved = { tool: 'redeploy' as const, input: {}, reason: 'r' };
+    calls.length = 0;
+    const first = await agent.runOpsTool('redeploy', {}, { incident: row, mode: 'full', approvedProposal: approved, deps: deps() });
+    expect(first.is_error).toBeFalsy();
+    expect(calls).toHaveLength(1);
+    const second = await agent.runOpsTool('redeploy', {}, { incident: db.queries.incidentById(row.id)!, mode: 'full', approvedProposal: approved, deps: deps() });
+    expect(second.is_error).toBe(true);
+    expect(second.content).toContain('already redeployed');
+  });
   it('gated tool without approval records a proposal instead of running', async () => {
     const { row } = db.queries.upsertIncident('err:a:b', 'err', 't');
     calls.length = 0;
@@ -113,5 +139,26 @@ describe('loops', () => {
     expect(r.text).toBe('Redeployed.');
     expect(calls.map(c => c[1].join(' '))).toEqual(['/usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh']);
     expect(db.queries.incidentById(row.id)?.status).toBe('fixing');
+  });
+  it('a pending proposal is approvable only by the very next human reply', async () => {
+    const { row } = db.queries.upsertIncident('err:k:l', 'err', 't');
+    db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');
+    calls.length = 0;
+    const textOnlyClient = scripted([[{ type: 'text', text: 'Here are the logs.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
+    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'show me the logs first', { ...deps(), client: textOnlyClient });
+    expect(r1.text).toBe('Here are the logs.');
+    expect(calls).toEqual([]);
+    const cleared = db.queries.incidentById(row.id)!;
+    expect(cleared.last_action).toBeNull();
+    expect(cleared.status).toBe('open');
+
+    // A later "go" cannot resurrect the cleared proposal: with no pending
+    // proposal, handleThreadReply passes approvedProposal: null and no
+    // "[system] approved" message, so nothing gated ever runs.
+    const secondClient = scripted([[{ type: 'text', text: 'Nothing pending to approve.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
+    const r2 = await agent.handleThreadReply(cleared, [], 'go', { ...deps(), client: secondClient });
+    expect(r2.text).toBe('Nothing pending to approve.');
+    expect(calls).toEqual([]);
+    expect(db.queries.incidentById(row.id)?.status).toBe('open');
   });
 });
