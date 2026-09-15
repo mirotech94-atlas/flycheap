@@ -47,7 +47,7 @@ const OUTPUT_CAP = 64 * 1024;
 
 export const defaultRunner: Runner = (file, args) =>
   new Promise(resolve => {
-    execFile(file, args, { timeout: 120_000, maxBuffer: OUTPUT_CAP * 4, env: { ...process.env, PATH: '/usr/bin:/bin' } }, (error: ExecFileException | null, stdout: string, stderr: string) => {
+    execFile(file, args, { timeout: 120_000, maxBuffer: OUTPUT_CAP * 4, env: { PATH: '/usr/bin:/bin', NODE_ENV: 'production' } }, (error: ExecFileException | null, stdout: string, stderr: string) => {
       const code = error ? (typeof error.code === 'number' ? error.code : null) : 0;
       resolve({
         ok: !error,
