@@ -1826,6 +1826,26 @@ In `src/lib/cron.ts`, add to the top-level `let` declarations: `let opsTask: cro
   },
 ```
 
+- [ ] **Step 7b: Detach the redeploy from the app's cgroup (controller ruling)**
+
+`deploy.sh` stops the `egyptair` service, and systemd kills the whole service cgroup when it does, including any child the app spawned. A redeploy started as a plain child of the app would therefore kill itself mid-run. Run it as a transient unit instead.
+
+In `src/lib/ops/shell.ts`, replace `commands.deploy` with:
+```ts
+  // Runs deploy.sh in its own transient unit so it survives the app restart it
+  // performs. A second call while one is running fails ("unit already exists"),
+  // which is the intended one-at-a-time behaviour.
+  deploy: (): CommandSpec => ({
+    file: 'sudo',
+    args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'],
+  }),
+```
+In `tests/ops/shell.test.ts`, change the `commands.deploy()` expectation to:
+```ts
+    expect(commands.deploy()).toEqual({ file: 'sudo', args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] });
+```
+Because `--no-block` returns immediately, the `redeploy` tool's result only confirms the unit was queued; the post-boot check (Task 8) reports the outcome in the thread. Update the `redeploy` tool description in `src/lib/ops/agent.ts` to say: `'GATED (needs founder approval). Queue a rebuild + restart via deploy.sh in a detached unit (auto-rolls back on failed health check). The result only confirms it was queued; health is confirmed in the thread after boot.'`
+
 - [ ] **Step 8: The sudoers file**
 
 `deploy/sudoers-egyflights-ops`:
@@ -1840,7 +1860,7 @@ egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-backup.
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl --failed --no-legend egyptair\*
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-jobs@*.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-post-video.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-backup.service -n [0-9]* --no-pager
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair --since -[0-9]*min --no-pager -o cat
-egyflights ALL=(root) NOPASSWD: /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
+egyflights ALL=(root) NOPASSWD: /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
 ```
 In `deploy/setup.sh`, after the `systemctl enable --now egyptair` line:
 ```bash
