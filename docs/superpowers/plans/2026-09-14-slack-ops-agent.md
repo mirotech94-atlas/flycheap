@@ -430,7 +430,7 @@ describe('run', () => {
     const fake: Runner = async (file, args) => { calls.push([file, args]); return { ok: true, code: 0, stdout: 'x', stderr: '' }; };
     const r = await run(commands.listFailed(), fake);
     expect(r.stdout).toBe('x');
-    expect(calls).toEqual([['sudo', ['/usr/bin/systemctl', '--failed', '--no-legend', 'egyptair*']]]);
+    expect(calls).toEqual([['sudo', ['/usr/bin/systemctl', 'list-units', '--failed', '--no-legend', '--plain', 'egyptair*']]]);
   });
 });
 ```
@@ -473,7 +473,7 @@ export const commands = {
   restartApp: (): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, 'restart', 'egyptair'] }),
   resetFailed: (unit: string): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, 'reset-failed', normalizeUnit(unit)] }),
   startUnit: (unit: string): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, 'start', normalizeUnit(unit)] }),
-  listFailed: (): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, '--failed', '--no-legend', 'egyptair*'] }),
+  listFailed: (): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, 'list-units', '--failed', '--no-legend', '--plain', 'egyptair*'] }),
   journal: (unit: string, lines: number): CommandSpec => {
     const n = Math.min(MAX_LINES, Math.max(10, Math.floor(Number(lines) || 50)));
     // 'egyptair' (main app) or an allowed job unit.
@@ -1857,7 +1857,7 @@ egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl restart egyptair
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-jobs@*.service, /usr/bin/systemctl start egyptair-jobs@*.service
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-post-video.service, /usr/bin/systemctl start egyptair-post-video.service
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-backup.service, /usr/bin/systemctl start egyptair-backup.service
-egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl --failed --no-legend egyptair\*
+egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl list-units --failed --no-legend --plain egyptair\*
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-jobs@*.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-post-video.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-backup.service -n [0-9]* --no-pager
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair --since -[0-9]*min --no-pager -o cat
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh

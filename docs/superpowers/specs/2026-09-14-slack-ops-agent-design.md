@@ -40,7 +40,7 @@ but is not turned into an incident (that would loop).
 
 | Probe | Source | Fingerprint | Clears when |
 |---|---|---|---|
-| Failed job unit | `systemctl --failed --no-legend 'egyptair*'` (via the sudoers-allowed `systemctl` read) | `unit:<name>` | unit no longer listed as failed |
+| Failed job unit | `systemctl list-units --failed --no-legend --plain 'egyptair*'` (via the sudoers-allowed `systemctl` read) | `unit:<name>` | unit no longer listed as failed |
 | Failed job run | `job_runs` rows with `ok = 0` started in the last 120 minutes (bounded lookback; re-reading is harmless because resolution is by the latest run, and it catches runs that fail long after they started) | `job:<job>` | a later `job_runs` row for the same job has `ok = 1` |
 | App errors | `error_log` rows with `level = 'error'` and `id` greater than the stored cursor (`ops_detector_last_error_id`; read in ascending id order, 200 per tick, excluding `source = 'ops-detector'`), grouped by `source` + the first 80 chars of `message` after every digit run is replaced by `#` (so `search 12` / `search 13`, `HTTP 500` / `503` group together) | `err:<source>:<sha1 prefix>` | no new matching rows for 60 minutes |
 | Health | `GET http://127.0.0.1:3000/api/health` checks with `ok = false` | `health:<check>` | the check reports `ok = true` |
@@ -121,7 +121,7 @@ Toolset:
 | `read_error_log(limit≤50)` | read | `error_log` newest rows |
 | `health_check()` | read | `GET /api/health` on loopback |
 | `job_history(job, limit≤20)` | read | `job_runs` rows |
-| `list_failed_units()` | read | `sudo systemctl --failed --no-legend 'egyptair*'` |
+| `list_failed_units()` | read | `sudo systemctl list-units --failed --no-legend --plain 'egyptair*'` |
 | `restart_app()` | safe | `sudo systemctl restart egyptair` (posts "restarting now" first; see §7) |
 | `start_job(unit)` | safe | `sudo systemctl reset-failed <unit>` then `sudo systemctl start <unit>`; unit must match `^egyptair-(jobs@[a-z0-9-]+|post-video|backup)\.service$` |
 | `clear_job_lock(name)` | safe | `DELETE FROM job_locks WHERE name = ?` when `started_at` is older than 30 min |
@@ -168,7 +168,7 @@ egyflights ALL=(root) NOPASSWD: \
   /usr/bin/systemctl reset-failed egyptair-jobs@*, /usr/bin/systemctl start egyptair-jobs@*, \
   /usr/bin/systemctl reset-failed egyptair-post-video, /usr/bin/systemctl start egyptair-post-video, \
   /usr/bin/systemctl reset-failed egyptair-backup, /usr/bin/systemctl start egyptair-backup, \
-  /usr/bin/systemctl --failed --no-legend egyptair*, \
+  /usr/bin/systemctl list-units --failed --no-legend --plain egyptair\*, \
   /usr/bin/journalctl -u egyptair* -n * --no-pager, /usr/bin/journalctl -u egyptair --since * --no-pager, \
   /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
 ```

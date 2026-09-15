@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { hasLlmKey, llmChat } from '@/lib/llm';
+import Anthropic from '@anthropic-ai/sdk';
 import { queries } from '@/lib/db';
 import { postToSlackChannel, founderChannelId, postToSlackThread } from '@/lib/notifier';
 import { routeSlackMessage } from '@/lib/ops/route';
@@ -102,12 +102,14 @@ async function answerInThread(
   question: string,
   opts: { isThreadReply: boolean },
 ) {
-  if (!hasLlmKey()) {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) {
     await postToSlackChannelThread(channel, threadTs,
       'Thanks for the message — our team will follow up shortly. (AI assist is temporarily unavailable.)');
     return;
   }
   try {
+    const client = new Anthropic({ apiKey });
     // First message in a thread → answer immediately (fastest path).
     // Reply inside an existing thread → pull thread context for coherence.
     let messages: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -123,8 +125,18 @@ async function answerInThread(
     } else {
       messages = [{ role: 'user', content: question }];
     }
-    // Fast tier — support Q&A wants a ~1-2s reply more than depth.
-    const text = await llmChat({ system: SUPPORT_SYSTEM_PROMPT, messages, maxTokens: 500, tier: 'fast' });
+    const res = await client.messages.create({
+      // Haiku 4.5 — fast enough to typically reply in ~1-2s, plenty capable
+      // for app-support Q&A.
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 500,
+      system: SUPPORT_SYSTEM_PROMPT,
+      messages,
+    });
+    const text = res.content
+      .flatMap(b => (b.type === 'text' ? [b.text] : []))
+      .join('\n')
+      .trim();
     await postToSlackChannelThread(channel, threadTs,
       text || 'Thanks for reaching out — our team will follow up shortly.');
   } catch (e) {
@@ -204,7 +216,7 @@ export async function POST(req: Request) {
             await postToSlackThread(ev.channel, threadTs, r.text);
           } catch (e) {
             console.error('[slack-ops] reply failed:', (e as Error).message);
-            await postToSlackThread(ev.channel, threadTs, `⚠️ I hit an error handling that: ${(e as Error).message}`);
+            await postToSlackThread(ev.channel, threadTs, `⚠️ I hit an error handling that: ${(e as Error).message}`).catch(() => {});
           }
         })();
       }
