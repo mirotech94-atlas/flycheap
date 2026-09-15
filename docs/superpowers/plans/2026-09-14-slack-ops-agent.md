@@ -586,11 +586,14 @@ describe('probeErrors', () => {
     expect(f[0].fingerprint).toBe(errorFingerprint('poller', 'ETIMEDOUT travelpayouts (search 12)'));
     expect(f[0].title).toBe('Errors: poller (2 in window)');
   });
-  it('fingerprint is stable and short', () => {
+  it('fingerprint is stable, short, and ignores numbers', () => {
     const a = errorFingerprint('x', 'a'.repeat(500));
     expect(a).toBe(errorFingerprint('x', 'a'.repeat(500) + 'tail differs'));
     expect(a.length).toBeLessThan(40);
     expect(a.startsWith('err:x:')).toBe(true);
+    expect(errorFingerprint('http', 'HTTP 500 from provider')).toBe(errorFingerprint('http', 'HTTP 503 from provider'));
+    expect(errorFingerprint('http', 'HTTP 500 from provider')).not.toBe(errorFingerprint('http', 'HTTP timeout from provider'));
+    expect(errorFingerprint('a', 'same text')).not.toBe(errorFingerprint('b', 'same text'));
   });
 });
 
@@ -663,8 +666,13 @@ export function probeJobRuns(rows: Array<{ job: string; started_at: string; mess
   }));
 }
 
+/** Digit runs become '#' so the same error groups across ids/counts/status codes. */
+export function normalizeErrorMessage(message: string): string {
+  return message.replace(/\d+/g, '#').slice(0, 80);
+}
+
 export function errorFingerprint(source: string | null, message: string): string {
-  const key = `${source ?? '-'}|${message.slice(0, 80)}`;
+  const key = `${source ?? '-'}|${normalizeErrorMessage(message)}`;
   return `err:${source ?? '-'}:${crypto.createHash('sha1').update(key).digest('hex').slice(0, 10)}`;
 }
 
@@ -713,7 +721,7 @@ export function probeCrashLoop(journalCatOut: string, threshold = 3): Finding[] 
 - [ ] **Step 4: Run the test**
 
 Run: `npx vitest run tests/ops/probes.test.ts`
-Expected: 8 passed.
+Expected: 7 passed.
 
 - [ ] **Step 5: Checkpoint** — `npm test` green.
 
