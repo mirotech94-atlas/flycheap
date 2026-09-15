@@ -41,13 +41,14 @@ but is not turned into an incident (that would loop).
 | Probe | Source | Fingerprint | Clears when |
 |---|---|---|---|
 | Failed job unit | `systemctl --failed --no-legend 'egyptair*'` (via the sudoers-allowed `systemctl` read) | `unit:<name>` | unit no longer listed as failed |
-| Failed job run | `job_runs` rows with `ok = 0` newer than the last tick | `job:<job>` | a later `job_runs` row for the same job has `ok = 1` |
-| App errors | `error_log` rows with `level = 'error'` newer than the last tick, grouped by `source` + the first 80 chars of `message` after every digit run is replaced by `#` (so `search 12` / `search 13`, `HTTP 500` / `503` group together) | `err:<source>:<sha1 prefix>` | no new matching rows for 60 minutes |
+| Failed job run | `job_runs` rows with `ok = 0` started in the last 120 minutes (bounded lookback; re-reading is harmless because resolution is by the latest run, and it catches runs that fail long after they started) | `job:<job>` | a later `job_runs` row for the same job has `ok = 1` |
+| App errors | `error_log` rows with `level = 'error'` and `id` greater than the stored cursor (`ops_detector_last_error_id`; read in ascending id order, 200 per tick, excluding `source = 'ops-detector'`), grouped by `source` + the first 80 chars of `message` after every digit run is replaced by `#` (so `search 12` / `search 13`, `HTTP 500` / `503` group together) | `err:<source>:<sha1 prefix>` | no new matching rows for 60 minutes |
 | Health | `GET http://127.0.0.1:3000/api/health` checks with `ok = false` | `health:<check>` | the check reports `ok = true` |
 | Crash loop | `journalctl -u egyptair --since '-15min'` shows 3+ service starts | `crashloop` | fewer than 3 starts in the window |
 
-"Last tick" is stored in `settings` under `ops_detector_last_tick` so a restart
-does not re-report everything.
+The error cursor is stored in `settings` under `ops_detector_last_error_id` so a
+restart does not re-report everything; `ops_detector_last_tick` is written as an
+informational timestamp only.
 
 ### 2. Incident store (`ops_incidents` table, `src/lib/db.ts`)
 
