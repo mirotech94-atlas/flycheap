@@ -3411,7 +3411,9 @@ html[dir="rtl"] .client-lang > div { left: auto; right: 0; }
 .fc-landing .fc-l-lang-menu a:hover, .fc-landing .fc-l-lang-menu a.on { opacity: 1; background: rgba(10,20,38,.05); }
 html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-l-lang summary,
 html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-l-lang-menu {
-  background: var(--fc-paper, #14161c); color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.12);
+  /* Fixed dark surface: --fc-paper is the landing's CREAM here, which left
+     white menu text on a cream popover in dark mode. */
+  background: #14161c; color: rgba(255,255,255,.85); border-color: rgba(255,255,255,.12);
 }
 html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-l-lang-menu a { color: rgba(255,255,255,.8); }
 html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-l-lang-menu a:hover,
