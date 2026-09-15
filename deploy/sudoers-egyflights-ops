@@ -5,7 +5,7 @@ egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl restart egyptair
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-jobs@*.service, /usr/bin/systemctl start egyptair-jobs@*.service
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-post-video.service, /usr/bin/systemctl start egyptair-post-video.service
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-backup.service, /usr/bin/systemctl start egyptair-backup.service
-egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl --failed --no-legend egyptair\*
+egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl list-units --failed --no-legend --plain egyptair\*
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-jobs@*.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-post-video.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-backup.service -n [0-9]* --no-pager
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair --since -[0-9]*min --no-pager -o cat
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh

@@ -40,6 +40,6 @@ describe('run', () => {
     const fake: Runner = async (file, args) => { calls.push([file, args]); return { ok: true, code: 0, stdout: 'x', stderr: '' }; };
     const r = await run(commands.listFailed(), fake);
     expect(r.stdout).toBe('x');
-    expect(calls).toEqual([['sudo', ['/usr/bin/systemctl', '--failed', '--no-legend', 'egyptair*']]]);
+    expect(calls).toEqual([['sudo', ['/usr/bin/systemctl', 'list-units', '--failed', '--no-legend', '--plain', 'egyptair*']]]);
   });
 });
