@@ -67,7 +67,8 @@ function FeatureIcon({ kind }: { kind: string }) {
 // Non-copy tier attributes (routing, styling); copy comes from the dictionary in the same order.
 const TIER_META: Array<{ ctaHref: string; ctaClass: string; featured?: boolean }> = [
   { ctaHref: '/login', ctaClass: 'fc-btn-light' },
-  { ctaHref: '/trial-terms?plan=pro', ctaClass: 'fc-btn-gold', featured: true },
+  { ctaHref: '/login', ctaClass: 'fc-btn-light' },
+  { ctaHref: '/checkout?plan=pro', ctaClass: 'fc-btn-gold', featured: true },
   { ctaHref: '/checkout?plan=enterprise', ctaClass: 'fc-btn-ink' },
 ];
 

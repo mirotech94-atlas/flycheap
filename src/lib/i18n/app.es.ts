@@ -25,7 +25,7 @@ export const es: AppDict = {
     welcomeBack: 'Bienvenido de nuevo',
     h2: ['Inicia sesión o ', 'regístrate', ''],
     sub: 'Los usuarios que vuelven se reconocen automáticamente. ¿Nuevo aquí? Estás a 30 segundos de tu primera ruta vigilada: un código de 6 dígitos por email, sin contraseña.',
-    legalA: 'Al continuar aceptas nuestra ', privacy: 'política de privacidad', legalB: ' y, para las pruebas de Pro, las ', trialTerms: 'condiciones de prueba', legalC: '. Nunca vendemos tus datos.',
+    legalA: 'Al continuar aceptas nuestra ', privacy: 'política de privacidad', legalB: ' y, para la prueba gratuita, las ', trialTerms: 'condiciones de prueba', legalC: '. Nunca vendemos tus datos.',
     form: {
       tabLogin: 'Iniciar sesión', tabSignup: 'Registrarse',
       rememberedA: 'Bienvenido de nuevo, ', rememberedB: '.', notYou: '¿No eres tú?',
@@ -101,8 +101,9 @@ export const es: AppDict = {
       title: ['Gratis para uno. ', 'Por puesto', ' para equipos.'],
       sub: 'Cancela cuando quieras desde el portal de facturación. Sube o baja de plan en un clic: tus rutas e historial nunca se borran.',
       tiers: [
+        { name: 'Prueba gratuita', price: '$0', unit: '3 meses', pitch: 'Prueba todo lo básico gratis durante 3 meses, sin tarjeta.', cta: 'Iniciar prueba gratuita →', note: 'Tras 3 meses continúas en Free salvo que actualices.', badge: '', features: ['Hasta 5 rutas vigiladas', 'Sondeo cada 30 minutos', 'Alertas por email + resumen diario', 'Mapa de exploración mundial', 'Sin tarjeta de crédito'] },
         { name: 'Free', price: '$0', unit: 'para siempre', pitch: 'Para quien reserva en familia y vigila unas pocas rutas.', cta: 'Regístrate gratis →', note: 'Sin tarjeta de crédito', badge: '', features: ['Hasta 5 rutas vigiladas', 'Sondeo cada 30 minutos', 'Alertas por email + resumen diario', 'Mapa de exploración mundial', 'Enlace familiar'] },
-        { name: 'Pro', price: '$9', unit: '/ mes', pitch: 'Para el viajero frecuente: velocidad y alcance.', cta: 'Prueba gratis 14 días →', note: 'Gratis 14 días, luego $9/mes · cancela cuando quieras', badge: 'Más popular', features: ['Hasta 100 rutas vigiladas', 'Sondeo prioritario cada 5 minutos', 'Alertas por SMS / WhatsApp / Telegram', 'Predicciones comprar/esperar + confianza', 'Radar de tarifas erróneas'] },
+        { name: 'Pro', price: '$9', unit: '/ mes', pitch: 'Para el viajero frecuente: velocidad y alcance.', cta: 'Obtener Pro →', note: 'Facturación mensual · cancela cuando quieras', badge: 'Más popular', features: ['Hasta 100 rutas vigiladas', 'Sondeo prioritario cada 5 minutos', 'Alertas por SMS / WhatsApp / Telegram', 'Predicciones comprar/esperar + confianza', 'Radar de tarifas erróneas'] },
         { name: 'Enterprise', price: '$39', unit: '/ mes', pitch: 'Para agencias, family offices y departamentos de viajes.', cta: 'Continuar a Enterprise →', note: 'Facturación mensual · cancela cuando quieras', badge: '', features: ['Rutas ilimitadas · sondeo cada minuto', 'Marca blanca + dominio propio', 'API REST (/api/v1)', 'Alertas en canal de Slack', 'Registro de auditoría'] },
       ],
     },
@@ -116,7 +117,7 @@ export const es: AppDict = {
         { q: '¿Cobran comisión por reservar?', a: 'Nunca. No somos una agencia de viajes. Los enlaces de reserva te llevan a Aviasales, Kayak, Google Flights o directamente a la aerolínea, y completas la compra allí.' },
         { q: '¿Es seguro el enlace familiar?', a: 'Sí. Usa un token criptográficamente aleatorio único para tu cuenta. Puedes rotarlo o revocarlo al instante desde Ajustes: quien tenga la URL antigua pierde el acceso de inmediato.' },
         { q: '¿Puedo usarlo con marca blanca para mi equipo?', a: 'Sí: los planes Enterprise incluyen dominio propio, logotipo, color de marca y email remitente. Habla con ventas para configurarlo; el aprovisionamiento tarda un día laborable.' },
-        { q: '¿Cómo funciona la prueba de Pro de 14 días?', a: 'Pulsa «Prueba gratis 14 días», revisa y acepta las condiciones de prueba y completa el pago: tu tarjeta se guarda pero no se cobra. Tienes todas las funciones Pro durante 14 días. Si cancelas antes del día 14 no pagas nada; si no, la facturación empieza a $9/mes. Te enviamos un recordatorio 3 días antes de que termine la prueba.' },
+        { q: '¿Cómo funciona la prueba gratuita de 3 meses?', a: 'Toda cuenta nueva empieza con 3 meses de las capacidades básicas gratis, sin tarjeta. Al terminar, continúas automáticamente en Free; puedes actualizar a Pro o Enterprise cuando quieras desde Ajustes → Facturación.' },
         { q: '¿Cómo cancelo mi suscripción?', a: 'Desde Ajustes → Facturación, un clic abre el portal seguro de clientes de Stripe donde cancelas al instante: sin emails ni llamadas de retención. Tu plan sigue activo hasta el final del periodo pagado y luego pasa a Free sin borrar ninguna ruta ni historial.' },
         { q: '¿Qué tan precisas son las recomendaciones comprar/esperar?', a: 'Cada veredicto combina un z-score frente al historial de precios de 30 días de tu ruta con la pendiente de tendencia de 14 días, y viene con un porcentaje de confianza explícito. Te mostramos los cálculos (percentil, mediana, tendencia) para que juzgues tú mismo.' },
         { q: '¿Qué es una tarifa errónea y de verdad cazaré una?', a: 'Una tarifa errónea es un fallo de precio (un error al cargar la tarifa o de divisa), normalmente un 40–80 % por debajo de lo normal. Suelen durar 30–90 minutos antes de que la aerolínea la retire. Nuestro radar marca cualquier tarifa ≥ 3 desviaciones estándar bajo la media de 30 días y avisa a los usuarios Pro en un solo ciclo de sondeo.' },

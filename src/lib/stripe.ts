@@ -35,7 +35,6 @@ export async function createProCheckoutSession(opts: {
   cancelUrl: string;
   customerId?: string | null;
   plan?: 'pro' | 'enterprise';
-  trialDays?: number;
 }): Promise<{ ok: true; url: string; sessionId: string } | { ok: false; error: string }> {
   if (!isStripeConfigured()) {
     return { ok: false, error: 'Stripe not configured (STRIPE_SECRET_KEY / STRIPE_PRICE_PRO_MONTHLY missing).' };
@@ -57,12 +56,6 @@ export async function createProCheckoutSession(opts: {
   else form.set('customer_email', opts.email);
   form.set('subscription_data[metadata][user_id]', String(opts.userId));
   form.set('subscription_data[metadata][plan]', plan);
-  if (opts.trialDays && opts.trialDays > 0) {
-    form.set('subscription_data[trial_period_days]', String(opts.trialDays));
-    // Card is collected up front; if the trial ends without a valid payment
-    // method Stripe cancels the subscription rather than invoicing.
-    form.set('subscription_data[trial_settings][end_behavior][missing_payment_method]', 'cancel');
-  }
   form.set('allow_promotion_codes', 'true');
   // Stripe Tax is active on the account: with automatic_tax on, Stripe charges
   // tax only in jurisdictions where a registration exists and monitors

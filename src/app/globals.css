@@ -1876,10 +1876,13 @@ html.dark .flight-conversation-panel__stat {
 
 /* Pricing */
 .fc-landing .fc-l-pricing {
-  display: grid; grid-template-columns: repeat(3, 1fr);
+  display: grid; grid-template-columns: repeat(4, 1fr);
   gap: 18px; align-items: stretch;
 }
-@media (max-width: 960px) {
+@media (max-width: 1180px) {
+  .fc-landing .fc-l-pricing { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
   .fc-landing .fc-l-pricing { grid-template-columns: 1fr; max-width: 480px; margin: 0 auto; }
 }
 .fc-landing .fc-l-tier {

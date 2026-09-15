@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Pricing — FlyCheap',
-  description: 'Free, Pro ($9/mo), and Enterprise ($39/mo). 7-day free trial on every paid plan. Pay with card (Stripe) or PayPal.',
+  description: 'A 3-month free trial for every new account, then Free, Pro ($9/mo), or Enterprise ($39/mo). Pay with card (Stripe) or PayPal.',
 };
 
 export default async function PricingPage() {
@@ -17,7 +17,7 @@ export default async function PricingPage() {
         <div className="eyebrow mb-1">Subscription</div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Plans &amp; pricing</h1>
         <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-          Pro starts with a <strong>7-day free trial</strong> — no charge until you decide to keep it. Enterprise begins billing immediately. Cancel anytime.
+          Every new account gets a <strong>3-month free trial</strong> of the basics, no card. Pro and Enterprise are plain monthly subscriptions — cancel anytime.
           {user ? null : (
             <> You&rsquo;ll need to <Link href="/login?next=/pricing" className="underline text-brand">sign in</Link> before checking out.</>
           )}

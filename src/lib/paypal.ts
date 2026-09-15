@@ -93,7 +93,6 @@ export async function createSubscription(opts: {
   email: string;
   returnUrl: string;
   cancelUrl: string;
-  trialDays?: number;
 }): Promise<{ ok: true; approveUrl: string; subscriptionId: string } | { ok: false; error: string }> {
   if (!isPaypalConfigured()) return { ok: false, error: 'PayPal not configured (missing client id/secret/plan ids).' };
   const planId = planIdFor(opts.plan, opts.period);
@@ -102,14 +101,7 @@ export async function createSubscription(opts: {
   const token = await getAccessToken();
   if (!token) return { ok: false, error: 'PayPal auth failed.' };
 
-  // start_time: subscription begins immediately by default. For a 7-day trial
-  // we delay the first billing by 7 days. (PayPal also supports trial pricing
-  // baked into the plan itself — using a delayed start is the simplest
-  // generic path that doesn't require editing every plan.)
-  const startTime = opts.trialDays && opts.trialDays > 0
-    ? new Date(Date.now() + opts.trialDays * 86400000).toISOString()
-    : undefined;
-
+  // Subscription starts (and billing begins) immediately — no trial period.
   const body: any = {
     plan_id: planId,
     custom_id: String(opts.userId),
@@ -122,7 +114,6 @@ export async function createSubscription(opts: {
       cancel_url: opts.cancelUrl,
     },
   };
-  if (startTime) body.start_time = startTime;
 
   const res = await fetch(`${API}/v1/billing/subscriptions`, {
     method: 'POST',

@@ -400,7 +400,7 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
 
       <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6">
         Questions? Reply to this email — it lands in our inbox.<br>
-        Your founding period covers 5 tracked routes, email alerts and worldwide explore for 3 months. Whenever you want more — up to 100 routes, 5-minute polling, SMS/WhatsApp/Telegram alerts — Pro is $9/mo with a 14-day trial, and Enterprise adds white-label + API.<br><br>
+        Your founding period covers 5 tracked routes, email alerts and worldwide explore for 3 months. Whenever you want more — up to 100 routes, 5-minute polling, SMS/WhatsApp/Telegram alerts — Pro is $9/mo, and Enterprise adds white-label + API.<br><br>
         <a href="${unsubLink}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> · <a href="${APP_URL}/settings" style="color:#94a3b8;text-decoration:underline">Manage preferences</a>
       </div>
     </div>

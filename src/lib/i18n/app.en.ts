@@ -35,7 +35,7 @@ export const en = {
     welcomeBack: 'Welcome back',
     h2: ['Log in or ', 'sign up', ''] as Rich,
     sub: 'Returning users are recognized automatically. New here? You’re 30 seconds from your first tracked route — one 6-digit email code, no password.',
-    legalA: 'By continuing you agree to our ', privacy: 'privacy policy', legalB: ' and, for Pro trials, the ', trialTerms: 'trial terms', legalC: '. We never sell your data.',
+    legalA: 'By continuing you agree to our ', privacy: 'privacy policy', legalB: ' and, for the free trial, the ', trialTerms: 'trial terms', legalC: '. We never sell your data.',
     form: {
       tabLogin: 'Log in', tabSignup: 'Sign up',
       rememberedA: 'Welcome back, ', rememberedB: '.', notYou: 'Not you?',
@@ -111,8 +111,9 @@ export const en = {
       title: ['Free for one. ', 'Priced per seat', ' for teams.'] as Rich,
       sub: 'Cancel anytime from the billing portal. Upgrade or downgrade in one click — your routes and history are never deleted.',
       tiers: [
+        { name: 'Free trial', price: '$0', unit: '3 months', pitch: 'Try everything basic for 3 months, no card.', cta: 'Start free trial →', note: 'After 3 months you continue on Free unless you upgrade.', badge: '', features: ['Up to 5 tracked routes', 'Polling every 30 minutes', 'Email alerts + daily digest', 'Worldwide explore map', 'No credit card required'] },
         { name: 'Free', price: '$0', unit: 'forever', pitch: 'For the family booker who watches a few routes.', cta: 'Sign up free →', note: 'No credit card required', badge: '', features: ['Up to 5 tracked routes', 'Polling every 30 minutes', 'Email alerts + daily digest', 'Worldwide explore map', 'Family share link'] },
-        { name: 'Pro', price: '$9', unit: '/ month', pitch: 'For the frequent traveler — speed and reach.', cta: 'Start 14-day free trial →', note: 'Free for 14 days, then $9/mo · cancel anytime', badge: 'Most popular', features: ['Up to 100 tracked routes', 'Priority 5-minute polling', 'SMS / WhatsApp / Telegram alerts', 'Buy/wait predictions + confidence', 'Mistake-fare radar'] },
+        { name: 'Pro', price: '$9', unit: '/ month', pitch: 'For the frequent traveler — speed and reach.', cta: 'Get Pro →', note: 'Billed monthly · cancel anytime', badge: 'Most popular', features: ['Up to 100 tracked routes', 'Priority 5-minute polling', 'SMS / WhatsApp / Telegram alerts', 'Buy/wait predictions + confidence', 'Mistake-fare radar'] },
         { name: 'Enterprise', price: '$39', unit: '/ month', pitch: 'For agencies, family offices, and travel desks.', cta: 'Continue to Enterprise →', note: 'Billed monthly · cancel anytime', badge: '', features: ['Unlimited routes · 1-minute polling', 'White-label branding + custom domain', 'REST API (/api/v1)', 'Slack channel alerts', 'Audit log'] },
       ],
     },
@@ -126,7 +127,7 @@ export const en = {
         { q: 'Do you charge a booking fee?', a: 'Never. We are not a travel agency. Booking links route you to Aviasales, Kayak, Google Flights, or the airline directly — you complete the purchase there.' },
         { q: 'Is the family share link secure?', a: 'Yes. It uses a cryptographically-random token unique to your account. You can rotate or revoke it instantly from Settings — anyone holding the old URL loses access immediately.' },
         { q: 'Can I white-label this for my team?', a: 'Yes — Enterprise plans include a custom domain, custom logo, brand color, and sender email. Talk to sales for setup; provisioning takes one business day.' },
-        { q: 'How does the 14-day Pro trial work?', a: 'Click "Start 14-day free trial", review and accept the trial terms, and complete checkout — your card is saved but not charged. You get every Pro feature for 14 days. If you cancel before day 14, you pay nothing; otherwise billing starts at $9/month. We email you a reminder 3 days before the trial ends.' },
+        { q: 'How does the 3-month free trial work?', a: 'Every new account starts with 3 months of the basic capabilities free — no card. When it ends you stay on Free automatically; upgrade to Pro or Enterprise any time from Settings → Billing.' },
         { q: 'How do I cancel my subscription?', a: 'From Settings → Billing, one click opens the secure Stripe customer portal where you can cancel instantly — no emails, no retention calls. Your plan stays active until the end of the paid period, then drops to Free without deleting any of your routes or history.' },
         { q: 'How accurate are the buy/wait recommendations?', a: 'Each verdict combines a z-score against your route’s 30-day price history with a 14-day trend slope, and ships with an explicit confidence percentage. We show you the math — percentile, median, trend — so you can judge the call yourself.' },
         { q: 'What is a mistake fare and will I really catch one?', a: 'A mistake fare is a pricing glitch — a fat-fingered fare filing or currency error — typically 40-80% below normal. They usually survive 30-90 minutes before airlines pull them. Our radar flags any fare ≥ 3 standard deviations below the 30-day mean and alerts Pro users within one polling cycle.' },

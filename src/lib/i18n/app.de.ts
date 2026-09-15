@@ -25,7 +25,7 @@ export const de: AppDict = {
     welcomeBack: 'Willkommen zurück',
     h2: ['Anmelden oder ', 'registrieren', ''],
     sub: 'Wiederkehrende Nutzer werden automatisch erkannt. Neu hier? Du bist 30 Sekunden von deiner ersten überwachten Strecke entfernt – ein 6-stelliger E-Mail-Code, kein Passwort.',
-    legalA: 'Mit dem Fortfahren akzeptierst du unsere ', privacy: 'Datenschutzerklärung', legalB: ' und, für Pro-Testphasen, die ', trialTerms: 'Testbedingungen', legalC: '. Wir verkaufen deine Daten nie.',
+    legalA: 'Mit dem Fortfahren akzeptierst du unsere ', privacy: 'Datenschutzerklärung', legalB: ' und, für die kostenlose Testphase, die ', trialTerms: 'Testbedingungen', legalC: '. Wir verkaufen deine Daten nie.',
     form: {
       tabLogin: 'Anmelden', tabSignup: 'Registrieren',
       rememberedA: 'Willkommen zurück, ', rememberedB: '.', notYou: 'Nicht du?',
@@ -101,8 +101,9 @@ export const de: AppDict = {
       title: ['Kostenlos für einen. ', 'Pro Sitz', ' für Teams.'],
       sub: 'Jederzeit im Abrechnungsportal kündbar. Upgrade oder Downgrade mit einem Klick – Strecken und Historie werden nie gelöscht.',
       tiers: [
+        { name: 'Kostenlose Testphase', price: '$0', unit: '3 Monate', pitch: 'Teste alle Grundfunktionen 3 Monate lang kostenlos, ohne Karte.', cta: 'Kostenlose Testphase starten →', note: 'Nach 3 Monaten läufst du automatisch auf Free weiter, sofern du nicht upgradest.', badge: '', features: ['Bis zu 5 überwachte Strecken', 'Abfrage alle 30 Minuten', 'E-Mail-Alarme + tägliche Zusammenfassung', 'Weltweite Entdecker-Karte', 'Keine Kreditkarte nötig'] },
         { name: 'Free', price: '$0', unit: 'für immer', pitch: 'Für alle, die für die Familie buchen und ein paar Strecken beobachten.', cta: 'Kostenlos registrieren →', note: 'Keine Kreditkarte nötig', badge: '', features: ['Bis zu 5 überwachte Strecken', 'Abfrage alle 30 Minuten', 'E-Mail-Alarme + tägliche Zusammenfassung', 'Weltweite Entdecker-Karte', 'Familien-Freigabelink'] },
-        { name: 'Pro', price: '$9', unit: '/ Monat', pitch: 'Für Vielflieger – Tempo und Reichweite.', cta: '14 Tage kostenlos testen →', note: '14 Tage gratis, dann 9 $/Monat · jederzeit kündbar', badge: 'Am beliebtesten', features: ['Bis zu 100 überwachte Strecken', 'Priorisierte 5-Minuten-Abfrage', 'SMS- / WhatsApp- / Telegram-Alarme', 'Kaufen/Warten-Prognosen + Konfidenz', 'Fehltarif-Radar'] },
+        { name: 'Pro', price: '$9', unit: '/ Monat', pitch: 'Für Vielflieger – Tempo und Reichweite.', cta: 'Pro holen →', note: 'Monatliche Abrechnung · jederzeit kündbar', badge: 'Am beliebtesten', features: ['Bis zu 100 überwachte Strecken', 'Priorisierte 5-Minuten-Abfrage', 'SMS- / WhatsApp- / Telegram-Alarme', 'Kaufen/Warten-Prognosen + Konfidenz', 'Fehltarif-Radar'] },
         { name: 'Enterprise', price: '$39', unit: '/ Monat', pitch: 'Für Agenturen, Family Offices und Reisestellen.', cta: 'Weiter zu Enterprise →', note: 'Monatliche Abrechnung · jederzeit kündbar', badge: '', features: ['Unbegrenzte Strecken · 1-Minuten-Abfrage', 'White-Label + eigene Domain', 'REST-API (/api/v1)', 'Slack-Kanal-Alarme', 'Audit-Log'] },
       ],
     },
@@ -116,7 +117,7 @@ export const de: AppDict = {
         { q: 'Verlangt ihr eine Buchungsgebühr?', a: 'Nie. Wir sind kein Reisebüro. Buchungslinks führen dich zu Aviasales, Kayak, Google Flights oder direkt zur Airline – dort schließt du den Kauf ab.' },
         { q: 'Ist der Familien-Freigabelink sicher?', a: 'Ja. Er nutzt ein kryptografisch zufälliges Token, das nur zu deinem Konto gehört. Du kannst ihn in den Einstellungen sofort erneuern oder widerrufen – wer die alte URL hat, verliert den Zugang umgehend.' },
         { q: 'Kann ich das für mein Team als White-Label nutzen?', a: 'Ja – Enterprise-Pläne enthalten eigene Domain, eigenes Logo, Markenfarbe und Absender-E-Mail. Sprich mit dem Vertrieb für die Einrichtung; die Bereitstellung dauert einen Werktag.' },
-        { q: 'Wie funktioniert die 14-tägige Pro-Testphase?', a: 'Klicke auf „14 Tage kostenlos testen“, lies und akzeptiere die Testbedingungen und schließe den Checkout ab – deine Karte wird gespeichert, aber nicht belastet. Du bekommst 14 Tage lang alle Pro-Funktionen. Kündigst du vor Tag 14, zahlst du nichts; sonst beginnt die Abrechnung mit 9 $/Monat. 3 Tage vor Ende der Testphase erinnern wir dich per E-Mail.' },
+        { q: 'Wie funktioniert die kostenlose 3-Monats-Testphase?', a: 'Jedes neue Konto startet mit 3 Monaten kostenlosen Grundfunktionen – ohne Karte. Danach läufst du automatisch auf Free weiter; du kannst jederzeit unter Einstellungen → Abrechnung auf Pro oder Enterprise upgraden.' },
         { q: 'Wie kündige ich mein Abo?', a: 'Unter Einstellungen → Abrechnung öffnet ein Klick das sichere Stripe-Kundenportal, in dem du sofort kündigen kannst – keine E-Mails, keine Rückhalte-Anrufe. Dein Plan bleibt bis zum Ende des bezahlten Zeitraums aktiv und fällt dann auf Free zurück, ohne dass Strecken oder Historie gelöscht werden.' },
         { q: 'Wie genau sind die Kaufen/Warten-Empfehlungen?', a: 'Jedes Urteil kombiniert einen z-Score gegenüber der 30-Tage-Preishistorie deiner Strecke mit einer 14-Tage-Trendsteigung und liefert einen expliziten Konfidenzwert. Wir zeigen dir die Rechnung – Perzentil, Median, Trend –, damit du selbst urteilen kannst.' },
         { q: 'Was ist ein Fehltarif und erwische ich wirklich einen?', a: 'Ein Fehltarif ist ein Preisfehler – ein Tippfehler bei der Tarifeingabe oder ein Währungsfehler –, typischerweise 40–80 % unter normal. Meist überleben sie 30–90 Minuten, bevor die Airline sie zurückzieht. Unser Radar markiert jeden Tarif ≥ 3 Standardabweichungen unter dem 30-Tage-Mittel und alarmiert Pro-Nutzer innerhalb eines Abfragezyklus.' },

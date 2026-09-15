@@ -24,8 +24,6 @@ export async function GET(req: NextRequest) {
 
   const rawPlan = req.nextUrl.searchParams.get('plan');
   const plan: 'pro' | 'enterprise' = rawPlan === 'enterprise' ? 'enterprise' : 'pro';
-  // 14-day free trial is offered on Pro only, and only via the trial-terms flow.
-  const trialDays = plan === 'pro' && req.nextUrl.searchParams.get('trial') === '14' ? 14 : undefined;
 
   const r = await createProCheckoutSession({
     userId: user.id,
@@ -34,7 +32,6 @@ export async function GET(req: NextRequest) {
     successUrl: `${baseUrl}/settings?billing=success`,
     cancelUrl:  `${baseUrl}/settings?billing=canceled`,
     plan,
-    trialDays,
   });
   if (!r.ok) return NextResponse.redirect(`${baseUrl}/settings?billing=error&msg=${encodeURIComponent(r.error)}`);
   return NextResponse.redirect(r.url, 303);

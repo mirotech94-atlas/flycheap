@@ -21,8 +21,6 @@ async function start(req: NextRequest, plan: PlanKey, period: BillingPeriod) {
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
   const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
   const baseUrl = `${proto}://${host}`;
-  // 7-day trial only for Pro tier — Enterprise starts billing immediately.
-  const trialDays = plan === 'pro' && user.tier === 'free' ? 7 : 0;
 
   const r = await createSubscription({
     plan, period,
@@ -30,7 +28,6 @@ async function start(req: NextRequest, plan: PlanKey, period: BillingPeriod) {
     email: user.email,
     returnUrl: `${baseUrl}/api/billing/paypal/return?plan=${plan}&period=${period}`,
     cancelUrl: `${baseUrl}/pricing?billing=canceled`,
-    trialDays,
   });
   if (!r.ok) {
     return NextResponse.redirect(new URL(`/pricing?billing=error&msg=${encodeURIComponent(r.error)}`, req.url));

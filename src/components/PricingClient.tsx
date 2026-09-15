@@ -105,7 +105,26 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
         </div>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* FREE TRIAL */}
+        <div className="card flex flex-col">
+          <div className="eyebrow">Free trial</div>
+          <h3 className="font-display font-bold text-2xl mt-1">$0</h3>
+          <p className="text-xs text-slate-500">3 months, no card</p>
+          <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
+            <li>✓ Try everything basic for 3 months</li>
+            <li>✓ 5 tracked routes</li>
+            <li>✓ 30-min polling</li>
+            <li>✓ Email alerts</li>
+            <li className="text-slate-400">— after 3 months, continues on Free unless you upgrade</li>
+          </ul>
+          {signedIn ? (
+            <button className="btn w-full" disabled>Your account already started this</button>
+          ) : (
+            <a href="/login" className="btn btn-primary w-full text-center">Start free trial →</a>
+          )}
+        </div>
+
         {/* FREE */}
         <div className="card flex flex-col">
           <div className="eyebrow">Free</div>
@@ -143,7 +162,6 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
               <div className="eyebrow text-brand-700">Pro</div>
               <h3 className="font-display font-bold text-2xl mt-1">{lbl.headline}</h3>
               <p className="text-xs text-slate-500">{lbl.sub}</p>
-              <p className="text-[11px] text-emerald-600 font-semibold mt-1">7-day free trial · no charge today</p>
               <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
                 {FEATURES[plan].map(f => <li key={f}>✓ {f}</li>)}
               </ul>

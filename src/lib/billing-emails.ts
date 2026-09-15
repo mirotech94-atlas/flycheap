@@ -65,8 +65,7 @@ export async function sendUpgradeNudgeEmail(to: string): Promise<void> {
   await send(to, 'Your first 3 months with FlyCheap are up — ready for more?', shell(
     'Three months in. Time to level up?',
     `<p>Your founding period is complete — thanks for flying with us. Your account stays on the Free plan (5 routes, email alerts, worldwide explore), nothing is lost.</p>
-     <p>If FlyCheap has been earning its keep, <strong>Pro</strong> ($9/month) unlocks up to 100 routes, priority 5-minute polling, SMS / WhatsApp / Telegram alerts, buy/wait verdicts and the mistake-fare radar. <strong>Enterprise</strong> ($39/month) adds white-label, a custom domain, the REST API and Slack alerts.</p>
-     <p>Pro starts with a 14-day free trial, so you can try the fast lane before paying anything.</p>`,
+     <p>If FlyCheap has been earning its keep, <strong>Pro</strong> ($9/month) unlocks up to 100 routes, priority 5-minute polling, SMS / WhatsApp / Telegram alerts, buy/wait verdicts and the mistake-fare radar. <strong>Enterprise</strong> ($39/month) adds white-label, a custom domain, the REST API and Slack alerts.</p>`,
     `${APP}/welcome#pricing`, 'See Pro & Enterprise →',
   ));
 }

@@ -157,8 +157,8 @@ export default function OnboardingPage() {
                 accent: 'border-slate-200 dark:border-slate-700',
               },
               {
-                name: 'Pro', price: '$9', tag: '/mo', cta: 'Start 14-day trial',
-                ctaHref: '/?upgrade=pro',
+                name: 'Pro', price: '$9', tag: '/mo', cta: 'Get Pro',
+                ctaHref: '/checkout?plan=pro',
                 features: ['Unlimited tracked routes', 'Weekly anomaly digest', 'SMS / WhatsApp / Telegram alerts', 'Buy/wait predictions', 'Priority polling (5-min)'],
                 accent: 'border-brand-500 ring-2 ring-brand-500/20 scale-105',
                 badge: 'Most popular',

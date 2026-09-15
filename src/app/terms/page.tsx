@@ -23,12 +23,12 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
     body: <>You must provide a working email address; sign-in is by one-time code. You are responsible for activity under your account and for keeping your family share link private (you can rotate or revoke it at any time in Settings). One person per account; one free trial per person. We may suspend accounts that abuse the service, scrape it, resell access, or attempt to circumvent plan limits.</>,
   },
   {
-    id: 'plans', h: '4 · Plans, billing and trials',
-    body: <>The Free plan is free indefinitely. Pro ($9 USD/month) and Enterprise ($39 USD/month) are billed monthly in advance through Stripe or PayPal; card details never touch our servers. The Pro plan includes a 14-day free trial governed by the <Link href="/trial-terms">Trial Terms</Link>: a card is collected, $0 is charged today, and billing begins on day 15 unless you cancel first. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
+    id: 'plans', h: '4 · Plans, billing and the free trial',
+    body: <>Every new account starts with a <strong>3-month free trial</strong> of the basic capabilities, governed by the <Link href="/trial-terms">Trial Terms</Link>: no card is collected and you are never charged. When the trial ends your account continues automatically on the <strong>Free</strong> plan (free indefinitely) unless you upgrade. Pro ($9 USD/month) and Enterprise ($39 USD/month) are plain monthly subscriptions, billed in advance through Stripe or PayPal from the moment you subscribe; card details never touch our servers. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
   },
   {
     id: 'refunds', h: '5 · Cancellation and refunds',
-    body: <>Cancel at any time from <em>Settings → Billing → Manage subscription</em> — one click, no retention calls. Your paid features stay active until the end of the period you already paid for; then your account moves to Free. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved. Monthly charges already billed are non-refundable, which is why we remind you before a trial converts and make cancellation self-serve. If you believe you were billed in error, email <a href="mailto:sales@flycheap.18dn.com">sales@flycheap.18dn.com</a> within 7 days of the charge and we will make it right.</>,
+    body: <>Cancel at any time from <em>Settings → Billing → Manage subscription</em> — one click, no retention calls. Your paid features stay active until the end of the period you already paid for; then your account moves to Free. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved. Monthly charges already billed are non-refundable, which is why cancellation is self-serve. If you believe you were billed in error, email <a href="mailto:sales@flycheap.18dn.com">sales@flycheap.18dn.com</a> within 7 days of the charge and we will make it right.</>,
   },
   {
     id: 'failed-payment', h: '6 · Failed payments',
