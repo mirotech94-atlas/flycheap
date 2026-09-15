@@ -17,6 +17,13 @@ export const ADMIN_URL = `https://${ADMIN_HOST}`;
  */
 export const PUBLIC_ADMIN_HOST = clean(process.env.NEXT_PUBLIC_ADMIN_HOST) || ADMIN_HOST;
 
+/**
+ * Client host reference safe for client bundles. `process.env.CLIENT_HOST` is
+ * not inlined into the browser bundle (only NEXT_PUBLIC_* vars are), so
+ * client components must use this instead of CLIENT_HOST directly.
+ */
+export const PUBLIC_CLIENT_HOST = clean(process.env.NEXT_PUBLIC_CLIENT_HOST) || CLIENT_HOST;
+
 /** Every hostname the app has ever been served on; used for "is this one of ours" checks. */
 export const OUR_HOSTS: ReadonlySet<string> = new Set([
   CLIENT_HOST, ADMIN_HOST,

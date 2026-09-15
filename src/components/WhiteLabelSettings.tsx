@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { CLIENT_HOST } from '@/lib/hosts';
+import { PUBLIC_CLIENT_HOST } from '@/lib/hosts';
 
 type Branding = {
   brand_color: string | null;
@@ -204,7 +204,7 @@ export function WhiteLabelSettings() {
             {!isFree && <span className="badge badge-info">{me.tier}</span>}
           </div>
           <p className="text-[11px] text-slate-500 mb-2">
-            Point your own domain at the dashboard. Add a CNAME record from your DNS to <code className="font-mono">{CLIENT_HOST}</code>;
+            Point your own domain at the dashboard. Add a CNAME record from your DNS to <code className="font-mono">{PUBLIC_CLIENT_HOST}</code>;
             once it propagates, that hostname will load with your branding and your data.
           </p>
           <div className="flex items-center gap-2">

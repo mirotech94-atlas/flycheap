@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 
-const ENV_KEYS = ['CLIENT_HOST', 'ADMIN_HOST', 'NEXT_PUBLIC_ADMIN_HOST'] as const;
+const ENV_KEYS = ['CLIENT_HOST', 'ADMIN_HOST', 'NEXT_PUBLIC_ADMIN_HOST', 'NEXT_PUBLIC_CLIENT_HOST'] as const;
 let saved: Record<string, string | undefined>;
 
 beforeEach(() => {
@@ -50,5 +50,18 @@ describe('hosts (env override)', () => {
     vi.resetModules();
     const hosts = await import('@/lib/hosts');
     expect(hosts.ADMIN_HOSTS.has('admin.flycheap.live')).toBe(true);
+  });
+
+  it('PUBLIC_CLIENT_HOST reads NEXT_PUBLIC_CLIENT_HOST, falling back to CLIENT_HOST', async () => {
+    process.env.NEXT_PUBLIC_CLIENT_HOST = 'my.flycheap.live';
+    vi.resetModules();
+    const hosts = await import('@/lib/hosts');
+    expect(hosts.PUBLIC_CLIENT_HOST).toBe('my.flycheap.live');
+  });
+
+  it('PUBLIC_CLIENT_HOST equals CLIENT_HOST when NEXT_PUBLIC_CLIENT_HOST is unset', async () => {
+    vi.resetModules();
+    const hosts = await import('@/lib/hosts');
+    expect(hosts.PUBLIC_CLIENT_HOST).toBe(hosts.CLIENT_HOST);
   });
 });
