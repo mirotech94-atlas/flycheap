@@ -280,10 +280,10 @@ export function HotelsSearchPanel(props: {
         Affiliate-tracked through <code>/go</code> when an affiliate ID is configured for the chosen provider. Booking.com falls back to a public deeplink until its affiliate ID is set.
         {' '}
         <Link
-          href={`/rentals?destination=${encodeURIComponent(destination)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(totalAdults))}`}
+          href={`/airbnbs?destination=${encodeURIComponent(destination)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(totalAdults))}`}
           className="text-cyan-700 dark:text-cyan-400 underline underline-offset-2"
         >
-          Vacation rentals →
+          Airbnbs →
         </Link>
       </p>
     </div>

@@ -24,7 +24,7 @@ function buildNav(nav: AppNavDict): { top: Item; groups: Group[]; guest: Item[] 
         items: [
           { href: '/explore', label: nav.explore, icon: '◷' },
           { href: '/hotels',  label: nav.hotels,  icon: '◈' },
-          { href: '/rentals', label: nav.rentals, icon: '⌂' },
+          { href: '/airbnbs', label: nav.rentals, icon: '⌂' },
           { href: '/offers',  label: nav.offers,  icon: '※' },
         ],
       },

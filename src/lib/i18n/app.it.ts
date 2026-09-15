@@ -3,7 +3,7 @@ export const it: AppDict = {
   common: { language: 'Lingua', live: 'LIVE' },
 
   nav: {
-    dashboard: 'Dashboard', explore: 'Esplora', hotels: 'Hotel', rentals: 'Vacation rentals', offers: 'Offerte',
+    dashboard: 'Dashboard', explore: 'Esplora', hotels: 'Hotel', rentals: 'Airbnbs', offers: 'Offerte',
     integrations: 'Integrazioni', pricing: 'Prezzi', guides: 'Guide', routes: 'Rotte',
     searches: 'Ricerche', settings: 'Impostazioni',
     groupFlights: 'Voli', groupServices: 'Servizi', groupHelp: 'Aiuto',

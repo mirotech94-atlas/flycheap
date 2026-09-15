@@ -13,7 +13,7 @@ export const en = {
   common: { language: 'Language', live: 'LIVE' },
 
   nav: {
-    dashboard: 'Dashboard', explore: 'Explore', hotels: 'Hotels', rentals: 'Vacation rentals', offers: 'Offers',
+    dashboard: 'Dashboard', explore: 'Explore', hotels: 'Hotels', rentals: 'Airbnbs', offers: 'Offers',
     integrations: 'Integrations', pricing: 'Pricing', guides: 'Guides', routes: 'Routes',
     searches: 'Searches', settings: 'Settings',
     groupFlights: 'Flights', groupServices: 'Services', groupHelp: 'Help',

@@ -5,9 +5,7 @@ import { queries } from '@/lib/db';
 import { HotelUpsell } from '@/components/HotelUpsell';
 import { HotelsBoard } from '@/components/HotelsBoard';
 import { DealSlideshow } from '@/components/DealSlideshow';
-import { getCityGradient } from '@/lib/cityGradients';
-import { cityName } from '@/lib/explore';
-import { hotellookLink, trackedRedirect, buildRouteId } from '@/lib/affiliate';
+import { StayHeroSlide } from '@/components/StayHeroSlide';
 
 // Worldwide hotel inspiration — used to pad the slideshow beyond tracked routes.
 const POPULAR_HOTEL_CITIES = ['DXB', 'PAR', 'BKK', 'CUN', 'ROM', 'IST', 'MLE', 'TYO'];
@@ -55,14 +53,14 @@ export default async function HotelsPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <FcPageHead
         title="Somewhere to stay"
-        lede="Hotels for the dates you are already flying. Pick a destination, see what a night actually costs there, and we hand you to the provider with the better price. Looking for a whole home? Use Vacation rentals."
-        action={<Link href="/rentals" className="nc-btn-quiet inline-flex shrink-0">Vacation rentals</Link>}
+        lede="Hotels for the dates you are already flying. Pick a destination, see what a night actually costs there, and we hand you to the provider with the better price. Looking for a whole home? Use Airbnbs."
+        action={<Link href="/airbnbs" className="nc-btn-quiet inline-flex shrink-0">Airbnbs</Link>}
       />
 
       {/* Animated worldwide showcase — Book now on every slide */}
       <DealSlideshow label="Hotel destinations worldwide" heightClass="h-[280px] md:h-[320px]">
         {slideDests.map(d => (
-          <HotelHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={adults} />
+          <StayHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={adults} mode="hotel" />
         ))}
       </DealSlideshow>
 
@@ -101,55 +99,6 @@ export default async function HotelsPage({ searchParams }: PageProps) {
           </div>
         </div>
       )}
-    </div>
-  );
-}
-
-/* ─── Full-width hotel hero slide — gradient scene + Book now ─── */
-function HotelHeroSlide({ iata, checkIn, checkOut, adults }: {
-  iata: string; checkIn: string; checkOut: string; adults: number;
-}) {
-  const grad = getCityGradient(iata);
-  const city = cityName(iata).replace(/\s*\([^)]*\)\s*/g, '').trim();
-  const nights = Math.max(1, Math.round(
-    (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / 86400000,
-  ));
-  const rid = buildRouteId({ origin: 'HOTEL', destination: iata, departDate: checkIn, returnDate: checkOut, adults });
-  const href = trackedRedirect(
-    hotellookLink({ destination: iata, checkIn, checkOut, adults, surface: 'hotels-slideshow', routeId: rid }),
-    { surface: 'hotels-slideshow', routeId: rid },
-  );
-
-  return (
-    <div className="relative w-full h-full overflow-hidden">
-      <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from}dd 100%)` }} />
-      <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[170px] md:text-[220px] font-black text-white/6 font-mono leading-none select-none pointer-events-none">
-        {iata}
-      </div>
-      <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
-
-      <div className="relative h-full flex flex-col justify-center px-8 md:px-14 max-w-2xl">
-        <div className="text-white/60 text-xs uppercase tracking-[0.2em] font-semibold mb-1">
-          Stay in
-        </div>
-        <h3 className="text-white font-display font-extrabold text-4xl md:text-5xl tracking-tight leading-none">
-          {city}
-        </h3>
-        <div className="text-white/70 text-sm mt-2">
-          {checkIn} → {checkOut} · {nights} night{nights !== 1 ? 's' : ''} · {adults} adult{adults !== 1 ? 's' : ''} · 70+ booking sites compared
-        </div>
-        <div className="mt-5">
-          <a
-            href={href}
-            target="_blank"
-            rel="noopener sponsored"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] transition shadow-lg"
-          >
-            Book now →
-          </a>
-        </div>
-      </div>
     </div>
   );
 }

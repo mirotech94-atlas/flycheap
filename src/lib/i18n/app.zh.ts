@@ -3,7 +3,7 @@ export const zh: AppDict = {
   common: { language: '语言', live: '实时' },
 
   nav: {
-    dashboard: '仪表盘', explore: '探索', hotels: '酒店', rentals: 'Vacation rentals', offers: '优惠',
+    dashboard: '仪表盘', explore: '探索', hotels: '酒店', rentals: 'Airbnbs', offers: '优惠',
     integrations: '集成', pricing: '价格', guides: '指南', routes: '航线',
     searches: '搜索', settings: '设置',
     groupFlights: '航班', groupServices: '服务', groupHelp: '帮助',

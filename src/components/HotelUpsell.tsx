@@ -1,5 +1,5 @@
 import Link from 'next/link';
-import { hotellookLink, tripcomHotelLink, trackedRedirect, buildRouteId, tpBrandConfigured, type AffiliateSurface } from '@/lib/affiliate';
+import { hotellookLink, tripcomHotelLink, airbnbLink, vrboLink, trackedRedirect, buildRouteId, tpBrandConfigured, type AffiliateSurface } from '@/lib/affiliate';
 import { cityName } from '@/lib/explore';
 
 interface Props {
@@ -11,6 +11,8 @@ interface Props {
   surface: AffiliateSurface;
   /** Override the auto-generated routeId for fine-grained attribution. */
   routeId?: string;
+  /** 'hotel' (default) searches Hotellook/Trip.com; 'airbnb' searches Airbnb/Vrbo. */
+  mode?: 'hotel' | 'airbnb';
 }
 
 export function HotelUpsell({
@@ -21,6 +23,7 @@ export function HotelUpsell({
   adults = 2,
   surface,
   routeId,
+  mode = 'hotel',
 }: Props) {
   const city = cityName(destinationIata).replace(/\s*\([^)]*\)\s*/g, '').trim();
   const rid = routeId ?? buildRouteId({
@@ -30,7 +33,8 @@ export function HotelUpsell({
     returnDate: checkOut,
     adults,
   });
-  // Primary: Hotellook (Travelpayouts) — broad coverage, marker 727998
+
+  // Hotel mode: Hotellook (primary) + Trip.com (secondary).
   const hotellookUrl = hotellookLink({
     destination: destinationIata,
     checkIn,
@@ -41,8 +45,6 @@ export function HotelUpsell({
   });
   const hotellookHref = trackedRedirect(hotellookUrl, { surface, routeId: rid });
 
-  // Secondary: Trip.com — often beats Hotellook on Asia routes (Tokyo, Bangkok,
-  // Bali, Hong Kong, Seoul). Per-booking commission $5-15 or 4-7% per night.
   const tripcomUrl = tripcomHotelLink({
     destinationCity: city,
     checkIn,
@@ -53,6 +55,17 @@ export function HotelUpsell({
   });
   const tripcomHref = trackedRedirect(tripcomUrl, { surface, routeId: rid, provider: 'tripcom' });
 
+  // Airbnb mode: Airbnb (primary) + Vrbo (secondary). No affiliate program for
+  // either — clicks are still logged through /go for the click dashboard.
+  const airbnbHref = trackedRedirect(
+    airbnbLink({ destinationCity: city, checkIn, checkOut, adults }),
+    { surface, routeId: rid, provider: 'airbnb' },
+  );
+  const vrboHref = trackedRedirect(
+    vrboLink({ destinationCity: city, checkIn, checkOut, adults }),
+    { surface, routeId: rid, provider: 'vrbo' },
+  );
+
   // Airport transfer (Kiwitaxi via Travelpayouts — 50% revenue share). This is
   // the only surface that knows both the arrival airport and the arrival date,
   // which is what a transfer quote needs. Hidden entirely until configured.
@@ -60,7 +73,9 @@ export function HotelUpsell({
     ? `/go?brand=kiwitaxi&surface=${encodeURIComponent(surface)}&route_id=${encodeURIComponent(rid)}&destination=${encodeURIComponent(destinationIata)}&dep=${encodeURIComponent(checkIn)}`
     : null;
 
-  const rentalsHref = `/rentals?destination=${encodeURIComponent(destinationIata)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(adults))}`;
+  const otherStayHref = mode === 'hotel'
+    ? `/airbnbs?destination=${encodeURIComponent(destinationIata)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(adults))}`
+    : `/hotels?destination=${encodeURIComponent(destinationIata)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(adults))}`;
 
   const nights = Math.max(0, Math.round(
     (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24),
@@ -72,28 +87,54 @@ export function HotelUpsell({
       <div className="eyebrow text-cyan-700 dark:text-cyan-400">Where you sleep</div>
       <h2 className="!mb-2 mt-1">Stay in {city} for {nights} {nights === 1 ? 'night' : 'nights'}</h2>
       <div className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
-        Compare hotels in {city} for {checkIn} → {checkOut} ({adults} {adults === 1 ? 'adult' : 'adults'}). Cached prices from 70+ booking sites.
+        {mode === 'hotel'
+          ? <>Compare hotels in {city} for {checkIn} → {checkOut} ({adults} {adults === 1 ? 'adult' : 'adults'}). Cached prices from 70+ booking sites.</>
+          : <>Whole homes and apartments in {city} for {checkIn} → {checkOut} ({adults} {adults === 1 ? 'adult' : 'adults'}).</>}
       </div>
       <div className="mt-4 flex flex-wrap gap-2">
-        <a
-          href={hotellookHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-primary inline-flex"
-        >
-          Search hotels in {city} →
-        </a>
-        <a
-          href={tripcomHref}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="btn btn-secondary inline-flex text-sm"
-          title="Trip.com often has the best Asia pricing"
-        >
-          or check Trip.com →
-        </a>
-        <Link href={rentalsHref} className="btn btn-secondary inline-flex text-sm" title="Whole-home vacation rentals for these dates and guests">
-          Vacation rentals →
+        {mode === 'hotel' ? (
+          <>
+            <a
+              href={hotellookHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-primary inline-flex"
+            >
+              Search hotels in {city} →
+            </a>
+            <a
+              href={tripcomHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-secondary inline-flex text-sm"
+              title="Trip.com often has the best Asia pricing"
+            >
+              or check Trip.com →
+            </a>
+          </>
+        ) : (
+          <>
+            <a
+              href={airbnbHref}
+              target="_blank"
+              rel="noopener sponsored"
+              className="btn btn-primary inline-flex"
+            >
+              Search Airbnb in {city} →
+            </a>
+            <a
+              href={vrboHref}
+              target="_blank"
+              rel="noopener sponsored"
+              className="btn btn-secondary inline-flex text-sm"
+              title="Vrbo often has more whole-home options for larger groups"
+            >
+              or check Vrbo →
+            </a>
+          </>
+        )}
+        <Link href={otherStayHref} className="btn btn-secondary inline-flex text-sm" title={mode === 'hotel' ? 'Whole-home Airbnbs for these dates and guests' : 'Hotels for these dates and guests'}>
+          {mode === 'hotel' ? 'Airbnbs →' : 'Hotels →'}
         </Link>
       </div>
       {transferHref && (
@@ -105,7 +146,11 @@ export function HotelUpsell({
           — driver meets you, price agreed before you fly.
         </div>
       )}
-      <div className="text-[11px] text-slate-400 mt-2">Hotel links via Hotellook/Trip.com may earn us a commission at no cost to you.</div>
+      <div className="text-[11px] text-slate-400 mt-2">
+        {mode === 'hotel'
+          ? 'Hotel links via Hotellook/Trip.com may earn us a commission at no cost to you.'
+          : 'Airbnb and Vrbo searches are plain links prefilled with your dates — no commission.'}
+      </div>
     </div>
   );
 }
