@@ -137,7 +137,7 @@ describe('loops', () => {
     ] as unknown as Array<Anthropic.Message['content']>);
     const r = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [{ role: 'assistant', content: 'I propose redeploy' }], 'go', { ...deps(), client });
     expect(r.text).toBe('Redeployed.');
-    expect(calls.map(c => c[1].join(' '))).toEqual(['/usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh']);
+    expect(calls.map(c => c[1].join(' '))).toEqual(['/usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh']);
     expect(db.queries.incidentById(row.id)?.status).toBe('fixing');
   });
   it('a pending proposal is approvable only by the very next human reply', async () => {

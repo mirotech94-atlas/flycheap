@@ -33,6 +33,9 @@ const ROWS: Row[] = [
     hint: 'Founder-only mirror: one line per fare alert sent to any client (who, route, price, which channels delivered). Clients never see this channel. Clear to disable.' },
   { key: 'usd_to_egp', label: 'USD → EGP conversion rate', fallback: '49.5',
     hint: 'Display-only rate for the EGP price labels.' },
+  { key: 'ops_agent_enabled', label: 'Slack ops agent', fallback: 'true',
+    hint: 'Watches for failed jobs, errors and health problems every 5 min, posts cards to #admin_alerts, runs safe fixes on its own, and answers replies in the card thread. Set to false to switch it off.',
+    options: ['true', 'false'] },
 ];
 
 export default async function AdminSettingsPage() {

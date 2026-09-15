@@ -57,6 +57,10 @@ Next steps (run by hand):
        systemctl enable --now egyptair
        journalctl -u egyptair -f      # watch logs
 
+       # Ops agent privilege boundary — exact commands the app user may run via sudo.
+       install -o root -g root -m 0440 deploy/sudoers-egyflights-ops /etc/sudoers.d/egyflights-ops
+       visudo -cf /etc/sudoers.d/egyflights-ops
+
   3. Configure Caddy (edit hostname first):
        cp deploy/Caddyfile /etc/caddy/Caddyfile
        systemctl reload caddy

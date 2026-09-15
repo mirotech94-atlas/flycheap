@@ -41,7 +41,7 @@ export const OPS_TOOLS: Anthropic.Tool[] = [
   { name: 'clear_job_lock', description: 'SAFE. Delete a job_locks row older than 30 minutes (stuck lock).', input_schema: obj({ name: { type: 'string' } }, ['name']) },
   { name: 'poll_search', description: 'SAFE. Re-poll one tracked route by search id.', input_schema: obj({ id: { type: 'integer' } }, ['id']) },
   { name: 'set_platform_setting', description: 'GATED (needs founder approval). Change one platform setting. Allowed keys: poll_interval_minutes, alert_channels, enabled_providers, price_drop_pct, alert_threshold_per_adult_usd.', input_schema: obj({ key: { type: 'string' }, value: { type: 'string' }, reason: { type: 'string' } }, ['key', 'value', 'reason']) },
-  { name: 'redeploy', description: 'GATED (needs founder approval). Rebuild and restart the app with deploy.sh (auto-rolls back on failed health check).', input_schema: obj({ reason: { type: 'string' } }, ['reason']) },
+  { name: 'redeploy', description: 'GATED (needs founder approval). Queue a rebuild + restart via deploy.sh in a detached unit (auto-rolls back on failed health check). The result only confirms it was queued; health is confirmed in the thread after boot.', input_schema: obj({ reason: { type: 'string' } }, ['reason']) },
 ];
 
 const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {

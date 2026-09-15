@@ -21,7 +21,7 @@ describe('commands', () => {
     expect(commands.startUnit('egyptair-jobs@digest')).toEqual({ file: 'sudo', args: ['/usr/bin/systemctl', 'start', 'egyptair-jobs@digest.service'] });
     expect(commands.journal('egyptair-jobs@digest', 500).args).toContain('200'); // capped
     expect(commands.journalSince(15).args).toEqual(['/usr/bin/journalctl', '-u', 'egyptair', '--since', '-15min', '--no-pager', '-o', 'cat']);
-    expect(commands.deploy()).toEqual({ file: 'sudo', args: ['/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] });
+    expect(commands.deploy()).toEqual({ file: 'sudo', args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] });
   });
   it('clamps journal lines to 10–200', () => {
     expect(commands.journal('egyptair', 0).args).toContain('10');

@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import Anthropic from '@anthropic-ai/sdk';
+import { hasLlmKey, llmChat } from '@/lib/llm';
 import { queries } from '@/lib/db';
-import { postToSlackChannel } from '@/lib/notifier';
+import { postToSlackChannel, founderChannelId, postToSlackThread } from '@/lib/notifier';
+import { routeSlackMessage } from '@/lib/ops/route';
 
 export const dynamic = 'force-dynamic';
 
@@ -101,14 +102,12 @@ async function answerInThread(
   question: string,
   opts: { isThreadReply: boolean },
 ) {
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) {
+  if (!hasLlmKey()) {
     await postToSlackChannelThread(channel, threadTs,
       'Thanks for the message — our team will follow up shortly. (AI assist is temporarily unavailable.)');
     return;
   }
   try {
-    const client = new Anthropic({ apiKey });
     // First message in a thread → answer immediately (fastest path).
     // Reply inside an existing thread → pull thread context for coherence.
     let messages: Array<{ role: 'user' | 'assistant'; content: string }>;
@@ -124,18 +123,8 @@ async function answerInThread(
     } else {
       messages = [{ role: 'user', content: question }];
     }
-    const res = await client.messages.create({
-      // Haiku 4.5 — fast enough to typically reply in ~1-2s, plenty capable
-      // for app-support Q&A.
-      model: 'claude-haiku-4-5-20251001',
-      max_tokens: 500,
-      system: SUPPORT_SYSTEM_PROMPT,
-      messages,
-    });
-    const text = res.content
-      .flatMap(b => (b.type === 'text' ? [b.text] : []))
-      .join('\n')
-      .trim();
+    // Fast tier — support Q&A wants a ~1-2s reply more than depth.
+    const text = await llmChat({ system: SUPPORT_SYSTEM_PROMPT, messages, maxTokens: 500, tier: 'fast' });
     await postToSlackChannelThread(channel, threadTs,
       text || 'Thanks for reaching out — our team will follow up shortly.');
   } catch (e) {
@@ -186,26 +175,39 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  if (payload.type === 'event_callback' && payload.event) {
+  if (payload.type === 'event_callback' && payload.event && payload.event.type === 'message') {
     const ev = payload.event;
     const eventId: string = payload.event_id ?? `${ev.channel}:${ev.ts}`;
-    const supportChannel = queries.getSetting('alert_slack_support_target') ?? '';
 
-    const isHumanMessage =
-      ev.type === 'message' &&
-      !ev.bot_id &&
-      !ev.subtype &&
-      typeof ev.text === 'string' &&
-      ev.text.trim().length > 0 &&
-      ev.channel === supportChannel;
+    const ids = { admin: founderChannelId('admin'), support: queries.getSetting('alert_slack_support_target') ?? '' };
+    const decision = routeSlackMessage(ev, ids, ts => Boolean(queries.incidentByThread(ts)));
 
-    if (isHumanMessage && rememberEvent(eventId)) {
-      // Ack Slack immediately (must be <3s), process the LLM reply in the
-      // background — this is a long-running Node server so a detached
-      // promise is safe.
+    if (decision !== 'ignore' && rememberEvent(eventId)) {
       const isThreadReply = Boolean(ev.thread_ts && ev.thread_ts !== ev.ts);
       const threadTs: string = ev.thread_ts || ev.ts;
-      void answerInThread(ev.channel, threadTs, ev.text, { isThreadReply });
+      if (decision === 'support') {
+        void answerInThread(ev.channel, threadTs, ev.text, { isThreadReply });
+      } else {
+        // Ops agent: founder replying under an incident card in #admin_alerts.
+        void (async () => {
+          try {
+            if ((queries.getSetting('ops_agent_enabled') ?? 'true') === 'false') {
+              await postToSlackThread(ev.channel, threadTs, 'Ops agent is switched off in Admin → Settings.');
+              return;
+            }
+            const { handleThreadReply } = await import('@/lib/ops/agent');
+            const { productionIO } = await import('@/lib/ops/detector');
+            const incident = queries.incidentByThread(threadTs)!;
+            const history = await fetchThreadHistory(ev.channel, threadTs);
+            const io = productionIO();
+            const r = await handleThreadReply(incident, history, String(ev.text), { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth });
+            await postToSlackThread(ev.channel, threadTs, r.text);
+          } catch (e) {
+            console.error('[slack-ops] reply failed:', (e as Error).message);
+            await postToSlackThread(ev.channel, threadTs, `⚠️ I hit an error handling that: ${(e as Error).message}`);
+          }
+        })();
+      }
     }
   }
 

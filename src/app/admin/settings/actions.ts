@@ -63,6 +63,10 @@ const EDITABLE: Record<string, { label: string; validate: (v: string) => string 
     label: 'Slack · #client_alerts channel ID',
     validate: v => v === '' || /^[CG][A-Z0-9]{8,}$/.test(v) ? null : 'Enter a Slack channel ID (starts with C, e.g. C0B3YEK82BC) or leave blank.',
   },
+  ops_agent_enabled: {
+    label: 'Slack ops agent',
+    validate: v => v === 'true' || v === 'false' ? null : 'Enter true or false.',
+  },
 };
 
 export type SettingResult = { ok: boolean; key?: string; message: string };

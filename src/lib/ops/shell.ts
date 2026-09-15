@@ -40,7 +40,13 @@ export const commands = {
     const m = Math.min(120, Math.max(1, Math.floor(Number.isFinite(raw) ? raw : 15)));
     return { file: 'sudo', args: [JOURNALCTL, '-u', 'egyptair', '--since', `-${m}min`, '--no-pager', '-o', 'cat'] };
   },
-  deploy: (): CommandSpec => ({ file: 'sudo', args: ['/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] }),
+  // Runs deploy.sh in its own transient unit so it survives the app restart it
+  // performs. A second call while one is running fails ("unit already exists"),
+  // which is the intended one-at-a-time behaviour.
+  deploy: (): CommandSpec => ({
+    file: 'sudo',
+    args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'],
+  }),
 };
 
 const OUTPUT_CAP = 64 * 1024;
