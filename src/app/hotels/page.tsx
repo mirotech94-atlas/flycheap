@@ -55,8 +55,8 @@ export default async function HotelsPage({ searchParams }: PageProps) {
     <div className="space-y-6">
       <FcPageHead
         title="Somewhere to stay"
-        lede="Hotels and whole-home vacation rentals for the dates you are already flying. Pick a destination and we show what a night actually costs there, then hand you to the provider with the better price."
-        action={<Link href="/offers" className="nc-btn-quiet inline-flex shrink-0">Stays from your routes</Link>}
+        lede="Hotels for the dates you are already flying. Pick a destination, see what a night actually costs there, and we hand you to the provider with the better price. Looking for a whole home? Use Vacation rentals."
+        action={<Link href="/rentals" className="nc-btn-quiet inline-flex shrink-0">Vacation rentals</Link>}
       />
 
       {/* Animated worldwide showcase — Book now on every slide */}
@@ -79,7 +79,7 @@ export default async function HotelsPage({ searchParams }: PageProps) {
       {trackedDestinations.length > 1 && (
         <div className="card">
           <div className="eyebrow">Across your tracked routes</div>
-          <h2 className="!mb-2 mt-1">Hotels &amp; Airbnb vacation homes in every destination you watch</h2>
+          <h2 className="!mb-2 mt-1">Hotels in every destination you watch</h2>
           <p className="text-xs text-slate-500 mb-4">
             One upsell card per distinct destination across your tracked searches. Dates default to each search&rsquo;s outbound/return.
           </p>

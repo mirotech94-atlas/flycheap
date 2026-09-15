@@ -1,4 +1,5 @@
-import { hotellookLink, tripcomHotelLink, airbnbLink, vrboLink, trackedRedirect, buildRouteId, tpBrandConfigured, type AffiliateSurface } from '@/lib/affiliate';
+import Link from 'next/link';
+import { hotellookLink, tripcomHotelLink, trackedRedirect, buildRouteId, tpBrandConfigured, type AffiliateSurface } from '@/lib/affiliate';
 import { cityName } from '@/lib/explore';
 
 interface Props {
@@ -52,16 +53,14 @@ export function HotelUpsell({
   });
   const tripcomHref = trackedRedirect(tripcomUrl, { surface, routeId: rid, provider: 'tripcom' });
 
-  // Homes: Airbnb (deep link — no affiliate program) + Vrbo. Prefilled with the same dates/guests.
-  const airbnbHref = trackedRedirect(airbnbLink({ destinationCity: city, checkIn, checkOut, adults }), { surface, routeId: rid, provider: 'airbnb' });
-  const vrboHref = trackedRedirect(vrboLink({ destinationCity: city, checkIn, checkOut, adults }), { surface, routeId: rid, provider: 'vrbo' });
-
   // Airport transfer (Kiwitaxi via Travelpayouts — 50% revenue share). This is
   // the only surface that knows both the arrival airport and the arrival date,
   // which is what a transfer quote needs. Hidden entirely until configured.
   const transferHref = tpBrandConfigured('kiwitaxi')
     ? `/go?brand=kiwitaxi&surface=${encodeURIComponent(surface)}&route_id=${encodeURIComponent(rid)}&destination=${encodeURIComponent(destinationIata)}&dep=${encodeURIComponent(checkIn)}`
     : null;
+
+  const rentalsHref = `/rentals?destination=${encodeURIComponent(destinationIata)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(adults))}`;
 
   const nights = Math.max(0, Math.round(
     (new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24),
@@ -84,9 +83,6 @@ export function HotelUpsell({
         >
           Search hotels in {city} →
         </a>
-        <a href={airbnbHref} target="_blank" rel="noopener noreferrer" className="btn btn-secondary inline-flex text-sm" title="Short-term vacation rentals on Airbnb — whole homes, apartments, rooms — prefilled with these dates and guests">
-          Vacation homes on Airbnb →
-        </a>
         <a
           href={tripcomHref}
           target="_blank"
@@ -96,9 +92,9 @@ export function HotelUpsell({
         >
           or check Trip.com →
         </a>
-        <a href={vrboHref} target="_blank" rel="noopener noreferrer" className="btn btn-secondary inline-flex text-sm" title="Vacation rentals on Vrbo, prefilled with these dates">
-          Vrbo →
-        </a>
+        <Link href={rentalsHref} className="btn btn-secondary inline-flex text-sm" title="Whole-home vacation rentals for these dates and guests">
+          Vacation rentals →
+        </Link>
       </div>
       {transferHref && (
         <div className="mt-3 pt-3 border-t border-cyan-200/50 dark:border-cyan-800/30 text-sm text-slate-600 dark:text-slate-400">
@@ -109,7 +105,7 @@ export function HotelUpsell({
           — driver meets you, price agreed before you fly.
         </div>
       )}
-      <div className="text-[11px] text-slate-400 mt-2">Airbnb and Vrbo are vacation-rental searches (short-term stays only) prefilled with your dates — plain links, no commission. Hotel links via Hotellook/Trip.com may earn us a commission at no cost to you.</div>
+      <div className="text-[11px] text-slate-400 mt-2">Hotel links via Hotellook/Trip.com may earn us a commission at no cost to you.</div>
     </div>
   );
 }

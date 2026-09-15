@@ -1,19 +1,18 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { hotelCityForDestination, buildBookingUrl } from '@/lib/affiliate';
 import { DatePopover } from './DatePopover';
 import { HotelsGuestsPicker, totalGuests, defaultGuests, type GuestsState } from './HotelsGuestsPicker';
 
-type Provider = 'hotellook' | 'tripcom' | 'travelpayouts' | 'booking' | 'airbnb' | 'vrbo';
+type Provider = 'hotellook' | 'tripcom' | 'travelpayouts' | 'booking';
 
 const PROVIDER_LABELS: Record<Provider, string> = {
   hotellook: 'Hotellook (Travelpayouts)',
   tripcom: 'Trip.com',
   travelpayouts: 'Travelpayouts metasearch',
   booking: 'Booking.com',
-  airbnb: 'Airbnb — vacation homes & apartments',
-  vrbo: 'Vrbo — vacation rentals',
 };
 
 // Curated destination catalog for the hotel dropdown. Grouped so users land
@@ -117,23 +116,6 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
     u.searchParams.set('checkout', checkOut);
     u.searchParams.set('adult', String(adults));
     return `/go?to=${encodeURIComponent(u.toString())}&provider=tripcom&surface=offers-page`;
-  }
-  if (p === 'airbnb') {
-    // Airbnb has no partner API/affiliate program — prefilled search deep link, click still logged via /go.
-    const u = new URL(`https://www.airbnb.com/s/${encodeURIComponent(cityForHotels.replace(/\s+/g, '-'))}/homes`);
-    u.searchParams.set('checkin', checkIn);
-    u.searchParams.set('checkout', checkOut);
-    u.searchParams.set('adults', String(adults));
-    if (children > 0) u.searchParams.set('children', String(children));
-    return `/go?to=${encodeURIComponent(u.toString())}&provider=airbnb&surface=offers-page`;
-  }
-  if (p === 'vrbo') {
-    const u = new URL('https://www.vrbo.com/search');
-    u.searchParams.set('destination', cityForHotels);
-    u.searchParams.set('startDate', checkIn);
-    u.searchParams.set('endDate', checkOut);
-    u.searchParams.set('adults', String(adults));
-    return `/go?to=${encodeURIComponent(u.toString())}&provider=vrbo&surface=offers-page`;
   }
   if (p === 'travelpayouts') {
     // Travelpayouts metasearch — link to its hotel search with a real city.
@@ -296,6 +278,13 @@ export function HotelsSearchPanel(props: {
 
       <p className="text-[11px] text-slate-400 mt-2">
         Affiliate-tracked through <code>/go</code> when an affiliate ID is configured for the chosen provider. Booking.com falls back to a public deeplink until its affiliate ID is set.
+        {' '}
+        <Link
+          href={`/rentals?destination=${encodeURIComponent(destination)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(totalAdults))}`}
+          className="text-cyan-700 dark:text-cyan-400 underline underline-offset-2"
+        >
+          Vacation rentals →
+        </Link>
       </p>
     </div>
   );
