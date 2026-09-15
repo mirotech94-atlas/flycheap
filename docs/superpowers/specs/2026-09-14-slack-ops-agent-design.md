@@ -126,7 +126,7 @@ Toolset:
 | `clear_job_lock(name)` | safe | `DELETE FROM job_locks WHERE name = ?` when `started_at` is older than 30 min |
 | `poll_search(id)` | safe | existing `pollSearch(id)` |
 | `set_platform_setting(key, value)` | gated | same validation table as the admin Settings page (`EDITABLE` in `src/app/admin/settings/actions.ts`) |
-| `redeploy()` | gated | `sudo bash /opt/egyptair-tracker/deploy/deploy.sh` |
+| `redeploy()` | gated | `sudo systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh` — a transient unit, because deploy.sh stops the service that would otherwise be its parent process |
 
 Gated tools are not callable until the current thread contains a human message
 after the agent's proposal that matches `^(go|yes|do it|approved)\b` (case-insensitive).
@@ -169,7 +169,7 @@ egyflights ALL=(root) NOPASSWD: \
   /usr/bin/systemctl reset-failed egyptair-backup, /usr/bin/systemctl start egyptair-backup, \
   /usr/bin/systemctl --failed --no-legend egyptair*, \
   /usr/bin/journalctl -u egyptair* -n * --no-pager, /usr/bin/journalctl -u egyptair --since * --no-pager, \
-  /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
+  /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
 ```
 
 Every shell call goes through one helper (`src/lib/ops/shell.ts`) that uses
