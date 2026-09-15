@@ -69,6 +69,17 @@ describe('ops_incidents', () => {
     expect(r.last_deploy_at).toBe('2026-09-14T11:00:00.000Z');
   });
 
+  it('errorRowsAfterId returns rows in ascending id order, excludes ops-detector, and respects afterId', () => {
+    const before = db.getDb().prepare(`SELECT COALESCE(MAX(id), 0) AS id FROM error_log`).get() as { id: number };
+    db.queries.logError({ source: 'poller', message: 'first after cursor' });
+    db.queries.logError({ source: 'ops-detector', message: 'probe units failed: boom' });
+    db.queries.logError({ source: 'poller', message: 'second after cursor' });
+    const rows = db.queries.errorRowsAfterId(before.id);
+    expect(rows.map(r => r.message)).toEqual(['first after cursor', 'second after cursor']);
+    expect(rows[0].id).toBeLessThan(rows[1].id);
+    expect(db.queries.errorRowsAfterId(rows[0].id).map(r => r.message)).toEqual(['second after cursor']);
+  });
+
   it('clearStaleJobLock only removes old locks', () => {
     expect(db.queries.tryAcquireJobLock('poll', 'h1')).toBe(true);
     expect(db.queries.clearStaleJobLock('poll', 30)).toBe(0);   // fresh → kept

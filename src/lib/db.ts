@@ -1220,6 +1220,20 @@ export const queries = {
       `SELECT id, occurred_at, source, message, stack FROM error_log
         WHERE level = 'error' AND occurred_at > ? ORDER BY occurred_at DESC LIMIT ?`
     ).all(sinceSqlite, limit) as Array<{ id: number; occurred_at: string; source: string | null; message: string; stack: string | null }>,
+  /**
+   * Monotonic-id cursor variant of errorRowsSince, for the ops detector's
+   * incremental scan: ordered ascending (oldest unseen first) so the caller
+   * can track "highest id read" without missing or reprocessing a row
+   * regardless of how many share a timestamp or how large a backlog is.
+   * Excludes the detector's own probe-failure log rows (source
+   * 'ops-detector') so it can never manufacture incidents about itself.
+   */
+  errorRowsAfterId: (afterId: number, limit = 200) =>
+    getDb().prepare(
+      `SELECT id, occurred_at, source, message, stack FROM error_log
+        WHERE level = 'error' AND id > ? AND (source IS NULL OR source <> 'ops-detector')
+        ORDER BY id ASC LIMIT ?`
+    ).all(afterId, limit) as Array<{ id: number; occurred_at: string; source: string | null; message: string; stack: string | null }>,
   failedJobRunsSince: (sinceSqlite: string) =>
     getDb().prepare(
       `SELECT job, started_at, message FROM job_runs WHERE ok = 0 AND started_at > ? ORDER BY started_at DESC`
