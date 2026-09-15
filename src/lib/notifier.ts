@@ -111,15 +111,38 @@ async function sendTelegram(chatId: string, body: string, parseMode?: 'Markdown'
 //  founder notices there would put the operator's own messages in front of the bot.)
 export type FounderSlackChannel = 'admin' | 'client-mirror';
 
+export function founderChannelId(which: FounderSlackChannel): string {
+  const key = which === 'admin' ? 'alert_slack_admin_target' : 'alert_slack_target';
+  return queries.getSetting(key) ?? '';
+}
+
 export async function postFounderSlack(
   which: FounderSlackChannel,
   text: string,
   blocks?: unknown[],
 ): Promise<NotifyResult> {
-  const key = which === 'admin' ? 'alert_slack_admin_target' : 'alert_slack_target';
-  const channel = queries.getSetting(key) ?? '';
-  if (!channel) return { channel: 'slack', ok: false, skipped: `${key} not set` };
+  const channel = founderChannelId(which);
+  if (!channel) return { channel: 'slack', ok: false, skipped: `${which === 'admin' ? 'alert_slack_admin_target' : 'alert_slack_target'} not set` };
   return postToSlackChannel(channel, text, blocks);
+}
+
+/** Reply inside an existing thread (chat.postMessage with thread_ts). */
+export async function postToSlackThread(channel: string, threadTs: string, text: string): Promise<NotifyResult> {
+  const token = process.env.SLACK_BOT_TOKEN;
+  if (!token) return { channel: 'slack', ok: false, skipped: 'SLACK_BOT_TOKEN not set' };
+  if (!channel || !threadTs) return { channel: 'slack', ok: false, skipped: 'no channel/thread' };
+  try {
+    const res = await fetch('https://slack.com/api/chat.postMessage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ channel, thread_ts: threadTs, text, unfurl_links: false }),
+    });
+    const j = await res.json().catch(() => ({}));
+    if (!j.ok) return { channel: 'slack', ok: false, error: j.error || `HTTP ${res.status}` };
+    return { channel: 'slack', ok: true, id: String(j.ts ?? '') };
+  } catch (e) {
+    return { channel: 'slack', ok: false, error: (e as Error).message };
+  }
 }
 
 /** Post a "new signup" card to #admin_alerts. Best-effort; never throws. */
