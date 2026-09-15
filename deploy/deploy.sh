@@ -1,0 +1,251 @@
+#!/usr/bin/env bash
+# Build and restart the Cheapflight Tracker on the production server.
+# Run as root. Idempotent. Verifies HTTP 200 after restart; auto-rolls
+# back if the new build can't serve a request.
+#
+# Why this exists:
+# - Running `npm run build` directly as root leaves .next/ owned by root,
+#   which then breaks the egyflights service (EACCES on prerender writes).
+# - A partial/broken build can leave .next half-populated → service starts
+#   but returns 500 ("client reference manifest missing" / "Invariant" errors).
+#   We catch that here and roll back to the previous build automatically.
+
+set -euo pipefail
+
+APP_USER="egyflights"
+APP_DIR="/opt/egyptair-tracker"
+HEALTH_URL="http://localhost:3000/"
+HEALTH_TIMEOUT_S=10
+HEALTH_MAX_ATTEMPTS=12     # 12 × 5s = 60s grace window after restart
+
+if [ "$(id -u)" -ne 0 ]; then
+  echo "Run as root (or with sudo)." >&2
+  exit 1
+fi
+
+cd "$APP_DIR"
+
+# -------------------------------------------------------------------------
+# 1. PRE-FLIGHT CHECK — confirm the app is healthy BEFORE we touch anything.
+#    If it's already down we still proceed (the deploy might fix it), but we
+#    log the state so we don't claim "rolled back to the previous version"
+#    when the previous version was also broken.
+# -------------------------------------------------------------------------
+echo "==> Pre-flight: service state before deploy"
+PRE_STATE="unknown"
+if systemctl is-active --quiet egyptair; then
+  PRE_HTTP=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
+  echo "    service: active · HTTP $PRE_HTTP"
+  if [ "$PRE_HTTP" = "200" ]; then
+    PRE_STATE="healthy"
+  else
+    PRE_STATE="degraded"
+  fi
+else
+  echo "    service: inactive — deploying anyway"
+  PRE_STATE="inactive"
+fi
+
+# -------------------------------------------------------------------------
+# 2. BACKUP CURRENT BUILD so we can roll back if the new one is broken.
+# -------------------------------------------------------------------------
+BACKUP_DIR="$APP_DIR/.next.previous"
+if [ -d "$APP_DIR/.next" ] && [ "$PRE_STATE" = "healthy" ]; then
+  echo "==> Snapshotting current .next → .next.previous"
+  rm -rf "$BACKUP_DIR"
+  cp -r "$APP_DIR/.next" "$BACKUP_DIR"
+fi
+
+# -------------------------------------------------------------------------
+# 3. INSTALL + BUILD as the service user so file ownership stays sane.
+# -------------------------------------------------------------------------
+echo "==> Stop egyptair service (it holds node_modules/next files open → ENOTEMPTY on rename)"
+# `npm install` updates node_modules/next via atomic rename. If next start is
+# running, the directory is busy and rename fails with ENOTEMPTY. We restart
+# the service after the build completes.
+WAS_ACTIVE=no
+if systemctl is-active --quiet egyptair; then
+  WAS_ACTIVE=yes
+  systemctl stop egyptair
+fi
+
+echo "==> Pause systemd timers (they touch the app dir; race the build → EACCES)"
+# egyptair-jobs-* timers fire at intervals (poll, digest, best-deals, etc.)
+# and run scripts that touch .next or node_modules. If they fire DURING a
+# build, they create files as root (since systemd is root) inside paths the
+# build needs to own — EACCES cascade. Pause + restore around the build.
+TIMERS=(
+  egyptair-jobs-poll.timer
+  egyptair-jobs-digest.timer
+  egyptair-jobs-weekly.timer
+  egyptair-jobs-monthly.timer
+  egyptair-jobs-six-month.timer
+  egyptair-jobs-annual.timer
+  egyptair-jobs-best-deals.timer
+  egyptair-jobs-bg-poll.timer
+  egyptair-jobs-route-intel.timer
+  egyptair-jobs-compact.timer
+  egyptair-jobs-commissions.timer
+  egyptair-post-video.timer
+)
+PAUSED_TIMERS=()
+for t in "${TIMERS[@]}"; do
+  if systemctl is-active --quiet "$t"; then
+    systemctl stop "$t"
+    PAUSED_TIMERS+=("$t")
+  fi
+done
+echo "    paused ${#PAUSED_TIMERS[@]} timers"
+# Ensure we ALWAYS restore them, even on failure/rollback paths below.
+restore_timers() {
+  for t in "${PAUSED_TIMERS[@]}"; do
+    systemctl start "$t" 2>/dev/null || true
+  done
+}
+trap restore_timers EXIT
+
+echo "==> Defensive chown: ensure $APP_USER owns .next, node_modules, and source"
+# A prior failed deploy may have left root-owned files. The build runs as
+# $APP_USER, so any root-owned residue causes EACCES half-way through.
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next" "$APP_DIR/node_modules" 2>/dev/null || true
+
+# -------------------------------------------------------------------------
+# DISK GUARD — npm's content-addressable cache (_cacache) grows unbounded
+# across deploys and once filled the disk it OOM-failed a build. If free
+# space is under 2 GB, purge the npm caches before installing. They're pure
+# cache — npm re-fetches what it needs — so this is always safe.
+# -------------------------------------------------------------------------
+FREE_KB=$(df --output=avail / | tail -1 | tr -d ' ')
+if [ "${FREE_KB:-0}" -lt 2097152 ]; then
+  echo "==> Low disk (<2GB free) — purging npm caches"
+  rm -rf "/home/$APP_USER/.npm/_cacache" /root/.npm/_cacache 2>/dev/null || true
+  journalctl --vacuum-size=100M 2>/dev/null || true
+  echo "    free now: $(df -h --output=avail / | tail -1 | tr -d ' ')"
+fi
+
+echo "==> Installing deps as $APP_USER"
+# `npm ci` is faster + deterministic but breaks hard on any lockfile drift.
+# Today's app evolves the lockfile faster than we can keep prod in lock-step,
+# so prefer `npm install` which auto-heals drift. Add `--prefer-offline` to
+# use the cached tarballs when possible (faster, fewer registry hits).
+sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
+
+# DO NOT wipe node_modules/.cache here — Next's Turbopack cache makes builds
+# fit in 2-3GB RAM; cold-build needs ~5GB and OOMs on small VPS instances.
+# The previous-build snapshot (Section 2 above) covers us against stale .next
+# manifests. Only the .next directory itself is recreated each deploy.
+
+# ---------------------------------------------------------------------------
+# Keep the PREVIOUS build's static assets.
+#
+# Next content-hashes every JS/CSS chunk and deletes the old ones on each
+# build. Any browser tab still open from before the deploy is holding HTML
+# that points at those deleted filenames — the page loads, the stylesheet
+# 404s, and the user sees raw unstyled HTML. That is exactly what happened
+# on 2026-09-13 after a run of rapid rebuilds.
+#
+# Snapshot .next/static before the build, then restore the old files
+# afterwards with --no-clobber so the new build wins on any collision and
+# the old hashes simply remain available. Costs a few MB; keeps open tabs
+# alive across a deploy.
+# ---------------------------------------------------------------------------
+STATIC_KEEP="$APP_DIR/.next.static-keep"
+if [ -d "$APP_DIR/.next/static" ]; then
+  rm -rf "$STATIC_KEEP"
+  cp -a "$APP_DIR/.next/static" "$STATIC_KEEP"
+  echo "==> Snapshotted previous static assets for open tabs"
+fi
+
+echo "==> Building as $APP_USER (memory capped at 6GB — survives cold builds)"
+# --max-old-space-size caps the Node heap so an OOM kills the build cleanly
+# rather than the kernel OOM-killer hitting at an arbitrary moment. 6GB lets
+# a *cold* build (no node_modules/.cache) complete on this box (9.9GB RAM);
+# warm builds rarely use more than 2GB so the cap doesn't cost anything.
+if ! sudo -u "$APP_USER" NODE_OPTIONS="--max-old-space-size=6144" npm run build; then
+  echo "==> ❌ BUILD FAILED — rolling back" >&2
+  if [ -d "$BACKUP_DIR" ]; then
+    rm -rf "$APP_DIR/.next"
+    mv "$BACKUP_DIR" "$APP_DIR/.next"
+    systemctl restart egyptair
+    echo "==> Restored previous .next; service restarted." >&2
+  fi
+  exit 1
+fi
+
+echo "==> Fixing ownership (in case anything slipped through)"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
+
+# -------------------------------------------------------------------------
+# 4. RESTART + HEALTH-CHECK with retry. A new build needs ~5-15s to warm up.
+# -------------------------------------------------------------------------
+echo "==> Restarting service"
+# Put the previous build's hashed assets back alongside the new ones so tabs
+# opened before this deploy keep rendering. --no-clobber: new build wins.
+if [ -d "$STATIC_KEEP" ]; then
+  cp -an "$STATIC_KEEP/." "$APP_DIR/.next/static/" 2>/dev/null || true
+  chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next/static"
+  rm -rf "$STATIC_KEEP"
+  echo "==> Restored previous static assets (open tabs keep working)"
+fi
+
+systemctl restart egyptair
+
+echo "==> Health-check loop (up to $((HEALTH_MAX_ATTEMPTS * 5))s grace)"
+HEALTHY="no"
+for i in $(seq 1 "$HEALTH_MAX_ATTEMPTS"); do
+  sleep 5
+  if ! systemctl is-active --quiet egyptair; then
+    echo "    [$i/$HEALTH_MAX_ATTEMPTS] service inactive — still booting"
+    continue
+  fi
+  CODE=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
+  if [ "$CODE" = "200" ]; then
+    echo "    [$i/$HEALTH_MAX_ATTEMPTS] HTTP 200 ✓"
+    HEALTHY="yes"
+    break
+  else
+    echo "    [$i/$HEALTH_MAX_ATTEMPTS] HTTP $CODE — retrying"
+  fi
+done
+
+# -------------------------------------------------------------------------
+# 5. ROLLBACK if the new build can't serve a 200 within the grace window.
+# -------------------------------------------------------------------------
+if [ "$HEALTHY" != "yes" ]; then
+  echo "==> ❌ NEW BUILD UNHEALTHY — rolling back to .next.previous" >&2
+  if [ -d "$BACKUP_DIR" ]; then
+    systemctl stop egyptair
+    rm -rf "$APP_DIR/.next"
+    mv "$BACKUP_DIR" "$APP_DIR/.next"
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
+    systemctl start egyptair
+    sleep 5
+    CODE=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
+    echo "==> Rollback complete — HTTP $CODE on previous build" >&2
+  else
+    echo "==> No backup available — please debug manually (journalctl -u egyptair -f)" >&2
+  fi
+  exit 1
+fi
+
+# -------------------------------------------------------------------------
+# 6. SUCCESS — clean up the backup so we don't keep growing disk usage.
+# -------------------------------------------------------------------------
+if [ -d "$BACKUP_DIR" ]; then
+  echo "==> Cleaning up previous-build snapshot"
+  rm -rf "$BACKUP_DIR"
+fi
+
+# Proactively trim the npm cache if it has ballooned past 500 MB — keeps it
+# from creeping back up to the disk-full state between deploys.
+CACHE_DIR="/home/$APP_USER/.npm/_cacache"
+if [ -d "$CACHE_DIR" ]; then
+  CACHE_KB=$(du -sk "$CACHE_DIR" 2>/dev/null | cut -f1)
+  if [ "${CACHE_KB:-0}" -gt 512000 ]; then
+    echo "==> npm cache is $((CACHE_KB / 1024))MB — trimming"
+    rm -rf "$CACHE_DIR" 2>/dev/null || true
+  fi
+fi
+
+echo "==> Disk: $(df -h --output=avail / | tail -1 | tr -d ' ') free"
+echo "==> ✓ Deploy successful. Service active, HTTP 200. Tail logs: journalctl -u egyptair -f"

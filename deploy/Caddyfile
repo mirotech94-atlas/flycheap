@@ -1,0 +1,15 @@
+flycheap.18dn.com, admin.flycheap.18dn.com {
+    reverse_proxy 127.0.0.1:3000
+    encode gzip zstd
+    log {
+        output file /var/log/caddy/egyptair.log
+        format console
+    }
+}
+
+# Plain-HTTP fallback by IP (will redirect to https://flycheap.18dn.com)
+:80 {
+    @ip host 162.220.53.111
+    redir @ip https://flycheap.18dn.com{uri} permanent
+    reverse_proxy 127.0.0.1:3000
+}

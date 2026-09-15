@@ -1,0 +1,10 @@
+[Unit]
+Description=AI insights reporter — daily operator brief emailed to owner (08:00 ET)
+
+[Timer]
+OnCalendar=*-*-* 08:00:00 America/New_York
+Persistent=true
+Unit=egyptair-jobs@agent-insights.service
+
+[Install]
+WantedBy=timers.target

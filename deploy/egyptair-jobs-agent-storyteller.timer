@@ -1,0 +1,10 @@
+[Unit]
+Description=AI route storyteller — weekly SEO content for top routes (Mon 05:00 ET)
+
+[Timer]
+OnCalendar=Mon *-*-* 05:00:00 America/New_York
+Persistent=true
+Unit=egyptair-jobs@agent-storyteller.service
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,69 @@
+import { NextResponse } from 'next/server';
+import { pollAll, pollSearch } from '@/lib/poller';
+
+type PollState = {
+  running: boolean;
+  startedAt: number | null;
+  finishedAt: number | null;
+  count: number | null;
+  error: string | null;
+};
+
+declare global {
+  var __flycheapPollAll: PollState | undefined;
+}
+
+function state(): PollState {
+  if (!globalThis.__flycheapPollAll) {
+    globalThis.__flycheapPollAll = {
+      running: false,
+      startedAt: null,
+      finishedAt: null,
+      count: null,
+      error: null,
+    };
+  }
+  return globalThis.__flycheapPollAll;
+}
+
+export async function GET() {
+  return NextResponse.json({ poll: state() });
+}
+
+export async function POST(req: Request) {
+  const url = new URL(req.url);
+  const id = url.searchParams.get('search_id');
+  if (id) {
+    const r = await pollSearch(parseInt(id, 10));
+    if (!r) return NextResponse.json({ error: 'search not found' }, { status: 404 });
+    return NextResponse.json({ result: r });
+  }
+
+  if (url.searchParams.get('background') === '1') {
+    const s = state();
+    if (s.running) {
+      return NextResponse.json({ ok: true, status: 'running', poll: s }, { status: 202 });
+    }
+    s.running = true;
+    s.startedAt = Date.now();
+    s.finishedAt = null;
+    s.count = null;
+    s.error = null;
+    pollAll().then(results => {
+      const current = state();
+      current.running = false;
+      current.finishedAt = Date.now();
+      current.count = results.length;
+      current.error = null;
+    }).catch(e => {
+      const current = state();
+      current.running = false;
+      current.finishedAt = Date.now();
+      current.error = (e as Error).message;
+    });
+    return NextResponse.json({ ok: true, status: 'queued', poll: s }, { status: 202 });
+  }
+
+  const results = await pollAll();
+  return NextResponse.json({ results });
+}

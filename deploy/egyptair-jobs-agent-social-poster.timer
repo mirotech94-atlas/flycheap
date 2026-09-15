@@ -1,0 +1,10 @@
+[Unit]
+Description=AI social poster — queue X/Telegram posts from verified picks (every 6h, after curator)
+
+[Timer]
+OnCalendar=*-*-* 01,07,13,19:45:00 America/New_York
+Persistent=true
+Unit=egyptair-jobs@agent-social-poster.service
+
+[Install]
+WantedBy=timers.target

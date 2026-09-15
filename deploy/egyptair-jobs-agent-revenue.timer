@@ -1,0 +1,10 @@
+[Unit]
+Description=AI revenue agent — real-money check, alerts owner only when money moved (08:30 ET)
+
+[Timer]
+OnCalendar=*-*-* 08:30:00 America/New_York
+Persistent=true
+Unit=egyptair-jobs@agent-revenue.service
+
+[Install]
+WantedBy=timers.target

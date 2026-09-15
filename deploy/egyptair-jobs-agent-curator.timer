@@ -1,0 +1,10 @@
+[Unit]
+Description=AI deal curator — select + blurb best live fares (every 6h)
+
+[Timer]
+OnCalendar=*-*-* 01,07,13,19:30:00 America/New_York
+Persistent=true
+Unit=egyptair-jobs@agent-curator.service
+
+[Install]
+WantedBy=timers.target

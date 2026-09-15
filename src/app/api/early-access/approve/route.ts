@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { decideEarlyAccess, sendInviteEmail } from '@/lib/early-access';
+import { queries } from '@/lib/db';
+
+export const dynamic = 'force-dynamic';
+
+function page(title: string, body: string, ok = true) {
+  return new NextResponse(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
+  <style>body{margin:0;background:#0a0e17;color:#f2f4f6;font-family:Manrope,-apple-system,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh}
+  .c{max-width:460px;padding:36px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#10151f;text-align:center}
+  h1{font-size:26px;margin:0 0 10px;color:${ok ? '#d4af37' : '#ff9db5'}}p{color:#9aa3b2;line-height:1.6;margin:0}a{color:#d4af37}</style></head>
+  <body><div class="c"><h1>${title}</h1><p>${body}</p></div></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+}
+
+/** GET ?id=&t=&action=approve|decline — one-click links from the owner notification email. */
+export async function GET(req: NextRequest) {
+  const id = Number(req.nextUrl.searchParams.get('id'));
+  const t = req.nextUrl.searchParams.get('t') ?? '';
+  const action = req.nextUrl.searchParams.get('action') === 'decline' ? 'decline' : 'approve';
+  if (!id || !t) return page('Invalid link', 'This approval link is missing its token.', false);
+  const row = decideEarlyAccess(id, t, action);
+  if (!row) return page('Invalid link', 'Token mismatch — this link is not valid for that request.', false);
+
+  // Decisions made from the notification email are audited too, so the log is a
+  // complete record regardless of which path the founder used.
+  try {
+    queries.insertAudit({
+      user_id: null, email: null,
+      action: `early_access.${action}`, entity: `early_access/${id}`,
+      detail: { email: row.email, via: 'email-link' },
+      ip: (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || null,
+    });
+  } catch { /* audit is best-effort */ }
+  if (action === 'approve') {
+    await sendInviteEmail(row);
+    return page('Approved ✓', `${row.email} has been invited — their sign-up email is on its way.`);
+  }
+  return page('Declined', `${row.email} was marked as declined. No email was sent to them.`);
+}

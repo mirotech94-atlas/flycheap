@@ -1,0 +1,19 @@
+node_modules
+.next
+out
+build
+.env
+.env.local
+.env.*.local
+data/*.db
+data/*.db-journal
+*.log
+.DS_Store
+.vercel
+next-env.d.ts
+
+# large generated media (auto-poster clips) and SDD scratch
+social/
+.superpowers/
+data/backups/
+mobile/
