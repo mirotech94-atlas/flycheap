@@ -1234,6 +1234,16 @@ export const queries = {
         WHERE level = 'error' AND id > ? AND (source IS NULL OR source <> 'ops-detector')
         ORDER BY id ASC LIMIT ?`
     ).all(afterId, limit) as Array<{ id: number; occurred_at: string; source: string | null; message: string; stack: string | null }>,
+  /**
+   * Highest id currently in error_log (0 for an empty table). Used to seed
+   * the ops detector's error cursor on first boot so a pre-existing backlog
+   * of error rows doesn't all become one incident the first time the
+   * detector runs — see errorRowsAfterId above for the cursor itself.
+   */
+  maxErrorLogId: (): number => {
+    const r = getDb().prepare(`SELECT MAX(id) as m FROM error_log`).get() as { m: number | null };
+    return r?.m ?? 0;
+  },
   failedJobRunsSince: (sinceSqlite: string) =>
     getDb().prepare(
       `SELECT job, started_at, message FROM job_runs WHERE ok = 0 AND started_at > ? ORDER BY started_at DESC`

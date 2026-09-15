@@ -40,8 +40,8 @@ mkdir -p "$APP_DIR"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 echo "==> Installing ops agent privilege boundary"
-install -o root -g root -m 0440 deploy/sudoers-egyflights-ops /etc/sudoers.d/egyflights-ops
-visudo -cf /etc/sudoers.d/egyflights-ops
+visudo -cf "$APP_DIR/deploy/sudoers-egyflights-ops"
+install -o root -g root -m 0440 "$APP_DIR/deploy/sudoers-egyflights-ops" /etc/sudoers.d/egyflights-ops
 
 cat <<EOF
 

@@ -9,6 +9,8 @@ beforeAll(async () => { db = await bootTempDb(); agent = await import('@/lib/ops
 const calls: Array<[string, string[]]> = [];
 const runner = async (file: string, args: string[]) => { calls.push([file, args]); return { ok: true, code: 0, stdout: `ran ${args.join(' ')}`, stderr: '' }; };
 const deps = () => ({ runner, client: null, fetchHealth: async () => ({ ok: true, checks: {} }) });
+/** deps() with an injected clock, for deterministic cooldown tests. */
+const depsAt = (iso: string) => ({ ...deps(), now: () => new Date(iso) });
 
 /** Scripted fake Anthropic client: returns the given messages in order. */
 function scripted(turns: Array<Anthropic.Message['content']>): import('@/lib/ops/agent').MessagesClient {
@@ -52,21 +54,47 @@ describe('runOpsTool', () => {
     expect(bad.is_error).toBe(true);
   });
   it('restart_app is rate-limited to once per incident per hour', async () => {
+    db.queries.setSetting('ops_last_restart_at', new Date(Date.now() - 2 * 60 * 60_000).toISOString());
     const { row } = db.queries.upsertIncident('health:last_poll', 'health', 't');
     const a = await agent.runOpsTool('restart_app', {}, { incident: row, mode: 'safe', approvedProposal: null, deps: deps() });
     expect(a.restarted).toBe(true);
+    // Push the global cooldown back out of the way so this assertion is
+    // about the per-incident cooldown specifically, not the global one
+    // (both would otherwise refuse the same way since 'a' just set both to
+    // the same timestamp).
+    db.queries.setSetting('ops_last_restart_at', new Date(Date.now() - 2 * 60 * 60_000).toISOString());
     const b = await agent.runOpsTool('restart_app', {}, { incident: db.queries.incidentById(row.id)!, mode: 'safe', approvedProposal: null, deps: deps() });
     expect(b.is_error).toBe(true);
     expect(b.content).toContain('already restarted');
   });
   it('restart_app cooldown survives other bookkeeping (start_job) on the same incident', async () => {
+    db.queries.setSetting('ops_last_restart_at', new Date(Date.now() - 2 * 60 * 60_000).toISOString());
     const { row } = db.queries.upsertIncident('health:other_bookkeeping', 'health', 't');
     const a = await agent.runOpsTool('restart_app', {}, { incident: row, mode: 'safe', approvedProposal: null, deps: deps() });
     expect(a.restarted).toBe(true);
+    db.queries.setSetting('ops_last_restart_at', new Date(Date.now() - 2 * 60 * 60_000).toISOString());
     await agent.runOpsTool('start_job', { unit: 'egyptair-jobs@digest' }, { incident: db.queries.incidentById(row.id)!, mode: 'safe', approvedProposal: null, deps: deps() });
     const c = await agent.runOpsTool('restart_app', {}, { incident: db.queries.incidentById(row.id)!, mode: 'safe', approvedProposal: null, deps: deps() });
     expect(c.is_error).toBe(true);
     expect(c.content).toContain('already restarted');
+  });
+  it('global cooldown refuses a restart on a different incident within the hour', async () => {
+    db.queries.setSetting('ops_last_restart_at', '2020-01-01T00:00:00.000Z');
+    const { row: row1 } = db.queries.upsertIncident('unit:global-cooldown-a', 'unit', 't');
+    const a = await agent.runOpsTool('restart_app', {}, { incident: row1, mode: 'safe', approvedProposal: null, deps: depsAt('2026-01-01T00:00:00.000Z') });
+    expect(a.restarted).toBe(true);
+    // A fresh incident (last_restart_at is NULL) — the per-incident check
+    // alone would allow this; only the global cooldown refuses it.
+    const { row: row2 } = db.queries.upsertIncident('unit:global-cooldown-b', 'unit', 't');
+    const b = await agent.runOpsTool('restart_app', {}, { incident: row2, mode: 'safe', approvedProposal: null, deps: depsAt('2026-01-01T00:30:00.000Z') });
+    expect(b.is_error).toBe(true);
+    expect(b.content).toContain('not restarting again within the hour');
+  });
+  it('a global cooldown older than an hour allows a restart', async () => {
+    db.queries.setSetting('ops_last_restart_at', '2026-01-01T00:00:00.000Z');
+    const { row } = db.queries.upsertIncident('unit:global-cooldown-c', 'unit', 't');
+    const r = await agent.runOpsTool('restart_app', {}, { incident: row, mode: 'safe', approvedProposal: null, deps: depsAt('2026-01-01T02:30:00.000Z') });
+    expect(r.restarted).toBe(true);
   });
   it('safe mode refuses redeploy (a gated tool) with an approval-related error', async () => {
     const { row } = db.queries.upsertIncident('err:g:h', 'err', 't');
@@ -160,5 +188,32 @@ describe('loops', () => {
     expect(r2.text).toBe('Nothing pending to approve.');
     expect(calls).toEqual([]);
     expect(db.queries.incidentById(row.id)?.status).toBe('open');
+  });
+  it('an approval is single-use: a second "go" after the proposal was already consumed runs nothing', async () => {
+    const { row } = db.queries.upsertIncident('err:m:n', 'err', 't');
+    db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');
+    calls.length = 0;
+    // First "go": the model only replies with text, never calling the tool
+    // (e.g. it decided to ask a follow-up instead). The proposal must be
+    // consumed regardless — approval or not — so it can't be replayed.
+    const textOnlyClient = scripted([[{ type: 'text', text: 'One moment.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
+    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: textOnlyClient });
+    expect(r1.text).toBe('One moment.');
+    expect(calls).toEqual([]);
+    expect(db.queries.incidentById(row.id)?.last_action).toBeNull();
+    expect(db.queries.incidentById(row.id)?.status).toBe('open');
+
+    // Second "go": a scripted client that WOULD call redeploy if given the
+    // chance. Since the proposal was already consumed by the first reply,
+    // approvedProposal is null this time and the runner must see no deploy
+    // command.
+    calls.length = 0;
+    const deployClient = scripted([
+      [{ type: 'tool_use', id: 't2', name: 'redeploy', input: {} }],
+      [{ type: 'text', text: 'Deployed.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    const r2 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: deployClient });
+    expect(r2.text).toBeTruthy();
+    expect(calls).toEqual([]);
   });
 });

@@ -36,7 +36,7 @@ const parseSqlite = (s: string) => Date.parse(s.replace(' ', 'T') + 'Z');
 // run is harmless: 'job' incidents resolve via latestJobRunOk(job) === true,
 // not via absence from this list. The lookback also means a run that only
 // fails long after it started is still caught.
-async function gather(io: DetectorIO, now: Date, lastErrorId: number): Promise<{ findings: Finding[]; maxErrorId: number | null; errorCounts: Map<string, number> }> {
+async function gather(io: DetectorIO, now: Date, lastErrorId: number | null): Promise<{ findings: Finding[]; maxErrorId: number | null; errorCounts: Map<string, number> }> {
   const out: Finding[] = [];
   let maxErrorId: number | null = null;
   const errorCounts = new Map<string, number>();
@@ -44,7 +44,11 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number): Promise<{
   const probes: Array<[string, () => Promise<Finding[]>]> = [
     ['units', async () => probeFailedUnits((await run(commands.listFailed(), io.runner)).stdout)],
     ['jobs', async () => probeJobRuns(queries.failedJobRunsSince(jobsSince))],
-    ['errors', async () => {
+    // lastErrorId is null only on the very first tick ever (cursor never
+    // set) — the errors probe is skipped that tick (see tick() below, which
+    // seeds the cursor to the current max id instead) so a pre-existing
+    // backlog of error rows never becomes an incident.
+    ...(lastErrorId === null ? [] : [['errors', async () => {
       const rows = queries.errorRowsAfterId(lastErrorId);
       for (const r of rows) {
         if (maxErrorId === null || r.id > maxErrorId) maxErrorId = r.id;
@@ -52,7 +56,7 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number): Promise<{
         errorCounts.set(fp, (errorCounts.get(fp) ?? 0) + 1);
       }
       return probeErrors(rows);
-    }],
+    }] as [string, () => Promise<Finding[]>]]),
     ['health', async () => probeHealth(await io.fetchHealth())],
     ['crashloop', async () => probeCrashLoop((await run(commands.journalSince(15), io.runner)).stdout)],
   ];
@@ -104,7 +108,18 @@ export async function tick(io: DetectorIO): Promise<{ created: number; resolved:
   if (!queries.tryAcquireJobLock(LOCK, holder, 600)) return { created: 0, resolved: 0, posted: 0, skipped: 'locked' };
   let created = 0, resolved = 0, posted = 0;
   try {
-    const lastErrorId = Number(queries.getSetting(LAST_ERROR_ID_KEY) ?? '0');
+    const rawLastErrorId = queries.getSetting(LAST_ERROR_ID_KEY);
+    let lastErrorId: number | null;
+    if (rawLastErrorId === undefined) {
+      // Cursor never set (first tick ever, distinct from "0"): seed it to
+      // the current max error_log id and skip the errors probe this tick,
+      // so a pre-existing backlog never all becomes one incident at once.
+      const seed = queries.maxErrorLogId();
+      queries.setSetting(LAST_ERROR_ID_KEY, String(seed));
+      lastErrorId = null;
+    } else {
+      lastErrorId = Number(rawLastErrorId);
+    }
     const { findings, maxErrorId, errorCounts } = await gather(io, now, lastErrorId);
     const seen = new Set<string>();
     for (const f of findings) {

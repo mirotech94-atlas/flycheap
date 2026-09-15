@@ -170,6 +170,27 @@ describe('tick', () => {
     expect(r.skipped).toBe('restarting');
     expect(calls.some(([, a]) => a.includes('restart') && a.includes('egyptair'))).toBe(true);
   });
+
+  it('first-ever tick (no cursor) seeds it to the current max error id and creates no incident from the pre-existing backlog', async () => {
+    resetIncidents();
+    db.getDb().prepare(`DELETE FROM settings WHERE key = ?`).run('ops_detector_last_error_id');
+    db.queries.logError({ source: 'poller', message: 'pre-existing backlog 1' });
+    db.queries.logError({ source: 'poller', message: 'pre-existing backlog 2' });
+    db.queries.logError({ source: 'poller', message: 'pre-existing backlog 3' });
+    const expectedMax = db.queries.maxErrorLogId();
+    await det.tick(io().io);
+    expect(db.queries.openIncidents().filter(i => i.source === 'err')).toEqual([]);
+    expect(db.queries.getSetting('ops_detector_last_error_id')).toBe(String(expectedMax));
+  });
+
+  it('a row logged after the seeding tick is picked up on the next tick', async () => {
+    resetIncidents();
+    db.queries.logError({ source: 'poller', message: 'logged after seed' });
+    await det.tick(io().io);
+    const inc = db.queries.openIncidents().find(i => i.source === 'err');
+    expect(inc).toBeTruthy();
+    expect(inc?.title).toBe('Errors: poller (1 in window)');
+  });
 });
 
 describe('postBootCheck', () => {

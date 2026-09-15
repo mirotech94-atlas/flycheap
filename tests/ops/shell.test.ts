@@ -27,6 +27,9 @@ describe('commands', () => {
     expect(commands.journal('egyptair', 0).args).toContain('10');
     expect(commands.journal('egyptair', 40).args).toEqual(['/usr/bin/journalctl', '-u', 'egyptair', '-n', '40', '--no-pager']);
   });
+  it('journal builds the full sudo command spec for the "egyptair" special case', () => {
+    expect(commands.journal('egyptair', 40)).toEqual({ file: 'sudo', args: ['/usr/bin/journalctl', '-u', 'egyptair', '-n', '40', '--no-pager'] });
+  });
   it('clamps journalSince minutes to 1–120', () => {
     expect(commands.journalSince(0).args).toContain('-1min');
     expect(commands.journalSince(999).args).toContain('-120min');

@@ -105,11 +105,23 @@ export async function runOpsTool(
         return { content: `recorded proposal: ${tool}` };
       }
       case 'restart_app': {
+        // Global cooldown: a resolved incident frees its fingerprint, so a
+        // recurrence is a brand-new row with last_restart_at = NULL — the
+        // per-incident check below can't see a restart that happened under a
+        // different (now-resolved) incident. This one covers the live site
+        // regardless of which incident triggers it.
+        const lastGlobal = queries.getSetting('ops_last_restart_at');
+        const lastGlobalMs = lastGlobal ? Date.parse(lastGlobal) : NaN;
+        if (Number.isFinite(lastGlobalMs) && now.getTime() - lastGlobalMs < RESTART_COOLDOWN_MS) {
+          const minsAgo = Math.round((now.getTime() - lastGlobalMs) / 60_000);
+          return { content: `the app was restarted ${minsAgo} min ago by the ops agent; not restarting again within the hour`, is_error: true };
+        }
         const last = incident.last_restart_at ? Date.parse(incident.last_restart_at) : NaN;
         if (Number.isFinite(last) && now.getTime() - last < RESTART_COOLDOWN_MS) {
           return { content: 'already restarted the app for this incident within the last hour; not restarting again', is_error: true };
         }
         queries.markIncidentRestart(incident.id, now.toISOString());
+        queries.setSetting('ops_last_restart_at', now.toISOString());
         queries.setIncidentStatus(incident.id, 'fixing', 'RESTARTED');
         const r = fmt(await run(commands.restartApp(), deps.runner));
         return { ...r, restarted: true };
@@ -248,13 +260,12 @@ export async function autoFix(incident: OpsIncidentRow, action: { tool: string; 
 export async function handleThreadReply(incident: OpsIncidentRow, thread: ThreadMsg[], latest: string, deps: AgentDeps):
   Promise<{ text: string; restarted: boolean }> {
   const pending = parseProposal(incident.last_action);
-  let approvedProposal: Proposal | null = null;
-  if (pending && approvalGranted(latest)) {
-    approvedProposal = pending;
-  } else if (pending) {
-    // A pending proposal is approvable only by the very next human reply.
-    // Anything else (a question, a "not yet", small talk) clears it so a
-    // later unrelated "go" can never resurrect a stale proposal.
+  // A pending proposal is approvable only by the very next human reply, and
+  // only once: whether this reply approves it or not, it is consumed here
+  // (before the loop runs) so a later unrelated "go" can never resurrect a
+  // stale proposal, and the same proposal can never be replayed twice.
+  const approvedProposal: Proposal | null = pending && approvalGranted(latest) ? pending : null;
+  if (pending) {
     queries.setIncidentStatus(incident.id, 'open', null);
     incident = queries.incidentById(incident.id) ?? incident;
   }
