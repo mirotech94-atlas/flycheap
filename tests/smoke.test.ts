@@ -5,7 +5,9 @@ describe('test harness', () => {
   it('boots a temp database with the schema', async () => {
     const db = await bootTempDb();
     const n = (db.getDb().prepare(`SELECT COUNT(*) AS n FROM users`).get() as { n: number }).n;
-    expect(n).toBe(0);
+    expect(n).toBe(1);
+    const owner = db.getDb().prepare('SELECT id FROM users ORDER BY id LIMIT 1').get() as { id: number };
+    expect(owner.id).toBe(1);
     expect(process.cwd()).toContain('flycheap-test-');
   });
 });

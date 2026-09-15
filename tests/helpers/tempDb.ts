@@ -14,8 +14,6 @@ export async function bootTempDb() {
   // against a cached global from a previous import in the same worker).
   delete (globalThis as { __egyptairDb?: unknown }).__egyptairDb;
   const db = await import('@/lib/db');
-  db.getDb(); // runs init() → creates all tables and seeds default user
-  // Clean up the default seeded user for a pristine test database
-  db.getDb().prepare('DELETE FROM users WHERE id = 1').run();
+  db.getDb(); // runs init() → creates all tables and seeds default owner user
   return db;
 }
