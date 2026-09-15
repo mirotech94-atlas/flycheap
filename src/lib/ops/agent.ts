@@ -30,19 +30,30 @@ const obj = (properties: Record<string, unknown>, required: string[] = []) =>
   ({ type: 'object' as const, properties, required });
 
 export const OPS_TOOLS: Anthropic.Tool[] = [
-  { name: 'read_logs', description: 'Last N journal lines for a unit. unit is "egyptair" (the app) or an egyptair-jobs@<name> / egyptair-post-video / egyptair-backup unit.', input_schema: obj({ unit: { type: 'string' }, lines: { type: 'integer', minimum: 10, maximum: 200 } }, ['unit']) },
+  { name: 'read_logs', description: 'Last N journal lines for a unit ("egyptair", or an egyptair-jobs@<name> / egyptair-post-video / egyptair-backup unit).', input_schema: obj({ unit: { type: 'string' }, lines: { type: 'integer', minimum: 10, maximum: 200 } }, ['unit']) },
   { name: 'read_error_log', description: 'Newest rows from the app error_log table.', input_schema: obj({ limit: { type: 'integer', minimum: 1, maximum: 50 } }) },
   { name: 'health_check', description: 'GET /api/health on the app.', input_schema: obj({}) },
   { name: 'job_history', description: 'Recent job_runs rows for one job name (e.g. digest, agent-curator).', input_schema: obj({ job: { type: 'string' }, limit: { type: 'integer', minimum: 1, maximum: 20 } }, ['job']) },
   { name: 'list_failed_units', description: 'systemctl --failed for egyptair* units.', input_schema: obj({}) },
-  { name: 'propose_action', description: 'In diagnosis mode only: name ONE action you recommend. Safe tools (restart_app, start_job, clear_job_lock, poll_search) will run automatically. Gated tools (set_platform_setting, redeploy) will be shown to the founder for approval.', input_schema: obj({ tool: { type: 'string' }, input: { type: 'object' }, reason: { type: 'string' } }, ['tool', 'input', 'reason']) },
-  { name: 'restart_app', description: 'SAFE. systemctl restart egyptair. Ends your turn; say so before calling.', input_schema: obj({}) },
+  { name: 'propose_action', description: 'Diagnosis only: name ONE action you recommend. SAFE tools (restart_app, start_job, clear_job_lock, poll_search) run automatically; GATED tools (set_platform_setting, redeploy) go to the founder for approval.', input_schema: obj({ tool: { type: 'string' }, input: { type: 'object' }, reason: { type: 'string' } }, ['tool', 'input', 'reason']) },
+  { name: 'restart_app', description: 'SAFE. systemctl restart egyptair; ends your turn.', input_schema: obj({}) },
   { name: 'start_job', description: 'SAFE. reset-failed + start an egyptair-jobs@<name>, egyptair-post-video or egyptair-backup unit.', input_schema: obj({ unit: { type: 'string' } }, ['unit']) },
-  { name: 'clear_job_lock', description: 'SAFE. Delete a job_locks row older than 30 minutes (stuck lock).', input_schema: obj({ name: { type: 'string' } }, ['name']) },
+  { name: 'clear_job_lock', description: 'SAFE. Delete a stuck job_locks row older than 30 minutes.', input_schema: obj({ name: { type: 'string' } }, ['name']) },
   { name: 'poll_search', description: 'SAFE. Re-poll one tracked route by search id.', input_schema: obj({ id: { type: 'integer' } }, ['id']) },
-  { name: 'set_platform_setting', description: 'GATED (needs founder approval). Change one platform setting. Allowed keys: poll_interval_minutes, alert_channels, enabled_providers, price_drop_pct, alert_threshold_per_adult_usd.', input_schema: obj({ key: { type: 'string' }, value: { type: 'string' }, reason: { type: 'string' } }, ['key', 'value', 'reason']) },
-  { name: 'redeploy', description: 'GATED (needs founder approval). Queue a rebuild + restart via deploy.sh in a detached unit (auto-rolls back on failed health check). The result only confirms it was queued; health is confirmed in the thread after boot.', input_schema: obj({ reason: { type: 'string' } }, ['reason']) },
+  { name: 'set_platform_setting', description: 'GATED. Change one platform setting (poll_interval_minutes, alert_channels, enabled_providers, price_drop_pct, alert_threshold_per_adult_usd).', input_schema: obj({ key: { type: 'string' }, value: { type: 'string' }, reason: { type: 'string' } }, ['key', 'value', 'reason']) },
+  { name: 'redeploy', description: 'GATED. Queue a rebuild + restart via deploy.sh (auto-rolls back on failed health check).', input_schema: obj({ reason: { type: 'string' } }, ['reason']) },
 ];
+
+/** The tool set offered to the model for a given mode: read tools only in
+ * 'read' (propose_action is already one of them), read + safe in 'safe',
+ * everything in 'full'. */
+export function toolsForMode(mode: OpsMode): Anthropic.Tool[] {
+  if (mode === 'read') return OPS_TOOLS.filter(t => READ_TOOLS.has(t.name));
+  if (mode === 'safe') return OPS_TOOLS.filter(t => READ_TOOLS.has(t.name) || SAFE_TOOLS.has(t.name));
+  return OPS_TOOLS;
+}
+
+const MAX_TOKENS_BY_MODE: Record<OpsMode, number> = { read: 600, safe: 500, full: 900 };
 
 const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {
   poll_interval_minutes: v => /^\d+$/.test(v) && +v >= 1 && +v <= 1440 ? null : 'whole minutes 1–1440',
@@ -175,15 +186,15 @@ export async function runOpsTool(
   return { content: `unhandled tool ${name}`, is_error: true };
 }
 
-const SYSTEM = `You are the FlyCheap ops agent. You watch one production server (a small VPS running a Next.js app as systemd unit "egyptair", with scheduled job units "egyptair-jobs@<name>") and report to the founder in Slack.
+const SYSTEM = `You are the FlyCheap ops agent, watching one production server, reporting to the founder in Slack.
 Rules:
-- Safe tools (restart_app, start_job, clear_job_lock, poll_search) you may use on your own when they plausibly fix the problem.
-- Gated tools (set_platform_setting, redeploy) only run after the founder replies "go" to a proposal you stated plainly: the exact tool, its arguments, and why.
-- You never change code, billing, or user data. If the fix needs those, say so and stop.
-- Secrets never go through Slack. If a key or credential is missing, name the environment variable and give the founder this exact command to run on the server, then ask them to reply "done":
-  sed -i 's/^VAR=.*/VAR=<value>/' /opt/egyptair-tracker/.env.local   (or append if absent)
-- Be concrete and short. Slack formatting: *bold*, code in backticks, no headers.
-- End every turn with either a one-line status or a "Needs you:" line naming exactly what you need.`;
+- Use SAFE tools on your own when they plausibly fix the problem.
+- GATED tools only run after the founder replies "go" to a proposal stating the exact tool, arguments, and why.
+- Never touch code, billing, or user data — say so and stop if the fix needs that.
+- Secrets never go through Slack. If a credential is missing, name the env var and give this exact command, then ask them to reply "done":
+  sed -i 's/^VAR=.*/VAR=<value>/' /opt/egyptair-tracker/.env.local
+- Slack formatting: *bold*, code in backticks, no headers.
+- End every turn with a one-line status or a "Needs you:" line.`;
 
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;
@@ -199,7 +210,7 @@ async function loop(opts: {
   for (let i = 0; i < MAX_TOOL_CALLS + 1; i++) {
     let res: Anthropic.Message;
     try {
-      res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: 1200, system: `${SYSTEM}\n\n${modeNote}`, tools: OPS_TOOLS, messages });
+      res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: MAX_TOKENS_BY_MODE[opts.mode], system: `${SYSTEM}\n\n${modeNote}`, tools: toolsForMode(opts.mode), messages });
     } catch (e) {
       return { text: `AI assist error: ${(e as Error).message}`, restarted, toolCalls };
     }

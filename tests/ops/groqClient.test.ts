@@ -150,7 +150,37 @@ describe('createGroqMessagesClient — 429 rate-limit retry', () => {
     expect(res.content).toEqual([{ type: 'text', text: 'diagnosed', citations: null }]);
   });
 
-  it('caps the wait at 60s and defaults to 20s when no hint is present', async () => {
+  it('retries twice (three attempts total): 429, 429, then 200 succeeds', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      if (calls <= 2) {
+        return {
+          ok: false,
+          status: 429,
+          text: async () => 'Rate limit reached … Please try again in 25s.',
+          json: async () => ({}),
+        } as unknown as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => '',
+        json: async () => ({ id: 'chatcmpl-ok', choices: [{ message: { content: 'diagnosed' } }], usage: {} }),
+      } as unknown as Response;
+    }) as typeof fetch;
+    const sleepCalls: number[] = [];
+    const sleep = async (ms: number) => { sleepCalls.push(ms); };
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl, sleep });
+    const res = await client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming);
+
+    expect(calls).toBe(3);
+    expect(sleepCalls).toEqual([25000, 25000]);
+    expect(sleepCalls.every(ms => ms >= 20000)).toBe(true);
+    expect(res.content).toEqual([{ type: 'text', text: 'diagnosed', citations: null }]);
+  });
+
+  it('caps the wait at 60s and floors at 20s when no hint is present', async () => {
     let calls = 0;
     const fetchImpl = (async () => {
       calls += 1;
@@ -167,10 +197,11 @@ describe('createGroqMessagesClient — 429 rate-limit retry', () => {
 
     await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
       .rejects.toThrow(/^Groq 429: /);
-    expect(sleepCalls).toEqual([60_000]);
+    expect(calls).toBe(3);
+    expect(sleepCalls).toEqual([60_000, 20_000]);
   });
 
-  it('throws if the retry also fails with 429', async () => {
+  it('throws after exhausting both retries when every attempt hits 429', async () => {
     let calls = 0;
     const fetchImpl = (async () => {
       calls += 1;
@@ -187,7 +218,7 @@ describe('createGroqMessagesClient — 429 rate-limit retry', () => {
 
     await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
       .rejects.toThrow(/^Groq 429: /);
-    expect(calls).toBe(2);
-    expect(sleepCalls).toEqual([5000]);
+    expect(calls).toBe(3);
+    expect(sleepCalls).toEqual([20000, 20000]);
   });
 });

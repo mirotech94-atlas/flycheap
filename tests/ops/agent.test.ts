@@ -34,6 +34,23 @@ describe('approval + proposal parsing', () => {
   });
 });
 
+describe('toolsForMode', () => {
+  it('read mode offers only read tools (propose_action included, no restart_app/redeploy)', () => {
+    const names = agent.toolsForMode('read').map(t => t.name);
+    expect(names).toEqual(expect.arrayContaining(['read_logs', 'read_error_log', 'health_check', 'job_history', 'list_failed_units', 'propose_action']));
+    expect(names).not.toEqual(expect.arrayContaining(['restart_app', 'start_job', 'clear_job_lock', 'poll_search', 'set_platform_setting', 'redeploy']));
+  });
+  it('safe mode offers read + safe tools but no gated tools', () => {
+    const names = agent.toolsForMode('safe').map(t => t.name);
+    expect(names).toEqual(expect.arrayContaining(['read_logs', 'health_check', 'restart_app', 'start_job', 'clear_job_lock', 'poll_search']));
+    expect(names).not.toEqual(expect.arrayContaining(['set_platform_setting', 'redeploy']));
+  });
+  it('full mode offers every tool', () => {
+    const names = agent.toolsForMode('full').map(t => t.name);
+    expect(names.sort()).toEqual(agent.OPS_TOOLS.map(t => t.name).sort());
+  });
+});
+
 describe('runOpsTool', () => {
   it('read mode refuses safe and gated tools', async () => {
     const { row } = db.queries.upsertIncident('unit:egyptair-jobs@digest.service', 'unit', 't');
