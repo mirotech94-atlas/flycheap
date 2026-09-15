@@ -40,10 +40,13 @@ export function probeJobRuns(rows: Array<{ job: string; started_at: string; mess
   }));
 }
 
+/** Digit runs become '#' so the same error groups across ids/counts/status codes. */
+export function normalizeErrorMessage(message: string): string {
+  return message.replace(/\d+/g, '#').slice(0, 80);
+}
+
 export function errorFingerprint(source: string | null, message: string): string {
-  // Extract prefix by removing trailing numbers (e.g., "(search 12)" → "(search ")
-  const prefix = message.replace(/\s+\d+\)?$/, '');
-  const key = `${source ?? '-'}|${prefix.slice(0, 80)}`;
+  const key = `${source ?? '-'}|${normalizeErrorMessage(message)}`;
   return `err:${source ?? '-'}:${crypto.createHash('sha1').update(key).digest('hex').slice(0, 10)}`;
 }
 

@@ -43,11 +43,14 @@ describe('probeErrors', () => {
     expect(f[0].fingerprint).toBe(errorFingerprint('poller', 'ETIMEDOUT travelpayouts (search 12)'));
     expect(f[0].title).toBe('Errors: poller (2 in window)');
   });
-  it('fingerprint is stable and short', () => {
+  it('fingerprint is stable, short, and ignores numbers', () => {
     const a = errorFingerprint('x', 'a'.repeat(500));
     expect(a).toBe(errorFingerprint('x', 'a'.repeat(500) + 'tail differs'));
     expect(a.length).toBeLessThan(40);
     expect(a.startsWith('err:x:')).toBe(true);
+    expect(errorFingerprint('http', 'HTTP 500 from provider')).toBe(errorFingerprint('http', 'HTTP 503 from provider'));
+    expect(errorFingerprint('http', 'HTTP 500 from provider')).not.toBe(errorFingerprint('http', 'HTTP timeout from provider'));
+    expect(errorFingerprint('a', 'same text')).not.toBe(errorFingerprint('b', 'same text'));
   });
 });
 
