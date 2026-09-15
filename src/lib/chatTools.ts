@@ -4,6 +4,7 @@ import { sendDigest } from './digest';
 import { pollAll } from './poller';
 import { refreshBestDeals, getCachedBestDeals } from './bestDeals';
 import { bookingLink } from './affiliate';
+import { APP_URL } from './hosts';
 
 export const CHAT_SYSTEM_PROMPT = `You are FarePilot, the FlyCheap assistant. You help users find and BOOK cheap flights on any route worldwide, and manage their tracked searches and alerts.
 
@@ -253,7 +254,7 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
           origin, destination,
           departDate: depart, returnDate,
           adults, infants,
-          baseUrl: process.env.PUBLIC_BASE_URL || 'https://flycheap.18dn.com',
+          baseUrl: process.env.PUBLIC_BASE_URL || APP_URL,
           trackAs: { provider: 'aviasales', surface: 'nadia-concierge' },
         });
         return {

@@ -5,6 +5,7 @@ import { commands, run, defaultRunner, type Runner } from './shell';
 import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, errorFingerprint, type Finding, type HealthJson } from './probes';
 import { formatCard, formatResolved, formatBackUp, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
+import { CLIENT_HOST } from '@/lib/hosts';
 
 export type DetectorIO = {
   runner: Runner;
@@ -205,7 +206,7 @@ export function productionIO(): DetectorIO {
     runner: defaultRunner,
     fetchHealth: async () => {
       try {
-        const r = await fetch('http://127.0.0.1:3000/api/health', { headers: { Host: 'flycheap.18dn.com' }, signal: AbortSignal.timeout(8000) });
+        const r = await fetch('http://127.0.0.1:3000/api/health', { headers: { Host: CLIENT_HOST }, signal: AbortSignal.timeout(8000) });
         return r.ok || r.status === 503 ? (await r.json()) as HealthJson : null;
       } catch { return null; }
     },

@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { fmtUSD, fmtDate, fmtDateTime } from './utils';
 import { bookingLink, hotellookLink, airbnbLink, trackedRedirect, hotelCityForDestination, tpBrandConfigured } from './affiliate';
 import type { SearchRow, FareRow } from './db';
+import { APP_URL } from './hosts';
 
 export type AlertEmailContext = {
   /** Route's "normal" price — 7-day median (same number the anomaly detector uses). */
@@ -26,7 +27,7 @@ export type AlertEmailInput = {
   context?: Partial<AlertEmailContext>;
 };
 
-const SITE = (process.env.APP_URL || 'https://flycheap.18dn.com').replace(/\/$/, '');
+const SITE = (process.env.APP_URL || APP_URL).replace(/\/$/, '');
 
 /** "Sat, Dec 20" — weekday makes the working-date range scannable. */
 function fmtDow(iso: string): string {

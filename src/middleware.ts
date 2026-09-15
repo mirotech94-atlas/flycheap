@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { ADMIN_HOST, ADMIN_HOSTS, CLIENT_HOST, OUR_HOSTS } from '@/lib/hosts';
 
 // Hardcoded here (rather than imported from @/lib/auth) so middleware can run
 // in the Edge runtime without pulling in the better-sqlite3 / Node-only deps.
@@ -14,9 +15,7 @@ const PROTECTED_PREFIXES = ['/searches', '/settings', '/onboarding'];
 // are rewritten internally to /admin/<path> so the admin portal can live on
 // its own subdomain while sharing the same Next app. The /admin layout still
 // runs its own isAdmin() check, so this rewrite is safe.
-const ADMIN_HOSTS = new Set(['admin.flycheap.18dn.com']);
-/** Where to send client-app paths that were requested on the admin host. */
-const CLIENT_HOST = 'flycheap.18dn.com';
+// ADMIN_HOSTS / CLIENT_HOST now come from @/lib/hosts so a cutover is an env change.
 /** First path segment of every real /admin/<segment> route, plus the index. */
 const ADMIN_SEGMENTS = new Set([
   'affiliate', 'clicks', 'errors', 'health', 'integrations',
@@ -59,9 +58,9 @@ export function middleware(req: NextRequest) {
   }
 
   // Inverse redirect: on the client host, /admin should bounce to the admin subdomain.
-  if (!ADMIN_HOSTS.has(host) && pathname.startsWith('/admin') && (host === 'flycheap.18dn.com' || host === 'flycheap.18dn.com')) {
+  if (!ADMIN_HOSTS.has(host) && pathname.startsWith('/admin') && OUR_HOSTS.has(host)) {
     const url = req.nextUrl.clone();
-    url.host = 'admin.flycheap.18dn.com';
+    url.host = ADMIN_HOST;
     url.pathname = pathname.replace(/^\/admin/, '') || '/';
     return NextResponse.redirect(url);
   }

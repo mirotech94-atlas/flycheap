@@ -8,6 +8,7 @@ import { Logo } from '@/components/Logo';
 import { LanguageMenu } from '@/components/LanguageMenu';
 import { useAppI18n } from '@/lib/i18n/client';
 import type { AppNavDict } from '@/lib/i18n/app.en';
+import { PUBLIC_ADMIN_HOST } from '@/lib/hosts';
 
 type Item = { href: string; label: string; icon: string };
 type Group = { id: string; label: string; icon: string; items: Item[] };
@@ -158,7 +159,7 @@ export function ClientSidebar({
             </div>
             {isAdmin && (
               <a
-                href="https://admin.flycheap.18dn.com/"
+                href={`https://${PUBLIC_ADMIN_HOST}/`}
                 className="mt-2 inline-flex items-center gap-1 text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-[var(--nc-amber)]/15 text-[var(--nc-amber)] border border-[var(--nc-amber)]/30 hover:bg-[var(--nc-amber)]/25 transition"
               >
                 {nav.adminPortal}

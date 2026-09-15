@@ -5,6 +5,7 @@ import { fmtUSD, fmtDate } from './utils';
 import { cheapestByMonth } from './explore';
 import { sendExpoPushToUser, inQuietHours } from './expoPush';
 import { median7dForSearch } from './priceDrops';
+import { APP_URL, ADMIN_URL } from './hosts';
 
 export type NotifyKind = 'threshold' | 'price-drop' | 'digest' | 'ready';
 
@@ -153,7 +154,7 @@ export async function notifySignupToSlack(
 ): Promise<void> {
   try {
     const who = [user.name, user.username ? `@${user.username}` : null].filter(Boolean).join(' · ');
-    const adminUrl = `https://admin.flycheap.18dn.com/users/${user.id}`;
+    const adminUrl = `${ADMIN_URL}/users/${user.id}`;
     await postFounderSlack(
       'admin',
       `🎉 *New signup* — ${user.email}${who ? ` (${who})` : ''}\n` +
@@ -196,7 +197,7 @@ export async function notifyBillingToSlack(
     ].filter(Boolean).join(' · ');
     await postFounderSlack(
       'admin',
-      `${BILLING_LABELS[kind]} — ${u.email}\n${bits}\n<https://admin.flycheap.18dn.com/users/${u.id}|Open in admin →>`,
+      `${BILLING_LABELS[kind]} — ${u.email}\n${bits}\n<${ADMIN_URL}/users/${u.id}|Open in admin →>`,
     );
   } catch { /* Slack is non-critical for billing */ }
 }
@@ -269,7 +270,7 @@ function dealBlocks(opts: { origin: string; destination: string; perAdult: numbe
       type: 'actions',
       elements: [
         { type: 'button', text: { type: 'plain_text', text: 'Open in FlyCheap', emoji: false },
-          url: `https://flycheap.18dn.com/explore?from=${origin}&to=${destination}`, style: 'primary' },
+          url: `${APP_URL}/explore?from=${origin}&to=${destination}`, style: 'primary' },
         { type: 'button', text: { type: 'plain_text', text: 'Snooze this watch', emoji: false },
           value: `snooze:${origin}-${destination}` },
       ],
@@ -299,7 +300,7 @@ export async function fanoutDealToSubscribers(opts: {
   // Telegram chat watches
   const tgSubs = queries.matchingTelegramSubscriptions(search.origin, search.destination, pricePerAdult);
   for (const sub of tgSubs) {
-    const text = `🔥 *${search.origin} → ${search.destination}* now *$${pricePerAdult.toLocaleString()}*\n_Under your $${sub.threshold_usd.toLocaleString()} target · ${search.depart_date} → ${search.return_date}_\n\n[Open in FlyCheap](https://flycheap.18dn.com/explore?from=${search.origin}&to=${search.destination})`;
+    const text = `🔥 *${search.origin} → ${search.destination}* now *$${pricePerAdult.toLocaleString()}*\n_Under your $${sub.threshold_usd.toLocaleString()} target · ${search.depart_date} → ${search.return_date}_\n\n[Open in FlyCheap](${APP_URL}/explore?from=${search.origin}&to=${search.destination})`;
     const r = await sendTelegram(sub.chat_id, text, 'Markdown');
     if (r.ok) queries.markTelegramSubscriptionAlerted(sub.id);
     out.push(r);

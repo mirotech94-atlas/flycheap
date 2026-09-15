@@ -1,5 +1,6 @@
 import 'server-only';
 import type { NextRequest } from 'next/server';
+import { CLIENT_HOST } from './hosts';
 
 /**
  * Build an absolute URL for the public-facing site, even when the request was
@@ -14,7 +15,7 @@ export function publicUrl(req: NextRequest, path: string = '/'): string {
               ?? '';
   const looksLocal = !rawHost || /^(localhost|127\.|0\.0\.0\.0|::1)/.test(rawHost);
   const host = looksLocal
-    ? (process.env.APP_URL?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? 'flycheap.18dn.com')
+    ? (process.env.APP_URL?.replace(/^https?:\/\//, '').replace(/\/$/, '') ?? CLIENT_HOST)
     : rawHost;
   return `${proto}://${host}${path.startsWith('/') ? path : `/${path}`}`;
 }

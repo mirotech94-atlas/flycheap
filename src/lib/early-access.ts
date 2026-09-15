@@ -3,8 +3,9 @@ import crypto from 'node:crypto';
 import { Resend } from 'resend';
 import { getDb } from './db';
 import { supportFrom } from './senders';
+import { APP_URL } from './hosts';
 
-const APP = process.env.APP_URL || 'https://flycheap.18dn.com';
+const APP = process.env.APP_URL || APP_URL;
 /** Each friend who joins through your link moves you up this many spots. */
 export const REFERRAL_BOOST = 5;
 

@@ -3,6 +3,7 @@ import { cookies, headers } from 'next/headers';
 import crypto from 'node:crypto';
 import { Resend } from 'resend';
 import { queries, type UserRow } from './db';
+import { ADMIN_HOSTS, APP_URL } from './hosts';
 
 export const SESSION_COOKIE = 'fareintel_session';
 export const COOKIE_MAX_AGE_SEC = 30 * 24 * 60 * 60; // 30 days
@@ -138,7 +139,7 @@ export function isOwner(user: UserRow | null | undefined): boolean {
 /** True when the request arrived on the founder-only admin host (admin.<domain>). */
 export function isAdminHost(host: string | null | undefined): boolean {
   const h = (host || '').toLowerCase().split(':')[0];
-  return h === 'admin.flycheap.18dn.com' || h.startsWith('admin.');
+  return ADMIN_HOSTS.has(h) || h.startsWith('admin.');
 }
 export function ownerEmail(): string {
   return (process.env.OWNER_EMAIL || '').trim().toLowerCase();
@@ -382,7 +383,7 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
   const { supportFrom } = await import('./senders');
   const from = supportFrom('FlyCheap');
   const { unsubscribeUrl } = await import('@/app/api/unsubscribe/route');
-  const unsubLink = unsubscribeUrl(email, 'https://flycheap.18dn.com');
+  const unsubLink = unsubscribeUrl(email, APP_URL);
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
       <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">Welcome aboard ✈️</div>
@@ -390,17 +391,17 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
       <p style="color:#475569;margin:0 0 24px;font-size:16px;line-height:1.5">Your first 3 months are on us — full use of the basic capabilities, no card. Here's what to do in your first 60 seconds:</p>
 
       <ol style="margin:0 0 24px;padding-left:20px;color:#334155;line-height:1.7">
-        <li><strong>Add your first route</strong> — pick a home airport and destination at <a href="https://flycheap.18dn.com/searches" style="color:#0a3a6b;font-weight:600">/searches</a>. We'll start polling every 30 minutes.</li>
-        <li><strong>Set your target price</strong> in <a href="https://flycheap.18dn.com/settings" style="color:#0a3a6b;font-weight:600">Settings</a>. Get an email the moment any tracked fare drops below it.</li>
-        <li><strong>Explore worldwide</strong> deals at <a href="https://flycheap.18dn.com/explore" style="color:#0a3a6b;font-weight:600">/explore</a> — see the cheapest flights from your home city, color-coded on a world map.</li>
+        <li><strong>Add your first route</strong> — pick a home airport and destination at <a href="${APP_URL}/searches" style="color:#0a3a6b;font-weight:600">/searches</a>. We'll start polling every 30 minutes.</li>
+        <li><strong>Set your target price</strong> in <a href="${APP_URL}/settings" style="color:#0a3a6b;font-weight:600">Settings</a>. Get an email the moment any tracked fare drops below it.</li>
+        <li><strong>Explore worldwide</strong> deals at <a href="${APP_URL}/explore" style="color:#0a3a6b;font-weight:600">/explore</a> — see the cheapest flights from your home city, color-coded on a world map.</li>
       </ol>
 
-      <a href="https://flycheap.18dn.com/" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Open the dashboard →</a>
+      <a href="${APP_URL}/" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Open the dashboard →</a>
 
       <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6">
         Questions? Reply to this email — it lands in our inbox.<br>
         Your founding period covers 5 tracked routes, email alerts and worldwide explore for 3 months. Whenever you want more — up to 100 routes, 5-minute polling, SMS/WhatsApp/Telegram alerts — Pro is $9/mo with a 14-day trial, and Enterprise adds white-label + API.<br><br>
-        <a href="${unsubLink}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> · <a href="https://flycheap.18dn.com/settings" style="color:#94a3b8;text-decoration:underline">Manage preferences</a>
+        <a href="${unsubLink}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> · <a href="${APP_URL}/settings" style="color:#94a3b8;text-decoration:underline">Manage preferences</a>
       </div>
     </div>
   `;

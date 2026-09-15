@@ -5,6 +5,7 @@ import { APP_VERSION_SHORT } from '@/lib/version';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { HeaderControls } from './HeaderControls';
+import { PUBLIC_ADMIN_HOST } from '@/lib/hosts';
 
 // Public-facing nav. Routes that require auth are tagged so we can hide them
 // from anonymous visitors — otherwise crawlers (and affiliate-program review
@@ -80,7 +81,7 @@ export function ExecutiveTopBar({
         <HeaderControls />
         {isAdmin && (
           <a
-            href="https://admin.flycheap.18dn.com/"
+            href={`https://${PUBLIC_ADMIN_HOST}/`}
             className="user-chip"
             style={{ textDecoration: 'none', color: 'inherit', borderColor: '#d4af37', background: 'rgba(212,175,55,0.08)' }}
             title="Open the admin portal"

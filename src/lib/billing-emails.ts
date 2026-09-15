@@ -2,8 +2,9 @@ import 'server-only';
 import { Resend } from 'resend';
 import { getDb } from './db';
 import { supportFrom } from './senders';
+import { APP_URL } from './hosts';
 
-const APP = process.env.APP_URL || 'https://flycheap.18dn.com';
+const APP = process.env.APP_URL || APP_URL;
 
 export function findUserByStripeCustomer(customerId: string): { id: number; email: string; name: string | null } | undefined {
   return getDb()
