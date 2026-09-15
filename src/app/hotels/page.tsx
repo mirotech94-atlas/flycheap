@@ -6,9 +6,7 @@ import { HotelUpsell } from '@/components/HotelUpsell';
 import { HotelsBoard } from '@/components/HotelsBoard';
 import { DealSlideshow } from '@/components/DealSlideshow';
 import { StayHeroSlide } from '@/components/StayHeroSlide';
-
-// Worldwide hotel inspiration — used to pad the slideshow beyond tracked routes.
-const POPULAR_HOTEL_CITIES = ['DXB', 'PAR', 'BKK', 'CUN', 'ROM', 'IST', 'MLE', 'TYO'];
+import { buildShowcaseDestinations } from '@/lib/showcaseDestinations';
 
 export const dynamic = 'force-dynamic';
 
@@ -38,16 +36,12 @@ export default async function HotelsPage({ searchParams }: PageProps) {
 
   // Slideshow destinations: tracked routes first (with their real dates), padded
   // with worldwide popular cities so the showcase is global even with few tracked.
-  const slideDests: Array<{ iata: string; checkIn: string; checkOut: string }> = [];
-  for (const dest of trackedDestinations.slice(0, 5)) {
-    const s = searches.find(x => x.destination === dest)!;
-    slideDests.push({ iata: dest, checkIn: s.depart_date, checkOut: s.return_date });
-  }
-  for (const iata of POPULAR_HOTEL_CITIES) {
-    if (slideDests.length >= 8) break;
-    if (slideDests.some(d => d.iata === iata)) continue;
-    slideDests.push({ iata, checkIn, checkOut });
-  }
+  const slideDests = buildShowcaseDestinations({
+    trackedDestinations,
+    searches,
+    fallbackCheckIn: checkIn,
+    fallbackCheckOut: checkOut,
+  });
 
   return (
     <div className="space-y-6">

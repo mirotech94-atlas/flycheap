@@ -5,6 +5,7 @@ import { queries } from '@/lib/db';
 import { HotelUpsell } from '@/components/HotelUpsell';
 import { DealSlideshow } from '@/components/DealSlideshow';
 import { StayHeroSlide } from '@/components/StayHeroSlide';
+import { DestinationSelect } from '@/components/DestinationSelect';
 import { cityName } from '@/lib/explore';
 import { airbnbLink, vrboLink, trackedRedirect } from '@/lib/affiliate';
 
@@ -106,11 +107,10 @@ export default async function AirbnbsPage({ searchParams }: PageProps) {
           <div className="grid gap-4 md:grid-cols-4">
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-xs uppercase tracking-wide text-slate-500">Destination</span>
-              <input
-                type="text"
+              <DestinationSelect
                 name="destination"
-                defaultValue={destination}
-                placeholder="IATA or city, e.g. CAI or Cairo"
+                value={destination}
+                trackedDestinations={trackedDestinations}
                 className="w-full"
               />
             </label>

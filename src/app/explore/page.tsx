@@ -6,8 +6,11 @@ import { SatelliteExploreMap } from '@/components/SatelliteExploreMap';
 import { ExploreDestinationCard } from '@/components/ExploreDestinationCard';
 import { ExploreRankedList, type ExploreOption } from '@/components/ExploreRankedList';
 import { DealSlideshow } from '@/components/DealSlideshow';
+import { StayHeroSlide } from '@/components/StayHeroSlide';
 import { bookingLink } from '@/lib/affiliate';
 import { getCityGradient } from '@/lib/cityGradients';
+import { queries } from '@/lib/db';
+import { buildShowcaseDestinations } from '@/lib/showcaseDestinations';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 600;
@@ -29,6 +32,22 @@ export default async function ExplorePage({ searchParams }: PageProps) {
     topDestinations(origin),
     hotDeals({ origin, maxPrice: maxBudget, limit: 200 }),
   ]);
+
+  // Photo showcase — same destinations/padding as the Hotels page, so the
+  // Explore hero never drifts from what Hotels shows.
+  const todayPlus = (days: number) => {
+    const d = new Date();
+    d.setUTCDate(d.getUTCDate() + days);
+    return d.toISOString().slice(0, 10);
+  };
+  const searches = queries.listSearches();
+  const trackedDestinations = Array.from(new Set(searches.map(s => s.destination)));
+  const showcaseDests = buildShowcaseDestinations({
+    trackedDestinations,
+    searches,
+    fallbackCheckIn: todayPlus(60),
+    fallbackCheckOut: todayPlus(67),
+  });
 
   const PER_DEST = 3;
   const byDest = new Map<string, typeof rawDeals>();
@@ -72,6 +91,14 @@ export default async function ExplorePage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-8">
+      {/* Animated worldwide showcase — real destination photos, same
+          destinations/padding logic as the Hotels page slideshow. */}
+      <DealSlideshow label="Explore destinations worldwide" heightClass="h-[280px] md:h-[320px]">
+        {showcaseDests.map(d => (
+          <StayHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={1} mode="explore" />
+        ))}
+      </DealSlideshow>
+
       {/* HERO — the destination board. Dark cabin deck; the search is the
           one bright thing on it, because searching is why anyone is here. */}
       <section
