@@ -1,5 +1,5 @@
 import 'server-only';
-import { execFile } from 'node:child_process';
+import { execFile, type ExecFileException } from 'node:child_process';
 
 /**
  * The ONLY place privileged commands are built and run. Every spec here has a
@@ -29,13 +29,15 @@ export const commands = {
   startUnit: (unit: string): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, 'start', normalizeUnit(unit)] }),
   listFailed: (): CommandSpec => ({ file: 'sudo', args: [SYSTEMCTL, '--failed', '--no-legend', 'egyptair*'] }),
   journal: (unit: string, lines: number): CommandSpec => {
-    const n = Math.min(MAX_LINES, Math.max(10, Math.floor(Number(lines) || 50)));
+    const raw = Number(lines);
+    const n = Math.min(MAX_LINES, Math.max(10, Math.floor(Number.isFinite(raw) ? raw : 50)));
     // 'egyptair' (main app) or an allowed job unit.
     const u = unit === 'egyptair' ? 'egyptair' : normalizeUnit(unit);
     return { file: 'sudo', args: [JOURNALCTL, '-u', u, '-n', String(n), '--no-pager'] };
   },
   journalSince: (minutes: number): CommandSpec => {
-    const m = Math.min(120, Math.max(1, Math.floor(Number(minutes) || 15)));
+    const raw = Number(minutes);
+    const m = Math.min(120, Math.max(1, Math.floor(Number.isFinite(raw) ? raw : 15)));
     return { file: 'sudo', args: [JOURNALCTL, '-u', 'egyptair', '--since', `-${m}min`, '--no-pager', '-o', 'cat'] };
   },
   deploy: (): CommandSpec => ({ file: 'sudo', args: ['/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] }),
@@ -45,14 +47,13 @@ const OUTPUT_CAP = 64 * 1024;
 
 export const defaultRunner: Runner = (file, args) =>
   new Promise(resolve => {
-    execFile(file, args, { timeout: 120_000, maxBuffer: OUTPUT_CAP * 4, env: { PATH: '/usr/bin:/bin' } as unknown as NodeJS.ProcessEnv }, (err: any, stdout: any, stderr: any) => {
-      const code = err && typeof (err as NodeJS.ErrnoException & { code?: number | string }).code === 'number'
-        ? Number((err as { code?: number }).code) : err ? null : 0;
+    execFile(file, args, { timeout: 120_000, maxBuffer: OUTPUT_CAP * 4, env: { ...process.env, PATH: '/usr/bin:/bin' } }, (error: ExecFileException | null, stdout: string, stderr: string) => {
+      const code = error ? (typeof error.code === 'number' ? error.code : null) : 0;
       resolve({
-        ok: !err,
+        ok: !error,
         code,
         stdout: String(stdout ?? '').slice(-OUTPUT_CAP),
-        stderr: String(stderr ?? (err ? err.message : '')).slice(-OUTPUT_CAP),
+        stderr: String(stderr ?? (error ? error.message : '')).slice(-OUTPUT_CAP),
       });
     });
   });

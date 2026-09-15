@@ -23,6 +23,15 @@ describe('commands', () => {
     expect(commands.journalSince(15).args).toEqual(['/usr/bin/journalctl', '-u', 'egyptair', '--since', '-15min', '--no-pager', '-o', 'cat']);
     expect(commands.deploy()).toEqual({ file: 'sudo', args: ['/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'] });
   });
+  it('clamps journal lines to 10–200', () => {
+    expect(commands.journal('egyptair', 0).args).toContain('10');
+    expect(commands.journal('egyptair', 40).args).toEqual(['/usr/bin/journalctl', '-u', 'egyptair', '-n', '40', '--no-pager']);
+  });
+  it('clamps journalSince minutes to 1–120', () => {
+    expect(commands.journalSince(0).args).toContain('-1min');
+    expect(commands.journalSince(999).args).toContain('-120min');
+    expect(commands.journalSince(undefined as unknown as number).args).toContain('-15min');
+  });
 });
 
 describe('run', () => {
