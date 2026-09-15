@@ -40,8 +40,12 @@ mkdir -p "$APP_DIR"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 echo "==> Installing ops agent privilege boundary"
-visudo -cf "$APP_DIR/deploy/sudoers-egyflights-ops"
-install -o root -g root -m 0440 "$APP_DIR/deploy/sudoers-egyflights-ops" /etc/sudoers.d/egyflights-ops
+# Ops agent privilege boundary — exact commands the app user may run via sudo.
+# Source is next to this script (the checkout being provisioned from), not $APP_DIR,
+# which is still empty on a fresh box at this point.
+SUDOERS_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/sudoers-egyflights-ops"
+visudo -cf "$SUDOERS_SRC"
+install -o root -g root -m 0440 "$SUDOERS_SRC" /etc/sudoers.d/egyflights-ops
 
 cat <<EOF
 
