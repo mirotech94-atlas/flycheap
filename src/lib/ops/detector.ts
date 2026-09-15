@@ -5,6 +5,7 @@ import { commands, run, defaultRunner, type Runner } from './shell';
 import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, errorFingerprint, type Finding, type HealthJson } from './probes';
 import { formatCard, formatResolved, formatBackUp, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
+import { createGroqMessagesClient } from './groqClient';
 import { CLIENT_HOST } from '@/lib/hosts';
 
 export type DetectorIO = {
@@ -219,8 +220,20 @@ export function productionIO(): DetectorIO {
       const { postToSlackThread, founderChannelId } = await import('@/lib/notifier');
       await postToSlackThread(founderChannelId('admin'), ts, text);
     },
-    client: process.env.ANTHROPIC_API_KEY
-      ? (new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as unknown as MessagesClient)
-      : null,
+    client: opsClient(),
   };
+}
+
+function opsClient(): MessagesClient | null {
+  const provider = process.env.LLM_PROVIDER || (process.env.GROQ_API_KEY ? 'groq' : 'anthropic');
+  if (provider === 'groq' && process.env.GROQ_API_KEY) {
+    return createGroqMessagesClient({
+      apiKey: process.env.GROQ_API_KEY,
+      model: process.env.OPS_MODEL_GROQ || 'openai/gpt-oss-120b',
+    });
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as unknown as MessagesClient;
+  }
+  return null;
 }

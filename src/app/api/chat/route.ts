@@ -133,18 +133,18 @@ export async function POST(req: Request) {
   const toolResults: ToolResultLog = [];
   const latestUserQuestion = [...parsed.data.messages].reverse().find(m => m.role === 'user')?.content || '';
 
-  // Provider chain: Anthropic → Groq → OpenAI. Each is tried only if its key
+  // Provider chain: Groq → Anthropic → OpenAI. Each is tried only if its key
   // is configured; the first that completes wins. Tool state is reset between
   // attempts so a failed provider's partial calls don't leak into the reply.
   const attempts: Array<() => Promise<LoopResult>> = [];
-  if (process.env.ANTHROPIC_API_KEY) {
-    attempts.push(() => runAnthropicLoop(parsed.data.messages, toolCalls, toolResults));
-  }
   if (process.env.GROQ_API_KEY) {
     attempts.push(() => runOpenAICompatLoop(
-      { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'llama-3.3-70b-versatile', provider: 'groq' },
+      { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' },
       parsed.data.messages, toolCalls, toolResults,
     ));
+  }
+  if (process.env.ANTHROPIC_API_KEY) {
+    attempts.push(() => runAnthropicLoop(parsed.data.messages, toolCalls, toolResults));
   }
   if (process.env.OPENAI_API_KEY) {
     attempts.push(() => runOpenAICompatLoop(
