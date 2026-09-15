@@ -47,3 +47,28 @@ export function marketingDecision(
 
   return { kind: 'app-redirect', host: opts.clientHost };
 }
+
+/**
+ * On the client host, `/welcome` (and `/welcome/*`) duplicates the marketing
+ * site's own landing — with a marketing host configured that content lives
+ * there, not here. Bounce those requests back to the marketing site's root
+ * (or the matching sub-path) instead of rendering it twice.
+ *
+ * Returns the target pathname on the marketing host, or null when there's
+ * nothing to do (feature off, already on the marketing host / its www, a
+ * custom domain not in `ourHosts`, or the path isn't /welcome).
+ */
+export function welcomeRedirect(
+  host: string,
+  pathname: string,
+  opts: { marketingHost: string; ourHosts: ReadonlySet<string> },
+): string | null {
+  const h = (host ?? '').toLowerCase().split(':')[0];
+  const marketingHost = opts.marketingHost;
+  if (!marketingHost) return null;
+  if (h === marketingHost || h === `www.${marketingHost}`) return null;
+  if (!opts.ourHosts.has(h)) return null;
+  if (pathname === '/welcome') return '/';
+  if (pathname.startsWith('/welcome/')) return pathname.slice('/welcome'.length);
+  return null;
+}

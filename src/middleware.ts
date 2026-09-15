@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { ADMIN_HOST, ADMIN_HOSTS, CLIENT_HOST, MARKETING_HOST, OUR_HOSTS } from '@/lib/hosts';
-import { marketingDecision } from '@/lib/marketingRoute';
+import { marketingDecision, welcomeRedirect } from '@/lib/marketingRoute';
 
 // Hardcoded here (rather than imported from @/lib/auth) so middleware can run
 // in the Edge runtime without pulling in the better-sqlite3 / Node-only deps.
@@ -58,6 +58,15 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(url, 307);
   }
   // decision.kind === 'pass' | 'none' -> fall through to the existing logic.
+
+  // Client host requesting /welcome directly: with a marketing host
+  // configured, that content lives there — send it back to the marketing
+  // site's root (or matching sub-path) instead of rendering it twice.
+  const welcomeTarget = welcomeRedirect(host, pathname, { marketingHost: MARKETING_HOST, ourHosts: OUR_HOSTS });
+  if (welcomeTarget !== null) {
+    const url = req.nextUrl.clone();
+    return NextResponse.redirect(`https://${MARKETING_HOST}${welcomeTarget}${url.search}`, 308);
+  }
 
   // Subdomain rewrite: admin.flycheap.18dn.com/* -> /admin/*
   if (ADMIN_HOSTS.has(host) && !pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/api')) {

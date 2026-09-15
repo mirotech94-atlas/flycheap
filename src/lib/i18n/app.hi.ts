@@ -3,7 +3,7 @@ export const hi: AppDict = {
   common: { language: 'भाषा', live: 'लाइव' },
 
   nav: {
-    dashboard: 'डैशबोर्ड', explore: 'एक्सप्लोर', hotels: 'होटल', offers: 'ऑफ़र',
+    dashboard: 'डैशबोर्ड', explore: 'एक्सप्लोर', hotels: 'होटल', rentals: 'Vacation rentals', offers: 'ऑफ़र',
     integrations: 'इंटीग्रेशन', pricing: 'कीमतें', guides: 'गाइड', routes: 'रूट',
     searches: 'सर्च', settings: 'सेटिंग्स',
     groupFlights: 'फ़्लाइट', groupServices: 'सेवाएँ', groupHelp: 'सहायता',

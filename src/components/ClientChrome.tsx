@@ -6,13 +6,17 @@ import { usePathname } from 'next/navigation';
 // Full-bleed routes own their entire chrome (their own top bar + footer) and
 // must NOT get the client app sidebar / footer / widgets layered on top.
 // /admin = command-center shell; /welcome = standalone marketing landing.
-function isFullBleed(pathname: string | null, adminHost = false): boolean {
+function isFullBleed(pathname: string | null, adminHost = false, marketingHost = false): boolean {
   // On admin.flycheap.18dn.com the middleware REWRITES / -> /admin. A rewrite
   // does not change the browser URL, so usePathname() here still reports "/"
   // and every admin page got the client sidebar layered on top of it. The
   // host is the only reliable signal on the client, and it is passed down
   // from the server layout so there is no hydration mismatch.
   if (adminHost) return true;
+  // Same story on the marketing host: middleware REWRITES / -> /welcome, so
+  // usePathname() still reports "/" and the landing rendered inside the app
+  // shell (sidebar etc). Treat it exactly like the /welcome full-bleed case.
+  if (marketingHost) return true;
   return (
     !!pathname &&
     (pathname.startsWith('/admin') ||
@@ -45,10 +49,10 @@ export function useIsEmbed(): boolean {
  * Hides the client app chrome (sidebar / footer / ChatWidget / GlobeHUD / etc.)
  * on full-bleed routes (/admin/* and /welcome) and in mobile-app embed mode.
  */
-export function ClientChrome({ children, adminHost }: { children: React.ReactNode; adminHost?: boolean }) {
+export function ClientChrome({ children, adminHost, marketingHost }: { children: React.ReactNode; adminHost?: boolean; marketingHost?: boolean }) {
   const pathname = usePathname();
   const embed = useIsEmbed();
-  if (isFullBleed(pathname, adminHost) || embed) return null;
+  if (isFullBleed(pathname, adminHost, marketingHost) || embed) return null;
   return <>{children}</>;
 }
 
@@ -77,12 +81,12 @@ export function HideOnFcRoutes({ children }: { children: React.ReactNode }) {
  *  shifts content right by 220px to make room for the fixed client sidebar
  *  AND fills the entire viewport edge-to-edge — no centered max-width
  *  gutter (mirrors the admin shell). */
-export function AdminAwareMain({ children, adminHost }: { children: React.ReactNode; adminHost?: boolean }) {
+export function AdminAwareMain({ children, adminHost, marketingHost }: { children: React.ReactNode; adminHost?: boolean; marketingHost?: boolean }) {
   const pathname = usePathname();
   const embed = useIsEmbed();
   // Full-bleed routes (admin + welcome) and mobile-app embed mode render
   // edge-to-edge with no sidebar gutter and no imposed padding.
-  if (isFullBleed(pathname, adminHost) || embed) {
+  if (isFullBleed(pathname, adminHost, marketingHost) || embed) {
     return <main className="min-h-screen">{children}</main>;
   }
   return (

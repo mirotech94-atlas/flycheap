@@ -49,6 +49,7 @@ export const AFFILIATE_SURFACES = [
   'explore-slideshow',
   'explore-destinations-slideshow',
   'hotels-slideshow',
+  'rentals-page',
   'offers-results-table',
   'search-form',
   'searches-tracked-table',

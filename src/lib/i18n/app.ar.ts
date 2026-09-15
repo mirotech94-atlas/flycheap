@@ -3,7 +3,7 @@ export const ar: AppDict = {
   common: { language: 'اللغة', live: 'مباشر' },
 
   nav: {
-    dashboard: 'لوحة التحكم', explore: 'استكشف', hotels: 'الفنادق', offers: 'العروض',
+    dashboard: 'لوحة التحكم', explore: 'استكشف', hotels: 'الفنادق', rentals: 'Vacation rentals', offers: 'العروض',
     integrations: 'التكاملات', pricing: 'الأسعار', guides: 'الأدلة', routes: 'المسارات',
     searches: 'عمليات البحث', settings: 'الإعدادات',
     groupFlights: 'الرحلات', groupServices: 'الخدمات', groupHelp: 'المساعدة',

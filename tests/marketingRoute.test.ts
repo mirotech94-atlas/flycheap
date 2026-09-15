@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { marketingDecision } from '@/lib/marketingRoute';
+import { marketingDecision, welcomeRedirect } from '@/lib/marketingRoute';
 
 const opts = { marketingHost: 'flycheap.live', clientHost: 'my.flycheap.live' };
 
@@ -49,5 +49,30 @@ describe('marketingDecision', () => {
   it('strips the port before matching the host', () => {
     expect(marketingDecision('flycheap.live:443', '/', opts))
       .toEqual({ kind: 'rewrite', pathname: '/welcome' });
+  });
+});
+
+describe('welcomeRedirect', () => {
+  const ourHosts = new Set(['my.flycheap.live', 'flycheap.live', 'www.flycheap.live']);
+  const wOpts = { marketingHost: 'flycheap.live', ourHosts };
+
+  it('redirects the client host /welcome to the marketing root', () => {
+    expect(welcomeRedirect('my.flycheap.live', '/welcome', wOpts)).toBe('/');
+  });
+
+  it('redirects a nested /welcome/x to the matching marketing sub-path', () => {
+    expect(welcomeRedirect('my.flycheap.live', '/welcome/x', wOpts)).toBe('/x');
+  });
+
+  it('is a no-op on the marketing host itself', () => {
+    expect(welcomeRedirect('flycheap.live', '/welcome', wOpts)).toBeNull();
+  });
+
+  it('is a no-op when the marketing host feature is off', () => {
+    expect(welcomeRedirect('my.flycheap.live', '/welcome', { marketingHost: '', ourHosts })).toBeNull();
+  });
+
+  it('is a no-op for a custom domain not in ourHosts', () => {
+    expect(welcomeRedirect('custom.example.com', '/welcome', wOpts)).toBeNull();
   });
 });

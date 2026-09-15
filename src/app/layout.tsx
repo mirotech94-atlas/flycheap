@@ -10,6 +10,7 @@ import { DeferredAppWidgets } from '@/components/DeferredAppWidgets';
 import { UserTelemetry } from '@/components/UserTelemetry';
 import { getActiveTenant } from '@/lib/tenant';
 import { getCurrentUser, isOwner } from '@/lib/auth';
+import { MARKETING_HOSTS } from '@/lib/hosts';
 import { getRequestLocaleInfo } from '@/lib/i18n/server';
 import { getAppDict } from '@/lib/i18n/app';
 import { AppI18nProvider } from '@/lib/i18n/client';
@@ -110,6 +111,12 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const hdrs = await headers();
   const reqHost = (hdrs.get('x-forwarded-host') ?? hdrs.get('host') ?? '').toLowerCase();
   const isAdminHost = reqHost.startsWith('admin.');
+  // Same host-derived approach as isAdminHost above: the marketing-host rewrite
+  // (/ -> /welcome) leaves the browser URL unchanged, so client components
+  // cannot detect it from the pathname. Resolve it here from the real Host
+  // header and pass it down so ClientChrome can render the landing bare.
+  const hostNoPort = reqHost.split(':')[0];
+  const isMarketingHost = MARKETING_HOSTS.has(hostNoPort);
 
   const { locale, dir, font } = await getRequestLocaleInfo();
   const t = getAppDict(locale);
@@ -125,7 +132,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AppI18nProvider value={{ locale, dir, nav: t.nav }}>
         <UserTelemetry />
         <GlobeProvider>
-        <ClientChrome adminHost={isAdminHost}>
+        <ClientChrome adminHost={isAdminHost} marketingHost={isMarketingHost}>
           <ClientSidebar
             user={sessionUser ? { email: sessionUser.email, name: sessionUser.name, tier: sessionUser.tier } : null}
             isAdmin={showAdminLink}
@@ -133,9 +140,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           />
         </ClientChrome>
 
-        <AdminAwareMain adminHost={isAdminHost}>{children}</AdminAwareMain>
+        <AdminAwareMain adminHost={isAdminHost} marketingHost={isMarketingHost}>{children}</AdminAwareMain>
 
-        <ClientChrome adminHost={isAdminHost}>
+        <ClientChrome adminHost={isAdminHost} marketingHost={isMarketingHost}>
         <footer className="max-w-7xl mx-auto px-6 py-8 text-xs text-slate-500 no-print border-t border-slate-200/60 dark:border-slate-800 mt-12">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
             <div>

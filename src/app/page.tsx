@@ -31,6 +31,7 @@ import { partyCo2Kg } from '@/lib/carbon';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { getAppDict, fill } from '@/lib/i18n/app';
 import { Em } from '@/lib/i18n/rich';
+import { MARKETING_HOST } from '@/lib/hosts';
 
 import type { Metadata } from 'next';
 
@@ -192,8 +193,10 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const sessionUser = await getCurrentUser();
   // Signed-out visitors get the marketing landing, not the operational
-  // dashboard — the cockpit is a signed-in surface.
-  if (!sessionUser) redirect('/welcome');
+  // dashboard — the cockpit is a signed-in surface. With a marketing host
+  // configured, the landing lives there — send visitors straight to /login
+  // instead of rendering /welcome a second time on the client host.
+  if (!sessionUser) redirect(MARKETING_HOST ? '/login' : '/welcome');
   const t = getAppDict(await getRequestLocale()).dashboard;
   const allRows = loadDashboard(sessionUser
     ? { userId: sessionUser.id }
