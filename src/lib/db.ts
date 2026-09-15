@@ -225,6 +225,25 @@ function init(db: Database.Database) {
     );
     CREATE INDEX IF NOT EXISTS idx_job_runs_job_time ON job_runs(job, started_at);
 
+    -- Ops incidents: one row per distinct production problem the ops detector
+    -- has seen (src/lib/ops/detector.ts). slack_ts is the #admin_alerts card
+    -- whose thread is the conversation with the founder about it.
+    CREATE TABLE IF NOT EXISTS ops_incidents (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      fingerprint TEXT NOT NULL UNIQUE,
+      source TEXT NOT NULL,          -- unit | job | err | health | crashloop
+      title TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',   -- open | fixing | needs_human | resolved
+      slack_ts TEXT,
+      first_seen TEXT NOT NULL DEFAULT (datetime('now')),
+      last_seen TEXT NOT NULL DEFAULT (datetime('now')),
+      occurrences INTEGER NOT NULL DEFAULT 1,
+      last_action TEXT,
+      resolved_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_ops_incidents_status ON ops_incidents(status);
+    CREATE INDEX IF NOT EXISTS idx_ops_incidents_thread ON ops_incidents(slack_ts);
+
     -- Audit log: every mutating admin/owner action records who did what.
     -- Surface on /admin → audit.
     CREATE TABLE IF NOT EXISTS audit_log (
@@ -714,6 +733,21 @@ export type UserRow = {
   paypal_subscription_id?: string | null;
 };
 
+export type OpsIncidentStatus = 'open' | 'fixing' | 'needs_human' | 'resolved';
+export type OpsIncidentRow = {
+  id: number;
+  fingerprint: string;
+  source: string;
+  title: string;
+  status: OpsIncidentStatus;
+  slack_ts: string | null;
+  first_seen: string;
+  last_seen: string;
+  occurrences: number;
+  last_action: string | null;
+  resolved_at: string | null;
+};
+
 // Audit rows written for traffic that originated on the server itself (see
 // isInternalIp in auth.ts) carry detail {"internal":true}. Admin "last seen"
 // columns must ignore them or a QA curl run looks like a user visit.
@@ -1134,6 +1168,62 @@ export const queries = {
     getDb().prepare(
       `DELETE FROM job_locks WHERE name = ? AND holder = ?`
     ).run(name, holder),
+
+  // -------- Ops incidents (src/lib/ops) --------
+  upsertIncident: (fingerprint: string, source: string, title: string): { row: OpsIncidentRow; created: boolean } => {
+    const db = getDb();
+    const existing = db.prepare(`SELECT * FROM ops_incidents WHERE fingerprint = ?`).get(fingerprint) as OpsIncidentRow | undefined;
+    if (existing) {
+      db.prepare(`UPDATE ops_incidents SET last_seen = datetime('now'), occurrences = occurrences + 1, title = ? WHERE id = ?`)
+        .run(title, existing.id);
+      return { row: db.prepare(`SELECT * FROM ops_incidents WHERE id = ?`).get(existing.id) as OpsIncidentRow, created: false };
+    }
+    const r = db.prepare(`INSERT INTO ops_incidents (fingerprint, source, title) VALUES (?, ?, ?)`).run(fingerprint, source, title);
+    return { row: db.prepare(`SELECT * FROM ops_incidents WHERE id = ?`).get(Number(r.lastInsertRowid)) as OpsIncidentRow, created: true };
+  },
+  openIncidents: (): OpsIncidentRow[] =>
+    getDb().prepare(`SELECT * FROM ops_incidents WHERE status <> 'resolved' ORDER BY first_seen`).all() as OpsIncidentRow[],
+  incidentByThread: (slackTs: string): OpsIncidentRow | undefined =>
+    getDb().prepare(`SELECT * FROM ops_incidents WHERE slack_ts = ?`).get(slackTs) as OpsIncidentRow | undefined,
+  incidentById: (id: number): OpsIncidentRow | undefined =>
+    getDb().prepare(`SELECT * FROM ops_incidents WHERE id = ?`).get(id) as OpsIncidentRow | undefined,
+  setIncidentSlackTs: (id: number, ts: string): void => {
+    getDb().prepare(`UPDATE ops_incidents SET slack_ts = ? WHERE id = ?`).run(ts, id);
+  },
+  setIncidentStatus: (id: number, status: OpsIncidentStatus, lastAction?: string | null): void => {
+    if (lastAction === undefined) {
+      getDb().prepare(`UPDATE ops_incidents SET status = ? WHERE id = ?`).run(status, id);
+    } else {
+      getDb().prepare(`UPDATE ops_incidents SET status = ?, last_action = ? WHERE id = ?`).run(status, lastAction, id);
+    }
+  },
+  /** Marks resolved and suffixes the fingerprint with #id so a recurrence opens a new incident. */
+  resolveIncident: (id: number): void => {
+    getDb().prepare(
+      `UPDATE ops_incidents SET status = 'resolved', resolved_at = datetime('now'), fingerprint = fingerprint || '#' || id WHERE id = ?`
+    ).run(id);
+  },
+
+  // -------- Probe inputs for the ops detector --------
+  errorRowsSince: (sinceSqlite: string, limit = 200) =>
+    getDb().prepare(
+      `SELECT id, occurred_at, source, message, stack FROM error_log
+        WHERE level = 'error' AND occurred_at > ? ORDER BY occurred_at DESC LIMIT ?`
+    ).all(sinceSqlite, limit) as Array<{ id: number; occurred_at: string; source: string | null; message: string; stack: string | null }>,
+  failedJobRunsSince: (sinceSqlite: string) =>
+    getDb().prepare(
+      `SELECT job, started_at, message FROM job_runs WHERE ok = 0 AND started_at > ? ORDER BY started_at DESC`
+    ).all(sinceSqlite) as Array<{ job: string; started_at: string; message: string | null }>,
+  latestJobRunOk: (job: string): boolean | null => {
+    const r = getDb().prepare(
+      `SELECT ok FROM job_runs WHERE job = ? AND ok IS NOT NULL ORDER BY started_at DESC LIMIT 1`
+    ).get(job) as { ok: number } | undefined;
+    return r ? r.ok === 1 : null;
+  },
+  clearStaleJobLock: (name: string, minAgeMin: number): number =>
+    getDb().prepare(
+      `DELETE FROM job_locks WHERE name = ? AND started_at < datetime('now', ? || ' minutes')`
+    ).run(name, `-${Math.max(1, Math.floor(minAgeMin))}`).changes,
 
   rateLimitPrune: (maxAgeSec = 86400) =>
     getDb().prepare(`DELETE FROM rate_limits WHERE occurred_at < datetime('now', ?)`)
