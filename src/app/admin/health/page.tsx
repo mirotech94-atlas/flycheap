@@ -39,7 +39,8 @@ export default async function FareEnginePage() {
       }>;
 
   const lastPoll = (db.prepare(`SELECT MAX(polled_at) AS t FROM fare_snapshots`).get() as { t: string | null }).t;
-  const pollMin = minutesSince(lastPoll);
+  const lastAttempt = (db.prepare(`SELECT MAX(called_at) AS t FROM api_calls`).get() as { t: string | null }).t;
+  const pollMin = minutesSince(lastAttempt);
   const pollTone: Tone = pollMin == null ? 'bad' : pollMin > 90 ? 'bad' : pollMin > 45 ? 'warn' : 'good';
   const p95 = Math.round(latency.p95 ?? 0);
   const stale = coverage.filter(r => {
@@ -56,14 +57,14 @@ export default async function FareEnginePage() {
         right={
           <>
             <Status tone={pollTone}>{pollTone === 'good' ? 'Polling normally' : pollTone === 'warn' ? 'Polling slow' : 'Polling stalled'}</Status>
-            <Link href="/admin/settings" className="ad-btn">Tune cadence →</Link>
+            <a href="/admin/settings" className="ad-btn">Tune cadence →</a>
           </>
         }
       />
 
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi label="Fares recorded · 24h" value={fmtInt(snaps24h)} tone={pollTone}
-          spark={snapHourly.map(r => r.n)} foot={lastPoll ? `Last write ${ago(lastPoll)}` : 'No snapshots yet'} />
+          spark={snapHourly.map(r => r.n)} foot={lastAttempt ? `Last write ${lastPoll ? ago(lastPoll) : 'never'} \u00b7 last poll ${ago(lastAttempt)}` : 'No polls yet'} />
         <Kpi label="Provider calls · 24h" value={fmtInt(total24h)}
           foot={`${fmtInt(err24h)} error${err24h === 1 ? '' : 's'}`} />
         <Kpi label="Error rate · 24h" value={`${errRate.toFixed(2)}%`}

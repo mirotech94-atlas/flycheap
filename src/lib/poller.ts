@@ -140,6 +140,10 @@ async function pollOne(search: SearchRow): Promise<PollResult> {
 /** Shared tail: snapshot the offer, evaluate alert rules, notify. */
 async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<PollResult> {
   const summary = summarizeOffer(cheapest, search.adults, search.infants);
+  // Offers sourced from the /get_latest_prices month feed are NEARBY dates
+  // (often weeks off the requested days), not the exact trip the user tracks.
+  // Record them for coverage/history, but never fire a price alert on them.
+  const isNearby = ((cheapest as { raw?: { source?: string } }).raw?.source) === 'get_latest_prices';
   const inserted = queries.insertFare({
     search_id: search.id,
     ...summary,
@@ -177,7 +181,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   let dropPctActual: number | undefined;
 
   // (1) Threshold-cross alert: cheaper than user's target AND cheaper than the last alert sent.
-  const underThreshold = summary.price_per_adult_usd < threshold;
+  const underThreshold = !isNearby && summary.price_per_adult_usd < threshold;
   if (underThreshold) {
     const lastAlert = queries.lastAlertForSearch(search.id);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {
@@ -200,7 +204,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   // (1.5) "Ready"-alert: search was queued via /api/offers/queue-alert because
   // the on-demand poll timed out. The first time we successfully land a fare,
   // notify the owner regardless of threshold — they're waiting for ANY price.
-  if (!alerted) {
+  if (!alerted && !isNearby) {
     const readyKey = `notify_when_ready:search:${search.id}`;
     if (queries.getUserSetting(ownerId, readyKey) === '1') {
       const results = await notifyAll({
@@ -225,7 +229,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   // anything, so it is a paid capability. Free users still get every
   // threshold alert above; they just don't get "this is unusually cheap".
   const ownerLimits = limitsForUser(queries.getUserById(ownerId));
-  if (!alerted && ownerLimits.priceDropAlerts) {
+  if (!alerted && ownerLimits.priceDropAlerts && !isNearby) {
     const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct);
     if (drop.isDrop) {
       const results = await notifyAll({

@@ -90,6 +90,7 @@ function brief() {
 
   // Operations
   const lastPoll = one<{ t: string | null }>(`SELECT MAX(polled_at) AS t FROM fare_snapshots`).t;
+  const lastAttempt = one<{ t: string | null }>(`SELECT MAX(called_at) AS t FROM api_calls`).t;
   const snapshots = one<{ n: number }>(`SELECT COUNT(*) AS n FROM fare_snapshots`).n;
   const snapshots24h = one<{ n: number }>(
     `SELECT COUNT(*) AS n FROM fare_snapshots WHERE polled_at >= datetime('now','-1 day')`).n;
@@ -130,7 +131,7 @@ function brief() {
 
   return {
     m, aff, daily, signupSeries, paidUsers, mrr, billedPro, billedEnt, compAccounts, founding, foundingEnding, upgradeDue, pastDue,
-    waitlist, lastPoll, snapshots, snapshots24h, lastAlert, alerts24h, routesNoTarget, routesExpired,
+    waitlist, lastPoll, lastAttempt, snapshots, snapshots24h, lastAlert, alerts24h, routesNoTarget, routesExpired,
     errors24h, provs, provOk, clicks30, clicksLast7, clickTrendPct, tpBalance,
     ownRoutes, clientClicks30d, ownClicks30d, allAccounts, ownerTier,
   };
@@ -138,13 +139,13 @@ function brief() {
 
 export default async function CommandCenter() {
   const b = brief();
-  const pollMin = minutesSince(b.lastPoll);
+  const pollMin = minutesSince(b.lastAttempt);
   const pollTone: Tone = pollMin == null ? 'bad' : pollMin > 90 ? 'bad' : pollMin > 45 ? 'warn' : 'good';
   const signupSpark = b.signupSeries.map(d => d.n ?? 0);
 
   // Action items, most urgent first. Only real conditions — no filler.
   const actions: Array<{ tone: Tone; title: string; detail: string; href?: string; cta?: string }> = [];
-  if (pollTone === 'bad') actions.push({ tone: 'bad', title: 'Fare poller is stale', detail: `No snapshot written ${ago(b.lastPoll)}. Alerts cannot fire while the poller is down.`, href: '/admin/health', cta: 'Health' });
+  if (pollTone === 'bad') actions.push({ tone: 'bad', title: 'Fare poller is stale', detail: `No poll has run in ${ago(b.lastAttempt)}. Alerts cannot fire while the poller is down.`, href: '/admin/health', cta: 'Health' });
   if (b.pastDue > 0) actions.push({ tone: 'bad', title: `${b.pastDue} subscription${b.pastDue === 1 ? '' : 's'} past due`, detail: 'Payment failed and Stripe is retrying. The account drops to Free if it cannot collect.', href: '/admin/users', cta: 'Users' });
   if (b.waitlist.pending > 0) actions.push({ tone: 'gold', title: `${b.waitlist.pending} access request${b.waitlist.pending === 1 ? '' : 's'} waiting`, detail: 'Approve from the request email to send the invite, or review the full waitlist.', href: '/admin/signups#waitlist', cta: 'Review' });
   if (b.foundingEnding > 0) actions.push({ tone: 'warn', title: `${b.foundingEnding} founding trial${b.foundingEnding === 1 ? '' : 's'} end within 14 days`, detail: 'Upgrade nudges send automatically when each trial completes.', href: '/admin/users', cta: 'Users' });

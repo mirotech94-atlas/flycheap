@@ -6,8 +6,9 @@ import { LoginForm } from '@/components/LoginForm';
 import { getRequestLocale } from '@/lib/i18n/server';
 import { getAppDict } from '@/lib/i18n/app';
 import { Em } from '@/lib/i18n/rich';
-import { headers } from 'next/headers';
-import { isAdminHost } from '@/lib/auth';
+import { headers, cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { isAdminHost, getCurrentUser, isOwner, checkDeviceToken, DEVICE_COOKIE } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
@@ -65,13 +66,39 @@ function getLiveStats(): LiveStats {
   }
 }
 
-export default async function LoginPage() {
+export default async function LoginPage(
+  { searchParams }: { searchParams?: Promise<{ next?: string; fresh?: string }> },
+) {
   const stats = getLiveStats();
   const fmtK = (n: number) => (n >= 1000 ? `${(n / 1000).toFixed(n >= 10000 ? 0 : 1)}K` : String(n));
   const dict = getAppDict(await getRequestLocale());
   const t = dict.login;
   const h = await headers();
   const adminPortal = isAdminHost(h.get('x-forwarded-host') ?? h.get('host'));
+
+  // ── Skip OTP for returning users ──────────────────────────────────────
+  // A valid 30-day session, or a 90-day trusted-device cookie, means we
+  // already know this browser. Only genuinely new/forgotten devices see the
+  // OTP form below.
+  const sp = (await searchParams) ?? {};
+  const rawNext = typeof sp.next === 'string' ? sp.next : '';
+  const nextPath = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const dest = nextPath || (adminPortal ? '/admin' : '/');
+  const existingUser = await getCurrentUser();
+  if (existingUser) {
+    if (adminPortal && !isOwner(existingUser)) redirect('https://flycheap.18dn.com/');
+    redirect(dest);
+  }
+  if (sp.fresh !== '1') {
+    const devCookie = (await cookies()).get(DEVICE_COOKIE)?.value;
+    if (devCookie) {
+      const devUser = await checkDeviceToken();
+      if (devUser && !(adminPortal && !isOwner(devUser))) {
+        redirect(`/api/auth/resume?next=${encodeURIComponent(dest)}`);
+      }
+    }
+  }
+  // ──────────────────────────────────────────────────────────────────────
 
   if (adminPortal) {
     // Founder-only admin portal: one identity, no sign-ups, no marketing panel.
