@@ -59,17 +59,22 @@ export const AI_PROVIDERS: AiProvider[] = [
   {
     id: 'openrouter', label: 'OpenRouter', group: 'OpenRouter', order: 2,
     baseUrl: () => 'https://openrouter.ai/api/v1',
-    models: ['minimax/minimax-m3', 'openai/gpt-4o', 'anthropic/claude-3.5-sonnet', 'mistralai/mistral-7b-instruct'],
+    // Verified working on this account. NOTE: OpenRouter's ':free' variants are
+    // not available here (they 404 as "unavailable for free"), so minimax-m3 is
+    // the paid model — cheap, and only reached when Groq is exhausted.
+    models: ['minimax/minimax-m3'],
     auth: () => {
       const k = env('OPENROUTER_API_KEY');
       return k ? { apiKey: k, headers: { 'HTTP-Referer': 'https://flycheap.live', 'X-Title': 'FlyCheap' } } : null;
     },
-    note: 'Set OPENROUTER_API_KEY (has free models).',
+    note: 'Set OPENROUTER_API_KEY. Free ":free" models are unavailable on this account; minimax-m3 draws paid credit.',
   },
   {
     id: 'gemini', label: 'Google Gemini', group: 'Google Gemini', order: 3,
     baseUrl: () => 'https://generativelanguage.googleapis.com/v1beta/openai',
-    models: ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-pro'],
+    // Stable aliases (verified): older pinned ids like gemini-2.5-flash 404 for
+    // new API users, so use the "-latest" aliases that always resolve.
+    models: ['gemini-flash-latest', 'gemini-flash-lite-latest'],
     auth: () => { const k = env('GEMINI_API_KEY') ?? env('GOOGLE_API_KEY'); return k ? { apiKey: k } : null; },
     note: 'Set GEMINI_API_KEY (free tier).',
   },
