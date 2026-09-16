@@ -105,26 +105,7 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* FREE TRIAL */}
-        <div className="card flex flex-col">
-          <div className="eyebrow">Free trial</div>
-          <h3 className="font-display font-bold text-2xl mt-1">$0</h3>
-          <p className="text-xs text-slate-500">3 months, no card</p>
-          <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
-            <li>✓ Try everything basic for 3 months</li>
-            <li>✓ 5 tracked routes</li>
-            <li>✓ 30-min polling</li>
-            <li>✓ Email alerts</li>
-            <li className="text-slate-400">— after 3 months, continues on Free unless you upgrade</li>
-          </ul>
-          {signedIn ? (
-            <button className="btn w-full" disabled>Your account already started this</button>
-          ) : (
-            <a href="/login" className="btn btn-primary w-full text-center">Start free trial →</a>
-          )}
-        </div>
-
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
         {/* FREE */}
         <div className="card flex flex-col">
           <div className="eyebrow">Free</div>
@@ -138,15 +119,12 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
             <li className="text-slate-400">— no Slack / Telegram / WhatsApp / IG / SMS</li>
             <li className="text-slate-400">— no AI Route Intelligence</li>
           </ul>
-          {currentTier === 'free' ? (
+          {!signedIn ? (
+            <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
+          ) : currentTier === 'free' ? (
             <button className="btn w-full" disabled>Your current plan</button>
           ) : (
-            <button
-              type="button"
-              className="btn btn-danger w-full"
-              disabled={cancelling || !signedIn}
-              onClick={downgrade}
-            >
+            <button type="button" className="btn btn-danger w-full" disabled={cancelling} onClick={downgrade}>
               {cancelling ? 'Cancelling…' : 'Downgrade to Free now'}
             </button>
           )}
@@ -165,7 +143,9 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
               <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
                 {FEATURES[plan].map(f => <li key={f}>✓ {f}</li>)}
               </ul>
-              {isCurrent ? (
+              {!signedIn ? (
+                <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
+              ) : isCurrent ? (
                 <button className="btn w-full" disabled>Your current plan</button>
               ) : (
                 <div className="space-y-2">
@@ -195,7 +175,9 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
               <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
                 {FEATURES[plan].map(f => <li key={f}>✓ {f}</li>)}
               </ul>
-              {isCurrent ? (
+              {!signedIn ? (
+                <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
+              ) : isCurrent ? (
                 <button className="btn w-full" disabled>Your current plan</button>
               ) : (
                 <div className="space-y-2">

@@ -47,7 +47,7 @@ export function ExecutiveTopBar({
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return (parts[0][0] + parts[1][0]).toUpperCase();
   })();
-  const displayName = user?.name || user?.email?.split('@')[0] || 'Sign in';
+  const displayName = user?.name || user?.email?.split('@')[0] || 'Log in';
 
   return (
     <header className="topbar">
@@ -98,7 +98,7 @@ export function ExecutiveTopBar({
         ) : (
           <Link href="/login" className="user-chip" style={{ textDecoration: 'none', color: 'inherit' }}>
             <div className="avatar">→</div>
-            Sign in
+            Log in
           </Link>
         )}
       </div>

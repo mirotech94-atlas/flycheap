@@ -35,7 +35,7 @@ export function UserMenu() {
   if (!me) {
     return (
       <Link href="/login" className="text-sm text-white/80 hover:text-white px-3 py-1.5 rounded-md hover:bg-white/10">
-        Sign in
+        Log in
       </Link>
     );
   }

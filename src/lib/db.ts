@@ -491,6 +491,15 @@ function init(db: Database.Database) {
     db.exec(`ALTER TABLE users ADD COLUMN totp_secret TEXT`);
     db.exec(`ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0`);
   }
+  // The founding-trial end date. upsertUserByEmail() has always INSERTed this,
+  // but the column had no migration — a fresh DB (or a fresh deploy) broke on
+  // first signup. Idempotent: a no-op where the live DB already has it.
+  if (!userCols.some(c => c.name === 'trial_ends_at')) {
+    db.exec(`ALTER TABLE users ADD COLUMN trial_ends_at TEXT`);
+  }
+  if (!userCols.some(c => c.name === 'phone')) {
+    db.exec(`ALTER TABLE users ADD COLUMN phone TEXT`);
+  }
   // First-sign-in / authenticator-recovery email codes (typed 6-digit, replaces the
   // magic LINK whose universal-link/scheme handoff was unreliable in the app).
   db.exec(`

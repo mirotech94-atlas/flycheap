@@ -1,7 +1,7 @@
 import 'server-only';
 import crypto from 'node:crypto';
 import { Resend } from 'resend';
-import { getDb } from './db';
+import { getDb, queries } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
 
@@ -10,7 +10,7 @@ const APP = process.env.APP_URL || APP_URL;
 export const REFERRAL_BOOST = 5;
 
 export type EarlyAccessRow = {
-  id: number; email: string; home_airport: string | null; ref_code: string;
+  id: number; email: string; name: string | null; phone: string | null; home_airport: string | null; ref_code: string;
   referred_by: string | null; position: number; ip: string | null; created_at: string;
   approve_token: string | null; approved_at: string | null; declined_at: string | null;
 };
@@ -37,6 +37,8 @@ function ensure() {
   if (!cols.includes('approve_token')) getDb().exec('ALTER TABLE early_access ADD COLUMN approve_token TEXT');
   if (!cols.includes('approved_at')) getDb().exec('ALTER TABLE early_access ADD COLUMN approved_at TEXT');
   if (!cols.includes('declined_at')) getDb().exec('ALTER TABLE early_access ADD COLUMN declined_at TEXT');
+  if (!cols.includes('name')) getDb().exec('ALTER TABLE early_access ADD COLUMN name TEXT');
+  if (!cols.includes('phone')) getDb().exec('ALTER TABLE early_access ADD COLUMN phone TEXT');
   ensured = true;
 }
 
@@ -59,11 +61,13 @@ export type JoinResult = {
   refCode: string; referrals: number; shareUrl: string; total: number;
 };
 
-export function joinEarlyAccess(input: { email: string; homeAirport?: string | null; ref?: string | null; ip?: string | null }): JoinResult {
+export function joinEarlyAccess(input: { email: string; name?: string | null; phone?: string | null; homeAirport?: string | null; ref?: string | null; ip?: string | null }): JoinResult {
   ensure();
   const db = getDb();
   const email = input.email.trim().toLowerCase();
   const home = (input.homeAirport || '').trim().toUpperCase().slice(0, 3) || null;
+  const name = (input.name || '').trim().slice(0, 120) || null;
+  const phone = (input.phone || '').trim().slice(0, 32) || null;
   let ref = (input.ref || '').trim().toLowerCase().slice(0, 12) || null;
 
   let row = db.prepare('SELECT * FROM early_access WHERE email = ?').get(email) as EarlyAccessRow | undefined;
@@ -75,11 +79,13 @@ export function joinEarlyAccess(input: { email: string; homeAirport?: string | n
     const position = earlyAccessCount() + 1;
     let code = newRefCode();
     while (db.prepare('SELECT 1 FROM early_access WHERE ref_code = ?').get(code)) code = newRefCode();
-    db.prepare(`INSERT INTO early_access (email, home_airport, ref_code, referred_by, position, ip, approve_token) VALUES (?, ?, ?, ?, ?, ?, ?)`)
-      .run(email, home, code, ref, position, input.ip ?? null, crypto.randomBytes(18).toString('base64url'));
+    db.prepare(`INSERT INTO early_access (email, name, phone, home_airport, ref_code, referred_by, position, ip, approve_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(email, name, phone, home, code, ref, position, input.ip ?? null, crypto.randomBytes(18).toString('base64url'));
     row = db.prepare('SELECT * FROM early_access WHERE email = ?').get(email) as EarlyAccessRow;
-  } else if (home && !row.home_airport) {
-    db.prepare('UPDATE early_access SET home_airport = ? WHERE id = ?').run(home, row.id);
+  } else {
+    if (home && !row.home_airport) db.prepare('UPDATE early_access SET home_airport = ? WHERE id = ?').run(home, row.id);
+    if (name && !row.name) db.prepare('UPDATE early_access SET name = ? WHERE id = ?').run(name, row.id);
+    if (phone && !row.phone) db.prepare('UPDATE early_access SET phone = ? WHERE id = ?').run(phone, row.id);
   }
   const referrals = referralsFor(row.ref_code);
   return {
@@ -156,8 +162,10 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
   const html = `
   <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:28px;color:#0f172a">
     <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:14px">FlyCheap · Access request #${row.position}</div>
-    <h1 style="font-size:24px;margin:0 0 14px;color:#0a3a6b">${row.email}</h1>
+    <h1 style="font-size:24px;margin:0 0 14px;color:#0a3a6b">${row.name ? row.name + ' · ' : ''}${row.email}</h1>
     <table style="font-size:14px;color:#334155;border-collapse:collapse">
+      <tr><td style="padding:3px 14px 3px 0;color:#64748b">Name</td><td>${row.name ?? '—'}</td></tr>
+      <tr><td style="padding:3px 14px 3px 0;color:#64748b">Phone</td><td>${row.phone ?? '—'}</td></tr>
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Position</td><td>#${row.position} of ${total}</td></tr>
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Home airport</td><td>${row.home_airport ?? '—'}</td></tr>
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Referred by</td><td>${row.referred_by ?? '—'}</td></tr>
@@ -176,24 +184,35 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
   } catch (e) { console.error('[early-access] notify failed:', (e as Error).message); }
 }
 
-/** Sent to the requester when the owner approves. */
+/** Provision an approved requester's account (with the 3-month trial + their
+ *  name/phone), then email them a one-click magic link into the client app. */
+export async function approveAndProvision(row: EarlyAccessRow): Promise<void> {
+  const user = queries.upsertUserByEmail(row.email, row.name ?? undefined); // creates with founding_free trial
+  queries.setProfileIfEmpty(user.id, row.name ?? null, row.phone ?? null);
+  await sendInviteEmail(row);
+}
+
+/** Sent to the requester when the owner approves: a single button that logs them
+ *  straight into my.flycheap.live (their account is already set up). */
 export async function sendInviteEmail(row: EarlyAccessRow): Promise<void> {
   const r = resend(); if (!r) return;
+  // A 48-hour one-click login token. If it lapses, their account still exists and
+  // they can sign in normally at ${APP}/login.
+  const token = crypto.randomBytes(32).toString('base64url');
+  try { queries.insertMagicLink(token, row.email, 60 * 48); } catch (e) { console.error('[early-access] magic-link insert failed:', (e as Error).message); return; }
+  const loginUrl = `${APP}/api/auth/verify?token=${token}`;
+  const hi = row.name ? `${row.name.split(' ')[0]}, your` : 'Your';
   const html = `
   <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
     <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">FlyCheap · You're in</div>
-    <h1 style="font-size:30px;margin:0 0 10px;color:#0a3a6b;line-height:1.1">Your founding-member seat is open.</h1>
-    <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 18px">Welcome aboard. Sign up with <strong>${row.email}</strong> — one 6-digit code, no password — and add your first route. Your first 3 months are a free trial of the basic capabilities; upgrade to Pro or Enterprise whenever you want more.</p>
-    <a href="${APP}/login" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Create my account →</a>
-    <ol style="margin:26px 0 0;padding-left:20px;color:#334155;line-height:1.7;font-size:14px">
-      <li>Open the link, choose <strong>Sign up</strong>, use this email address.</li>
-      <li>Add a route and the per-adult price you'd love — polling starts immediately.</li>
-      <li>Reply to this email if anything at all gets in the way.</li>
-    </ol>
-    <div style="margin-top:30px;padding-top:18px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6"><a href="${APP}/demo" style="color:#94a3b8">4-minute demo</a> · <a href="${APP}/privacy" style="color:#94a3b8">Privacy</a></div>
+    <h1 style="font-size:30px;margin:0 0 10px;color:#0a3a6b;line-height:1.1">${hi} founding-member seat is open.</h1>
+    <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 22px">Welcome aboard. Your account is ready with a 3-month free trial of the basics — no card, no password. Just tap below to open FlyCheap and add your first route. Upgrade to Pro or Enterprise whenever you want more.</p>
+    <a href="${loginUrl}" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Open FlyCheap →</a>
+    <p style="color:#94a3b8;margin:22px 0 0;font-size:12px;line-height:1.6">This one-click sign-in link is valid for 48 hours. After that, sign in any time at <a href="${APP}/login" style="color:#94a3b8">${APP.replace('https://','')}/login</a> with this email.</p>
+    <div style="margin-top:26px;padding-top:18px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6"><a href="${APP}/demo" style="color:#94a3b8">4-minute demo</a> · <a href="${APP}/privacy" style="color:#94a3b8">Privacy</a></div>
   </div>`;
   try {
-    await r.emails.send({ from: supportFrom('FlyCheap'), to: row.email, subject: 'Your FlyCheap seat is open — welcome aboard', html });
+    await r.emails.send({ from: supportFrom('FlyCheap'), to: row.email, subject: "You're in — your FlyCheap account is ready", html });
   } catch (e) { console.error('[early-access] invite failed:', (e as Error).message); }
 }
 

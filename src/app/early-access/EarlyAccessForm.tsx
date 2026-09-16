@@ -11,7 +11,9 @@ export type FormLabels = {
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? `{${k}}`));
 
 export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: string; labels: FormLabels }) {
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
   const [ref, setRef] = useState(initialRef);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
@@ -31,7 +33,7 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   async function submit(e: React.FormEvent) {
     e.preventDefault(); setErr(null); setBusy(true);
     try {
-      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, ref, website: '' }) });
+      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, ref, website: '' }) });
       const j = await r.json();
       if (!j.ok) { setErr(j.error || t.err); return; }
       setRes(j);
@@ -56,7 +58,7 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
             <a href={`mailto:?subject=FlyCheap&body=${text}`}>{t.shareMail}</a>
           </div>
         </div>
-        <button type="button" className="dc-notyou" onClick={() => { try { localStorage.removeItem('fc_ea_result'); } catch { /* ignore */ } setRes(null); setEmail(''); }}>{t.notYou}</button>
+        <button type="button" className="dc-notyou" onClick={() => { try { localStorage.removeItem('fc_ea_result'); } catch { /* ignore */ } setRes(null); setName(''); setEmail(''); setPhone(''); }}>{t.notYou}</button>
       </div>
     );
   }
@@ -64,9 +66,15 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   return (
     <form className="dc-form" onSubmit={submit}>
       <div className="dc-form-row">
+        <input type="text" required autoComplete="name" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} aria-label="Full name" />
+      </div>
+      <div className="dc-form-row">
         <input type="email" required autoComplete="email" inputMode="email" placeholder={t.placeholder} value={email} onChange={e => setEmail(e.target.value)} aria-label="Email" />
+      </div>
+      <div className="dc-form-row">
+        <input type="tel" autoComplete="tel" inputMode="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} aria-label="Phone (optional)" />
         <input type="text" name="website" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: -9999, opacity: 0 }} aria-hidden="true" />
-        <button type="submit" className="dc-btn dc-btn-primary" disabled={busy || !email.includes('@')}>{busy ? t.busy : t.button}</button>
+        <button type="submit" className="dc-btn dc-btn-primary" disabled={busy || !email.includes('@') || name.trim().length < 2}>{busy ? t.busy : t.button}</button>
       </div>
       <div className="dc-form-fine">{t.fine}{ref && <span className="dc-accent"> · {t.invited}</span>}</div>
       {err && <div className="dc-form-err" role="alert">{err}</div>}

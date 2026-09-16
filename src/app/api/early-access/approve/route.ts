@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decideEarlyAccess, sendInviteEmail } from '@/lib/early-access';
+import { decideEarlyAccess, approveAndProvision } from '@/lib/early-access';
 import { queries } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
@@ -32,8 +32,8 @@ export async function GET(req: NextRequest) {
     });
   } catch { /* audit is best-effort */ }
   if (action === 'approve') {
-    await sendInviteEmail(row);
-    return page('Approved ✓', `${row.email} has been invited — their sign-up email is on its way.`);
+    await approveAndProvision(row);
+    return page('Approved ✓', `${row.email} is in — their account is set up with the 3-month trial and a one-click sign-in link is on its way.`);
   }
   return page('Declined', `${row.email} was marked as declined. No email was sent to them.`);
 }
