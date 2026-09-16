@@ -17,3 +17,6 @@ social/
 .superpowers/
 data/backups/
 mobile/
+data/*.db-wal
+data/*.db-shm
+tsconfig.tsbuildinfo
