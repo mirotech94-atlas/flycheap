@@ -81,7 +81,7 @@ export const ADMIN_TOOLS = [
   },
 ] as const;
 
-export type AdminToolResult = { content: string; is_error?: boolean };
+export type AdminToolResult = { content: string; is_error?: boolean; needs_step_up?: boolean };
 
 function j(v: unknown): string { try { return JSON.stringify(v, null, 2); } catch { return String(v); } }
 
@@ -97,8 +97,12 @@ async function findClient(query: string): Promise<AdminToolResult> {
 
 async function clientOverview(userId: number): Promise<AdminToolResult> {
   const db = getDb();
-  const user = db.prepare('SELECT * FROM users WHERE id = ?').get(userId);
-  if (!user) return { content: `No user with id ${userId}.`, is_error: true };
+  const rawUser = db.prepare('SELECT * FROM users WHERE id = ?').get(userId) as Record<string, unknown> | undefined;
+  if (!rawUser) return { content: `No user with id ${userId}.`, is_error: true };
+  // Never surface secrets through a read-only shortcut.
+  const user = { ...rawUser, totp_secret: rawUser.totp_secret ? '[redacted]' : null,
+    stripe_customer_id: rawUser.stripe_customer_id ? '[set]' : null,
+    stripe_subscription_id: rawUser.stripe_subscription_id ? '[set]' : null };
   const searches = db.prepare('SELECT * FROM searches WHERE user_id = ? ORDER BY id DESC LIMIT 50').all(userId);
   const alerts = db.prepare(
     `SELECT a.* FROM alerts_sent a JOIN searches s ON s.id = a.search_id WHERE s.user_id = ? ORDER BY a.id DESC LIMIT 20`,
@@ -150,10 +154,35 @@ async function runCommand(command: string): Promise<AdminToolResult> {
   }
 }
 
-/** Execute one admin tool and write the call to the audit trail. */
+const PRIVILEGED = new Set(['sql_query', 'run_command']);
+const EXEC_LIMIT = 30;        // max privileged calls
+const EXEC_WINDOW_SEC = 600;  // per 10 minutes, per owner
+
+export type AdminToolCtx = { adminUserId: number | null; stepUpOk: boolean };
+
+/** Execute one admin tool. Privileged tools (SQL/shell) require a valid TOTP
+ *  step-up and are rate-limited. Every call — including refusals — is audited. */
 export async function runAdminTool(
-  name: string, input: Record<string, unknown>, adminUserId: number | null,
+  name: string, input: Record<string, unknown>, ctx: AdminToolCtx,
 ): Promise<AdminToolResult> {
+  const audit = (res: AdminToolResult) => {
+    try {
+      queries.logAdminAgentAction({ adminUserId: ctx.adminUserId, tool: name,
+        input: j(input), resultPreview: res.content.slice(0, 500), ok: !res.is_error });
+    } catch { /* best-effort */ }
+    return res;
+  };
+
+  if (PRIVILEGED.has(name)) {
+    if (!ctx.stepUpOk) {
+      return audit({ content: 'STEP_UP_REQUIRED: a fresh 6-digit authenticator code is needed before running SQL or shell commands.', is_error: true, needs_step_up: true });
+    }
+    const ok = queries.rateLimitCheck('farepilot_exec', String(ctx.adminUserId ?? 0), EXEC_LIMIT, EXEC_WINDOW_SEC);
+    if (!ok) {
+      return audit({ content: `Rate limit: at most ${EXEC_LIMIT} SQL/shell actions per ${EXEC_WINDOW_SEC / 60} minutes. Wait and retry.`, is_error: true });
+    }
+  }
+
   let res: AdminToolResult;
   switch (name) {
     case 'find_client':     res = await findClient(String(input.query ?? '')); break;
@@ -163,11 +192,5 @@ export async function runAdminTool(
     case 'run_command':     res = await runCommand(String(input.command ?? '')); break;
     default:                res = { content: `Unknown tool: ${name}`, is_error: true };
   }
-  try {
-    queries.logAdminAgentAction({
-      adminUserId, tool: name, input: j(input),
-      resultPreview: res.content.slice(0, 500), ok: !res.is_error,
-    });
-  } catch { /* audit is best-effort, never blocks the action */ }
-  return res;
+  return audit(res);
 }

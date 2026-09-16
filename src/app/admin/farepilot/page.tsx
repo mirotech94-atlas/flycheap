@@ -13,6 +13,7 @@ export default async function FarePilotAdminPage() {
   if (!isOwner(user)) redirect('/');
 
   const audit = queries.recentAdminAgentAudit(15);
+  const totpEnabled = user.totp_enabled === 1 && !!user.totp_secret;
 
   return (
     <div className="space-y-6 motion-fade-in">
@@ -24,10 +25,15 @@ export default async function FarePilotAdminPage() {
         <p className="text-sm text-slate-500 mt-1">
           Owner-only. Full read / write / execute over the app and any client. Runs as <code className="text-xs">egyflights</code> on production. Every action is logged below.
         </p>
+        {!totpEnabled && (
+          <p className="mt-2 rounded-md bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-300">
+            Two-factor authentication is not enabled on your account. Read-only questions work, but running SQL or shell needs an authenticator code — enable 2FA on your account to unlock those.
+          </p>
+        )}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
-        <AdminFarePilot />
+        <AdminFarePilot totpEnabled={totpEnabled} />
 
         <div className="card">
           <div className="eyebrow mb-2">Recent actions</div>

@@ -1,17 +1,23 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
 import { z } from 'zod';
-import { getCurrentUser, isOwner } from '@/lib/auth';
-import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool } from '@/lib/adminAgentTools';
+import { getCurrentUser, isOwner, SESSION_COOKIE } from '@/lib/auth';
+import { verify as verifyTotp } from '@/lib/totp';
+import { queries } from '@/lib/db';
+import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, type AdminToolCtx } from '@/lib/adminAgentTools';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
+
+const STEPUP_WINDOW_SEC = 600; // a code unlocks SQL/shell for 10 minutes
 
 const Schema = z.object({
   messages: z.array(z.object({
     role: z.enum(['user', 'assistant']),
     content: z.string(),
   })).min(1).max(40),
+  totp: z.string().optional(),
 });
 
 const MAX_ITERATIONS = 8;
@@ -19,12 +25,12 @@ const MAX_ITERATIONS = 8;
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
 type ToolCall = { name: string; input: unknown; result_preview: string };
 type LoopResult =
-  | { ok: true; reply: string; turns: number; provider: string; toolCalls: ToolCall[] }
+  | { ok: true; reply: string; turns: number; provider: string; toolCalls: ToolCall[]; neededStepUp: boolean }
   | { ok: false; error: string };
 
 async function runLoop(
   opts: { baseUrl: string; apiKey: string; model: string; provider: string },
-  userMessages: ChatMsg[], adminUserId: number | null,
+  userMessages: ChatMsg[], ctx: AdminToolCtx,
 ): Promise<LoopResult> {
   const oaTools = ADMIN_TOOLS.map(t => ({
     type: 'function' as const,
@@ -40,6 +46,7 @@ async function runLoop(
     ...userMessages.map(m => ({ role: m.role, content: m.content } as OAMsg)),
   ];
   const toolCalls: ToolCall[] = [];
+  let neededStepUp = false;
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const res = await fetch(`${opts.baseUrl}/chat/completions`, {
@@ -57,13 +64,14 @@ async function runLoop(
 
     const calls = (msg.tool_calls ?? []) as Array<{ id: string; function: { name: string; arguments: string } }>;
     if (calls.length === 0) {
-      return { ok: true, reply: String(msg.content ?? ''), turns: i + 1, provider: opts.provider, toolCalls };
+      return { ok: true, reply: String(msg.content ?? ''), turns: i + 1, provider: opts.provider, toolCalls, neededStepUp };
     }
     messages.push({ role: 'assistant', content: msg.content ?? null, tool_calls: msg.tool_calls });
     for (const c of calls) {
       let input: Record<string, unknown> = {};
       try { input = JSON.parse(c.function.arguments || '{}'); } catch { /* keep {} */ }
-      const r = await runAdminTool(c.function.name, input, adminUserId);
+      const r = await runAdminTool(c.function.name, input, ctx);
+      if (r.needs_step_up) neededStepUp = true;
       toolCalls.push({ name: c.function.name, input, result_preview: r.content.slice(0, 300) });
       messages.push({ role: 'tool', tool_call_id: c.id, content: r.content });
     }
@@ -81,13 +89,29 @@ export async function POST(req: Request) {
   const parsed = Schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Bad request' }, { status: 400 });
 
+  // --- TOTP step-up: SQL/shell need a fresh code, then unlocked for 10 min. ---
+  const token = (await cookies()).get(SESSION_COOKIE)?.value ?? '';
+  const totpEnabled = me.totp_enabled === 1 && !!me.totp_secret;
+  const submitted = (parsed.data.totp ?? '').trim();
+  let stepUpJustGranted = false;
+  if (submitted && totpEnabled && verifyTotp(me.totp_secret as string, submitted)) {
+    queries.recordStepUp(token, me.id);
+    stepUpJustGranted = true;
+  } else if (submitted) {
+    // A code was sent but did not verify — tell the client so it can re-prompt.
+    return NextResponse.json({ error: totpEnabled ? 'That code did not verify — try again.' : 'Two-factor authentication is not enabled on your account.', totp_enabled: totpEnabled, needs_totp: totpEnabled }, { status: 401 });
+  }
+  const stepUpOk = totpEnabled && (stepUpJustGranted || queries.stepUpValidWithin(token, STEPUP_WINDOW_SEC));
+
+  const ctx: AdminToolCtx = { adminUserId: me.id, stepUpOk };
+
   const attempts: Array<() => Promise<LoopResult>> = [];
   if (process.env.GROQ_API_KEY) attempts.push(() => runLoop(
     { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' },
-    parsed.data.messages, me.id));
+    parsed.data.messages, ctx));
   if (process.env.OPENAI_API_KEY) attempts.push(() => runLoop(
     { baseUrl: 'https://api.openai.com/v1', apiKey: process.env.OPENAI_API_KEY!, model: process.env.CHAT_MODEL_OPENAI || 'gpt-4o-mini', provider: 'openai' },
-    parsed.data.messages, me.id));
+    parsed.data.messages, ctx));
   if (attempts.length === 0) {
     return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY or OPENAI_API_KEY).' }, { status: 500 });
   }
@@ -95,7 +119,13 @@ export async function POST(req: Request) {
   const errors: string[] = [];
   for (const attempt of attempts) {
     const r = await attempt();
-    if (r.ok) return NextResponse.json({ reply: r.reply, provider: r.provider, tool_calls: r.toolCalls });
+    if (r.ok) {
+      return NextResponse.json({
+        reply: r.reply, provider: r.provider, tool_calls: r.toolCalls,
+        needs_totp: r.neededStepUp && !stepUpOk,
+        totp_enabled: totpEnabled,
+      });
+    }
     errors.push(r.error);
   }
   return NextResponse.json({ error: `All providers failed: ${errors.join(' | ')}` }, { status: 502 });
