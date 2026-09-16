@@ -17,11 +17,9 @@
  * can render the launcher button, the chat-panel header, and per-message
  * bubbles — each in the right state at the right time.
  *
- * Why a waveform: a corporate ✈️ emoji or compass mark says "chatbot." A
- * live waveform that reacts to the conversation says "actual voice
- * assistant." It's the visual cue users already trust from Siri, Alexa,
- * ChatGPT voice — and it earns the "premium" framing the rest of the
- * design system is reaching for.
+ * The mark is a pair of aviator wings — FarePilot is a pilot — that gently
+ * breathe, faster while thinking/listening/speaking, with a per-mode ring
+ * glow. Premium and on-name, rather than a generic chat bubble.
  */
 
 type Mode = 'idle' | 'thinking' | 'listening' | 'speaking';
@@ -66,38 +64,12 @@ export function ConciergeAvatar({
       className={`relative inline-grid place-items-center rounded-full ${d.ring} ${ringTone} bg-brand-gradient transition-shadow duration-300 ${className}`}
       style={{ width: d.box, height: d.box }}
     >
-      <svg
-        viewBox="0 0 48 48"
-        width="100%"
-        height="100%"
-        className={waveClass}
-        aria-hidden="true"
-      >
-        <defs>
-          <linearGradient id="nadia-bar" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#ffffff" stopOpacity="0.95" />
-            <stop offset="100%" stopColor="#ffffff" stopOpacity="0.7" />
-          </linearGradient>
-        </defs>
-        {/* 5 vertical bars, centered. Each bar's scaleY is driven by the
-            CSS keyframes below, with a per-bar phase delay so the wave reads
-            as a continuous motion rather than 5 in unison. transform-box
-            keeps the scale anchored to each bar's own center. */}
-        <g style={{ transformOrigin: 'center', transformBox: 'fill-box' as unknown as 'fill-box' }}>
-          {[12, 18, 24, 30, 36].map((cx, i) => (
-            <rect
-              key={cx}
-              x={cx - 1.4}
-              y={20}
-              width={2.8}
-              height={8}
-              rx={1.4}
-              fill="url(#nadia-bar)"
-              className={`nadia-bar nadia-bar--${i}`}
-              style={{ transformOrigin: `${cx}px 24px`, transformBox: 'fill-box' as unknown as 'fill-box' }}
-            />
-          ))}
-        </g>
+      <svg viewBox="0 0 64 64" width="72%" height="72%" className={waveClass} aria-hidden="true">
+        {/* Aviator wings — FarePilot. Gold on the navy badge. */}
+        <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="#efcd6b" />
+        <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="#efcd6b" />
+        <circle cx="32" cy="32" r="7.5" fill="none" stroke="#efcd6b" strokeWidth="2.2" />
+        <circle cx="32" cy="32" r="2.6" fill="#efcd6b" />
       </svg>
       {/* Online indicator — a tiny pulse dot bottom-right, only for sm/md */}
       {size !== 'lg' && (
@@ -116,57 +88,14 @@ export function ConciergeAvatar({
           Keeps the avatar self-contained so it can be lifted into any page
           without touching globals.css. */}
       <style jsx>{`
-        .nadia-wave .nadia-bar {
-          will-change: transform;
-          animation: nadia-bounce 1.8s ease-in-out infinite;
-          transform-origin: center;
-          transform-box: fill-box;
-        }
-        .nadia-bar--0 { animation-delay: 0s; }
-        .nadia-bar--1 { animation-delay: 0.12s; }
-        .nadia-bar--2 { animation-delay: 0.24s; }
-        .nadia-bar--3 { animation-delay: 0.36s; }
-        .nadia-bar--4 { animation-delay: 0.48s; }
-
-        /* idle — gentle breathing */
-        .nadia-wave--idle .nadia-bar { animation-duration: 1.8s; }
-
-        /* thinking — slightly faster + reduced amplitude */
-        .nadia-wave--thinking .nadia-bar {
-          animation-name: nadia-pulse;
-          animation-duration: 1.1s;
-        }
-
-        /* listening — erratic, faster, full amplitude */
-        .nadia-wave--listening .nadia-bar {
-          animation-name: nadia-listen;
-          animation-duration: 0.6s;
-        }
-
-        /* speaking — rhythmic, taller bars, brand-gold flash */
-        .nadia-wave--speaking .nadia-bar {
-          animation-name: nadia-speak;
-          animation-duration: 0.45s;
-        }
-
-        @keyframes nadia-bounce {
-          0%, 100% { transform: scaleY(0.6); opacity: 0.78; }
-          50%      { transform: scaleY(1.2); opacity: 1; }
-        }
-        @keyframes nadia-pulse {
-          0%, 100% { transform: scaleY(0.75); }
-          50%      { transform: scaleY(1.15); }
-        }
-        @keyframes nadia-listen {
-          0%   { transform: scaleY(0.4); }
-          25%  { transform: scaleY(1.4); }
-          50%  { transform: scaleY(0.7); }
-          75%  { transform: scaleY(1.55); }
-          100% { transform: scaleY(0.5); }
-        }
-        @keyframes nadia-speak {
-          0%, 100% { transform: scaleY(0.5); }
-          50%      { transform: scaleY(1.7); }
+        .nadia-wave { transform-origin: center; will-change: transform; }
+        .nadia-wave--idle      { animation: wing-breathe 3s   ease-in-out infinite; }
+        .nadia-wave--thinking  { animation: wing-breathe 1.4s ease-in-out infinite; }
+        .nadia-wave--listening { animation: wing-breathe 0.7s ease-in-out infinite; }
+        .nadia-wave--speaking  { animation: wing-breathe 0.5s ease-in-out infinite; }
+        @keyframes wing-breathe {
+          0%, 100% { transform: scale(0.97); opacity: 0.92; }
+          50%      { transform: scale(1.05); opacity: 1; }
         }
       `}</style>
     </div>

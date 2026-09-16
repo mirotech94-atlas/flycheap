@@ -22,10 +22,12 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
       </defs>
       <rect width="64" height="64" rx="14" fill="url(#logo-bg)" />
       <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="rgba(255,255,255,.10)" />
-      <path
-        d="M52.4 15.8c.6-.6.6-1.7 0-2.3-.6-.6-1.7-.6-2.3 0L37.6 26 17.5 22.5l-3.5 3.5 16.4 7.6L20 43l-7.6-1.4-2.5 2.5 9.7 4.7 4.7 9.7 2.5-2.5L25.4 48l9.4-10.4 7.6 16.4 3.5-3.5L42.4 30.4z"
-        fill="url(#logo-gold)"
-      />
+      {/* Fare-drop: a plane descending a dotted price line — fares falling to target. */}
+      <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="url(#logo-gold)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="1 5" />
+      <circle cx="12" cy="20" r="2.8" fill="url(#logo-gold)" />
+      <g transform="translate(52,50) rotate(35)">
+        <path d="M0 -7 L6 6 L0 2 L-6 6 Z" fill="url(#logo-gold)" />
+      </g>
     </svg>
   );
 }
