@@ -43,6 +43,19 @@ describe('groqChat', () => {
     });
   });
 
+  it('adds response_format json_object when json:true', async () => {
+    let captured: any = null;
+    const fetchImpl = fakeFetch((url, init) => {
+      captured = JSON.parse(String(init.body));
+      return { status: 200, body: { choices: [{ message: { content: '{}' } }] } };
+    });
+    await groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-20b', system: 'Return JSON.',
+      messages: [{ role: 'user', content: 'go' }], maxTokens: 200, json: true, fetchImpl,
+    });
+    expect(captured.response_format).toEqual({ type: 'json_object' });
+  });
+
   it('throws on a non-2xx response', async () => {
     const fetchImpl = fakeFetch(() => ({ status: 401, body: 'unauthorized' }));
     await expect(groqChat({

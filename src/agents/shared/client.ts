@@ -107,9 +107,10 @@ export async function pingModel(model: AgentModel): Promise<boolean> {
   }
 }
 
-/** Plain text completion. */
+/** Plain text completion. Set json:true to request strict JSON from Groq
+ * (no effect on the Anthropic path, which relies on the prompt). */
 export async function complete(opts: {
-  model: AgentModel; system: string; user: string; maxTokens?: number;
+  model: AgentModel; system: string; user: string; maxTokens?: number; json?: boolean;
 }): Promise<string> {
   if (llmProvider() === 'groq') {
     const apiKey = process.env.GROQ_API_KEY;
@@ -121,6 +122,7 @@ export async function complete(opts: {
       system: opts.system,
       messages: [{ role: 'user', content: opts.user }],
       maxTokens: opts.maxTokens ?? 1024,
+      json: opts.json,
     })).trim();
   }
   const client = await getAnthropicClient();
@@ -153,6 +155,7 @@ export async function completeJSON<T>(opts: {
     system: opts.system + '\n\nReturn ONLY valid JSON. No prose, no markdown fences.',
     user: opts.user,
     maxTokens: opts.maxTokens ?? 2048,
+    json: true,
   });
   const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
   let parsed: unknown;

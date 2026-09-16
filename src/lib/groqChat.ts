@@ -30,6 +30,11 @@ export async function groqChat(opts: {
   system: string;
   messages: GroqChatMsg[];
   maxTokens: number;
+  // When true, ask Groq for strict JSON output (OpenAI-compatible
+  // response_format). The caller MUST also mention "JSON" in the prompt or
+  // Groq rejects the request; completeJSON already does. Reduces (does not
+  // guarantee) non-JSON replies from the gpt-oss models.
+  json?: boolean;
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
@@ -45,6 +50,7 @@ export async function groqChat(opts: {
       model: opts.model,
       max_tokens: opts.maxTokens,
       messages: [{ role: 'system', content: opts.system }, ...opts.messages],
+      ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
     }),
   });
 
