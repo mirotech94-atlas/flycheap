@@ -19,7 +19,7 @@ export const en = {
     groupFlights: 'Flights', groupServices: 'Services', groupHelp: 'Help',
     home: 'Home', flights: 'Flights', profile: 'Profile',
     tagline: 'Fare intelligence', toggle: 'Toggle navigation',
-    signIn: 'Sign in', signInArrow: 'Sign in →', signOut: 'Sign out', adminPortal: 'Admin portal →',
+    signIn: 'Log in', signInArrow: 'Log in →', signOut: 'Sign out', adminPortal: 'Admin portal →',
     guestA: 'FlyCheap watches ', guestStrong: '1,000+ airlines', guestB: ' around the clock and alerts you the moment a fare drops below your threshold.',
     whatIs: 'What is FlyCheap?', exploreDeals: 'Explore deals',
   },
@@ -53,7 +53,7 @@ export const en = {
 
   welcome: {
     brandMeta: 'Fare Intelligence Platform',
-    nav: { how: 'How it works', features: 'Features', pricing: 'Pricing', faq: 'FAQ', signIn: 'Sign in', earlyAccess: 'Get early access →' },
+    nav: { how: 'How it works', features: 'Features', pricing: 'Pricing', faq: 'FAQ', signIn: 'Log in', earlyAccess: 'Get early access →' },
     hero: {
       pill: 'Live · {providers} data providers · {fares} fares recorded',
       h1: [['The ', 'cheapest', ' fares,'], ['monitored ', 'for you', '.']] as Rich[],
@@ -147,7 +147,7 @@ export const en = {
       blurb: 'A flight intelligence platform built on Travelpayouts (Aviasales), Duffel, and Google Flights data. Some Book links are affiliate links — we may earn a commission at no extra cost to you. ',
       disclosure: 'Disclosure →',
       product: 'Product', dashboard: 'Dashboard', explore: 'Explore', watchlist: 'Watchlist', liveDemo: 'Live demo', pricing: 'Pricing', status: 'Status',
-      company: 'Company', about: 'About & docs', signIn: 'Sign in', contactSales: 'Contact sales',
+      company: 'Company', about: 'About & docs', signIn: 'Log in', contactSales: 'Contact sales',
       legal: 'Legal', terms: 'Terms of service', refunds: 'Refunds & cancellation', privacy: 'Privacy', trialTerms: 'Trial terms',
       copyright: '© 2026 FlyCheap · Operated by Myron Mekhael, New York · All rights reserved',
     },

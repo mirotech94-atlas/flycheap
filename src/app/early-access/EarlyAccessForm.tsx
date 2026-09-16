@@ -15,6 +15,7 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [ref, setRef] = useState(initialRef);
+  const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [res, setRes] = useState<Result | null>(null);
@@ -31,9 +32,11 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   }, []);
 
   async function submit(e: React.FormEvent) {
-    e.preventDefault(); setErr(null); setBusy(true);
+    e.preventDefault();
+    if (!agreed) { setErr('Please accept the Terms & Conditions to continue.'); return; }
+    setErr(null); setBusy(true);
     try {
-      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, ref, website: '' }) });
+      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, ref, acceptedTerms: true, website: '' }) });
       const j = await r.json();
       if (!j.ok) { setErr(j.error || t.err); return; }
       setRes(j);
@@ -74,8 +77,12 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
       <div className="dc-form-row">
         <input type="tel" autoComplete="tel" inputMode="tel" placeholder="Phone (optional)" value={phone} onChange={e => setPhone(e.target.value)} aria-label="Phone (optional)" />
         <input type="text" name="website" tabIndex={-1} autoComplete="off" style={{ position: 'absolute', left: -9999, opacity: 0 }} aria-hidden="true" />
-        <button type="submit" className="dc-btn dc-btn-primary" disabled={busy || !email.includes('@') || name.trim().length < 2}>{busy ? t.busy : t.button}</button>
+        <button type="submit" className="dc-btn dc-btn-primary" disabled={busy || !email.includes('@') || name.trim().length < 2 || !agreed}>{busy ? t.busy : t.button}</button>
       </div>
+      <label className="dc-form-terms" style={{ display: 'flex', gap: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.5, marginTop: 4, cursor: 'pointer' }}>
+        <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} aria-label="Accept terms and conditions" />
+        <span>I agree to FlyCheap&rsquo;s <a href="/terms" target="_blank" rel="noopener" className="dc-accent">Terms &amp; Conditions</a>, <a href="/trial-terms" target="_blank" rel="noopener" className="dc-accent">Trial Terms</a> and <a href="/privacy" target="_blank" rel="noopener" className="dc-accent">Privacy Policy</a>. The 3-month trial unlocks every feature, free, with no card.</span>
+      </label>
       <div className="dc-form-fine">{t.fine}{ref && <span className="dc-accent"> · {t.invited}</span>}</div>
       {err && <div className="dc-form-err" role="alert">{err}</div>}
     </form>

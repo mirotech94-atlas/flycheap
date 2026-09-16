@@ -13,7 +13,7 @@ function clientIp(req: NextRequest): string {
 
 /** POST { email, homeAirport?, ref? } → position + referral link. Idempotent per email. */
 export async function POST(req: NextRequest) {
-  let body: { email?: string; name?: string; phone?: string; homeAirport?: string; ref?: string; website?: string } = {};
+  let body: { email?: string; name?: string; phone?: string; homeAirport?: string; ref?: string; acceptedTerms?: boolean; website?: string } = {};
   try { body = await req.json(); } catch { /* fallthrough */ }
   // Honeypot: real users never fill "website".
   if (body.website) return NextResponse.json({ ok: true, position: 0 });
@@ -25,6 +25,10 @@ export async function POST(req: NextRequest) {
   const name = String(body.name ?? '').trim();
   if (name.length < 2 || name.length > 120) {
     return NextResponse.json({ ok: false, error: 'Please enter your name.' }, { status: 400 });
+  }
+  // Terms acceptance is required (the form gates on it; enforce server-side too).
+  if (body.acceptedTerms !== true) {
+    return NextResponse.json({ ok: false, error: 'Please accept the Terms & Conditions to continue.' }, { status: 400 });
   }
   const phone = String(body.phone ?? '').trim().slice(0, 32) || undefined;
   const ip = clientIp(req);

@@ -13,7 +13,7 @@ import { isAdminHost, getCurrentUser, isOwner, checkDeviceToken, DEVICE_COOKIE }
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Sign in — FlyCheap',
+  title: 'Log in — FlyCheap',
   description: 'Log in to your FlyCheap account to monitor cheap flights and get instant fare alerts.',
 };
 
