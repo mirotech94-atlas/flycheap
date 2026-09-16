@@ -6,6 +6,7 @@ import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoo
 import { formatCard, formatResolved, formatBackUp, formatFixingText, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
 import { createGroqMessagesClient } from './groqClient';
+import { llmProvider, groqModel } from '@/lib/llmProvider';
 import { CLIENT_HOST } from '@/lib/hosts';
 
 export type DetectorIO = {
@@ -260,15 +261,15 @@ export function productionIO(): DetectorIO {
 }
 
 function opsClient(): MessagesClient | null {
-  const provider = process.env.LLM_PROVIDER || (process.env.GROQ_API_KEY ? 'groq' : 'anthropic');
-  if (provider === 'groq' && process.env.GROQ_API_KEY) {
+  const provider = llmProvider();
+  if (provider === 'groq') {
     return createGroqMessagesClient({
-      apiKey: process.env.GROQ_API_KEY,
-      model: process.env.OPS_MODEL_GROQ || 'openai/gpt-oss-120b',
+      apiKey: process.env.GROQ_API_KEY!,
+      model: process.env.OPS_MODEL_GROQ || groqModel('smart'),
     });
   }
-  if (process.env.ANTHROPIC_API_KEY) {
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY }) as unknown as MessagesClient;
+  if (provider === 'anthropic') {
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
   }
   return null;
 }

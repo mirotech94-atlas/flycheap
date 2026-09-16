@@ -1,5 +1,7 @@
 import 'server-only';
 import { queries } from './db';
+import { llmProvider, groqModel } from './llmProvider';
+import { groqChat } from './groqChat';
 
 // Per-user Route Intelligence pipeline.
 //
@@ -158,18 +160,29 @@ export function computeUserStats(userId: number, daysBack = 60): RouteIntelStats
  */
 export async function generateProse(stats: RouteIntelStats): Promise<{ prose: string | null; model: string | null }> {
   if (stats.routes.length === 0) return { prose: null, model: null };
-  const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!apiKey) return { prose: null, model: null };
+  const provider = llmProvider();
+  if (provider === 'none') return { prose: null, model: null };
   // Cap on tokens / per-user generation count is enforced by the route-intel
   // job's outer scheduling — one summary per user per day max.
+  const system =
+    'You are a flight-deal analyst. Given a user\'s tracked-route pattern stats, write a 2-4 sentence narrative that highlights the SINGLE most actionable insight: best day to fly, cheapest month, or current buy/wait signal. Speak directly to the user ("your", "you"). No bullet points, no headers, no caveats — just the punchy summary. Keep it under 60 words.';
+  const userMsg =
+    `Stats JSON for the user's tracked routes (60-day window):\n${JSON.stringify(stats.routes.slice(0, 5), null, 2)}\n\nReturn ONLY the narrative paragraph. No preamble.`;
   try {
+    if (provider === 'groq') {
+      const model = groqModel('fast');
+      const text = (await groqChat({
+        apiKey: process.env.GROQ_API_KEY!,
+        model,
+        system,
+        messages: [{ role: 'user', content: userMsg }],
+        maxTokens: 220,
+      })).trim();
+      return { prose: text || null, model };
+    }
     const { default: Anthropic } = await import('@anthropic-ai/sdk');
-    const client = new Anthropic({ apiKey });
+    const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
     const model = 'claude-haiku-4-5-20251001';
-    const system =
-      'You are a flight-deal analyst. Given a user\'s tracked-route pattern stats, write a 2-4 sentence narrative that highlights the SINGLE most actionable insight: best day to fly, cheapest month, or current buy/wait signal. Speak directly to the user ("your", "you"). No bullet points, no headers, no caveats — just the punchy summary. Keep it under 60 words.';
-    const userMsg =
-      `Stats JSON for the user's tracked routes (60-day window):\n${JSON.stringify(stats.routes.slice(0, 5), null, 2)}\n\nReturn ONLY the narrative paragraph. No preamble.`;
     const res = await client.messages.create({
       model,
       max_tokens: 220,

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import { CHAT_SYSTEM_PROMPT, TOOLS, runTool } from '@/lib/chatTools';
 import { buildFlightHudPayload } from '@/lib/flightHud';
 import { getCurrentUser } from '@/lib/auth';
+import { llmProvider } from '@/lib/llmProvider';
 
 export const maxDuration = 60;
 
@@ -140,7 +141,10 @@ export async function POST(req: Request) {
   // is configured; the first that completes wins. Tool state is reset between
   // attempts so a failed provider's partial calls don't leak into the reply.
   const attempts: Array<() => Promise<LoopResult>> = [];
-  if (process.env.GROQ_API_KEY) {
+  // Gate the Groq attempt on the shared provider decision so an explicit
+  // LLM_PROVIDER=anthropic override actually skips Groq here too, instead of
+  // only affecting the ops detector / Slack concierge.
+  if (process.env.GROQ_API_KEY && llmProvider() === 'groq') {
     attempts.push(() => runOpenAICompatLoop(
       { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' },
       parsed.data.messages, toolCalls, toolResults,

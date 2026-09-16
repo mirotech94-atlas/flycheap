@@ -1,12 +1,16 @@
 import 'server-only';
+import { llmProvider, groqModel } from '@/lib/llmProvider';
+import { groqChat } from '@/lib/groqChat';
 
-// Thin wrapper over the Anthropic SDK shared by every agent. Mirrors the
-// proven pattern in src/lib/routeIntel.ts (dynamic import, dated model IDs).
+// Thin wrapper shared by every content agent. Groq is the primary provider;
+// Anthropic is kept only as a fallback (GROQ_API_KEY unset, or an explicit
+// LLM_PROVIDER=anthropic override) — see src/lib/llmProvider.ts.
 //
-// Pinned, dated model snapshots for reproducibility — curator/insights output
-// should not silently drift when an alias re-points. All three verified live
-// (HTTP 200) against the prod key on 2026-05-25.
-export const MODELS = {
+// Pinned, dated Anthropic model snapshots for reproducibility — curator/
+// insights output should not silently drift when an alias re-points. All
+// three verified live (HTTP 200) against the prod key on 2026-05-25. Groq
+// tiers ('smart' / 'fast') come from src/lib/llmProvider.ts.
+const ANTHROPIC_MODELS = {
   curator:  'claude-sonnet-4-5-20250929',
   insights: 'claude-sonnet-4-5-20250929',
   verifier: 'claude-haiku-4-5-20251001',
@@ -16,10 +20,33 @@ export const MODELS = {
   revenue:  'claude-sonnet-4-5-20250929',
 } as const;
 
-export type AgentModel = (typeof MODELS)[keyof typeof MODELS];
+type Role = keyof typeof ANTHROPIC_MODELS;
+
+// storyteller and social-poster reuse MODELS.curator; email-digest reuses
+// MODELS.insights (see those agents' imports) — so these four keys are the
+// full set of tiers actually needed.
+const ROLE_TIER: Record<Role, 'smart' | 'fast'> = {
+  curator: 'smart',
+  insights: 'smart',
+  revenue: 'smart',
+  verifier: 'fast',
+};
+
+function modelForRole(role: Role): string {
+  return llmProvider() === 'groq' ? groqModel(ROLE_TIER[role]) : ANTHROPIC_MODELS[role];
+}
+
+export const MODELS = {
+  curator: modelForRole('curator'),
+  insights: modelForRole('insights'),
+  verifier: modelForRole('verifier'),
+  revenue: modelForRole('revenue'),
+} as const;
+
+export type AgentModel = string;
 
 export function hasApiKey(): boolean {
-  return Boolean((process.env.ANTHROPIC_API_KEY ?? '').trim());
+  return llmProvider() !== 'none';
 }
 
 export function isDryRun(): boolean {
@@ -28,7 +55,7 @@ export function isDryRun(): boolean {
   return (process.env.AGENT_DRY_RUN ?? 'true').toLowerCase() !== 'false';
 }
 
-async function getClient() {
+async function getAnthropicClient() {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error('ANTHROPIC_API_KEY not set');
   const { default: Anthropic } = await import('@anthropic-ai/sdk');
@@ -41,12 +68,18 @@ async function getClient() {
  */
 export async function pingModel(model: AgentModel): Promise<boolean> {
   try {
-    const client = await getClient();
-    await client.messages.create({
-      model,
-      max_tokens: 1,
-      messages: [{ role: 'user', content: 'ping' }],
-    });
+    if (llmProvider() === 'groq') {
+      const apiKey = process.env.GROQ_API_KEY;
+      if (!apiKey) throw new Error('GROQ_API_KEY not set');
+      await groqChat({ apiKey, model, system: 'ping', messages: [{ role: 'user', content: 'ping' }], maxTokens: 1 });
+    } else {
+      const client = await getAnthropicClient();
+      await client.messages.create({
+        model,
+        max_tokens: 1,
+        messages: [{ role: 'user', content: 'ping' }],
+      });
+    }
     return true;
   } catch (e) {
     console.error(`[agents] model ping failed for ${model}:`, (e as Error).message);
@@ -58,7 +91,18 @@ export async function pingModel(model: AgentModel): Promise<boolean> {
 export async function complete(opts: {
   model: AgentModel; system: string; user: string; maxTokens?: number;
 }): Promise<string> {
-  const client = await getClient();
+  if (llmProvider() === 'groq') {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) throw new Error('GROQ_API_KEY not set');
+    return (await groqChat({
+      apiKey,
+      model: opts.model,
+      system: opts.system,
+      messages: [{ role: 'user', content: opts.user }],
+      maxTokens: opts.maxTokens ?? 1024,
+    })).trim();
+  }
+  const client = await getAnthropicClient();
   const res = await client.messages.create({
     model: opts.model,
     max_tokens: opts.maxTokens ?? 1024,

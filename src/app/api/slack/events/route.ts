@@ -5,6 +5,7 @@ import { queries } from '@/lib/db';
 import { postToSlackChannel, founderChannelId, postToSlackThread } from '@/lib/notifier';
 import { routeSlackMessage } from '@/lib/ops/route';
 import { groqChat } from '@/lib/groqChat';
+import { llmProvider, groqModel } from '@/lib/llmProvider';
 
 export const dynamic = 'force-dynamic';
 
@@ -103,10 +104,11 @@ async function answerInThread(
   question: string,
   opts: { isThreadReply: boolean },
 ) {
+  const provider = llmProvider();
+  const useGroq = provider === 'groq';
   const groqKey = process.env.GROQ_API_KEY;
-  const useGroq = Boolean(groqKey) && process.env.LLM_PROVIDER !== 'anthropic';
   const apiKey = process.env.ANTHROPIC_API_KEY;
-  if (!useGroq && !apiKey) {
+  if (provider === 'none') {
     await postToSlackChannelThread(channel, threadTs,
       'Thanks for the message — our team will follow up shortly. (AI assist is temporarily unavailable.)');
     return;
@@ -132,7 +134,7 @@ async function answerInThread(
     if (useGroq) {
       text = (await groqChat({
         apiKey: groqKey!,
-        model: process.env.SUPPORT_MODEL_GROQ || 'openai/gpt-oss-20b',
+        model: process.env.SUPPORT_MODEL_GROQ || groqModel('fast'),
         system: SUPPORT_SYSTEM_PROMPT,
         messages,
         maxTokens: 500,
