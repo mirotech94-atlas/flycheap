@@ -49,4 +49,55 @@ describe('groqChat', () => {
       apiKey: 'bad', model: 'openai/gpt-oss-20b', system: 's', messages: [], maxTokens: 100, fetchImpl,
     })).rejects.toThrow(/^Groq 401: /);
   });
+
+  it('retries once on 429 then succeeds, sleeping at least 20s', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          ok: false,
+          status: 429,
+          text: async () => 'Rate limit reached … Please try again in 35.115s.',
+          json: async () => ({}),
+        } as unknown as Response;
+      }
+      return {
+        ok: true,
+        status: 200,
+        text: async () => '',
+        json: async () => ({ choices: [{ message: { content: 'hello again' } }] }),
+      } as unknown as Response;
+    }) as typeof fetch;
+
+    const sleepCalls: number[] = [];
+    const sleep = async (ms: number) => { sleepCalls.push(ms); };
+    const reply = await groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-20b', system: 's', messages: [], maxTokens: 100, fetchImpl, sleep,
+    });
+
+    expect(calls).toBe(2);
+    expect(reply).toBe('hello again');
+    expect(sleepCalls).toHaveLength(1);
+    expect(sleepCalls[0]).toBeGreaterThanOrEqual(20000);
+  });
+
+  it('throws after exhausting retries when every attempt hits 429', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return {
+        ok: false,
+        status: 429,
+        text: async () => 'Please try again in 5s.',
+        json: async () => ({}),
+      } as unknown as Response;
+    }) as typeof fetch;
+    const sleep = async () => {};
+
+    await expect(groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-20b', system: 's', messages: [], maxTokens: 100, fetchImpl, sleep,
+    })).rejects.toThrow(/^Groq 429: /);
+    expect(calls).toBe(3);
+  });
 });

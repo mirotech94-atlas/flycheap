@@ -22,6 +22,25 @@ const ANTHROPIC_MODELS = {
 
 type Role = keyof typeof ANTHROPIC_MODELS;
 
+// A job (e.g. social-poster) can chain several agent completions back to
+// back within one process. Groq's free tier is 8,000 tokens/min/model, so
+// firing multiple completions in quick succession within that same minute
+// window risks a 429 even with groqChat's own retry — space consecutive
+// Groq calls out by a few seconds. Anthropic has no such shared-window limit
+// here, so the wait is skipped for it.
+const GROQ_CALL_SPACING_MS = 5_000;
+let lastGroqCallAt = 0;
+
+async function spaceGroqCalls(): Promise<void> {
+  if (llmProvider() !== 'groq') return;
+  const now = Date.now();
+  const elapsed = now - lastGroqCallAt;
+  if (lastGroqCallAt > 0 && elapsed < GROQ_CALL_SPACING_MS) {
+    await new Promise<void>(resolve => setTimeout(resolve, GROQ_CALL_SPACING_MS - elapsed));
+  }
+  lastGroqCallAt = Date.now();
+}
+
 // storyteller and social-poster reuse MODELS.curator; email-digest reuses
 // MODELS.insights (see those agents' imports) — so these four keys are the
 // full set of tiers actually needed.
@@ -71,6 +90,7 @@ export async function pingModel(model: AgentModel): Promise<boolean> {
     if (llmProvider() === 'groq') {
       const apiKey = process.env.GROQ_API_KEY;
       if (!apiKey) throw new Error('GROQ_API_KEY not set');
+      await spaceGroqCalls();
       await groqChat({ apiKey, model, system: 'ping', messages: [{ role: 'user', content: 'ping' }], maxTokens: 1 });
     } else {
       const client = await getAnthropicClient();
@@ -94,6 +114,7 @@ export async function complete(opts: {
   if (llmProvider() === 'groq') {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) throw new Error('GROQ_API_KEY not set');
+    await spaceGroqCalls();
     return (await groqChat({
       apiKey,
       model: opts.model,

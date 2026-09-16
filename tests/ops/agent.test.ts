@@ -172,6 +172,19 @@ describe('loops', () => {
     const d = await agent.diagnose(row, 'e', deps());
     expect(d).toEqual({ text: null, safeAction: null });
   });
+  it('diagnose includes the last release in the first user message when ops_last_release is set', async () => {
+    db.queries.setSetting('ops_last_release', '52cee4e 2026-09-16 14:45 UTC — channel commands');
+    let capturedMessages: Anthropic.MessageParam[] | null = null;
+    const client: import('@/lib/ops/agent').MessagesClient = { messages: { create: async (p) => {
+      capturedMessages = p.messages as Anthropic.MessageParam[];
+      return { id: 'm', type: 'message', role: 'assistant', model: 'x', content: [{ type: 'text', text: 'ok', citations: null }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } as unknown as Anthropic.Message;
+    } } };
+    const { row } = db.queries.upsertIncident('unit:release-aware', 'unit', 't');
+    await agent.diagnose(row, 'evidence', { ...deps(), client });
+    const firstUserMsg = capturedMessages![0];
+    expect(String(firstUserMsg.content)).toContain('Last release:');
+    expect(String(firstUserMsg.content)).toContain('52cee4e 2026-09-16 14:45 UTC — channel commands');
+  });
   it('handleThreadReply with approval executes the pending proposal', async () => {
     const { row } = db.queries.upsertIncident('err:e:f', 'err', 't');
     db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');

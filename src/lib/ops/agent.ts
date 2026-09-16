@@ -247,6 +247,7 @@ Rules:
 - Use SAFE tools on your own when they plausibly fix the problem.
 - GATED tools only run after the founder replies "go" to a proposal stating the exact tool, arguments, and why.
 - Never touch code, billing, or user data — say so and stop if the fix needs that.
+- If an incident's first_seen is older than the last release, assume the cause may already be fixed: for failed job units, the correct first safe action is start_job to re-run once; only escalate if the re-run fails.
 - Secrets never go through Slack. If a credential is missing, name the env var and give this exact command, then ask them to reply "done":
   sed -i 's/^VAR=.*/VAR=<value>/' /opt/egyptair-tracker/.env.local
 - Slack formatting: *bold*, code in backticks, no headers.
@@ -303,12 +304,20 @@ async function loop(opts: {
   return { text: 'Stopping: too many tool calls this turn.', restarted, toolCalls, lastToolResult };
 }
 
+/** Free-text line describing the last successful deploy (written by
+ * deploy/deploy.sh via `ops_last_release`), included in every diagnosis
+ * context so the model can tell whether an incident predates a fix. */
+function lastReleaseLine(): string {
+  const v = queries.getSetting('ops_last_release');
+  return `Last release: ${v ?? '(unknown)'}`;
+}
+
 export async function diagnose(incident: OpsIncidentRow, evidence: string, deps: AgentDeps):
   Promise<{ text: string | null; safeAction: { tool: string; input: Record<string, unknown> } | null }> {
   let safeAction: { tool: string; input: Record<string, unknown> } | null = null;
   const r = await loop({
     incident, mode: 'read', deps, approvedProposal: null,
-    messages: [{ role: 'user', content: `Incident: ${incident.title}\nSource: ${incident.source}\nSeen ${incident.occurrences}× since ${incident.first_seen} UTC.\n\nEvidence:\n${evidence || '(none gathered)'}` }],
+    messages: [{ role: 'user', content: `Incident: ${incident.title}\nSource: ${incident.source}\nSeen ${incident.occurrences}× since ${incident.first_seen} UTC.\n${lastReleaseLine()}\n\nEvidence:\n${evidence || '(none gathered)'}` }],
     onTool: (name, input) => {
       if (name !== 'propose_action') return;
       const tool = String(input.tool);
@@ -342,7 +351,7 @@ export async function handleThreadReply(incident: OpsIncidentRow, thread: Thread
     incident = queries.incidentById(incident.id) ?? incident;
   }
   const messages: Anthropic.MessageParam[] = [
-    { role: 'user', content: `Incident #${incident.id}: ${incident.title} (status ${incident.status}, seen ${incident.occurrences}× since ${incident.first_seen} UTC).` },
+    { role: 'user', content: `Incident #${incident.id}: ${incident.title} (status ${incident.status}, seen ${incident.occurrences}× since ${incident.first_seen} UTC).\n${lastReleaseLine()}` },
     ...thread.map(m => ({ role: m.role, content: m.content })),
   ];
   if (messages[messages.length - 1]?.role !== 'user' || messages[messages.length - 1]?.content !== latest) {
@@ -393,7 +402,7 @@ export async function handleChannelMessage(text: string, deps: AgentDeps): Promi
     channel: true,
     deps,
     approvedProposal: null,
-    messages: [{ role: 'user', content: `${context}\n\nFounder message in #admin_alerts: ${text}` }],
+    messages: [{ role: 'user', content: `${context}\n${lastReleaseLine()}\n\nFounder message in #admin_alerts: ${text}` }],
   });
   return { text: r.text ?? 'AI assist is unavailable right now; here is nothing new. Reply again later.', restarted: r.restarted };
 }

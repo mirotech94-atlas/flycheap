@@ -249,3 +249,26 @@ fi
 
 echo "==> Disk: $(df -h --output=avail / | tail -1 | tr -d ' ') free"
 echo "==> ✓ Deploy successful. Service active, HTTP 200. Tail logs: journalctl -u egyptair -f"
+
+# -------------------------------------------------------------------------
+# 7. RECORD THE RELEASE — lets the ops agent (src/lib/ops/agent.ts) tell
+#    whether an incident predates this deploy. The server tree has no git,
+#    so prefer `git describe` when available (dev/CI boxes) and otherwise
+#    fall back to a UTC timestamp.
+# -------------------------------------------------------------------------
+RELEASE_VALUE="$(git -C "$APP_DIR" describe --always --dirty 2>/dev/null || true)"
+if [ -n "$RELEASE_VALUE" ]; then
+  RELEASE_VALUE="$RELEASE_VALUE $(date -u +'%Y-%m-%d %H:%M UTC') deploy.sh"
+else
+  RELEASE_VALUE="$(date -u +'%Y-%m-%d %H:%M UTC') deploy.sh"
+fi
+if command -v sqlite3 >/dev/null 2>&1 && [ -f "$APP_DIR/data/fares.db" ]; then
+  # Escape single quotes for safe SQL string embedding (value is our own
+  # git-describe/date output, but escape defensively regardless).
+  RELEASE_VALUE_SQL="${RELEASE_VALUE//\'/\'\'}"
+  sqlite3 "$APP_DIR/data/fares.db" "INSERT INTO settings(key,value) VALUES('ops_last_release','${RELEASE_VALUE_SQL}') ON CONFLICT(key) DO UPDATE SET value=excluded.value" \
+    2>/dev/null || echo "==> WARNING: failed to record ops_last_release (non-fatal)" >&2
+else
+  echo "==> WARNING: sqlite3 or data/fares.db not found — skipping ops_last_release" >&2
+fi
+echo "==> Recorded ops_last_release: $RELEASE_VALUE"
