@@ -55,12 +55,12 @@ export function DepartureBoard({ rows }: { rows: BoardRow[] }) {
               <div className="mt-1.5 text-[12.5px]" style={{ color: 'var(--nc-on-dark-mute)' }}>
                 {day(r.departDate)} — {day(r.returnDate)}
               </div>
-              <div className="mt-2 text-[11.5px] font-medium" style={{ color: s.color === 'var(--nc-on-dark-faint)' ? 'var(--nc-on-dark-faint)' : undefined }}>
+              <div className="mt-2 text-[13.5px] font-semibold" style={{ color: s.color === 'var(--nc-on-dark-faint)' ? 'var(--nc-on-dark-faint)' : undefined }}>
                 <span style={{ color: s.label === 'At your price' ? 'var(--nc-mint)' : s.label === 'Lowest seen' ? 'var(--nc-teal)' : 'var(--nc-on-dark-faint)' }}>
                   {s.label}
                 </span>
                 {gap != null && gap > 0 && (
-                  <span style={{ color: 'var(--nc-on-dark-faint)' }}> · ${Math.round(gap)} above your target</span>
+                  <span style={{ color: 'var(--nc-on-dark-mute)' }}> · ${Math.round(gap)} above your target</span>
                 )}
               </div>
             </div>
