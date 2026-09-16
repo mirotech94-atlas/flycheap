@@ -3506,15 +3506,16 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
 /* A ticket stub: pale stock on the dark deck, with a torn edge. */
 .nc-ticket {
-  background: var(--nc-stock);
-  color: var(--nc-stock-ink);
+  background: var(--nc-deck);
+  color: var(--nc-on-dark);
+  border: 1px solid var(--nc-rule);
   border-radius: 10px;
   position: relative;
-  box-shadow: 0 10px 30px -18px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 10px 30px -20px rgba(0, 0, 0, 0.9);
 }
 /* The perforation: a dashed rule with a notch punched out of each edge. */
 .nc-ticket-stub {
-  border-left: 2px dashed var(--nc-stock-2);
+  border-left: 2px dashed var(--nc-rule-2);
   position: relative;
 }
 .nc-ticket-stub::before,

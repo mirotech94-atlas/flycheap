@@ -47,20 +47,20 @@ export function DepartureBoard({ rows }: { rows: BoardRow[] }) {
           <article key={r.id} className="nc-ticket flex items-stretch overflow-hidden">
             {/* Left: the itinerary */}
             <div className="flex-1 min-w-0 px-5 py-4">
-              <div className="nc-code text-[1.35rem]" style={{ color: 'var(--nc-stock-ink)' }}>
+              <div className="nc-code text-[1.35rem]" style={{ color: 'var(--nc-on-dark)' }}>
                 {r.origin}
-                <span aria-hidden className="mx-2" style={{ color: '#8C7A4E' }}>→</span>
+                <span aria-hidden className="mx-2" style={{ color: 'var(--nc-on-dark-faint)' }}>→</span>
                 {r.destination}
               </div>
-              <div className="mt-1.5 text-[12.5px]" style={{ color: '#5D6472' }}>
+              <div className="mt-1.5 text-[12.5px]" style={{ color: 'var(--nc-on-dark-mute)' }}>
                 {day(r.departDate)} — {day(r.returnDate)}
               </div>
-              <div className="mt-2 text-[11.5px] font-medium" style={{ color: s.color === 'var(--nc-on-dark-faint)' ? '#7A8191' : undefined }}>
-                <span style={{ color: s.label === 'At your price' ? '#2F7D53' : s.label === 'Lowest seen' ? '#9A6A12' : '#7A8191' }}>
+              <div className="mt-2 text-[11.5px] font-medium" style={{ color: s.color === 'var(--nc-on-dark-faint)' ? 'var(--nc-on-dark-faint)' : undefined }}>
+                <span style={{ color: s.label === 'At your price' ? 'var(--nc-mint)' : s.label === 'Lowest seen' ? 'var(--nc-teal)' : 'var(--nc-on-dark-faint)' }}>
                   {s.label}
                 </span>
                 {gap != null && gap > 0 && (
-                  <span style={{ color: '#7A8191' }}> · ${Math.round(gap)} above your target</span>
+                  <span style={{ color: 'var(--nc-on-dark-faint)' }}> · ${Math.round(gap)} above your target</span>
                 )}
               </div>
             </div>
@@ -70,17 +70,17 @@ export function DepartureBoard({ rows }: { rows: BoardRow[] }) {
               className="nc-ticket-stub shrink-0 px-5 py-4 flex flex-col items-end justify-center text-right"
               style={{ minWidth: '9.5rem' }}
             >
-              <div className="text-[10.5px] uppercase tracking-wider" style={{ color: '#8A8270' }}>
+              <div className="text-[10.5px] uppercase tracking-wider" style={{ color: 'var(--nc-on-dark-faint)' }}>
                 {r.perAdultUsd != null ? 'per adult' : 'no fare yet'}
               </div>
               <div
                 className="tabular-nums leading-none mt-1"
-                style={{ fontFamily: 'var(--nc-mono)', fontSize: '1.55rem', color: '#1A1E28' }}
+                style={{ fontFamily: 'var(--nc-mono)', fontSize: '1.55rem', color: 'var(--nc-amber)' }}
               >
                 {r.perAdultUsd != null ? `$${Math.round(r.perAdultUsd).toLocaleString('en-US')}` : '—'}
               </div>
               {r.target != null && (
-                <div className="text-[11px] mt-1.5" style={{ color: '#7A8191' }}>
+                <div className="text-[11px] mt-1.5" style={{ color: 'var(--nc-on-dark-faint)' }}>
                   target ${Math.round(r.target)}
                 </div>
               )}
