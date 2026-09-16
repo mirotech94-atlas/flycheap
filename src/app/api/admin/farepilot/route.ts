@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
 import { cookies, headers } from 'next/headers';
 import { z } from 'zod';
-import { getCurrentUser, isOwner, isAdminHost, SESSION_COOKIE } from '@/lib/auth';
+import { getCurrentUser, isOwner, SESSION_COOKIE } from '@/lib/auth';
 import { verify as verifyTotp } from '@/lib/totp';
 import { queries } from '@/lib/db';
-import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, type AdminToolCtx } from '@/lib/adminAgentTools';
+import { adminHostOk, sameOriginOk, clientIp } from '@/lib/adminGuard';
+import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, PRIVILEGED_TOOLS, type AdminToolCtx } from '@/lib/adminAgentTools';
 import {
-  recordStepUp, stepUpValid, isCodeReplay,
+  recordStepUp, stepUpValid, isCodeConsumed, consumeCode,
   verifyAllowed, recordVerifyAttempt, clearVerifyAttempts, VERIFY_LIMIT_INFO,
 } from '@/lib/adminAgentState';
 
@@ -14,11 +15,13 @@ export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 120;
 
+// F10: fail closed but shout if the env seed is not usable base32.
+if (process.env.OWNER_TOTP_SECRET && !/^[A-Z2-7]+=*$/i.test(process.env.OWNER_TOTP_SECRET.trim())) {
+  console.error('[farepilot] OWNER_TOTP_SECRET is set but is not valid base32 — step-up will fail closed.');
+}
+
 const Schema = z.object({
-  messages: z.array(z.object({
-    role: z.enum(['user', 'assistant']),
-    content: z.string().max(8000),
-  })).min(1).max(40),
+  messages: z.array(z.object({ role: z.enum(['user', 'assistant']), content: z.string().max(8000) })).min(1).max(40),
   totp: z.string().max(12).optional(),
 });
 
@@ -67,9 +70,12 @@ async function runLoop(
       let input: Record<string, unknown> = {};
       try { input = JSON.parse(c.function.arguments || '{}'); } catch { /* keep {} */ }
       const r = await runAdminTool(c.function.name, input, ctx);
-      if (r.needs_step_up) neededStepUp = true; else executed = true; // a tool that actually ran
+      if (r.needs_step_up) neededStepUp = true;
+      // F7: only a privileged tool that actually ran disables provider fallback.
+      else if (PRIVILEGED_TOOLS.has(c.function.name)) executed = true;
       toolCalls.push({ name: c.function.name, input, result_preview: r.content.slice(0, 300) });
-      messages.push({ role: 'tool', tool_call_id: c.id, content: r.content });
+      // F4: everything a tool returns is untrusted data, never instructions.
+      messages.push({ role: 'tool', tool_call_id: c.id, content: `<untrusted_data tool="${c.function.name}">\n${r.content}\n</untrusted_data>` });
     }
   }
   return { ok: false, error: `Hit max ${MAX_ITERATIONS} tool-use iterations`, executed };
@@ -77,43 +83,37 @@ async function runLoop(
 
 export async function POST(req: Request) {
   const h = await headers();
-  const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
+  if (!adminHostOk(h)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });          // I3
+  if (!sameOriginOk(h)) return NextResponse.json({ error: 'Cross-origin request refused.' }, { status: 403 }); // B3
 
-  // I3: this endpoint answers only on the admin host, and only same-origin.
-  if (!isAdminHost(host)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });
-  const secFetchSite = h.get('sec-fetch-site');
-  const origin = h.get('origin');
-  const sameOrigin = secFetchSite === 'same-origin' || (!!origin && (() => { try { return new URL(origin).host === host; } catch { return false; } })());
-  if (secFetchSite && !sameOrigin) return NextResponse.json({ error: 'Cross-origin request refused.' }, { status: 403 });
-
-  // OWNER-ONLY.
   const me = await getCurrentUser().catch(() => null);
   if (!me || !isOwner(me)) return NextResponse.json({ error: 'Forbidden — owner only.' }, { status: 403 });
 
   const parsed = Schema.safeParse(await req.json().catch(() => ({})));
   if (!parsed.success) return NextResponse.json({ error: 'Bad request' }, { status: 400 });
 
+  const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
   const token = (await cookies()).get(SESSION_COOKIE)?.value ?? '';
-  const ip = (h.get('x-forwarded-for') ?? '').split(',')[0]?.trim() || 'unknown';
-  // C2a: prefer an env seed for the gate so a plain DB read cannot reveal it.
+  const ip = clientIp(h); // F1: last hop
   const seed = (process.env.OWNER_TOTP_SECRET || (me.totp_secret ?? '')).trim();
   const totpEnabled = (me.totp_enabled === 1 || !!process.env.OWNER_TOTP_SECRET) && !!seed;
   const submitted = (parsed.data.totp ?? '').trim();
 
   let stepUpJustGranted = false;
   if (submitted) {
-    // C1: limit step-up attempts (per session AND per IP) before verifying.
     if (!verifyAllowed(token) || !verifyAllowed(`ip:${ip}`)) {
-      try { queries.logAdminAgentAction({ adminUserId: me.id, tool: 'step_up_verify', input: '', resultPreview: 'blocked: too many code attempts', ok: false }); } catch { /* ignore */ }
+      try { queries.logAdminAgentAction({ adminUserId: me.id, tool: 'step_up_verify', input: '', resultPreview: `blocked: too many attempts (${host})`, ok: false }); } catch { /* ignore */ }
       return NextResponse.json({ error: `Too many code attempts — wait ${VERIFY_LIMIT_INFO.windowMin} minutes.`, needs_totp: totpEnabled }, { status: 429 });
     }
     recordVerifyAttempt(token); recordVerifyAttempt(`ip:${ip}`);
-    if (!totpEnabled || !verifyTotp(seed, submitted) || isCodeReplay(token, submitted)) {
-      try { queries.logAdminAgentAction({ adminUserId: me.id, tool: 'step_up_verify', input: '', resultPreview: isCodeReplay(token, submitted) ? 'reused code' : 'bad code', ok: false }); } catch { /* ignore */ }
+    const good = totpEnabled && verifyTotp(seed, submitted) && !isCodeConsumed(me.id, submitted);
+    if (!good) {
+      try { queries.logAdminAgentAction({ adminUserId: me.id, tool: 'step_up_verify', input: '', resultPreview: !totpEnabled ? 'no 2fa' : (isCodeConsumed(me.id, submitted) ? 'reused code' : 'bad code'), ok: false }); } catch { /* ignore */ }
       return NextResponse.json({ error: totpEnabled ? 'That code did not verify — try again.' : 'Two-factor authentication is not enabled.', totp_enabled: totpEnabled, needs_totp: totpEnabled }, { status: 401 });
     }
+    consumeCode(me.id, submitted);
     clearVerifyAttempts(token); clearVerifyAttempts(`ip:${ip}`);
-    recordStepUp(token, submitted);
+    recordStepUp(token);
     stepUpJustGranted = true;
   }
   const stepUpOk = totpEnabled && (stepUpJustGranted || stepUpValid(token));
@@ -129,9 +129,7 @@ export async function POST(req: Request) {
     const r = await attempt();
     if (r.ok) return NextResponse.json({ reply: r.reply, provider: r.provider, tool_calls: r.toolCalls, needs_totp: r.neededStepUp && !stepUpOk, totp_enabled: totpEnabled });
     errors.push(r.error);
-    // I2: if a tool already ran this turn, do NOT retry another provider (would
-    // re-execute side effects). Return the error with what happened.
-    if (r.executed) return NextResponse.json({ error: `Provider failed after tools ran: ${r.error}. Not retrying to avoid re-executing actions.` }, { status: 502 });
+    if (r.executed) return NextResponse.json({ error: `Provider failed after a privileged tool ran: ${r.error}. Not retrying to avoid re-executing actions.` }, { status: 502 }); // I2
   }
   return NextResponse.json({ error: `All providers failed: ${errors.join(' | ')}` }, { status: 502 });
 }

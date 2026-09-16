@@ -78,6 +78,7 @@ function init(db: Database.Database) {
     );
 
     -- Server-side error log: lets us debug without ssh + tail
+    DROP TABLE IF EXISTS admin_stepup;
     CREATE TABLE IF NOT EXISTS admin_agent_audit (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       admin_user_id INTEGER,

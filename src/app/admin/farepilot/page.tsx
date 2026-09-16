@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
-import { getCurrentUser, isOwner } from '@/lib/auth';
+import { getCurrentUser, isOwner, isAdminHost } from '@/lib/auth';
+import { headers } from 'next/headers';
 import { queries } from '@/lib/db';
 import { AdminFarePilot } from '@/components/AdminFarePilot';
 import { fmtRelative } from '@/lib/utils';
@@ -7,13 +8,15 @@ import { fmtRelative } from '@/lib/utils';
 export const dynamic = 'force-dynamic';
 
 export default async function FarePilotAdminPage() {
+  const h = await headers();
+  if (!isAdminHost(h.get('x-forwarded-host') ?? h.get('host'))) redirect('https://flycheap.18dn.com/');
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=/admin/farepilot');
   // OWNER ONLY — this console can run arbitrary SQL + shell on production.
   if (!isOwner(user)) redirect('/');
 
   const audit = queries.recentAdminAgentAudit(15);
-  const totpEnabled = user.totp_enabled === 1 && !!user.totp_secret;
+  const totpEnabled = (user.totp_enabled === 1 && !!user.totp_secret) || !!process.env.OWNER_TOTP_SECRET;
 
   return (
     <div className="space-y-6 motion-fade-in">
