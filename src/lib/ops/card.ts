@@ -9,6 +9,12 @@ export function truncate(s: string, max: number): string {
   return s.length > max ? s.slice(0, max - 1) + '…' : s;
 }
 
+/** Text for a 'fixing' footer: tool + args, or just the tool name when it
+ * takes no input (e.g. restart_app). */
+export function formatFixingText(tool: string, input: Record<string, unknown>): string {
+  return Object.keys(input).length === 0 ? tool : `${tool} ${JSON.stringify(input)}`;
+}
+
 export function formatCard(args: {
   title: string; firstSeen: string; occurrences: number;
   evidence: string; diagnosis: string | null; footer: CardFooter;

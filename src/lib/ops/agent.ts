@@ -1,7 +1,7 @@
 import 'server-only';
 import type Anthropic from '@anthropic-ai/sdk';
 import { queries, getDb, type OpsIncidentRow } from '@/lib/db';
-import { commands, run, type Runner } from './shell';
+import { commands, run, normalizeUnit, type Runner } from './shell';
 import type { HealthJson } from './probes';
 
 /**
@@ -67,6 +67,41 @@ export function approvalGranted(latestHumanText: string): boolean {
   return /^(go|yes|do it|approved)\b/i.test(latestHumanText.trim());
 }
 
+/** Validates and normalises the input for a proposed SAFE tool, before it is
+ * ever recorded as a diagnosis's safeAction or run by auto-fix. Rejects
+ * anything not in SAFE_TOOLS (gated/unknown tools are proposals, not
+ * auto-fixes, and go through the approval path instead). */
+export function validateSafeAction(action: { tool: string; input: Record<string, unknown> }):
+  { ok: true; input: Record<string, unknown> } | { ok: false; reason: string } {
+  const { tool, input } = action;
+  if (!SAFE_TOOLS.has(tool)) return { ok: false, reason: 'not a safe tool' };
+  switch (tool) {
+    case 'poll_search': {
+      const raw = input.id;
+      const n = typeof raw === 'string' || typeof raw === 'number' ? Number(raw) : NaN;
+      if (!Number.isInteger(n) || n <= 0) return { ok: false, reason: 'poll_search needs a numeric search id' };
+      return { ok: true, input: { id: n } };
+    }
+    case 'start_job': {
+      try {
+        const unit = normalizeUnit(String(input.unit ?? ''));
+        return { ok: true, input: { unit } };
+      } catch {
+        return { ok: false, reason: 'start_job needs a unit like egyptair-jobs@<name>' };
+      }
+    }
+    case 'clear_job_lock': {
+      const name = input.name;
+      if (typeof name !== 'string' || !name.trim()) return { ok: false, reason: 'clear_job_lock needs a non-empty name' };
+      return { ok: true, input: { name } };
+    }
+    case 'restart_app':
+      return { ok: true, input: {} };
+    default:
+      return { ok: false, reason: 'not a safe tool' };
+  }
+}
+
 export function parseProposal(lastAction: string | null): Proposal | null {
   if (!lastAction || !lastAction.startsWith('PROPOSAL:')) return null;
   try {
@@ -112,7 +147,12 @@ export async function runOpsTool(
       }
       case 'propose_action': {
         const tool = String(input.tool ?? '');
-        if (!SAFE_TOOLS.has(tool) && !GATED_TOOLS.has(tool)) return { content: `cannot propose ${tool}`, is_error: true };
+        if (SAFE_TOOLS.has(tool)) {
+          const v = validateSafeAction({ tool, input: (input.input ?? {}) as Record<string, unknown> });
+          if (!v.ok) return { content: v.reason, is_error: true };
+          return { content: `recorded proposal: ${tool}` };
+        }
+        if (!GATED_TOOLS.has(tool)) return { content: `cannot propose ${tool}`, is_error: true };
         return { content: `recorded proposal: ${tool}` };
       }
       case 'restart_app': {
@@ -199,11 +239,11 @@ Rules:
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;
   approvedProposal: Proposal | null; onTool?: (name: string, input: Record<string, unknown>, result: ToolResult & { proposal?: Proposal }) => void;
-}): Promise<{ text: string | null; restarted: boolean; toolCalls: number }> {
+}): Promise<{ text: string | null; restarted: boolean; toolCalls: number; lastToolResult: string | null }> {
   const { deps } = opts;
-  if (!deps.client) return { text: null, restarted: false, toolCalls: 0 };
+  if (!deps.client) return { text: null, restarted: false, toolCalls: 0, lastToolResult: null };
   const messages = [...opts.messages];
-  let restarted = false, endsTurn = false, toolCalls = 0;
+  let restarted = false, endsTurn = false, toolCalls = 0, lastToolResult: string | null = null;
   const modeNote = opts.mode === 'read' ? 'MODE: diagnosis only. Use read tools, then call propose_action once if an action would help, then summarise in 2–4 sentences.'
     : opts.mode === 'safe' ? 'MODE: auto-fix. Run the one safe action you were given, check the result, summarise in one or two lines.'
     : 'MODE: conversation with the founder in the incident thread.';
@@ -212,10 +252,10 @@ async function loop(opts: {
     try {
       res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: MAX_TOKENS_BY_MODE[opts.mode], system: `${SYSTEM}\n\n${modeNote}`, tools: toolsForMode(opts.mode), messages });
     } catch (e) {
-      return { text: `AI assist error: ${(e as Error).message}`, restarted, toolCalls };
+      return { text: `AI assist error: ${(e as Error).message}`, restarted, toolCalls, lastToolResult };
     }
     const text = res.content.filter((b): b is Anthropic.TextBlock => b.type === 'text').map(b => b.text).join('\n').trim();
-    if (res.stop_reason !== 'tool_use') return { text: text || null, restarted, toolCalls };
+    if (res.stop_reason !== 'tool_use') return { text: text || null, restarted, toolCalls, lastToolResult };
     messages.push({ role: 'assistant', content: res.content });
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const t of res.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use')) {
@@ -224,6 +264,7 @@ async function loop(opts: {
       const r = toolCalls > MAX_TOOL_CALLS
         ? { content: 'tool budget exhausted for this turn; summarise now', is_error: true }
         : await runOpsTool(t.name, input, { incident: queries.incidentById(opts.incident.id) ?? opts.incident, mode: opts.mode, approvedProposal: opts.approvedProposal, deps });
+      lastToolResult = r.content.slice(0, 300);
       if ((r as { restarted?: boolean }).restarted) {
         restarted = true;
         // Only restart_app kills the current process mid-turn (its own tool
@@ -237,10 +278,10 @@ async function loop(opts: {
     messages.push({ role: 'user', content: results });
     if (endsTurn) {
       // The process is about to die; return whatever text we have.
-      return { text: text || 'Restarting now — I will confirm health after boot.', restarted, toolCalls };
+      return { text: text || 'Restarting now — I will confirm health after boot.', restarted, toolCalls, lastToolResult };
     }
   }
-  return { text: 'Stopping: too many tool calls this turn.', restarted, toolCalls };
+  return { text: 'Stopping: too many tool calls this turn.', restarted, toolCalls, lastToolResult };
 }
 
 export async function diagnose(incident: OpsIncidentRow, evidence: string, deps: AgentDeps):
@@ -250,9 +291,10 @@ export async function diagnose(incident: OpsIncidentRow, evidence: string, deps:
     incident, mode: 'read', deps, approvedProposal: null,
     messages: [{ role: 'user', content: `Incident: ${incident.title}\nSource: ${incident.source}\nSeen ${incident.occurrences}× since ${incident.first_seen} UTC.\n\nEvidence:\n${evidence || '(none gathered)'}` }],
     onTool: (name, input) => {
-      if (name === 'propose_action' && SAFE_TOOLS.has(String(input.tool))) {
-        safeAction = { tool: String(input.tool), input: (input.input ?? {}) as Record<string, unknown> };
-      }
+      if (name !== 'propose_action') return;
+      const tool = String(input.tool);
+      const v = validateSafeAction({ tool, input: (input.input ?? {}) as Record<string, unknown> });
+      if (v.ok) safeAction = { tool, input: v.input };
     },
   });
   return { text: r.text, safeAction };
@@ -265,7 +307,7 @@ export async function autoFix(incident: OpsIncidentRow, action: { tool: string; 
     incident, mode: 'safe', deps, approvedProposal: null,
     messages: [{ role: 'user', content: `Run this safe action now and report: ${action.tool} ${JSON.stringify(action.input)}` }],
   });
-  return { text: r.text ?? 'done', restarted: r.restarted };
+  return { text: r.text ?? r.lastToolResult ?? 'done', restarted: r.restarted };
 }
 
 export async function handleThreadReply(incident: OpsIncidentRow, thread: ThreadMsg[], latest: string, deps: AgentDeps):

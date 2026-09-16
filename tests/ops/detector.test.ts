@@ -248,6 +248,59 @@ describe('tick', () => {
   });
 });
 
+describe('openCard auto-fix reply', () => {
+  it('posts a 🔧 Ran ... reply containing the tool result when the auto-fix turn returns no text', async () => {
+    resetIncidents();
+    db.getDb().prepare('DELETE FROM job_runs').run();
+    const client = scripted([
+      // diagnose (read mode): propose poll_search with id 7
+      [{ type: 'tool_use', id: 't1', name: 'propose_action', input: { tool: 'poll_search', input: { id: 7 }, reason: 'stale search' } }],
+      [{ type: 'text', text: 'Re-polling search 7.', citations: null }],
+      // autoFix (safe mode): calls poll_search, then returns no text at all
+      [{ type: 'tool_use', id: 't2', name: 'poll_search', input: { id: 7 } }],
+      [{ type: 'text', text: '', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    const h = io({
+      client,
+      failed: '● egyptair-jobs@poller.service loaded failed failed x',
+    });
+    await det.tick(h.io);
+    const posted = h.threads.find(([, text]) => text.startsWith('🔧 Ran poll_search {"id":7}'));
+    expect(posted).toBeTruthy();
+    expect(posted?.[1]).not.toContain('(no summary from the agent)');
+  });
+
+  it('posts a ⚠️ Auto-fix ... failed reply when autoFix throws, and tick still returns normally', async () => {
+    resetIncidents();
+    db.getDb().prepare('DELETE FROM job_runs').run();
+    const client = scripted([
+      [{ type: 'tool_use', id: 't1', name: 'propose_action', input: { tool: 'poll_search', input: { id: 7 }, reason: 'stale search' } }],
+      [{ type: 'text', text: 'Re-polling search 7.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    // Force autoFix to throw: the second call detector.ts makes to
+    // queries.incidentById (right before invoking autoFix) blows up, so the
+    // whole "run the auto-fix" step in openCard throws — same effect as
+    // autoFix itself throwing, without reaching into its internals.
+    const original = db.queries.incidentById;
+    let calls = 0;
+    (db.queries as unknown as { incidentById: typeof original }).incidentById = ((id: number) => {
+      calls += 1;
+      if (calls > 2) throw new Error('groq 500');
+      return original(id);
+    }) as typeof original;
+    try {
+      const h = io({ client, failed: '● egyptair-jobs@poller2.service loaded failed failed x' });
+      const r = await det.tick(h.io);
+      expect(r).toBeTruthy();
+      const posted = h.threads.find(([, text]) => text.startsWith('⚠️ Auto-fix poll_search failed:'));
+      expect(posted).toBeTruthy();
+      expect(posted?.[1]).toContain('groq 500');
+    } finally {
+      (db.queries as unknown as { incidentById: typeof original }).incidentById = original;
+    }
+  });
+});
+
 describe('postBootCheck', () => {
   it('posts back up into fixing threads that have a restart or deploy timestamp', async () => {
     const { row } = db.queries.upsertIncident('health:last_poll', 'health', 'Health check failing: last_poll');

@@ -3,7 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { queries, type OpsIncidentRow } from '@/lib/db';
 import { commands, run, defaultRunner, type Runner } from './shell';
 import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, errorFingerprint, type Finding, type HealthJson } from './probes';
-import { formatCard, formatResolved, formatBackUp, type CardFooter } from './card';
+import { formatCard, formatResolved, formatBackUp, formatFixingText, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
 import { createGroqMessagesClient } from './groqClient';
 import { CLIENT_HOST } from '@/lib/hosts';
@@ -108,16 +108,25 @@ async function openCard(inc: OpsIncidentRow, f: Finding, io: DetectorIO): Promis
   const evidence = await evidenceFor(f, io);
   const d = await diagnose(inc, evidence, agentDeps(io));
   let footer: CardFooter = { kind: 'none' };
-  if (d.safeAction) footer = { kind: 'fixing', text: `${d.safeAction.tool} ${JSON.stringify(d.safeAction.input)}` };
+  if (d.safeAction) footer = { kind: 'fixing', text: formatFixingText(d.safeAction.tool, d.safeAction.input) };
   const pending = queries.incidentById(inc.id)?.last_action;
   if (pending?.startsWith('PROPOSAL:')) footer = { kind: 'needs_you', text: 'see the proposal below and reply *go* to approve' };
   const ts = await io.postCard(formatCard({ title: inc.title, firstSeen: inc.first_seen, occurrences: inc.occurrences, evidence, diagnosis: d.text, footer }));
   if (!ts) return { posted: false, restarted: false };
   queries.setIncidentSlackTs(inc.id, ts);
   if (!d.safeAction) return { posted: true, restarted: false };
-  const fix = await autoFix(queries.incidentById(inc.id) ?? inc, d.safeAction, agentDeps(io));
-  const restarted = fix.restarted;
-  try { await io.postThread(ts, fix.text); }
+  const { tool, input } = d.safeAction;
+  let restarted = false;
+  let replyText: string;
+  try {
+    const fix = await autoFix(queries.incidentById(inc.id) ?? inc, d.safeAction, agentDeps(io));
+    restarted = fix.restarted;
+    const summary = fix.text.trim();
+    replyText = `🔧 Ran ${tool} ${JSON.stringify(input)}\n${summary || '(no summary from the agent)'}`;
+  } catch (e) {
+    replyText = `⚠️ Auto-fix ${tool} failed: ${(e as Error).message}`;
+  }
+  try { await io.postThread(ts, replyText); }
   catch (e) { queries.logError({ source: 'ops-detector', message: `postThread failed for incident ${inc.id}: ${(e as Error).message}` }); }
   return { posted: true, restarted };
 }

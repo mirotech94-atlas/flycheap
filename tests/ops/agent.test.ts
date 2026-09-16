@@ -165,7 +165,7 @@ describe('loops', () => {
     ] as unknown as Array<Anthropic.Message['content']>);
     const d = await agent.diagnose(row, 'evidence', { ...deps(), client });
     expect(d.text).toContain('Compact failed once');
-    expect(d.safeAction).toEqual({ tool: 'start_job', input: { unit: 'egyptair-jobs@compact' } });
+    expect(d.safeAction).toEqual({ tool: 'start_job', input: { unit: 'egyptair-jobs@compact.service' } });
   });
   it('diagnose with no client returns unavailable', async () => {
     const { row } = db.queries.upsertIncident('unit:y', 'unit', 't');
@@ -232,5 +232,60 @@ describe('loops', () => {
     const r2 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: deployClient });
     expect(r2.text).toBeTruthy();
     expect(calls).toEqual([]);
+  });
+});
+
+describe('validateSafeAction', () => {
+  it('poll_search requires a positive integer id, coercing numeric strings', () => {
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: { id: 7 } })).toEqual({ ok: true, input: { id: 7 } });
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: { id: '7' } })).toEqual({ ok: true, input: { id: 7 } });
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: {} })).toEqual({ ok: false, reason: 'poll_search needs a numeric search id' });
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: { id: 'abc' } })).toEqual({ ok: false, reason: 'poll_search needs a numeric search id' });
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: { id: -1 } })).toEqual({ ok: false, reason: 'poll_search needs a numeric search id' });
+    expect(agent.validateSafeAction({ tool: 'poll_search', input: { id: 1.5 } })).toEqual({ ok: false, reason: 'poll_search needs a numeric search id' });
+  });
+  it('start_job normalises a valid unit and rejects a bad one', () => {
+    expect(agent.validateSafeAction({ tool: 'start_job', input: { unit: 'egyptair-jobs@digest' } })).toEqual({ ok: true, input: { unit: 'egyptair-jobs@digest.service' } });
+    expect(agent.validateSafeAction({ tool: 'start_job', input: { unit: 'caddy' } })).toEqual({ ok: false, reason: 'start_job needs a unit like egyptair-jobs@<name>' });
+    expect(agent.validateSafeAction({ tool: 'start_job', input: {} })).toEqual({ ok: false, reason: 'start_job needs a unit like egyptair-jobs@<name>' });
+  });
+  it('clear_job_lock requires a non-empty name', () => {
+    expect(agent.validateSafeAction({ tool: 'clear_job_lock', input: { name: 'digest' } })).toEqual({ ok: true, input: { name: 'digest' } });
+    expect(agent.validateSafeAction({ tool: 'clear_job_lock', input: { name: '' } })).toEqual({ ok: false, reason: 'clear_job_lock needs a non-empty name' });
+    expect(agent.validateSafeAction({ tool: 'clear_job_lock', input: {} })).toEqual({ ok: false, reason: 'clear_job_lock needs a non-empty name' });
+  });
+  it('restart_app needs no input', () => {
+    expect(agent.validateSafeAction({ tool: 'restart_app', input: {} })).toEqual({ ok: true, input: {} });
+    expect(agent.validateSafeAction({ tool: 'restart_app', input: { whatever: 1 } })).toEqual({ ok: true, input: {} });
+  });
+  it('rejects anything not in SAFE_TOOLS', () => {
+    expect(agent.validateSafeAction({ tool: 'redeploy', input: {} })).toEqual({ ok: false, reason: 'not a safe tool' });
+    expect(agent.validateSafeAction({ tool: 'bogus', input: {} })).toEqual({ ok: false, reason: 'not a safe tool' });
+  });
+});
+
+describe('propose_action validation', () => {
+  it('propose_action with poll_search {} returns an error result and diagnose yields safeAction: null', async () => {
+    const { row } = db.queries.upsertIncident('unit:no-id', 'unit', 't');
+    const r = await agent.runOpsTool('propose_action', { tool: 'poll_search', input: {}, reason: 'x' }, { incident: row, mode: 'read', approvedProposal: null, deps: deps() });
+    expect(r.is_error).toBe(true);
+    expect(r.content).toBe('poll_search needs a numeric search id');
+
+    const client = scripted([
+      [{ type: 'tool_use', id: 't1', name: 'propose_action', input: { tool: 'poll_search', input: {}, reason: 'x' } }],
+      [{ type: 'text', text: 'Could not identify a search id.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    const d = await agent.diagnose(row, 'evidence', { ...deps(), client });
+    expect(d.safeAction).toBeNull();
+  });
+  it('a diagnosis that first proposes without id, then with { id: 7 }, yields the corrected safeAction', async () => {
+    const { row } = db.queries.upsertIncident('unit:corrects-itself', 'unit', 't');
+    const client = scripted([
+      [{ type: 'tool_use', id: 't1', name: 'propose_action', input: { tool: 'poll_search', input: {}, reason: 'first try' } }],
+      [{ type: 'tool_use', id: 't2', name: 'propose_action', input: { tool: 'poll_search', input: { id: 7 }, reason: 'corrected' } }],
+      [{ type: 'text', text: 'Re-polling search 7.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    const d = await agent.diagnose(row, 'evidence', { ...deps(), client });
+    expect(d.safeAction).toEqual({ tool: 'poll_search', input: { id: 7 } });
   });
 });
