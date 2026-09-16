@@ -344,3 +344,10 @@ describe('handleChannelMessage', () => {
     expect(r.text).toBe('Nothing open right now.');
   });
 });
+
+describe('SYSTEM prompt is conversational', () => {
+  it('is honest about not being able to show images/video, and does not force a status line on casual replies', () => {
+    expect(agent.SYSTEM).toMatch(/cannot display images, videos, screenshots or files/i);
+    expect(agent.SYSTEM).toMatch(/casual question.*don't force a status line/i);
+  });
+});

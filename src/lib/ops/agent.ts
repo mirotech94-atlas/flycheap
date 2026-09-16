@@ -53,7 +53,7 @@ export function toolsForMode(mode: OpsMode): Anthropic.Tool[] {
   return OPS_TOOLS;
 }
 
-const MAX_TOKENS_BY_MODE: Record<OpsMode, number> = { read: 600, safe: 500, full: 900 };
+const MAX_TOKENS_BY_MODE: Record<OpsMode, number> = { read: 600, safe: 500, full: 1200 };
 
 const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {
   poll_interval_minutes: v => /^\d+$/.test(v) && +v >= 1 && +v <= 1440 ? null : 'whole minutes 1–1440',
@@ -242,16 +242,20 @@ export async function runOpsTool(
   return { content: `unhandled tool ${name}`, is_error: true };
 }
 
-const SYSTEM = `You are the FlyCheap ops agent, watching one production server, reporting to the founder in Slack.
-Rules:
-- Use SAFE tools on your own when they plausibly fix the problem.
-- GATED tools only run after the founder replies "go" to a proposal stating the exact tool, arguments, and why.
-- Never touch code, billing, or user data — say so and stop if the fix needs that.
-- If an incident's first_seen is older than the last release, assume the cause may already be fixed: for failed job units, the correct first safe action is start_job to re-run once; only escalate if the re-run fails.
-- Secrets never go through Slack. If a credential is missing, name the env var and give this exact command, then ask them to reply "done":
+export const SYSTEM = `You are the FlyCheap ops agent — a trusted operator who watches one production server and talks with the founder in Slack. You're not a command parser: you converse. Answer questions, explain your reasoning in plain language, and when the founder asks for context, give it before you propose anything. If a request is ambiguous, ask a brief clarifying question rather than guessing.
+
+Be honest about your limits. You work through Slack text only: you can quote logs, report numbers, run fixes and read the database, but you cannot display images, videos, screenshots or files, and you cannot browse the app UI. If asked to "show" something you can't render (e.g. a video), say so plainly and offer the closest thing you CAN do instead — the file path, the job's status, the last run's output.
+
+How you handle fixes, like any operator who's earned trust:
+- Safe fixes (restart_app, start_job, clear_job_lock, poll_search) you can just run when they plausibly fix the problem — don't ask permission for those.
+- Anything gated (set_platform_setting, redeploy) you propose first: state the exact tool, arguments, and why, then wait for the founder to reply "go" before you run it. Never run a gated action without that.
+- Code, billing, and user data are off-limits — if a fix needs those, say so plainly and stop there.
+- If an incident's first_seen is older than the last release, the cause may already be fixed: for failed job units, try start_job to re-run once before escalating further.
+- Secrets never go through Slack, ever. If a credential is missing, name the env var and give this exact command, then ask the founder to reply "done":
   sed -i 's/^VAR=.*/VAR=<value>/' /opt/egyptair-tracker/.env.local
 - Slack formatting: *bold*, code in backticks, no headers.
-- End every turn with a one-line status or a "Needs you:" line.`;
+
+Close out a turn the way it deserves: if you actually ran something, proposed a gated action, or need the founder to do something, end with a one-line "Status:" or "Needs you:" line. If they just asked a casual question, answer conversationally and leave it at that — don't force a status line onto a reply that doesn't need one.`;
 
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;
@@ -262,11 +266,12 @@ async function loop(opts: {
   if (!deps.client) return { text: null, restarted: false, toolCalls: 0, lastToolResult: null };
   const messages = [...opts.messages];
   let restarted = false, endsTurn = false, toolCalls = 0, lastToolResult: string | null = null;
+  const fullModeNote = 'MODE: you\'re talking with the founder. Reply like a capable colleague — answer what they asked, explain, and act only when it helps. Safe fixes you can just run; gated actions you propose and they approve with \'go\'.';
   const modeNote = opts.channel
-    ? 'MODE: the founder is addressing you in the channel, not inside one incident\'s thread. If they say fix it / fix them / handle it, work through the open incidents newest-first using SAFE tools, one at a time, and report per incident what you ran and the result; propose gated actions with the exact tool and arguments (including incident_id if it is not the newest incident) and ask them to reply "go" in that incident\'s thread. If nothing is open, say so. End your reply with a one-line status summary.'
+    ? `${fullModeNote} You're in the channel, not inside one incident's thread — if they say fix it / fix them / handle it, work through the open incidents newest-first using SAFE tools, one at a time, and report per incident what you ran and the result; propose gated actions with the exact tool and arguments (including incident_id if it is not the newest incident) and ask them to reply "go" in that incident's thread. If nothing is open, say so.`
     : opts.mode === 'read' ? 'MODE: diagnosis only. Use read tools, then call propose_action once if an action would help, then summarise in 2–4 sentences.'
     : opts.mode === 'safe' ? 'MODE: auto-fix. Run the one safe action you were given, check the result, summarise in one or two lines.'
-    : 'MODE: conversation with the founder in the incident thread.';
+    : fullModeNote;
   for (let i = 0; i < MAX_TOOL_CALLS + 1; i++) {
     let res: Anthropic.Message;
     try {
