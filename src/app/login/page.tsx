@@ -1,3 +1,4 @@
+import { Logo, LogoMark } from '@/components/Logo';
 import { Suspense } from 'react';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import Link from 'next/link';
@@ -106,7 +107,7 @@ export default async function LoginPage(
       <div className="fc-shell fc-admin-login -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="coal" data-fc-accent="gold">
         <div className="fc-admin-login-card">
           <div className="fc-admin-login-brand">
-            <svg width="34" height="34" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0a3a6b" /><path d="M52.4 15.8c.6-.6.6-1.7 0-2.3-.6-.6-1.7-.6-2.3 0L37.6 26 17.5 22.5l-3.5 3.5 16.4 7.6L20 43l-7.6-1.4-2.5 2.5 9.7 4.7 4.7 9.7 2.5-2.5L25.4 48l9.4-10.4 7.6 16.4 3.5-3.5L42.4 30.4z" fill="#d4af37" /></svg>
+            <Logo size={34} />
             <div><div className="n">FlyCheap</div><div className="m">Admin portal · founder access</div></div>
           </div>
           <h2>Superadmin <em>sign in</em></h2>
@@ -129,10 +130,7 @@ export default async function LoginPage(
         <div className="fc-login-intel-inner">
           <Link href="/welcome" className="fc-l-brand" style={{ color: 'var(--fc-cream)' }}>
             <div className="fc-l-brand-mark" style={{ background: 'rgba(255,255,255,.08)' }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path d="M5 5 L5 19 M5 5 L14 5 M5 12 L11 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-                <path d="M22 8 A6 6 0 0 0 16 8 A6 6 0 0 0 22 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-              </svg>
+              <LogoMark size={22} />
             </div>
             <div>
               <div className="fc-l-brand-name" style={{ color: 'var(--fc-cream)' }}>FlyCheap</div>

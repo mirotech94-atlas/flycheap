@@ -1,3 +1,4 @@
+import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { cookies, headers } from 'next/headers';
@@ -63,7 +64,7 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
       <header className="dc-nav">
         <div className="dc-wrap dc-nav-in">
           <Link href="/early-access" className="dc-logo" aria-label="FlyCheap">
-            <svg width="26" height="26" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0a3a6b" /><path d="M52.4 15.8c.6-.6.6-1.7 0-2.3-.6-.6-1.7-.6-2.3 0L37.6 26 17.5 22.5l-3.5 3.5 16.4 7.6L20 43l-7.6-1.4-2.5 2.5 9.7 4.7 4.7 9.7 2.5-2.5L25.4 48l9.4-10.4 7.6 16.4 3.5-3.5L42.4 30.4z" fill="#d4af37" /></svg>
+            <Logo size={26} />
             <span>flycheap</span>
           </Link>
           <nav className="dc-links">
@@ -272,7 +273,7 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
         <div className="dc-wrap">
           <div className="dc-footer-grid">
             <div className="dc-footer-brand">
-              <div className="dc-logo"><svg width="22" height="22" viewBox="0 0 64 64"><rect width="64" height="64" rx="14" fill="#0a3a6b" /><path d="M52.4 15.8c.6-.6.6-1.7 0-2.3-.6-.6-1.7-.6-2.3 0L37.6 26 17.5 22.5l-3.5 3.5 16.4 7.6L20 43l-7.6-1.4-2.5 2.5 9.7 4.7 4.7 9.7 2.5-2.5L25.4 48l9.4-10.4 7.6 16.4 3.5-3.5L42.4 30.4z" fill="#d4af37" /></svg><span>flycheap</span></div>
+              <div className="dc-logo"><Logo size={22} /><span>flycheap</span></div>
               <p>{t.footer.tag}</p>
               <p className="dc-accent">{t.footer.sovereign}</p>
             </div>

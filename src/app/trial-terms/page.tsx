@@ -1,3 +1,4 @@
+import { LogoMark } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 
@@ -39,10 +40,7 @@ export default function TrialTermsPage() {
       <header className="fc-l-topbar">
         <Link href="/welcome" className="fc-l-brand">
           <div className="fc-l-brand-mark">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M5 5 L5 19 M5 5 L14 5 M5 12 L11 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M22 8 A6 6 0 0 0 16 8 A6 6 0 0 0 22 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-            </svg>
+            <LogoMark size={22} />
           </div>
           <div>
             <div className="fc-l-brand-name">FlyCheap</div>

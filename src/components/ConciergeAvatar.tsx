@@ -101,3 +101,17 @@ export function ConciergeAvatar({
     </div>
   );
 }
+
+
+/** The bare aviator-wings glyph in `currentColor` — for buttons/labels that
+ *  don't want the full circular badge (e.g. the chat launcher). */
+export function WingsMark({ size = 22, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg viewBox="0 0 64 64" width={size} height={size} fill="none" className={className} aria-hidden="true">
+      <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="currentColor" />
+      <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="currentColor" />
+      <circle cx="32" cy="32" r="7.5" fill="none" stroke="currentColor" strokeWidth="2.4" />
+      <circle cx="32" cy="32" r="2.6" fill="currentColor" />
+    </svg>
+  );
+}

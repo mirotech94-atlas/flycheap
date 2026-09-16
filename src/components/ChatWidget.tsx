@@ -1,5 +1,6 @@
 'use client';
 
+import { ConciergeAvatar, WingsMark } from '@/components/ConciergeAvatar';
 import { useState, useRef, useEffect } from 'react';
 import { useGlobe } from '@/lib/globeStore';
 import type { FlightHudPayload } from '@/lib/flightHud';
@@ -232,7 +233,7 @@ export function ChatWidget() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
         ) : (
           <>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <WingsMark size={22} />
             <span className="font-semibold text-sm hidden md:inline">Ask FarePilot</span>
           </>
         )}
@@ -245,12 +246,7 @@ export function ChatWidget() {
           <div className="relative bg-brand-gradient text-white px-4 py-3 flex items-center justify-between overflow-hidden">
             <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-brand-gold/20 blur-2xl pointer-events-none" />
             <div className="relative flex items-center gap-3">
-              <div className="relative">
-                <div className="w-10 h-10 rounded-full bg-white/15 flex items-center justify-center text-lg backdrop-blur">
-                  ✈️
-                </div>
-                <span className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-emerald-400 border-2 border-brand-700" />
-              </div>
+              <ConciergeAvatar size="md" />
               <div>
                 <div className="font-display font-bold text-sm leading-tight">FarePilot · Flight Concierge</div>
                 <div className="text-[10px] text-white/70 flex items-center gap-1">
@@ -279,7 +275,7 @@ export function ChatWidget() {
             {msgs.map((m, i) => (
               <div key={i} className={`flex items-end gap-2 motion-fade-in ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {m.role === 'assistant' && (
-                  <div className="w-7 h-7 rounded-full bg-brand-gradient flex items-center justify-center text-xs shrink-0">✈️</div>
+                  <div className="w-7 h-7 rounded-full bg-brand-gradient flex items-center justify-center shrink-0"><WingsMark size={16} className="text-amber-300" /></div>
                 )}
                 <div className={`max-w-[80%] rounded-2xl px-3.5 py-2 text-sm whitespace-pre-wrap leading-relaxed shadow-soft ${
                   m.role === 'user'
@@ -292,7 +288,7 @@ export function ChatWidget() {
             ))}
             {pending && (
               <div className="flex items-end gap-2">
-                <div className="w-7 h-7 rounded-full bg-brand-gradient flex items-center justify-center text-xs shrink-0">✈️</div>
+                <div className="w-7 h-7 rounded-full bg-brand-gradient flex items-center justify-center shrink-0"><WingsMark size={16} className="text-amber-300" /></div>
                 <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl rounded-bl-sm px-3.5 py-2.5 shadow-soft">
                   <span className="inline-flex gap-1">
                     <span className="w-2 h-2 rounded-full bg-slate-400 animate-bounce" />

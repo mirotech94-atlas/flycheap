@@ -31,3 +31,17 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
     </svg>
   );
 }
+
+/** The bare mark in `currentColor` (no navy tile), for brand-mark containers
+ *  that already provide their own tile/background. Same fare-drop geometry as Logo. */
+export function LogoMark({ size = 22, className = '' }: { size?: number; className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width={size} height={size} fill="none" className={className} aria-hidden="true">
+      <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeDasharray="1.5 7" />
+      <circle cx="12" cy="20" r="4" fill="currentColor" />
+      <g transform="translate(52,50) rotate(35)">
+        <path d="M0 -9 L8 8 L0 3 L-8 8 Z" fill="currentColor" />
+      </g>
+    </svg>
+  );
+}
