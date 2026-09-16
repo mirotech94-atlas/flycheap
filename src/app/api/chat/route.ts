@@ -1,4 +1,3 @@
-import { GROQ_CHAT_MODELS } from '@/lib/ai/providers';
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
@@ -146,16 +145,10 @@ export async function POST(req: Request) {
   // LLM_PROVIDER=anthropic override actually skips Groq here too, instead of
   // only affecting the ops detector / Slack concierge.
   if (process.env.GROQ_API_KEY && llmProvider() === 'groq') {
-    // Rotate every Groq chat model — each has its own daily token cap, so a
-    // capped model falls back to the next before any paid provider is hit.
-    const groqFirst = process.env.CHAT_MODEL_GROQ;
-    const groqModels = groqFirst ? [groqFirst, ...GROQ_CHAT_MODELS.filter(m => m !== groqFirst)] : GROQ_CHAT_MODELS;
-    for (const gm of groqModels) {
-      attempts.push(() => runOpenAICompatLoop(
-        { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: gm, provider: 'groq' },
-        parsed.data.messages, toolCalls, toolResults,
-      ));
-    }
+    attempts.push(() => runOpenAICompatLoop(
+      { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' },
+      parsed.data.messages, toolCalls, toolResults,
+    ));
   }
   if (process.env.ANTHROPIC_API_KEY) {
     attempts.push(() => runAnthropicLoop(parsed.data.messages, toolCalls, toolResults));
