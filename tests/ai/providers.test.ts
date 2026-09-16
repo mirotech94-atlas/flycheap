@@ -33,11 +33,19 @@ describe('AI provider registry', () => {
     expect(or!.headers?.['X-Title']).toBe('FlyCheap');
   });
 
-  it('caps attempts per provider and total', () => {
+  it('Groq spans all its chat models; maxTotal bounds the chain; maxPerProvider caps others', () => {
     process.env.GROQ_API_KEY = 'g';
-    const chain = buildProviderChain({ maxPerProvider: 1, maxTotal: 5 });
-    expect(chain.filter(s => s.provider.startsWith('groq')).length).toBe(1);
-    expect(chain.length).toBeLessThanOrEqual(5);
+    const chain = buildProviderChain();
+    // Groq now contributes every chat model on the account (each its own daily cap).
+    const groq = chain.filter(s => s.provider.startsWith('groq'));
+    expect(groq.length).toBe(6);
+    expect(groq.map(s => s.model)).toContain('groq/compound');
+    // maxTotal still bounds the whole chain.
+    expect(buildProviderChain({ maxTotal: 4 }).length).toBe(4);
+    // A provider without its own maxModels still honours maxPerProvider.
+    process.env.ANTHROPIC_API_KEY = 'a';
+    const capped = buildProviderChain({ maxPerProvider: 1 });
+    expect(capped.filter(s => s.provider.startsWith('anthropic')).length).toBe(1);
   });
 
   it('catalog reports configured flags without leaking keys', () => {

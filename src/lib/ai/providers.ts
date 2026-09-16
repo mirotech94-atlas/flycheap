@@ -26,6 +26,8 @@ export type AiProvider = {
   order: number;
   baseUrl: () => string;
   models: string[];
+  /** How many of this provider's models the failover chain may use (default maxPerProvider). */
+  maxModels?: number;
   /** Resolves credentials from env; null when the provider is not configured. */
   auth: () => { apiKey: string; headers?: Record<string, string> } | null;
   /** One line telling the owner how to enable a dormant provider. */
@@ -37,12 +39,32 @@ const env = (k: string): string | null => {
   return v && v.trim() ? v.trim() : null;
 };
 
+/**
+ * Every CHAT-CAPABLE model on the Groq account, in fallback order (most capable
+ * + most tool-reliable first). Groq's token cap is PER MODEL PER DAY, so each
+ * entry is a fresh daily budget before any paid provider is touched.
+ *
+ * Deliberately EXCLUDED: meta-llama/llama-prompt-guard-2-22m / -86m (prompt-
+ * injection classifiers) and openai/gpt-oss-safeguard-20b (moderation) — those
+ * are guard models, not chat models, so they can't answer the concierge or
+ * agents. Add them only to a dedicated moderation path, never to this chain.
+ */
+export const GROQ_CHAT_MODELS = [
+  'openai/gpt-oss-120b',   // best tool-use · 200K tok/day
+  'openai/gpt-oss-20b',    // fast tool-use · 200K tok/day
+  'qwen/qwen3.8-27b',      // capable, supports tools · 200K tok/day
+  'groq/compound',         // agentic · no daily token cap (250 req/day)
+  'groq/compound-mini',    // agentic, lighter · no daily token cap (250 req/day)
+  'allam-2-7b',            // small last-resort · 500K tok/day
+];
+
 export const AI_PROVIDERS: AiProvider[] = [
   {
     id: 'groq', label: 'Groq', group: 'Groq (free)', order: 0,
     baseUrl: () => 'https://api.groq.com/openai/v1',
-    // Verified available on this account; each has its own daily bucket.
-    models: ['openai/gpt-oss-120b', 'openai/gpt-oss-20b', 'qwen/qwen3.8-27b'],
+    // All chat-capable models on this account; each has its own daily bucket.
+    models: GROQ_CHAT_MODELS,
+    maxModels: GROQ_CHAT_MODELS.length,
     auth: () => { const k = env('GROQ_API_KEY'); return k ? { apiKey: k } : null; },
   },
   {
@@ -110,13 +132,13 @@ export type ProviderAttempt = {
  */
 export function buildProviderChain(opts?: { maxPerProvider?: number; maxTotal?: number }): ProviderAttempt[] {
   const maxPer = opts?.maxPerProvider ?? 2;
-  const maxTotal = opts?.maxTotal ?? 8;
+  const maxTotal = opts?.maxTotal ?? 12;
   const chain: ProviderAttempt[] = [];
   for (const p of [...AI_PROVIDERS].sort((a, b) => a.order - b.order)) {
     const a = p.auth();
     if (!a) continue;
     const base = p.baseUrl();
-    for (const model of p.models.slice(0, maxPer)) {
+    for (const model of p.models.slice(0, p.maxModels ?? maxPer)) {
       chain.push({ provider: `${p.id}:${model.split('/').pop()}`, model, baseUrl: base, apiKey: a.apiKey, headers: a.headers });
       if (chain.length >= maxTotal) return chain;
     }
