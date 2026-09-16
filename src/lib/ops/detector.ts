@@ -15,6 +15,9 @@ export type DetectorIO = {
   postCard: (text: string) => Promise<string | null>;
   postThread: (ts: string, text: string) => Promise<void>;
   client: MessagesClient | null;
+  // Fast Groq model for conversational turns (thread replies / channel
+  // messages) — see AgentDeps.chatClient. Falls back to `client` when unset.
+  chatClient?: MessagesClient | null;
   now?: () => Date;
   sleep?: (ms: number) => Promise<void>;
 };
@@ -107,7 +110,7 @@ async function sleep(io: DetectorIO, ms: number): Promise<void> {
 }
 
 function agentDeps(io: DetectorIO): AgentDeps {
-  return { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth, now: io.now };
+  return { runner: io.runner, client: io.client, chatClient: io.chatClient, fetchHealth: io.fetchHealth, now: io.now };
 }
 
 // Sources whose incident cards get the <!channel> critical treatment instead
@@ -281,6 +284,7 @@ export function productionIO(): DetectorIO {
       await postToSlackThread(founderChannelId('admin'), ts, text);
     },
     client: opsClient(),
+    chatClient: opsChatClient(),
   };
 }
 
@@ -290,6 +294,24 @@ function opsClient(): MessagesClient | null {
     return createGroqMessagesClient({
       apiKey: process.env.GROQ_API_KEY!,
       model: process.env.OPS_MODEL_GROQ || groqModel('smart'),
+    });
+  }
+  if (provider === 'anthropic') {
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
+  }
+  return null;
+}
+
+// Conversational turns (thread replies / channel messages in #admin_alerts)
+// use the FAST Groq model instead of the smart one used for diagnose/
+// autoFix: smaller prompts + a smaller model keep them well under Groq's
+// free-tier 8,000 tokens/min/model cap.
+function opsChatClient(): MessagesClient | null {
+  const provider = llmProvider();
+  if (provider === 'groq') {
+    return createGroqMessagesClient({
+      apiKey: process.env.GROQ_API_KEY!,
+      model: groqModel('fast'),
     });
   }
   if (provider === 'anthropic') {

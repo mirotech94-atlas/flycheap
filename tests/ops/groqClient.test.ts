@@ -201,6 +201,51 @@ describe('createGroqMessagesClient — 429 rate-limit retry', () => {
     expect(sleepCalls).toEqual([60_000, 20_000]);
   });
 
+  it('a 413 falls back to the smaller model once, and the retry succeeds', async () => {
+    let calls = 0;
+    const seenModels: string[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      calls += 1;
+      seenModels.push(JSON.parse(String(init.body)).model);
+      if (calls === 1) {
+        return { ok: false, status: 413, text: async () => 'Request too large … TPM Limit 8000, Requested 10326', json: async () => ({}) } as unknown as Response;
+      }
+      return { ok: true, status: 200, text: async () => '', json: async () => ({ id: 'chatcmpl-ok', choices: [{ message: { content: 'shorter reply' } }], usage: {} }) } as unknown as Response;
+    }) as typeof fetch;
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl });
+    const res = await client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming);
+
+    expect(calls).toBe(2);
+    expect(seenModels).toEqual(['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
+    expect(res.content).toEqual([{ type: 'text', text: 'shorter reply', citations: null }]);
+  });
+
+  it('413 twice (already on the fallback model, still too large) throws a clear error', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return { ok: false, status: 413, text: async () => 'Request too large', json: async () => ({}) } as unknown as Response;
+    }) as typeof fetch;
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-120b', fetchImpl });
+
+    await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
+      .rejects.toThrow('Groq 413 (request too large even after trim)');
+    expect(calls).toBe(2); // one on the smart model, one fallback retry
+  });
+
+  it('413 when already using the fallback model throws immediately without a second fetch', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      return { ok: false, status: 413, text: async () => 'Request too large', json: async () => ({}) } as unknown as Response;
+    }) as typeof fetch;
+    const client = createGroqMessagesClient({ apiKey: 'k', model: 'openai/gpt-oss-20b', fetchImpl });
+
+    await expect(client.messages.create({ model: 'x', max_tokens: 100, messages: [{ role: 'user', content: 'hi' }] } as Anthropic.MessageCreateParamsNonStreaming))
+      .rejects.toThrow('Groq 413 (request too large even after trim)');
+    expect(calls).toBe(1);
+  });
+
   it('throws after exhausting both retries when every attempt hits 429', async () => {
     let calls = 0;
     const fetchImpl = (async () => {

@@ -102,37 +102,52 @@ export function createGroqMessagesClient(opts: {
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
+  // Free-tier per-minute token caps make a 413 (request too large) an
+  // unretryable-as-is error — the only recourse is a smaller model with a
+  // smaller cap-relative footprint. Defaults to the fast model.
+  fallbackModel?: string;
 }): MessagesClient {
   const baseUrl = opts.baseUrl ?? 'https://api.groq.com/openai/v1';
   const fetchImpl = opts.fetchImpl ?? fetch;
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
+  const fallbackModel = opts.fallbackModel ?? 'openai/gpt-oss-20b';
 
   return {
     messages: {
       async create(params: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message> {
         const messages = buildOAMessages(params);
         const oaTools = buildOATools(params.tools as Anthropic.Tool[] | undefined);
-        const body: Record<string, unknown> = {
-          model: opts.model,
-          max_tokens: params.max_tokens,
-          messages,
+        const buildBody = (model: string): Record<string, unknown> => {
+          const body: Record<string, unknown> = { model, max_tokens: params.max_tokens, messages };
+          if (oaTools) {
+            body.tools = oaTools;
+            body.tool_choice = 'auto';
+          }
+          return body;
         };
-        if (oaTools) {
-          body.tools = oaTools;
-          body.tool_choice = 'auto';
-        }
 
-        const doFetch = () => fetchImpl(`${baseUrl}/chat/completions`, {
+        const doFetch = (model: string) => fetchImpl(`${baseUrl}/chat/completions`, {
           method: 'POST',
           headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
+          body: JSON.stringify(buildBody(model)),
         });
 
-        let res = await doFetch();
+        let model = opts.model;
+        let res = await doFetch(model);
         for (let attempt = 0; res.status === 429 && attempt < MAX_RETRIES; attempt++) {
           const retryText = await res.text().catch(() => '');
           await sleep(parseRetrySeconds(retryText) * 1000);
-          res = await doFetch();
+          res = await doFetch(model);
+        }
+        if (res.status === 413) {
+          if (model === fallbackModel) {
+            throw new Error('Groq 413 (request too large even after trim)');
+          }
+          model = fallbackModel;
+          res = await doFetch(model);
+          if (res.status === 413) {
+            throw new Error('Groq 413 (request too large even after trim)');
+          }
         }
         if (!res.ok) {
           const text = await res.text().catch(() => '');
@@ -166,7 +181,7 @@ export function createGroqMessagesClient(opts: {
           id: j.id ?? 'groq-message',
           type: 'message',
           role: 'assistant',
-          model: opts.model,
+          model,
           content,
           stop_reason,
           stop_sequence: null,

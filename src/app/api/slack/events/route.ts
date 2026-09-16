@@ -229,7 +229,7 @@ export async function POST(req: Request) {
             const { handleChannelMessage } = await import('@/lib/ops/agent');
             const { productionIO } = await import('@/lib/ops/detector');
             const io = productionIO();
-            const r = await handleChannelMessage(String(ev.text), { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth });
+            const r = await handleChannelMessage(String(ev.text), { runner: io.runner, client: io.client, chatClient: io.chatClient, fetchHealth: io.fetchHealth });
             if (r.restarted) queries.setSetting('ops_pending_restart_thread', ev.ts);
             await postToSlackThread(ev.channel, ev.ts, r.text);
           } catch (e) {
@@ -250,7 +250,7 @@ export async function POST(req: Request) {
             const incident = queries.incidentByThread(threadTs)!;
             const history = await fetchThreadHistory(ev.channel, threadTs);
             const io = productionIO();
-            const r = await handleThreadReply(incident, history, String(ev.text), { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth });
+            const r = await handleThreadReply(incident, history, String(ev.text), { runner: io.runner, client: io.client, chatClient: io.chatClient, fetchHealth: io.fetchHealth });
             await postToSlackThread(ev.channel, threadTs, r.text);
           } catch (e) {
             console.error('[slack-ops] reply failed:', (e as Error).message);

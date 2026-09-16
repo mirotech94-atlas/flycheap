@@ -12,6 +12,11 @@ const deps = () => ({ runner, client: null, fetchHealth: async () => ({ ok: true
 /** deps() with an injected clock, for deterministic cooldown tests. */
 const depsAt = (iso: string) => ({ ...deps(), now: () => new Date(iso) });
 
+/** A single-turn end_turn response carrying just a text reply. */
+function scriptedOk(text: string): Anthropic.Message {
+  return { id: 'm', type: 'message', role: 'assistant', model: 'x', content: [{ type: 'text', text, citations: null }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } as unknown as Anthropic.Message;
+}
+
 /** Scripted fake Anthropic client: returns the given messages in order. */
 function scripted(turns: Array<Anthropic.Message['content']>): import('@/lib/ops/agent').MessagesClient {
   let i = 0;
@@ -342,6 +347,90 @@ describe('handleChannelMessage', () => {
     const client = scripted([[{ type: 'text', text: 'Nothing open right now.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
     const r = await agent.handleChannelMessage('fix it', { ...deps(), client });
     expect(r.text).toBe('Nothing open right now.');
+  });
+});
+
+describe('compactIncident', () => {
+  it('renders "#<id> <title> — <status>, <age>" using a fixed first_seen', () => {
+    const { row } = db.queries.upsertIncident('unit:compact-a', 'unit', 'Job failed: compact-a');
+    const fixedNow = new Date('2026-09-16T12:00:00.000Z');
+    const withFirstSeen = { ...row, first_seen: '2026-09-14 12:00:00', status: 'open' as const };
+    expect(agent.compactIncident(withFirstSeen, fixedNow)).toBe(`#${row.id} Job failed: compact-a — open, 2d`);
+  });
+  it('humanises minutes and hours too', () => {
+    const { row } = db.queries.upsertIncident('unit:compact-b', 'unit', 'Job failed: compact-b');
+    const fixedNow = new Date('2026-09-16T12:00:00.000Z');
+    expect(agent.compactIncident({ ...row, first_seen: '2026-09-16 11:45:00', status: 'open' as const }, fixedNow))
+      .toBe(`#${row.id} Job failed: compact-b — open, 15m`);
+    expect(agent.compactIncident({ ...row, first_seen: '2026-09-16 09:00:00', status: 'open' as const }, fixedNow))
+      .toBe(`#${row.id} Job failed: compact-b — open, 3h`);
+  });
+});
+
+describe('conversational turns use the fast chatClient', () => {
+  it('handleChannelMessage calls chatClient.create, not client.create, when both are provided', async () => {
+    for (const inc of db.queries.openIncidents()) db.queries.resolveIncident(inc.id);
+    db.queries.upsertIncident('unit:chat-client-a', 'unit', 'Job failed: chat-client-a');
+    let smartCalls = 0, fastCalls = 0;
+    const smartClient: import('@/lib/ops/agent').MessagesClient = { messages: { create: async () => { smartCalls++; return scriptedOk('smart replied'); } } };
+    const fastClient: import('@/lib/ops/agent').MessagesClient = { messages: { create: async () => { fastCalls++; return scriptedOk('fast replied'); } } };
+    const r = await agent.handleChannelMessage('status?', { ...deps(), client: smartClient, chatClient: fastClient });
+    expect(fastCalls).toBe(1);
+    expect(smartCalls).toBe(0);
+    expect(r.text).toBe('fast replied');
+  });
+
+  it('handleThreadReply calls chatClient.create, not client.create, when both are provided', async () => {
+    const { row } = db.queries.upsertIncident('unit:chat-client-b', 'unit', 't');
+    let smartCalls = 0, fastCalls = 0;
+    const smartClient: import('@/lib/ops/agent').MessagesClient = { messages: { create: async () => { smartCalls++; return scriptedOk('smart replied'); } } };
+    const fastClient: import('@/lib/ops/agent').MessagesClient = { messages: { create: async () => { fastCalls++; return scriptedOk('fast replied'); } } };
+    const r = await agent.handleThreadReply(row, [], 'how are things looking?', { ...deps(), client: smartClient, chatClient: fastClient });
+    expect(fastCalls).toBe(1);
+    expect(smartCalls).toBe(0);
+    expect(r.text).toBe('fast replied');
+  });
+
+  it('falls back to client when chatClient is not provided', async () => {
+    const { row } = db.queries.upsertIncident('unit:chat-client-c', 'unit', 't');
+    let smartCalls = 0;
+    const smartClient: import('@/lib/ops/agent').MessagesClient = { messages: { create: async () => { smartCalls++; return scriptedOk('smart replied'); } } };
+    const r = await agent.handleThreadReply(row, [], 'hello', { ...deps(), client: smartClient });
+    expect(smartCalls).toBe(1);
+    expect(r.text).toBe('smart replied');
+  });
+});
+
+describe('handleThreadReply trims thread history', () => {
+  it('caps to the last 6 messages and strips ``` fences from everything but the most recent', async () => {
+    const { row } = db.queries.upsertIncident('unit:trim-history', 'unit', 't');
+    const bigCodeBlock = '```\n' + 'log line\n'.repeat(400) + '```';
+    const thread: import('@/lib/ops/agent').ThreadMsg[] = [];
+    for (let i = 0; i < 9; i++) thread.push({ role: i % 2 === 0 ? 'user' : 'assistant', content: `msg ${i}` });
+    // An older message carries the huge fenced log block that used to blow
+    // the token budget.
+    thread[6] = { role: 'assistant', content: `here's the incident card:\n${bigCodeBlock}` };
+    // The most recent thread message ALSO has a fence — it must survive
+    // untouched since it's the latest context.
+    thread[8] = { role: 'user', content: `latest fence:\n${bigCodeBlock}` };
+
+    let captured: Anthropic.MessageParam[] | null = null;
+    const client: import('@/lib/ops/agent').MessagesClient = { messages: { create: async (p) => {
+      captured = p.messages as Anthropic.MessageParam[];
+      return scriptedOk('ok');
+    } } };
+    await agent.handleThreadReply(row, thread, 'latest fence:\n' + bigCodeBlock, { ...deps(), client });
+
+    expect(captured).not.toBeNull();
+    const msgs = captured!;
+    // 1 context line + at most 6 history messages (the latest is already
+    // the last history message here, so nothing extra gets appended).
+    expect(msgs.length).toBeLessThanOrEqual(7);
+    const fenceCount = msgs.filter(m => typeof m.content === 'string' && (m.content as string).includes('```')).length;
+    expect(fenceCount).toBeLessThanOrEqual(1);
+    if (fenceCount === 1) {
+      expect(String(msgs[msgs.length - 1].content)).toContain('```');
+    }
   });
 });
 

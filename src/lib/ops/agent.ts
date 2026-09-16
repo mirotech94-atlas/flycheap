@@ -16,7 +16,11 @@ export type ToolResult = { content: string; is_error?: boolean };
 export type Proposal = { tool: 'set_platform_setting' | 'redeploy'; input: Record<string, unknown>; reason: string };
 export type ThreadMsg = { role: 'user' | 'assistant'; content: string };
 export type MessagesClient = { messages: { create(p: Anthropic.MessageCreateParamsNonStreaming): Promise<Anthropic.Message> } };
-export type AgentDeps = { runner: Runner; client: MessagesClient | null; fetchHealth: () => Promise<HealthJson>; now?: () => Date };
+// `client` is the smart model (diagnose/autoFix); `chatClient` is the fast
+// model used for conversational turns (handleThreadReply/handleChannelMessage)
+// so those stay well under Groq's free-tier per-minute token cap. Falls back
+// to `client` when unset (e.g. in tests, or when only one client is wired).
+export type AgentDeps = { runner: Runner; client: MessagesClient | null; chatClient?: MessagesClient | null; fetchHealth: () => Promise<HealthJson>; now?: () => Date };
 
 export const OPS_MODEL = 'claude-sonnet-5';
 const MAX_TOOL_CALLS = 8;
@@ -53,7 +57,68 @@ export function toolsForMode(mode: OpsMode): Anthropic.Tool[] {
   return OPS_TOOLS;
 }
 
-const MAX_TOKENS_BY_MODE: Record<OpsMode, number> = { read: 600, safe: 500, full: 1200 };
+const MAX_TOKENS_BY_MODE: Record<OpsMode, number> = { read: 500, safe: 400, full: 700 };
+
+/** Cheap token estimate (chars/4) used only to keep a conversational turn's
+ * request comfortably under Groq's free-tier per-minute token cap — not a
+ * real tokenizer, just a fast, conservative-enough proxy for budgeting. */
+export function estimateTokens(s: string): number {
+  return Math.ceil(s.length / 4);
+}
+
+function requestSize(system: string, tools: Anthropic.Tool[], messages: Anthropic.MessageParam[]): number {
+  return estimateTokens(system) + estimateTokens(JSON.stringify(tools)) + estimateTokens(JSON.stringify(messages));
+}
+
+const CONVERSATIONAL_BUDGET = 6500;
+
+/** Removes a "Recently resolved:" block (up to the next "Last release:"
+ * line, or the end) from a channel-message context string. */
+function dropResolvedSection(s: string): string {
+  const lines = s.split('\n');
+  const start = lines.findIndex(l => l.startsWith('Recently resolved:'));
+  if (start === -1) return s;
+  let end = lines.findIndex((l, i) => i > start && l.startsWith('Last release:'));
+  if (end === -1) end = lines.length;
+  return [...lines.slice(0, start), ...lines.slice(end)].join('\n');
+}
+
+/** Keeps only the first `keep` "#..." incident lines under "Open incidents
+ * (newest first):", replacing the rest with a count. */
+function trimOpenIncidentLines(s: string, keep: number): string {
+  const lines = s.split('\n');
+  const start = lines.findIndex(l => l.startsWith('Open incidents'));
+  if (start === -1) return s;
+  let end = lines.findIndex((l, i) => i > start && (l.startsWith('Recently resolved:') || l.startsWith('Last release:')));
+  if (end === -1) end = lines.length;
+  const body = lines.slice(start + 1, end);
+  const incidentLines = body.filter(l => l.startsWith('#'));
+  if (incidentLines.length <= keep) return s;
+  const omitted = incidentLines.length - keep;
+  const newBody = [...incidentLines.slice(0, keep), `…and ${omitted} more open`];
+  return [...lines.slice(0, start + 1), ...newBody, ...lines.slice(end)].join('\n');
+}
+
+/** Shrinks `messages` in place (within the pre-tool-loop history segment
+ * only — never touching later tool_use/tool_result pairs, which must stay
+ * intact) until the request fits CONVERSATIONAL_BUDGET, or there is nothing
+ * left to trim. Order: drop oldest history messages (keeping the context
+ * message at index 0 and the latest user message), then drop the
+ * resolved-incidents context, then cap the open-incident list to 5.
+ * Returns the updated historyEnd (shrinks as messages are spliced out). */
+function fitBudget(system: string, tools: Anthropic.Tool[], messages: Anthropic.MessageParam[], historyEnd: number): number {
+  while (requestSize(system, tools, messages) > CONVERSATIONAL_BUDGET && historyEnd > 2) {
+    messages.splice(1, 1);
+    historyEnd -= 1;
+  }
+  if (requestSize(system, tools, messages) > CONVERSATIONAL_BUDGET && typeof messages[0]?.content === 'string') {
+    messages[0] = { ...messages[0], content: dropResolvedSection(messages[0].content as string) };
+  }
+  if (requestSize(system, tools, messages) > CONVERSATIONAL_BUDGET && typeof messages[0]?.content === 'string') {
+    messages[0] = { ...messages[0], content: trimOpenIncidentLines(messages[0].content as string, 5) };
+  }
+  return historyEnd;
+}
 
 const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {
   poll_interval_minutes: v => /^\d+$/.test(v) && +v >= 1 && +v <= 1440 ? null : 'whole minutes 1–1440',
@@ -259,12 +324,14 @@ Close out a turn the way it deserves: if you actually ran something, proposed a 
 
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;
-  approvedProposal: Proposal | null; channel?: boolean;
+  approvedProposal: Proposal | null; channel?: boolean; client?: MessagesClient | null;
   onTool?: (name: string, input: Record<string, unknown>, result: ToolResult & { proposal?: Proposal }) => void;
 }): Promise<{ text: string | null; restarted: boolean; toolCalls: number; lastToolResult: string | null }> {
   const { deps } = opts;
-  if (!deps.client) return { text: null, restarted: false, toolCalls: 0, lastToolResult: null };
+  const client = opts.client !== undefined ? opts.client : deps.client;
+  if (!client) return { text: null, restarted: false, toolCalls: 0, lastToolResult: null };
   const messages = [...opts.messages];
+  let historyEnd = messages.length;
   let restarted = false, endsTurn = false, toolCalls = 0, lastToolResult: string | null = null;
   const fullModeNote = 'MODE: you\'re talking with the founder. Reply like a capable colleague — answer what they asked, explain, and act only when it helps. Safe fixes you can just run; gated actions you propose and they approve with \'go\'.';
   const modeNote = opts.channel
@@ -272,10 +339,13 @@ async function loop(opts: {
     : opts.mode === 'read' ? 'MODE: diagnosis only. Use read tools, then call propose_action once if an action would help, then summarise in 2–4 sentences.'
     : opts.mode === 'safe' ? 'MODE: auto-fix. Run the one safe action you were given, check the result, summarise in one or two lines.'
     : fullModeNote;
+  const system = `${SYSTEM}\n\n${modeNote}`;
+  const tools = toolsForMode(opts.mode);
   for (let i = 0; i < MAX_TOOL_CALLS + 1; i++) {
+    historyEnd = fitBudget(system, tools, messages, historyEnd);
     let res: Anthropic.Message;
     try {
-      res = await deps.client.messages.create({ model: OPS_MODEL, max_tokens: MAX_TOKENS_BY_MODE[opts.mode], system: `${SYSTEM}\n\n${modeNote}`, tools: toolsForMode(opts.mode), messages });
+      res = await client.messages.create({ model: OPS_MODEL, max_tokens: MAX_TOKENS_BY_MODE[opts.mode], system, tools, messages });
     } catch (e) {
       return { text: `AI assist error: ${(e as Error).message}`, restarted, toolCalls, lastToolResult };
     }
@@ -317,11 +387,37 @@ function lastReleaseLine(): string {
   return `Last release: ${v ?? '(unknown)'}`;
 }
 
+/** Humanises the time since `firstSeen` (a sqlite "YYYY-MM-DD HH:MM:SS" UTC
+ * timestamp) as a short age like "45m", "3h" or "2d". */
+function humanizeAge(firstSeen: string, now: Date): string {
+  const then = Date.parse(`${firstSeen.replace(' ', 'T')}Z`);
+  if (!Number.isFinite(then)) return '?';
+  const minutes = Math.max(0, Math.floor((now.getTime() - then) / 60_000));
+  if (minutes < 60) return `${minutes}m`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  return `${Math.floor(hours / 24)}d`;
+}
+
+/** One compact line for an incident — `#<id> <title> — <status>, <age>` —
+ * used everywhere a conversational turn needs incident context WITHOUT the
+ * full card (no last_action, evidence or logs): that's what blows a
+ * Groq free-tier request's token budget. */
+export function compactIncident(row: OpsIncidentRow, now: Date = new Date()): string {
+  return `#${row.id} ${row.title} — ${row.status}, ${humanizeAge(row.first_seen, now)}`;
+}
+
+/** Removes fenced code blocks (the giant log dumps that bloat a thread's
+ * history) from a message's content. */
+function stripCodeFences(s: string): string {
+  return s.replace(/```[\s\S]*?```/g, '[code omitted]');
+}
+
 export async function diagnose(incident: OpsIncidentRow, evidence: string, deps: AgentDeps):
   Promise<{ text: string | null; safeAction: { tool: string; input: Record<string, unknown> } | null }> {
   let safeAction: { tool: string; input: Record<string, unknown> } | null = null;
   const r = await loop({
-    incident, mode: 'read', deps, approvedProposal: null,
+    incident, mode: 'read', deps, approvedProposal: null, client: deps.client,
     messages: [{ role: 'user', content: `Incident: ${incident.title}\nSource: ${incident.source}\nSeen ${incident.occurrences}× since ${incident.first_seen} UTC.\n${lastReleaseLine()}\n\nEvidence:\n${evidence || '(none gathered)'}` }],
     onTool: (name, input) => {
       if (name !== 'propose_action') return;
@@ -337,7 +433,7 @@ export async function autoFix(incident: OpsIncidentRow, action: { tool: string; 
   Promise<{ text: string; restarted: boolean }> {
   if (!SAFE_TOOLS.has(action.tool)) return { text: `refusing to auto-run ${action.tool}`, restarted: false };
   const r = await loop({
-    incident, mode: 'safe', deps, approvedProposal: null,
+    incident, mode: 'safe', deps, approvedProposal: null, client: deps.client,
     messages: [{ role: 'user', content: `Run this safe action now and report: ${action.tool} ${JSON.stringify(action.input)}` }],
   });
   return { text: r.text ?? r.lastToolResult ?? 'done', restarted: r.restarted };
@@ -355,17 +451,32 @@ export async function handleThreadReply(incident: OpsIncidentRow, thread: Thread
     queries.setIncidentStatus(incident.id, 'open', null);
     incident = queries.incidentById(incident.id) ?? incident;
   }
+  const now = deps.now?.() ?? new Date();
+  // Keep only the last 6 thread messages, strip fenced code blocks (the
+  // incident card's giant log block) from every one of them except the
+  // most recent, and cap each to 500 chars — the single biggest source of
+  // token bloat in a conversational turn.
+  const recent = thread.slice(-6);
+  const lastRaw = recent[recent.length - 1];
+  const trimmedThread = recent.map((m, i) => {
+    const isMostRecent = i === recent.length - 1;
+    const content = (isMostRecent ? m.content : stripCodeFences(m.content)).slice(0, 500);
+    return { role: m.role, content };
+  });
   const messages: Anthropic.MessageParam[] = [
-    { role: 'user', content: `Incident #${incident.id}: ${incident.title} (status ${incident.status}, seen ${incident.occurrences}× since ${incident.first_seen} UTC).\n${lastReleaseLine()}` },
-    ...thread.map(m => ({ role: m.role, content: m.content })),
+    { role: 'user', content: `${compactIncident(incident, now)}\n${lastReleaseLine()}` },
+    ...trimmedThread,
   ];
-  if (messages[messages.length - 1]?.role !== 'user' || messages[messages.length - 1]?.content !== latest) {
+  // Compare against the untrimmed thread tail — dedup must not be fooled by
+  // the 500-char cap just applied above.
+  const alreadyEndsWithLatest = lastRaw?.role === 'user' && lastRaw.content === latest;
+  if (!alreadyEndsWithLatest) {
     messages.push({ role: 'user', content: latest });
   }
   if (approvedProposal) {
     messages.push({ role: 'user', content: `[system] The founder approved your pending proposal exactly as recorded: ${JSON.stringify(approvedProposal)}. Call that tool with those arguments now, then report.` });
   }
-  const r = await loop({ incident, mode: 'full', deps, approvedProposal, messages });
+  const r = await loop({ incident, mode: 'full', deps, approvedProposal, messages, client: deps.chatClient ?? deps.client });
   return { text: r.text ?? 'AI assist is unavailable right now; here is nothing new. Reply again later.', restarted: r.restarted };
 }
 
@@ -384,19 +495,23 @@ const NO_OPEN_INCIDENT: OpsIncidentRow = {
  * its own context from every open incident (newest first) plus the last few
  * resolved ones, since there is no single incident this message is about. */
 export async function handleChannelMessage(text: string, deps: AgentDeps): Promise<{ text: string; restarted: boolean }> {
+  const now = deps.now?.() ?? new Date();
   const openNewestFirst = [...queries.openIncidents()].reverse();
   const resolved = queries.recentResolvedIncidents(3);
   const lines: string[] = ['Open incidents (newest first):'];
   if (openNewestFirst.length) {
-    for (const inc of openNewestFirst) {
-      lines.push(`#${inc.id} [${inc.status}] ${inc.title} — last_action: ${inc.last_action ?? '(none)'} — first seen ${inc.first_seen} UTC`);
-    }
+    // Compact one-liners only (no last_action/evidence/logs), capped at 8 —
+    // a channel message's context is otherwise the biggest source of token
+    // bloat once more than a handful of incidents are open.
+    const shown = openNewestFirst.slice(0, 8);
+    for (const inc of shown) lines.push(compactIncident(inc, now));
+    if (openNewestFirst.length > shown.length) lines.push(`…and ${openNewestFirst.length - shown.length} more open`);
   } else {
     lines.push('(none)');
   }
   lines.push('Recently resolved:');
   if (resolved.length) {
-    for (const inc of resolved) lines.push(`#${inc.id} ${inc.title} — first seen ${inc.first_seen} UTC`);
+    for (const inc of resolved) lines.push(compactIncident(inc, now));
   } else {
     lines.push('(none)');
   }
@@ -408,6 +523,7 @@ export async function handleChannelMessage(text: string, deps: AgentDeps): Promi
     deps,
     approvedProposal: null,
     messages: [{ role: 'user', content: `${context}\n${lastReleaseLine()}\n\nFounder message in #admin_alerts: ${text}` }],
+    client: deps.chatClient ?? deps.client,
   });
   return { text: r.text ?? 'AI assist is unavailable right now; here is nothing new. Reply again later.', restarted: r.restarted };
 }
