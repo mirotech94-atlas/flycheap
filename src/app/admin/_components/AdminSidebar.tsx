@@ -24,6 +24,7 @@ const NAV: NavGroup[] = [
   { group: 'Operations', items: [
     { href: '/admin/health',       label: 'Fare engine',  icon: 'health' },
     { href: '/admin/queue',        label: 'Content queue', icon: 'queue', hint: 'AI-drafted posts awaiting your approval' },
+    { href: '/admin/farepilot',    label: 'FarePilot',    icon: 'overview', hint: 'Owner AI operator console' },
     { href: '/admin/errors',       label: 'Errors',       icon: 'errors' },
     { href: '/admin/integrations', label: 'Integrations', icon: 'integrations' },
   ] },

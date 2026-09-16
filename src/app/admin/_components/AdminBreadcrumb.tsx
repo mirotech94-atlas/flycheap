@@ -13,6 +13,7 @@ const SECTION_LABEL: Record<string, string> = {
   '/admin/health':       'Fare engine',
   '/admin/queue':        'Content queue',
   '/admin/errors':       'Errors',
+  '/admin/farepilot':    'FarePilot',
   '/admin/integrations': 'Integrations',
   '/admin/settings':     'Settings',
 };

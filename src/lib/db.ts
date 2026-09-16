@@ -78,6 +78,16 @@ function init(db: Database.Database) {
     );
 
     -- Server-side error log: lets us debug without ssh + tail
+    CREATE TABLE IF NOT EXISTS admin_agent_audit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      admin_user_id INTEGER,
+      tool TEXT NOT NULL,
+      input TEXT,
+      result_preview TEXT,
+      ok INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_admin_agent_audit_time ON admin_agent_audit(id DESC);
     CREATE TABLE IF NOT EXISTS error_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       occurred_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -761,6 +771,14 @@ const AUDIT_NOT_INTERNAL = `coalesce(a.detail, '') NOT LIKE '%"internal":true%'`
 export const queries = {
   // -------- Users --------
   getUserById:    (id: number) => getDb().prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined,
+  // -------- Admin FarePilot audit (owner-only agent action trail) --------
+  logAdminAgentAction: (p: { adminUserId: number | null; tool: string; input: string; resultPreview: string; ok: boolean }) =>
+    getDb().prepare(`INSERT INTO admin_agent_audit (admin_user_id, tool, input, result_preview, ok) VALUES (?, ?, ?, ?, ?)`)
+      .run(p.adminUserId, p.tool, p.input.slice(0, 4000), p.resultPreview.slice(0, 4000), p.ok ? 1 : 0),
+  recentAdminAgentAudit: (limit = 100) =>
+    getDb().prepare(`SELECT * FROM admin_agent_audit ORDER BY id DESC LIMIT ?`).all(limit) as Array<{
+      id: number; admin_user_id: number | null; tool: string; input: string | null; result_preview: string | null; ok: number; created_at: string;
+    }>,
   getUserByEmail: (email: string) => getDb().prepare('SELECT * FROM users WHERE email = ?').get(email) as UserRow | undefined,
   getUserByUsername: (username: string) =>
     getDb().prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username) as UserRow | undefined,
