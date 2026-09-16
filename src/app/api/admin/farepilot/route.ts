@@ -139,7 +139,13 @@ export async function POST(req: Request) {
   // fallback has credit. The F7 `executed` guard below still prevents any
   // re-run of a privileged action across providers.
   const attempts: Array<() => Promise<LoopResult>> = [];
-  if (process.env.GROQ_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' }, parsed.data.messages, ctx));
+  if (process.env.GROQ_API_KEY) {
+    const groqKey = process.env.GROQ_API_KEY;
+    // Groq's daily cap is per-model, so a second Groq model is a real
+    // fallback with its own budget — tried before spending any paid credit.
+    attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: groqKey, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq:120b' }, parsed.data.messages, ctx));
+    attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: groqKey, model: process.env.CHAT_MODEL_GROQ_FALLBACK || 'llama-3.3-70b-versatile', provider: 'groq:llama' }, parsed.data.messages, ctx));
+  }
   if (process.env.ANTHROPIC_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.anthropic.com/v1', apiKey: process.env.ANTHROPIC_API_KEY!, model: process.env.CHAT_MODEL_ANTHROPIC || 'claude-sonnet-4-5-20250929', provider: 'anthropic' }, parsed.data.messages, ctx));
   if (process.env.OPENAI_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.openai.com/v1', apiKey: process.env.OPENAI_API_KEY!, model: process.env.CHAT_MODEL_OPENAI || 'gpt-4o-mini', provider: 'openai' }, parsed.data.messages, ctx));
   if (attempts.length === 0) return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY).' }, { status: 500 });

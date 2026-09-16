@@ -53,6 +53,11 @@ export async function groqChat(opts: {
   // and conserves the free-tier tokens-per-minute budget. Only sent for
   // gpt-oss models (Groq rejects the field on models that don't support it).
   reasoningEffort?: 'low' | 'medium' | 'high';
+  // Groq's daily (TPD) token cap is PER MODEL, so when the primary model's
+  // daily bucket is exhausted a different Groq model still answers. On a
+  // daily-cap 429 we switch to this model once (its own bucket) instead of
+  // failing. Defaults to the fast gpt-oss model.
+  fallbackModel?: string;
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
@@ -60,30 +65,37 @@ export async function groqChat(opts: {
   const baseUrl = opts.baseUrl ?? 'https://api.groq.com/openai/v1';
   const fetchImpl = opts.fetchImpl ?? fetch;
   const sleep = opts.sleep ?? ((ms: number) => new Promise<void>(resolve => setTimeout(resolve, ms)));
+  const fallbackModel = opts.fallbackModel ?? 'openai/gpt-oss-20b';
 
-  const doFetch = () => fetchImpl(`${baseUrl}/chat/completions`, {
+  const doFetch = (model: string) => fetchImpl(`${baseUrl}/chat/completions`, {
     method: 'POST',
     headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      model: opts.model,
+      model,
       max_tokens: opts.maxTokens,
       messages: [{ role: 'system', content: opts.system }, ...opts.messages],
       ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
-      ...(opts.reasoningEffort && /gpt-oss/.test(opts.model)
+      ...(opts.reasoningEffort && /gpt-oss/.test(model)
         ? { reasoning_effort: opts.reasoningEffort }
         : {}),
     }),
   });
 
-  let res = await doFetch();
+  let model = opts.model;
+  let res = await doFetch(model);
   let lastBody = '';
   for (let attempt = 0; !res.ok && attempt < MAX_RETRIES; attempt++) {
     lastBody = await res.text().catch(() => '');
     if (res.status === 429) {
-      // A daily-cap 429 won't clear for hours — fail fast, don't stall.
-      if (isDailyLimit(lastBody)) throw new Error(`Groq daily token limit reached (free tier). ${lastBody.slice(0, 200)}`);
-      // Per-minute rate limit: honour the server's retry hint.
-      await sleep(parseRetrySeconds(lastBody) * 1000);
+      // A daily-cap 429 is per-model: switch to the fallback model's own
+      // daily bucket once. If we're already on it, the whole account is dry.
+      if (isDailyLimit(lastBody)) {
+        if (model === fallbackModel) throw new Error(`Groq daily token limit reached on all models. ${lastBody.slice(0, 160)}`);
+        model = fallbackModel;
+      } else {
+        // Per-minute rate limit: honour the server's retry hint.
+        await sleep(parseRetrySeconds(lastBody) * 1000);
+      }
     } else if (res.status === 400 && /json_validate_failed/.test(lastBody)) {
       // Transient: the gpt-oss reasoning models occasionally emit an empty
       // final message in strict-JSON mode (all budget spent in the hidden
@@ -95,7 +107,7 @@ export async function groqChat(opts: {
       // Non-retryable error: surface it immediately.
       throw new Error(`Groq ${res.status}: ${lastBody.slice(0, 300)}`);
     }
-    res = await doFetch();
+    res = await doFetch(model);
   }
   if (!res.ok) {
     const text = await res.text().catch(() => lastBody);

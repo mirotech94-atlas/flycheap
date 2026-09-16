@@ -108,6 +108,32 @@ describe('groqChat', () => {
     expect(sleeps).toEqual([500]);
   });
 
+  it('switches to the fallback model on a daily-cap (TPD) 429', async () => {
+    const seen: string[] = [];
+    const fetchImpl = (async (_url: string, init: RequestInit) => {
+      const model = JSON.parse(String(init.body)).model as string;
+      seen.push(model);
+      if (model === 'openai/gpt-oss-120b') {
+        return { ok: false, status: 429, text: async () => 'Rate limit reached … on tokens per day (TPD): Limit 200000', json: async () => ({}) } as unknown as Response;
+      }
+      return { ok: true, status: 200, text: async () => '', json: async () => ({ choices: [{ message: { content: 'from fallback' } }] }) } as unknown as Response;
+    }) as typeof fetch;
+    const reply = await groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-120b', system: 's', messages: [], maxTokens: 100,
+      fallbackModel: 'openai/gpt-oss-20b', fetchImpl,
+    });
+    expect(reply).toBe('from fallback');
+    expect(seen).toEqual(['openai/gpt-oss-120b', 'openai/gpt-oss-20b']);
+  });
+
+  it('throws when the daily cap is hit on the fallback model too', async () => {
+    const fetchImpl = fakeFetch(() => ({ status: 429, body: 'tokens per day (TPD): Limit 200000 reached' }));
+    await expect(groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-20b', system: 's', messages: [], maxTokens: 100,
+      fallbackModel: 'openai/gpt-oss-20b', fetchImpl,
+    })).rejects.toThrow(/daily token limit reached on all models/);
+  });
+
   it('does not retry a non-json_validate 400', async () => {
     let calls = 0;
     const fetchImpl = fakeFetch(() => { calls += 1; return { status: 400, body: 'bad request shape' }; });

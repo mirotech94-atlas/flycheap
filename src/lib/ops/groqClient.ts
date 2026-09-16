@@ -136,12 +136,16 @@ export function createGroqMessagesClient(opts: {
         let res = await doFetch(model);
         for (let attempt = 0; res.status === 429 && attempt < MAX_RETRIES; attempt++) {
           const retryText = await res.text().catch(() => '');
-          // A daily-cap (TPD) 429 won't clear for hours — fail fast rather
-          // than stalling the detector for a minute or two per diagnosis.
+          // Groq's daily (TPD) cap is per-model: switch to the fallback
+          // model's own daily bucket once rather than stalling on per-minute
+          // backoff that can't clear. Only if we're already on the fallback
+          // is the account truly dry for the day.
           if (/per day|tokens per day|\bTPD\b/i.test(retryText)) {
-            throw new Error(`Groq daily token limit reached (free tier). ${retryText.slice(0, 200)}`);
+            if (model === fallbackModel) throw new Error(`Groq daily token limit reached on all models. ${retryText.slice(0, 160)}`);
+            model = fallbackModel;
+          } else {
+            await sleep(parseRetrySeconds(retryText) * 1000);
           }
-          await sleep(parseRetrySeconds(retryText) * 1000);
           res = await doFetch(model);
         }
         if (res.status === 413) {
