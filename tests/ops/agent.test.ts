@@ -289,3 +289,45 @@ describe('propose_action validation', () => {
     expect(d.safeAction).toEqual({ tool: 'poll_search', input: { id: 7 } });
   });
 });
+
+describe('handleChannelMessage', () => {
+  it('builds context containing every open incident title', async () => {
+    for (const inc of db.queries.openIncidents()) db.queries.resolveIncident(inc.id);
+    db.queries.upsertIncident('unit:channel-a', 'unit', 'Job failed: channel-a');
+    db.queries.upsertIncident('unit:channel-b', 'unit', 'Job failed: channel-b');
+    let seenContext = '';
+    const client: import('@/lib/ops/agent').MessagesClient = {
+      messages: { create: async (p) => {
+        seenContext = String((p.messages[0] as { content: string }).content);
+        return { id: 'm', type: 'message', role: 'assistant', model: 'x', content: [{ type: 'text', text: 'Two open, nothing actioned.', citations: null }], stop_reason: 'end_turn', stop_sequence: null, usage: { input_tokens: 0, output_tokens: 0 } } as unknown as Anthropic.Message;
+      } },
+    };
+    const r = await agent.handleChannelMessage('status?', { ...deps(), client });
+    expect(seenContext).toContain('Job failed: channel-a');
+    expect(seenContext).toContain('Job failed: channel-b');
+    expect(r.text).toBe('Two open, nothing actioned.');
+  });
+
+  it('"fix it" with a client that starts a failed job runs reset-failed + start and reports a status line', async () => {
+    for (const inc of db.queries.openIncidents()) db.queries.resolveIncident(inc.id);
+    db.queries.upsertIncident('unit:channel-fix', 'unit', 'Job failed: channel-fix');
+    calls.length = 0;
+    const client = scripted([
+      [{ type: 'tool_use', id: 't1', name: 'start_job', input: { unit: 'egyptair-jobs@channel-fix' } }],
+      [{ type: 'text', text: 'Ran start_job on channel-fix and it recovered. Status: 1 incident fixed, 0 open.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    const r = await agent.handleChannelMessage('fix it', { ...deps(), client });
+    expect(calls.map(c => c[1].join(' '))).toEqual([
+      '/usr/bin/systemctl reset-failed egyptair-jobs@channel-fix.service',
+      '/usr/bin/systemctl start egyptair-jobs@channel-fix.service',
+    ]);
+    expect(r.text).toContain('Status:');
+  });
+
+  it('says so when nothing is open', async () => {
+    for (const inc of db.queries.openIncidents()) db.queries.resolveIncident(inc.id);
+    const client = scripted([[{ type: 'text', text: 'Nothing open right now.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
+    const r = await agent.handleChannelMessage('fix it', { ...deps(), client });
+    expect(r.text).toBe('Nothing open right now.');
+  });
+});

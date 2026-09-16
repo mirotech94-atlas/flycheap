@@ -47,6 +47,8 @@ export const commands = {
     file: 'sudo',
     args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'],
   }),
+  // Plain `df`, no sudo needed — not in deploy/sudoers-egyflights-ops.
+  diskFree: (): CommandSpec => ({ file: 'df', args: ['-Pk', '/opt/egyptair-tracker'] }),
 };
 
 const OUTPUT_CAP = 64 * 1024;

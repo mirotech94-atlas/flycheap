@@ -2,7 +2,7 @@ import 'server-only';
 import Anthropic from '@anthropic-ai/sdk';
 import { queries, type OpsIncidentRow } from '@/lib/db';
 import { commands, run, defaultRunner, type Runner } from './shell';
-import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, errorFingerprint, type Finding, type HealthJson } from './probes';
+import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint, type Finding, type HealthJson } from './probes';
 import { formatCard, formatResolved, formatBackUp, formatFixingText, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
 import { createGroqMessagesClient } from './groqClient';
@@ -63,6 +63,11 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number | null): Pr
     }] as [string, () => Promise<Finding[]>]]),
     ['health', async () => probeHealth(await io.fetchHealth())],
     ['crashloop', async () => probeCrashLoop((await run(commands.journalSince(15), io.runner)).stdout)],
+    ['disk', async () => {
+      const alreadyOpen = queries.openIncidents().some(i => i.fingerprint === 'disk:low');
+      const kb = parseDiskFreeKb((await run(commands.diskFree(), io.runner)).stdout);
+      return probeDisk(kb, alreadyOpen);
+    }],
   ];
   for (const [name, p] of probes) {
     try { out.push(...(await p())); }
@@ -105,6 +110,11 @@ function agentDeps(io: DetectorIO): AgentDeps {
   return { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth, now: io.now };
 }
 
+// Sources whose incident cards get the <!channel> critical treatment instead
+// of the ordinary 🔴 marker — the ones a founder should be paged for, not
+// just informed about.
+const CRITICAL_FINGERPRINTS: ReadonlySet<string> = new Set(['health:database', 'health:unreachable', 'crashloop', 'disk:low']);
+
 async function openCard(inc: OpsIncidentRow, f: Finding, io: DetectorIO): Promise<{ posted: boolean; restarted: boolean }> {
   const evidence = await evidenceFor(f, io);
   const d = await diagnose(inc, evidence, agentDeps(io));
@@ -112,7 +122,8 @@ async function openCard(inc: OpsIncidentRow, f: Finding, io: DetectorIO): Promis
   if (d.safeAction) footer = { kind: 'fixing', text: formatFixingText(d.safeAction.tool, d.safeAction.input) };
   const pending = queries.incidentById(inc.id)?.last_action;
   if (pending?.startsWith('PROPOSAL:')) footer = { kind: 'needs_you', text: 'see the proposal below and reply *go* to approve' };
-  const ts = await io.postCard(formatCard({ title: inc.title, firstSeen: inc.first_seen, occurrences: inc.occurrences, evidence, diagnosis: d.text, footer }));
+  const critical = CRITICAL_FINGERPRINTS.has(f.fingerprint);
+  const ts = await io.postCard(formatCard({ title: inc.title, firstSeen: inc.first_seen, occurrences: inc.occurrences, evidence, diagnosis: d.text, footer, critical }));
   if (!ts) return { posted: false, restarted: false };
   queries.setIncidentSlackTs(inc.id, ts);
   if (!d.safeAction) return { posted: true, restarted: false };
@@ -221,12 +232,25 @@ export async function tick(io: DetectorIO): Promise<{ created: number; resolved:
 export async function postBootCheck(io: DetectorIO): Promise<void> {
   try {
     const h = await io.fetchHealth();
+    const bad = h ? Object.entries(h.checks).filter(([, c]) => !c.ok).map(([k, c]) => `${k}: ${c.detail ?? 'failing'}`).join('; ') : 'health endpoint unreachable';
+
+    // A restart triggered by a founder message in the channel (no single
+    // incident to hang a thread reply off) — confirm health under that
+    // message's own thread, then clear the marker so it can't fire twice.
+    const pendingThread = queries.getSetting('ops_pending_restart_thread');
+    if (pendingThread) {
+      try {
+        await io.postThread(pendingThread, h?.ok ? formatBackUp() : `⚠️ Back up but not healthy — ${bad}`);
+      } finally {
+        queries.setSetting('ops_pending_restart_thread', '');
+      }
+    }
+
     const fixing = queries.openIncidents().filter(i => i.status === 'fixing' && i.slack_ts && (i.last_restart_at || i.last_deploy_at));
     if (!fixing.length) return;
     if (h?.ok) {
       for (const inc of fixing) await io.postThread(inc.slack_ts!, formatBackUp());
     } else {
-      const bad = h ? Object.entries(h.checks).filter(([, c]) => !c.ok).map(([k, c]) => `${k}: ${c.detail ?? 'failing'}`).join('; ') : 'health endpoint unreachable';
       for (const inc of fixing) {
         await io.postThread(inc.slack_ts!, `⚠️ Back up but not healthy — ${bad}\n*Needs you:* tell me how you want to proceed, or reply *go* if you want a redeploy proposal.`);
         queries.setIncidentStatus(inc.id, 'needs_human');

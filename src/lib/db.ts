@@ -1218,6 +1218,8 @@ export const queries = {
   },
   openIncidents: (): OpsIncidentRow[] =>
     getDb().prepare(`SELECT * FROM ops_incidents WHERE status <> 'resolved' ORDER BY first_seen`).all() as OpsIncidentRow[],
+  recentResolvedIncidents: (limit = 3): OpsIncidentRow[] =>
+    getDb().prepare(`SELECT * FROM ops_incidents WHERE status = 'resolved' ORDER BY resolved_at DESC LIMIT ?`).all(limit) as OpsIncidentRow[],
   incidentByThread: (slackTs: string): OpsIncidentRow | undefined =>
     getDb().prepare(`SELECT * FROM ops_incidents WHERE slack_ts = ?`).get(slackTs) as OpsIncidentRow | undefined,
   incidentById: (id: number): OpsIncidentRow | undefined =>

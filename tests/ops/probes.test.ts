@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, errorFingerprint } from '@/lib/ops/probes';
+import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint } from '@/lib/ops/probes';
 
 describe('probeFailedUnits', () => {
   it('parses systemctl --failed --no-legend output', () => {
@@ -68,5 +68,34 @@ describe('probeCrashLoop', () => {
     const out = ['Started egyptair.service - EgyptAir Cheap Flights Tracker.', '▲ Next.js 16.2.6', 'Started egyptair.service - EgyptAir Cheap Flights Tracker.', 'Started egyptair.service - EgyptAir Cheap Flights Tracker.'].join('\n');
     expect(probeCrashLoop(out)).toEqual([{ fingerprint: 'crashloop', source: 'crashloop', title: 'App restarting repeatedly (3 starts in 15 min)', detail: expect.stringContaining('3 starts') }]);
     expect(probeCrashLoop('Started egyptair.service - x\nStarted egyptair.service - y')).toEqual([]);
+  });
+});
+
+describe('parseDiskFreeKb', () => {
+  it('parses the Available column of `df -Pk` output', () => {
+    const out = ['Filesystem     1024-blocks     Used Available Capacity Mounted on', '/dev/sda1        41152800 39572404   1580396      97% /'].join('\n');
+    expect(parseDiskFreeKb(out)).toBe(1580396);
+  });
+  it('returns null for unparseable output', () => {
+    expect(parseDiskFreeKb('')).toBeNull();
+    expect(parseDiskFreeKb('df: /opt/egyptair-tracker: No such file or directory')).toBeNull();
+  });
+});
+
+describe('probeDisk', () => {
+  const GB = 1024 * 1024;
+  it('opens only below 1.5 GB free when nothing is open yet', () => {
+    expect(probeDisk(1.6 * GB, false)).toEqual([]);
+    const f = probeDisk(1.4 * GB, false);
+    expect(f).toEqual([{ fingerprint: 'disk:low', source: 'disk', title: 'Disk space low: 1.4 GB free', detail: expect.stringContaining('available on /opt/egyptair-tracker') }]);
+  });
+  it('once open, stays open until >= 2 GB free (hysteresis)', () => {
+    expect(probeDisk(1.8 * GB, true)).toHaveLength(1);
+    expect(probeDisk(1.99 * GB, true)).toHaveLength(1);
+    expect(probeDisk(2 * GB, true)).toEqual([]);
+  });
+  it('unparseable df output produces no finding', () => {
+    expect(probeDisk(null, false)).toEqual([]);
+    expect(probeDisk(null, true)).toEqual([]);
   });
 });

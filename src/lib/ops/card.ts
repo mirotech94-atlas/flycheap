@@ -17,11 +17,11 @@ export function formatFixingText(tool: string, input: Record<string, unknown>): 
 
 export function formatCard(args: {
   title: string; firstSeen: string; occurrences: number;
-  evidence: string; diagnosis: string | null; footer: CardFooter;
+  evidence: string; diagnosis: string | null; footer: CardFooter; critical?: boolean;
 }): string {
   const since = args.firstSeen.replace(/:\d\d$/, '').replace('T', ' ');
   const lines = [
-    `🔴 *${args.title}*`,
+    args.critical ? `<!channel> 🚨 CRITICAL *${args.title}*` : `🔴 *${args.title}*`,
     `*Since:* ${since} UTC · *Seen:* ${args.occurrences}×`,
   ];
   const ev = args.evidence.trim();

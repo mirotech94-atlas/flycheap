@@ -30,4 +30,16 @@ describe('formatCard', () => {
   it('resolved line', () => {
     expect(formatResolved('Job failed: x')).toBe('✅ Resolved — Job failed: x has been clear for 60 min.');
   });
+  it('critical flag prefixes the first line with <!channel> 🚨 CRITICAL instead of 🔴', () => {
+    const s = formatCard({
+      title: 'Disk space low: 1.1 GB free', firstSeen: '2026-09-14 23:30:02', occurrences: 1,
+      evidence: '', diagnosis: null, footer: { kind: 'none' }, critical: true,
+    });
+    expect(s.split('\n')[0]).toBe('<!channel> 🚨 CRITICAL *Disk space low: 1.1 GB free*');
+  });
+  it('omitting critical (or false) keeps the plain 🔴 marker', () => {
+    const base = { title: 't', firstSeen: '2026-09-14 23:30:02', occurrences: 1, evidence: '', diagnosis: null, footer: { kind: 'none' } as const };
+    expect(formatCard(base).split('\n')[0]).toBe('🔴 *t*');
+    expect(formatCard({ ...base, critical: false }).split('\n')[0]).toBe('🔴 *t*');
+  });
 });

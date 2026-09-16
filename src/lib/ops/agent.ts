@@ -40,8 +40,8 @@ export const OPS_TOOLS: Anthropic.Tool[] = [
   { name: 'start_job', description: 'SAFE. reset-failed + start an egyptair-jobs@<name>, egyptair-post-video or egyptair-backup unit.', input_schema: obj({ unit: { type: 'string' } }, ['unit']) },
   { name: 'clear_job_lock', description: 'SAFE. Delete a stuck job_locks row older than 30 minutes.', input_schema: obj({ name: { type: 'string' } }, ['name']) },
   { name: 'poll_search', description: 'SAFE. Re-poll one tracked route by search id.', input_schema: obj({ id: { type: 'integer' } }, ['id']) },
-  { name: 'set_platform_setting', description: 'GATED. Change one platform setting (poll_interval_minutes, alert_channels, enabled_providers, price_drop_pct, alert_threshold_per_adult_usd).', input_schema: obj({ key: { type: 'string' }, value: { type: 'string' }, reason: { type: 'string' } }, ['key', 'value', 'reason']) },
-  { name: 'redeploy', description: 'GATED. Queue a rebuild + restart via deploy.sh (auto-rolls back on failed health check).', input_schema: obj({ reason: { type: 'string' } }, ['reason']) },
+  { name: 'set_platform_setting', description: 'GATED. Change one platform setting (poll_interval_minutes, alert_channels, enabled_providers, price_drop_pct, alert_threshold_per_adult_usd). When addressing multiple open incidents in the channel, pass incident_id to bind the proposal to the incident it concerns (defaults to the newest open one).', input_schema: obj({ key: { type: 'string' }, value: { type: 'string' }, reason: { type: 'string' }, incident_id: { type: 'integer' } }, ['key', 'value', 'reason']) },
+  { name: 'redeploy', description: 'GATED. Queue a rebuild + restart via deploy.sh (auto-rolls back on failed health check). When addressing multiple open incidents in the channel, pass incident_id to bind the proposal to the incident it concerns (defaults to the newest open one).', input_schema: obj({ reason: { type: 'string' }, incident_id: { type: 'integer' } }, ['reason']) },
 ];
 
 /** The tool set offered to the model for a given mode: read tools only in
@@ -195,12 +195,28 @@ export async function runOpsTool(
       }
       case 'set_platform_setting':
       case 'redeploy': {
-        const proposal: Proposal = { tool: name, input: { ...input }, reason: String(input.reason ?? '') };
+        // In an incident thread this is always ctx.incident. From a channel
+        // message there's no single incident bound to the whole turn, so a
+        // proposal that concerns a specific (usually older) incident can name
+        // it via incident_id; absent that, it defaults to ctx.incident (the
+        // newest open one, for channel messages — see handleChannelMessage).
+        const boundIncident = (() => {
+          const raw = input.incident_id;
+          if (raw !== undefined && raw !== null) {
+            const id = Number(raw);
+            const found = Number.isFinite(id) ? queries.incidentById(id) : undefined;
+            if (found) return found;
+          }
+          return incident;
+        })();
+        const proposalInput = { ...input };
+        delete (proposalInput as { incident_id?: unknown }).incident_id;
+        const proposal: Proposal = { tool: name, input: proposalInput, reason: String(input.reason ?? '') };
         delete (proposal.input as { reason?: unknown }).reason;
         const approved = ctx.approvedProposal && ctx.approvedProposal.tool === name && sameInput(ctx.approvedProposal.input, proposal.input);
         if (!approved) {
-          queries.setIncidentStatus(incident.id, 'needs_human', `PROPOSAL:${JSON.stringify(proposal)}`);
-          return { content: `NEEDS_APPROVAL: I have recorded this proposal. Tell the founder exactly what you want to run and why, and ask them to reply "go".`, is_error: true, proposal };
+          queries.setIncidentStatus(boundIncident.id, 'needs_human', `PROPOSAL:${JSON.stringify(proposal)}`);
+          return { content: `NEEDS_APPROVAL: I have recorded this proposal on incident #${boundIncident.id} (${boundIncident.title}). Tell the founder exactly what you want to run and why, and ask them to reply "go" in that incident's thread.`, is_error: true, proposal };
         }
         if (name === 'set_platform_setting') {
           const key = String(proposal.input.key ?? ''), value = String(proposal.input.value ?? '');
@@ -210,13 +226,13 @@ export async function runOpsTool(
           if (err) return { content: `invalid value for ${key}: ${err}`, is_error: true };
           const before = queries.getSetting(key) ?? null;
           queries.setSetting(key, value);
-          queries.insertAudit({ user_id: null, email: 'ops-agent', action: 'settings.update', entity: `setting:${key}`, detail: { before, after: value, via: 'slack-ops-agent', incident: incident.id }, ip: null });
-          queries.setIncidentStatus(incident.id, 'fixing', `SET:${key}=${value}`);
+          queries.insertAudit({ user_id: null, email: 'ops-agent', action: 'settings.update', entity: `setting:${key}`, detail: { before, after: value, via: 'slack-ops-agent', incident: boundIncident.id }, ip: null });
+          queries.setIncidentStatus(boundIncident.id, 'fixing', `SET:${key}=${value}`);
           return { content: `set ${key}: ${before ?? '(unset)'} → ${value}` };
         }
-        if (incident.last_deploy_at) return { content: 'already redeployed once for this incident', is_error: true };
-        queries.markIncidentDeploy(incident.id, now.toISOString());
-        queries.setIncidentStatus(incident.id, 'fixing', 'DEPLOYED');
+        if (boundIncident.last_deploy_at) return { content: 'already redeployed once for this incident', is_error: true };
+        queries.markIncidentDeploy(boundIncident.id, now.toISOString());
+        queries.setIncidentStatus(boundIncident.id, 'fixing', 'DEPLOYED');
         return { ...fmt(await run(commands.deploy(), deps.runner)), restarted: true };
       }
     }
@@ -238,13 +254,16 @@ Rules:
 
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;
-  approvedProposal: Proposal | null; onTool?: (name: string, input: Record<string, unknown>, result: ToolResult & { proposal?: Proposal }) => void;
+  approvedProposal: Proposal | null; channel?: boolean;
+  onTool?: (name: string, input: Record<string, unknown>, result: ToolResult & { proposal?: Proposal }) => void;
 }): Promise<{ text: string | null; restarted: boolean; toolCalls: number; lastToolResult: string | null }> {
   const { deps } = opts;
   if (!deps.client) return { text: null, restarted: false, toolCalls: 0, lastToolResult: null };
   const messages = [...opts.messages];
   let restarted = false, endsTurn = false, toolCalls = 0, lastToolResult: string | null = null;
-  const modeNote = opts.mode === 'read' ? 'MODE: diagnosis only. Use read tools, then call propose_action once if an action would help, then summarise in 2–4 sentences.'
+  const modeNote = opts.channel
+    ? 'MODE: the founder is addressing you in the channel, not inside one incident\'s thread. If they say fix it / fix them / handle it, work through the open incidents newest-first using SAFE tools, one at a time, and report per incident what you ran and the result; propose gated actions with the exact tool and arguments (including incident_id if it is not the newest incident) and ask them to reply "go" in that incident\'s thread. If nothing is open, say so. End your reply with a one-line status summary.'
+    : opts.mode === 'read' ? 'MODE: diagnosis only. Use read tools, then call propose_action once if an action would help, then summarise in 2–4 sentences.'
     : opts.mode === 'safe' ? 'MODE: auto-fix. Run the one safe action you were given, check the result, summarise in one or two lines.'
     : 'MODE: conversation with the founder in the incident thread.';
   for (let i = 0; i < MAX_TOOL_CALLS + 1; i++) {
@@ -333,5 +352,48 @@ export async function handleThreadReply(incident: OpsIncidentRow, thread: Thread
     messages.push({ role: 'user', content: `[system] The founder approved your pending proposal exactly as recorded: ${JSON.stringify(approvedProposal)}. Call that tool with those arguments now, then report.` });
   }
   const r = await loop({ incident, mode: 'full', deps, approvedProposal, messages });
+  return { text: r.text ?? 'AI assist is unavailable right now; here is nothing new. Reply again later.', restarted: r.restarted };
+}
+
+// Used only when handleChannelMessage runs with zero open incidents: SAFE/
+// GATED tools bind their bookkeeping to ctx.incident, and id 0 never matches
+// a real row, so any such call is a harmless no-op — matching the system
+// prompt's instruction not to act when nothing is open.
+const NO_OPEN_INCIDENT: OpsIncidentRow = {
+  id: 0, fingerprint: '', source: '', title: '(no open incidents)', status: 'resolved',
+  slack_ts: null, first_seen: '', last_seen: '', occurrences: 0,
+  last_action: null, last_restart_at: null, last_deploy_at: null, resolved_at: null,
+};
+
+/** A root message in #admin_alerts (not a reply inside an incident thread) —
+ * the founder addressing the ops agent in the channel, e.g. "fix it". Builds
+ * its own context from every open incident (newest first) plus the last few
+ * resolved ones, since there is no single incident this message is about. */
+export async function handleChannelMessage(text: string, deps: AgentDeps): Promise<{ text: string; restarted: boolean }> {
+  const openNewestFirst = [...queries.openIncidents()].reverse();
+  const resolved = queries.recentResolvedIncidents(3);
+  const lines: string[] = ['Open incidents (newest first):'];
+  if (openNewestFirst.length) {
+    for (const inc of openNewestFirst) {
+      lines.push(`#${inc.id} [${inc.status}] ${inc.title} — last_action: ${inc.last_action ?? '(none)'} — first seen ${inc.first_seen} UTC`);
+    }
+  } else {
+    lines.push('(none)');
+  }
+  lines.push('Recently resolved:');
+  if (resolved.length) {
+    for (const inc of resolved) lines.push(`#${inc.id} ${inc.title} — first seen ${inc.first_seen} UTC`);
+  } else {
+    lines.push('(none)');
+  }
+  const context = lines.join('\n');
+  const r = await loop({
+    incident: openNewestFirst[0] ?? NO_OPEN_INCIDENT,
+    mode: 'full',
+    channel: true,
+    deps,
+    approvedProposal: null,
+    messages: [{ role: 'user', content: `${context}\n\nFounder message in #admin_alerts: ${text}` }],
+  });
   return { text: r.text ?? 'AI assist is unavailable right now; here is nothing new. Reply again later.', restarted: r.restarted };
 }

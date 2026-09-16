@@ -216,6 +216,27 @@ export async function POST(req: Request) {
       const threadTs: string = ev.thread_ts || ev.ts;
       if (decision === 'support') {
         void answerInThread(ev.channel, threadTs, ev.text, { isThreadReply });
+      } else if (decision === 'ops-channel') {
+        // Founder addressing the ops agent directly in #admin_alerts (a root
+        // message, not a reply inside an incident thread). Reply in a thread
+        // under their own message.
+        void (async () => {
+          try {
+            if ((queries.getSetting('ops_agent_enabled') ?? 'true') === 'false') {
+              await postToSlackThread(ev.channel, ev.ts, 'Ops agent is switched off in Admin → Settings.');
+              return;
+            }
+            const { handleChannelMessage } = await import('@/lib/ops/agent');
+            const { productionIO } = await import('@/lib/ops/detector');
+            const io = productionIO();
+            const r = await handleChannelMessage(String(ev.text), { runner: io.runner, client: io.client, fetchHealth: io.fetchHealth });
+            if (r.restarted) queries.setSetting('ops_pending_restart_thread', ev.ts);
+            await postToSlackThread(ev.channel, ev.ts, r.text);
+          } catch (e) {
+            console.error('[slack-ops] channel message failed:', (e as Error).message);
+            await postToSlackThread(ev.channel, ev.ts, `⚠️ I hit an error handling that: ${(e as Error).message}`).catch(() => {});
+          }
+        })();
       } else {
         // Ops agent: founder replying under an incident card in #admin_alerts.
         void (async () => {

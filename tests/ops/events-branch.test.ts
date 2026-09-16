@@ -8,8 +8,10 @@ describe('routeSlackMessage', () => {
   it('human reply in an incident thread in #admin_alerts → ops', () => {
     expect(routeSlackMessage({ channel: 'CADMIN', thread_ts: '100.1', ts: '100.2', text: 'go' }, ids, has)).toBe('ops');
   });
-  it('root messages and non-incident threads in #admin_alerts are ignored', () => {
-    expect(routeSlackMessage({ channel: 'CADMIN', ts: '101.0', text: 'hi' }, ids, has)).toBe('ignore');
+  it('a root human message in #admin_alerts → ops-channel', () => {
+    expect(routeSlackMessage({ channel: 'CADMIN', ts: '101.0', text: 'fix it' }, ids, has)).toBe('ops-channel');
+  });
+  it('a reply inside a non-incident thread in #admin_alerts is ignored', () => {
     expect(routeSlackMessage({ channel: 'CADMIN', thread_ts: '999.9', ts: '999.10', text: 'hi' }, ids, has)).toBe('ignore');
   });
   it('bot and subtype messages are ignored everywhere', () => {

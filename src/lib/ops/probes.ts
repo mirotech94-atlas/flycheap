@@ -3,7 +3,7 @@ import { UNIT_RE } from './shell';
 
 /** Pure parsers: raw inputs → findings. No I/O here so every branch is unit-testable. */
 
-export type FindingSource = 'unit' | 'job' | 'err' | 'health' | 'crashloop';
+export type FindingSource = 'unit' | 'job' | 'err' | 'health' | 'crashloop' | 'disk';
 export type Finding = { fingerprint: string; source: FindingSource; title: string; detail: string };
 export type HealthJson = { ok: boolean; checks: Record<string, { ok: boolean; detail?: string; ms?: number }> } | null;
 
@@ -78,6 +78,38 @@ export function probeHealth(health: HealthJson): Finding[] {
       title: `Health check failing: ${name}`,
       detail: c.detail ?? '(no detail)',
     }));
+}
+
+const KB_PER_GB = 1024 * 1024;
+export const DISK_LOW_KB = 1.5 * KB_PER_GB;
+export const DISK_CLEAR_KB = 2 * KB_PER_GB;
+
+/** Parses `df -Pk <mount>` output into the KB available on the last (data)
+ * row. Returns null if the output can't be parsed (e.g. df failed). */
+export function parseDiskFreeKb(dfOutput: string): number | null {
+  const lines = dfOutput.trim().split('\n').filter(Boolean);
+  const last = lines[lines.length - 1];
+  if (!last) return null;
+  // Posix `df -P`: Filesystem 1024-blocks Used Available Capacity Mounted-on
+  const cols = last.trim().split(/\s+/);
+  const avail = Number(cols[3]);
+  return Number.isFinite(avail) ? avail : null;
+}
+
+/** Hysteresis so a slow climb from 1.4 GB to 1.6 GB doesn't flap the
+ * incident open/closed: once open, it only clears at >= 2 GB free; it only
+ * opens (from clear) below 1.5 GB free. */
+export function probeDisk(availableKb: number | null, alreadyOpen: boolean): Finding[] {
+  if (availableKb === null) return [];
+  const stillLow = alreadyOpen ? availableKb < DISK_CLEAR_KB : availableKb < DISK_LOW_KB;
+  if (!stillLow) return [];
+  const gb = availableKb / KB_PER_GB;
+  return [{
+    fingerprint: 'disk:low',
+    source: 'disk',
+    title: `Disk space low: ${gb.toFixed(1)} GB free`,
+    detail: `${availableKb} KB (${gb.toFixed(2)} GB) available on /opt/egyptair-tracker`,
+  }];
 }
 
 export function probeCrashLoop(journalCatOut: string, threshold = 3): Finding[] {

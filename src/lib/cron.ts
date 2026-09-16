@@ -35,6 +35,7 @@ export function startCron() {
       console.log(`[cron ${t}] polled ${results.length} searches`, results);
     } catch (e) {
       console.error(`[cron ${t}] poll failed`, e);
+      queries.logError({ source: 'cron:poll', message: (e as Error).message, stack: (e as Error).stack });
     }
   });
 
@@ -51,6 +52,7 @@ export function startCron() {
         console.log(`[digest ${t}] ${r.ok ? `sent to ${r.sentTo} (id=${r.id})` : `FAILED: ${r.error}`}`);
       } catch (e) {
         console.error(`[digest ${t}] threw`, e);
+        queries.logError({ source: 'cron:digest', message: (e as Error).message, stack: (e as Error).stack });
       }
     },
     { timezone: 'America/New_York' }
@@ -69,6 +71,7 @@ export function startCron() {
       console.log(`[best-deals ${t}] refreshed — ${total} pairings across ${results.length} dests | ${summary}`);
     } catch (e) {
       console.error(`[best-deals ${t}] failed`, e);
+      queries.logError({ source: 'cron:best-deals', message: (e as Error).message, stack: (e as Error).stack });
     }
   });
   console.log('[cron] best-deals scheduled — every 12 hours');
@@ -84,6 +87,7 @@ export function startCron() {
         console.log(`[weekly ${t}] ${r.ok ? `sent to ${r.sentTo} (id=${r.id})` : `FAILED: ${r.error}`}`);
       } catch (e) {
         console.error(`[weekly ${t}] threw`, e);
+        queries.logError({ source: 'cron:weekly', message: (e as Error).message, stack: (e as Error).stack });
       }
     },
     { timezone: 'America/New_York' }
@@ -102,6 +106,7 @@ export function startCron() {
         console.log(`[compact ${t}] deleted=${stats.deleted} kept=${stats.kept} reclaimedKb=${stats.vacuumedKb}`);
       } catch (e) {
         console.error(`[compact ${t}] failed`, e);
+        queries.logError({ source: 'cron:compact', message: (e as Error).message, stack: (e as Error).stack });
       }
     },
     { timezone: 'America/New_York' }
