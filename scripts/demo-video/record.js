@@ -147,21 +147,23 @@ const SCENES = {
     await smoothScroll(page, 400, 3000);
     await sleep(1500);
   }, { healthUrl: APP + '/searches' }],
-  '07-concierge': [22.6, async page => {
+  '07-concierge': [30.0, async page => {
+    // Measured live: a real Claude tool-calling loop against actual fare data
+    // takes ~18s end-to-end. Narration was lengthened (22.6s -> 30.0s) to give
+    // this room instead of faking a faster answer than the product delivers.
     await resilientGoto(page, APP + '/');
-    await sleep(2000);
+    await sleep(1500);
     try {
-      await page.locator('[aria-label="Open chat"]').click({ timeout: 4000 });
-      await sleep(1500);
+      await page.locator('[aria-label="Open chat"]').click({ timeout: 8000 });
+      await sleep(500);
       const input = page.locator('input[placeholder="Ask anything…"], textarea[placeholder="Ask anything…"]').first();
       await input.click({ timeout: 3000 });
-      await input.pressSequentially('Cheapest 2 weeks to Cairo in September under $800/adult?', { delay: 45 });
-      await sleep(600);
+      await input.pressSequentially('Cheapest 2 weeks to Cairo in September under $800/adult?', { delay: 15 });
       await page.locator('[aria-label="Send"]').click({ timeout: 2500 });
-      await sleep(11000);                  // let the answer stream in
+      await sleep(26000);                  // let the answer stream in
     } catch (e) {
       console.log('concierge fallback:', e.message);
-      await sleep(12000);
+      await sleep(27000);
     }
   }, { healthUrl: APP + '/' }],
   '08-pricing': [42.7, async page => {

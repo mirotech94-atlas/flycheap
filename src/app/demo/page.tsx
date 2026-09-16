@@ -1,4 +1,3 @@
-import { LogoMark } from '@/components/Logo';
 import Link from 'next/link';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import type { Metadata } from 'next';
@@ -26,7 +25,7 @@ const CHAPTERS: Chapter[] = [
   { t: 125, label: 'Explore the world',        desc: 'Cheapest fares to every destination on the interactive map.' },
   { t: 146, label: 'Alerts, Slack & Telegram', desc: 'Thresholds, anomaly triggers, and self-serve chat alerts.' },
   { t: 183, label: 'The AI concierge',         desc: 'Ask questions in plain English, get answers from your data.' },
-  { t: 205, label: 'Early access & pricing',   desc: 'Free, Pro and Enterprise — and how to request an account.' },
+  { t: 213, label: 'Early access & pricing',   desc: 'Free, Pro and Enterprise — and how to request an account.' },
 ];
 
 export default function DemoPage() {
@@ -35,7 +34,10 @@ export default function DemoPage() {
       <header className="fc-l-topbar">
         <Link href="/welcome" className="fc-l-brand">
           <div className="fc-l-brand-mark">
-            <LogoMark size={22} />
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+              <path d="M5 5 L5 19 M5 5 L14 5 M5 12 L11 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
+              <path d="M22 8 A6 6 0 0 0 16 8 A6 6 0 0 0 22 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+            </svg>
           </div>
           <div>
             <div className="fc-l-brand-name">FlyCheap</div>
