@@ -33,15 +33,17 @@ describe('AI provider registry', () => {
     expect(or!.headers?.['X-Title']).toBe('FlyCheap');
   });
 
-  it('Groq spans all its chat models; maxTotal bounds the chain; maxPerProvider caps others', () => {
+  it('Groq spans its tool-capable chat models; maxTotal bounds the chain; maxPerProvider caps others', () => {
     process.env.GROQ_API_KEY = 'g';
     const chain = buildProviderChain();
-    // Groq now contributes every chat model on the account (each its own daily cap).
+    // Groq contributes every tool-capable chat model on the account (each its own daily cap).
     const groq = chain.filter(s => s.provider.startsWith('groq'));
-    expect(groq.length).toBe(6);
-    expect(groq.map(s => s.model)).toContain('groq/compound');
+    expect(groq.length).toBe(3);
+    expect(groq.map(s => s.model)).toContain('qwen/qwen3.8-27b');
+    // Models that reject tool-calling (compound/allam) are not in the tool chain.
+    expect(groq.map(s => s.model)).not.toContain('groq/compound');
     // maxTotal still bounds the whole chain.
-    expect(buildProviderChain({ maxTotal: 4 }).length).toBe(4);
+    expect(buildProviderChain({ maxTotal: 2 }).length).toBe(2);
     // A provider without its own maxModels still honours maxPerProvider.
     process.env.ANTHROPIC_API_KEY = 'a';
     const capped = buildProviderChain({ maxPerProvider: 1 });

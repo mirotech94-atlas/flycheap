@@ -40,22 +40,26 @@ const env = (k: string): string | null => {
 };
 
 /**
- * Every CHAT-CAPABLE model on the Groq account, in fallback order (most capable
- * + most tool-reliable first). Groq's token cap is PER MODEL PER DAY, so each
- * entry is a fresh daily budget before any paid provider is touched.
+ * The TOOL-CAPABLE Groq chat models on this account, in fallback order (most
+ * capable first). Groq's token cap is PER MODEL PER DAY, so each entry is a
+ * fresh daily budget before any paid provider is touched.
  *
- * Deliberately EXCLUDED: meta-llama/llama-prompt-guard-2-22m / -86m (prompt-
- * injection classifiers) and openai/gpt-oss-safeguard-20b (moderation) — those
- * are guard models, not chat models, so they can't answer the concierge or
- * agents. Add them only to a dedicated moderation path, never to this chain.
+ * This chain is used by tool-calling callers (FarePilot admin agent + the
+ * flight concierge, both of which send `tools`). Verified live 2026-09-16:
+ * gpt-oss-120b, gpt-oss-20b and qwen3.8-27b return tool_calls, but
+ * groq/compound, groq/compound-mini and allam-2-7b all reject the request with
+ * HTTP 400 "tool calling is not supported with this model" — so they are
+ * EXCLUDED here (they would only ever burn a wasted failover hop). They can
+ * still serve the non-tool content agents; wire them into groqChat's plain
+ * completion path if that daily headroom is ever needed.
+ *
+ * Also excluded (not chat models): meta-llama/llama-prompt-guard-2-* (injection
+ * classifiers) and openai/gpt-oss-safeguard-20b (moderation).
  */
 export const GROQ_CHAT_MODELS = [
   'openai/gpt-oss-120b',   // best tool-use · 200K tok/day
   'openai/gpt-oss-20b',    // fast tool-use · 200K tok/day
   'qwen/qwen3.8-27b',      // capable, supports tools · 200K tok/day
-  'groq/compound',         // agentic · no daily token cap (250 req/day)
-  'groq/compound-mini',    // agentic, lighter · no daily token cap (250 req/day)
-  'allam-2-7b',            // small last-resort · 500K tok/day
 ];
 
 export const AI_PROVIDERS: AiProvider[] = [
