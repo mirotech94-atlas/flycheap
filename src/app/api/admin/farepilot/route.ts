@@ -10,6 +10,7 @@ import {
   recordStepUp, stepUpValid, isCodeConsumed, consumeCode,
   verifyAllowed, recordVerifyAttempt, clearVerifyAttempts, VERIFY_LIMIT_INFO,
 } from '@/lib/adminAgentState';
+import { buildProviderChain } from '@/lib/ai/providers';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -34,7 +35,7 @@ type LoopResult =
   | { ok: false; error: string; executed: boolean };
 
 async function runLoop(
-  opts: { baseUrl: string; apiKey: string; model: string; provider: string },
+  opts: { baseUrl: string; apiKey: string; model: string; provider: string; headers?: Record<string, string> },
   userMessages: ChatMsg[], ctx: AdminToolCtx,
 ): Promise<LoopResult> {
   const oaTools = ADMIN_TOOLS.map(t => ({ type: 'function' as const, function: { name: t.name, description: t.description, parameters: t.input_schema } }));
@@ -54,7 +55,7 @@ async function runLoop(
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const res = await fetch(`${opts.baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
       body: JSON.stringify({ model: opts.model, max_tokens: 2048, messages, tools: oaTools }),
     });
     if (!res.ok) return { ok: false, error: `${opts.provider} API ${res.status}: ${(await res.text().catch(() => '')).slice(0, 200)}`, executed };
@@ -132,29 +133,21 @@ export async function POST(req: Request) {
   const stepUpOk = totpEnabled && (stepUpJustGranted || stepUpValid(token));
   const ctx: AdminToolCtx = { adminUserId: me.id, stepUpOk };
 
-  // Provider chain: Groq (free, primary) → Anthropic → OpenAI (both paid
-  // fallbacks). Anthropic runs through its OpenAI-compatible endpoint so the
-  // same runLoop drives it unchanged. When Groq's free daily token cap is
-  // exhausted, the request fails over instead of dead-ending — provided a
-  // fallback has credit. The F7 `executed` guard below still prevents any
-  // re-run of a privileged action across providers.
-  const attempts: Array<() => Promise<LoopResult>> = [];
-  if (process.env.GROQ_API_KEY) {
-    const groqKey = process.env.GROQ_API_KEY;
-    // Groq's daily cap is per-model, so a second Groq model is a real
-    // fallback with its own budget — tried before spending any paid credit.
-    attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: groqKey, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq:120b' }, parsed.data.messages, ctx));
-    attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: groqKey, model: process.env.CHAT_MODEL_GROQ_FALLBACK || 'llama-3.3-70b-versatile', provider: 'groq:llama' }, parsed.data.messages, ctx));
-  }
-  if (process.env.ANTHROPIC_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.anthropic.com/v1', apiKey: process.env.ANTHROPIC_API_KEY!, model: process.env.CHAT_MODEL_ANTHROPIC || 'claude-sonnet-4-5-20250929', provider: 'anthropic' }, parsed.data.messages, ctx));
-  if (process.env.OPENAI_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.openai.com/v1', apiKey: process.env.OPENAI_API_KEY!, model: process.env.CHAT_MODEL_OPENAI || 'gpt-4o-mini', provider: 'openai' }, parsed.data.messages, ctx));
-  if (attempts.length === 0) return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY).' }, { status: 500 });
+  // Multi-provider failover chain from the registry (src/lib/ai/providers.ts):
+  // free tiers first (Groq's two models have separate daily buckets), then any
+  // configured paid/self-hosted provider, each via its OpenAI-compatible
+  // endpoint so this one runLoop drives them all. Only providers whose keys
+  // are set enter the chain. The F7 `executed` guard below still stops the
+  // chain the moment a privileged tool has run, so a longer chain never
+  // re-executes an action.
+  const chain = buildProviderChain();
+  if (chain.length === 0) return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY, or add a fallback provider key).' }, { status: 500 });
 
   const errors: string[] = [];
-  for (const attempt of attempts) {
-    const r = await attempt();
+  for (const step of chain) {
+    const r = await runLoop(step, parsed.data.messages, ctx);
     if (r.ok) return NextResponse.json({ reply: r.reply, provider: r.provider, tool_calls: r.toolCalls, needs_totp: r.neededStepUp && !stepUpOk, totp_enabled: totpEnabled });
-    errors.push(r.error);
+    errors.push(`${step.provider}: ${r.error}`);
     if (r.executed) return NextResponse.json({ error: `Provider failed after a privileged tool ran: ${r.error}. Not retrying to avoid re-executing actions.` }, { status: 502 }); // I2
   }
   return NextResponse.json({ error: humanizeProviderFailure(errors) }, { status: 502 });

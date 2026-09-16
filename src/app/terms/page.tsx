@@ -24,7 +24,7 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
   },
   {
     id: 'plans', h: '4 · Plans, billing and the free trial',
-    body: <>Every new account starts with a <strong>3-month free trial</strong> of the basic capabilities, governed by the <Link href="/trial-terms">Trial Terms</Link>: no card is collected and you are never charged. When the trial ends your account continues automatically on the <strong>Free</strong> plan (free indefinitely) unless you upgrade. Pro ($9 USD/month) and Enterprise ($39 USD/month) are plain monthly subscriptions, billed in advance through Stripe or PayPal from the moment you subscribe; card details never touch our servers. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
+    body: <>Every new account starts with a <strong>3-month free trial of the full product</strong> — all Pro and Enterprise features — governed by the <Link href="/trial-terms">Trial Terms</Link>: no card is collected and you are never charged. Near the end of the trial you can contact us by email or phone to continue; if you don&rsquo;t, your account continues automatically on the <strong>Free</strong> plan (free indefinitely). Pro ($9 USD/month) and Enterprise ($39 USD/month) are plain monthly subscriptions, billed in advance through Stripe or PayPal from the moment you subscribe; card details never touch our servers. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
   },
   {
     id: 'refunds', h: '5 · Cancellation and refunds',

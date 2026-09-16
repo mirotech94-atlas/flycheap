@@ -17,7 +17,7 @@ export default async function PricingPage() {
         <div className="eyebrow mb-1">Subscription</div>
         <h1 className="text-3xl font-bold text-slate-900 dark:text-white tracking-tight">Plans &amp; pricing</h1>
         <p className="text-sm text-slate-500 mt-1 max-w-2xl">
-          Every new account gets a <strong>3-month free trial</strong> of the basics, no card. Pro and Enterprise are plain monthly subscriptions — cancel anytime.
+          Every new account gets a <strong>3-month free trial of everything</strong> — all Pro and Enterprise features, no card. Love it? Email or call and we&rsquo;ll continue together; otherwise it rolls to Free.
           {user ? null : (
             <> You&rsquo;ll need to <Link href="/login?next=/pricing" className="underline text-brand">log in</Link> before checking out.</>
           )}

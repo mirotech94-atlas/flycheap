@@ -714,10 +714,10 @@ export const TIER_LIMITS: Record<string, TierLimit> = {
 /**
  * Resolve the limits that actually apply to a user.
  *
- * A founding-trial account is on tier 'free' but must receive the PRO
- * experience — that is the whole point of the 3-month trial. Resolving this
- * in one place stops the trial from silently delivering the free product and
- * making the month-3 upgrade prompt read as a downgrade notice.
+ * A founding-trial account is on tier 'free' but receives the FULL product for
+ * the 3-month trial — every Pro AND Enterprise capability — so people can try
+ * everything before deciding whether to continue. Resolving this in one place
+ * stops the trial from silently delivering a lesser product.
  */
 export function limitsForUser(
   user: { tier?: string | null; subscription_status?: string | null } | null | undefined,
@@ -726,8 +726,8 @@ export function limitsForUser(
   const status = (user.subscription_status ?? '').toLowerCase();
   const base = TIER_LIMITS[user.tier ?? 'free'] ?? TIER_LIMITS.free;
   if (status === 'founding_free' || status === 'trialing') {
-    // Never downgrade someone who is already above Pro (enterprise comps).
-    return base.maxRoutes >= TIER_LIMITS.pro.maxRoutes ? base : TIER_LIMITS.pro;
+    // Full access during the trial: never below Enterprise.
+    return base.maxRoutes >= TIER_LIMITS.enterprise.maxRoutes ? base : TIER_LIMITS.enterprise;
   }
   return base;
 }

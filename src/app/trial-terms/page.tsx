@@ -3,13 +3,13 @@ import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
   title: 'Free Trial Terms — FlyCheap',
-  description: 'Terms and conditions of the FlyCheap 3-month free trial: every new account gets 3 months of the basic capabilities free, no card, then continues on Free.',
+  description: 'Terms and conditions of the FlyCheap 3-month free trial: every new account gets 3 months of the full product — all Pro and Enterprise features — free, no card.',
 };
 
 const TERMS: Array<{ h: string; body: React.ReactNode }> = [
   {
     h: '1 · What the trial includes',
-    body: <>Every new FlyCheap account starts with a <strong>3-month free trial</strong> of the basic capabilities: up to 5 tracked routes, polling every 30 minutes, email alerts and daily digest, and the worldwide explore map.</>,
+    body: <>Every new FlyCheap account starts with a <strong>3-month free trial of the entire product</strong> — every Free, Pro <em>and</em> Enterprise capability: unlimited tracked routes, priority polling, all alert channels (email, SMS, WhatsApp, Telegram), buy-vs-wait predictions, mistake-fare radar, family sharing, full price history, and the worldwide explore map. Nothing is held back.</>,
   },
   {
     h: '2 · No card, ever',
@@ -17,7 +17,7 @@ const TERMS: Array<{ h: string; body: React.ReactNode }> = [
   },
   {
     h: '3 · What happens after 3 months',
-    body: <>When your 3 months are up, your account continues on the <strong>Free</strong> plan automatically — nothing is paused, deleted, or charged. If you want more (up to 100 routes, 5-minute polling, SMS / WhatsApp / Telegram alerts, and more), you can upgrade to <Link href="/pricing">Pro or Enterprise</Link> at any time from Settings → Billing.</>,
+    body: <>Near the end of your 3 months, if you love it, just <strong>reach out by email or phone</strong> and we&rsquo;ll sort out continuing together — there is no automatic charge and no card on file. If we don&rsquo;t hear from you, your account simply continues on the <strong>Free</strong> plan; nothing is paused, deleted, or billed.</>,
   },
   {
     h: '4 · One trial per person',
@@ -60,15 +60,16 @@ export default function TrialTermsPage() {
           Trial terms, in <em>plain English</em>.
         </h1>
         <p className="fc-section-sub" style={{ maxWidth: 640 }}>
-          The short version: <strong>every new account gets 3 months of the basic capabilities free</strong>,
-          no card required. After 3 months you continue on Free automatically unless you upgrade.
+          The short version: <strong>every new account gets 3 months of the full product free</strong> —
+          all Pro and Enterprise features, no card. Love it? Email or call and we&rsquo;ll continue together.
+          Otherwise it just rolls to the Free plan.
         </p>
 
         <div className="fc-trial-summary">
           <div><span className="k">Today</span><span className="v">$0.00</span></div>
-          <div><span className="k">Months 1–3</span><span className="v">Basic capabilities, free</span></div>
+          <div><span className="k">Months 1–3</span><span className="v">Everything, free</span></div>
           <div><span className="k">Card required</span><span className="v">None, ever</span></div>
-          <div><span className="k">After 3 months</span><span className="v">Free plan, automatically</span></div>
+          <div><span className="k">After 3 months</span><span className="v">Contact us, or roll to Free</span></div>
         </div>
 
         <div className="fc-trial-terms">
