@@ -82,6 +82,41 @@ describe('groqChat', () => {
     })).rejects.toThrow(/^Groq 401: /);
   });
 
+  it('retries a transient json_validate_failed 400 then succeeds', async () => {
+    let calls = 0;
+    const fetchImpl = (async () => {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          ok: false, status: 400,
+          text: async () => '{"error":{"code":"json_validate_failed","failed_generation":""}}',
+          json: async () => ({}),
+        } as unknown as Response;
+      }
+      return {
+        ok: true, status: 200, text: async () => '',
+        json: async () => ({ choices: [{ message: { content: '{"body":"ok"}' } }] }),
+      } as unknown as Response;
+    }) as typeof fetch;
+    const sleeps: number[] = [];
+    const reply = await groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-120b', system: 's', messages: [],
+      maxTokens: 700, json: true, fetchImpl, sleep: async (ms) => { sleeps.push(ms); },
+    });
+    expect(calls).toBe(2);
+    expect(reply).toBe('{"body":"ok"}');
+    expect(sleeps).toEqual([500]);
+  });
+
+  it('does not retry a non-json_validate 400', async () => {
+    let calls = 0;
+    const fetchImpl = fakeFetch(() => { calls += 1; return { status: 400, body: 'bad request shape' }; });
+    await expect(groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-120b', system: 's', messages: [], maxTokens: 100, json: true, fetchImpl,
+    })).rejects.toThrow(/^Groq 400: /);
+    expect(calls).toBe(1);
+  });
+
   it('retries once on 429 then succeeds, sleeping at least 20s', async () => {
     let calls = 0;
     const fetchImpl = (async () => {

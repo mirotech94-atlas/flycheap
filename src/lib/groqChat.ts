@@ -8,7 +8,9 @@ export type GroqChatMsg = { role: 'user' | 'assistant'; content: string };
 // still lands inside the same minute window and re-triggers immediately),
 // cap it at 60s so a bad server-supplied value can't stall the caller
 // indefinitely, sleep, and retry up to 2 times (3 attempts total) before
-// giving up. Mirrors src/lib/ops/groqClient.ts.
+// giving up. The same retry budget also covers the transient
+// json_validate_failed 400 the gpt-oss models throw when strict-JSON output
+// comes back empty. Mirrors src/lib/ops/groqClient.ts.
 const MIN_RETRY_SECONDS = 20;
 const MAX_RETRY_SECONDS = 60;
 const MAX_RETRIES = 2;
@@ -66,13 +68,27 @@ export async function groqChat(opts: {
   });
 
   let res = await doFetch();
-  for (let attempt = 0; res.status === 429 && attempt < MAX_RETRIES; attempt++) {
-    const retryText = await res.text().catch(() => '');
-    await sleep(parseRetrySeconds(retryText) * 1000);
+  let lastBody = '';
+  for (let attempt = 0; !res.ok && attempt < MAX_RETRIES; attempt++) {
+    lastBody = await res.text().catch(() => '');
+    if (res.status === 429) {
+      // Rate limited: honour the server's retry hint.
+      await sleep(parseRetrySeconds(lastBody) * 1000);
+    } else if (res.status === 400 && /json_validate_failed/.test(lastBody)) {
+      // Transient: the gpt-oss reasoning models occasionally emit an empty
+      // final message in strict-JSON mode (all budget spent in the hidden
+      // reasoning channel), which Groq rejects as json_validate_failed with
+      // an empty failed_generation. A plain re-run almost always succeeds, so
+      // retry after a short pause rather than failing the whole agent run.
+      await sleep(500);
+    } else {
+      // Non-retryable error: surface it immediately.
+      throw new Error(`Groq ${res.status}: ${lastBody.slice(0, 300)}`);
+    }
     res = await doFetch();
   }
   if (!res.ok) {
-    const text = await res.text().catch(() => '');
+    const text = await res.text().catch(() => lastBody);
     throw new Error(`Groq ${res.status}: ${text.slice(0, 300)}`);
   }
   const j = await res.json();
