@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FlyCheap — narrated live demo',
     description: 'Watch the real product in action: every page, every feature, explained.',
-    url: 'https://flycheap.18dn.com/demo',
+    url: 'https://flycheap.live/demo',
     siteName: 'FlyCheap',
     type: 'video.other',
   },
@@ -23,9 +23,9 @@ const CHAPTERS: Chapter[] = [
   { t: 64,  label: 'Best deals & booking',     desc: 'The 12-month deals table and cross-shopping every OTA.' },
   { t: 95,  label: 'Fare calendar & buy/wait', desc: 'Day-by-day price heatmap and the recommendation engine.' },
   { t: 125, label: 'Explore the world',        desc: 'Cheapest fares to every destination on the interactive map.' },
-  { t: 146, label: 'Alerts & settings',        desc: 'Thresholds, anomaly triggers, and every alert channel.' },
-  { t: 179, label: 'The AI concierge',         desc: 'Ask questions in plain English, get answers from your data.' },
-  { t: 201, label: 'Plans & getting started',  desc: 'Free, Pro and Enterprise — and your first route in 30 seconds.' },
+  { t: 146, label: 'Alerts, Slack & Telegram', desc: 'Thresholds, anomaly triggers, and self-serve chat alerts.' },
+  { t: 183, label: 'The AI concierge',         desc: 'Ask questions in plain English, get answers from your data.' },
+  { t: 205, label: 'Early access & pricing',   desc: 'Free, Pro and Enterprise — and how to request an account.' },
 ];
 
 export default function DemoPage() {
@@ -46,7 +46,8 @@ export default function DemoPage() {
         </Link>
         <div className="fc-l-topbar-right">
           <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
-          <Link href="/login" className="fc-btn fc-btn-ink fc-btn-sm">Try free →</Link>
+          <Link href="/login" className="fc-btn fc-btn-light fc-btn-sm">Log in</Link>
+          <Link href="/early-access" className="fc-btn fc-btn-ink fc-btn-sm">Get early access →</Link>
         </div>
       </header>
 
@@ -71,11 +72,11 @@ export default function DemoPage() {
         <div className="fc-demo-cta">
           <div>
             <div className="fc-smallcaps">Seen enough?</div>
-            <h2>Your first route takes <em>30 seconds</em>.</h2>
+            <h2>Request access — <em>most approvals land within hours</em>.</h2>
           </div>
           <div className="fc-hero-cta" style={{ marginTop: 0 }}>
-            <Link href="/login" className="fc-btn fc-btn-gold">Sign up free →</Link>
-            <Link href="/welcome#pricing" className="fc-btn fc-btn-ghost">See pricing</Link>
+            <Link href="/early-access" className="fc-btn fc-btn-gold">Get early access →</Link>
+            <Link href="/pricing" className="fc-btn fc-btn-ghost">See pricing</Link>
           </div>
         </div>
       </section>

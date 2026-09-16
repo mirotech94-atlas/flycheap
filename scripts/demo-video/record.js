@@ -3,7 +3,9 @@ const { chromium } = require('playwright-core');
 const fs = require('fs');
 const path = require('path');
 
-const BASE = 'https://flycheap.18dn.com';
+// flycheap.live cutover: bare domain = marketing, my. = signed-in app.
+const MKT = 'https://flycheap.live';
+const APP = 'https://my.flycheap.live';
 const TOKEN = fs.readFileSync(path.join(__dirname, 'session-token.txt'), 'utf8').trim();
 const OUT = path.join(__dirname, 'scenes');
 const sleep = ms => new Promise(r => setTimeout(r, ms));
@@ -27,9 +29,41 @@ async function tryHover(page, sel, ms = 900) {
   } catch { /* keep rolling */ }
 }
 
+// The prod box has been restarting every ~10-15min today (deploy-in-progress
+// elsewhere) — a plain goto during that ~90s window lands on a 502.
+// Health-check BEFORE recording starts, so retries never burn the scene's
+// recorded time budget on 502 screens.
+async function waitUntilHealthy(url, tries = 8) {
+  for (let i = 0; i < tries; i++) {
+    try {
+      const resp = await fetch(url, { redirect: 'manual' });
+      if (resp.status < 500) return true;
+      console.log(`  health check ${url} -> ${resp.status}, waiting (${i + 1}/${tries})`);
+    } catch (e) {
+      console.log(`  health check ${url} failed (${e.message}), waiting (${i + 1}/${tries})`);
+    }
+    await sleep(10000);
+  }
+  console.log(`  ${url} still unhealthy after ${tries} checks — recording anyway`);
+  return false;
+}
+
+async function resilientGoto(page, url) {
+  // NOTE: health is checked once up front per scene (see main loop) so this
+  // stays a single plain goto — checking here would burn recorded seconds.
+  try {
+    // 'load' not 'networkidle': several pages here (welcome, pricing,
+    // integrations) hold a persistent connection (live ticker/feed) that
+    // never goes idle, which was masquerading as repeated timeouts.
+    return await page.goto(url, { waitUntil: 'load', timeout: 20000 });
+  } catch (e) {
+    console.log(`  goto ${url} failed: ${e.message}`);
+  }
+}
+
 const SCENES = {
   '01-welcome': [30.9, async page => {
-    await page.goto(BASE + '/welcome', { waitUntil: 'networkidle', timeout: 45000 }).catch(() => {});
+    await resilientGoto(page, MKT + '/welcome');
     await sleep(3500);
     await smoothScroll(page, 500, 4000);
     await sleep(1500);
@@ -38,9 +72,10 @@ const SCENES = {
     await smoothScroll(page, 700, 5000);   // how it works
     await tryHover(page, '.fc-l-howit-step:nth-child(2)', 1500);
     await smoothScroll(page, 500, 4000);
-  }],
+  }, { healthUrl: MKT + '/welcome' }],
   '02-dashboard': [32.8, async page => {
-    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+    // The exec dashboard (KPI strip, globe, deals table, calendar) is the app root.
+    await resilientGoto(page, APP + '/');
     await sleep(4500);
     await tryHover(page, '.fc-kpi:nth-child(1)', 1200);
     await tryHover(page, '.fc-kpi:nth-child(2)', 1200);
@@ -51,9 +86,9 @@ const SCENES = {
     await sleep(2500);                      // live feed
     await smoothScroll(page, -200, 1500);
     await sleep(2000);
-  }],
+  }, { healthUrl: APP + '/' }],
   '03-deals': [31.3, async page => {
-    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+    await resilientGoto(page, APP + '/');
     await sleep(2000);
     try {
       await page.locator('.fc-deals-table').first().scrollIntoViewIfNeeded({ timeout: 3000 });
@@ -62,18 +97,18 @@ const SCENES = {
     await tryHover(page, '.fc-deals-table tbody tr:nth-child(1)', 1400);
     await tryHover(page, '.fc-deals-table tbody tr:nth-child(2)', 1400);
     await tryHover(page, '.fc-deals-table tbody tr:nth-child(3)', 1200);
-    // open the Book cross-shop dropdown
+    // open the book/check-fare cross-shop link on the top row
     try {
-      const book = page.locator('.fc-deals-table tbody tr').first().getByText(/book/i).first();
+      const book = page.locator('.fc-deals-table tbody tr').first().getByText(/check fare|book/i).first();
       await book.click({ timeout: 2500 });
       await sleep(4000);
       await page.keyboard.press('Escape');
     } catch { await sleep(4000); }
     await sleep(1500);
     await smoothScroll(page, 150, 1200);
-  }],
-  '04-calendar': [30.0, async page => {
-    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+  }, { healthUrl: APP + '/' }],
+  '04-calendar': [30.1, async page => {
+    await resilientGoto(page, APP + '/');
     await sleep(2000);
     try {
       await page.locator('.fc-calendar, .fc-cal-grid').first().scrollIntoViewIfNeeded({ timeout: 4000 });
@@ -82,34 +117,38 @@ const SCENES = {
     await tryHover(page, '.fc-cal-cell.l4', 1200);
     await tryHover(page, '.fc-cal-cell.l5', 1200);
     await sleep(1200);
-    // pan left to the route DNA / buy-wait card
+    // pan to the route DNA / buy-wait card
     try {
       await page.locator('.fc-dna').first().scrollIntoViewIfNeeded({ timeout: 3000 });
     } catch { /* ok */ }
     await tryHover(page, '.fc-dna-reco', 1500);
     await sleep(2500);
-  }],
+  }, { healthUrl: APP + '/' }],
   '05-explore': [20.9, async page => {
-    await page.goto(BASE + '/explore', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+    await resilientGoto(page, APP + '/explore');
     await sleep(5000);
     await smoothScroll(page, 450, 3500);
     await sleep(2500);
     await smoothScroll(page, 450, 3500);
     await sleep(1500);
-  }],
-  '06-alerts': [33.0, async page => {
-    await page.goto(BASE + '/searches', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
-    await sleep(4500);
-    await smoothScroll(page, 400, 3500);
-    await sleep(2500);
-    await smoothScroll(page, 400, 3500);
-    await page.goto(BASE + '/settings', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+  }, { healthUrl: APP + '/explore' }],
+  '06-alerts': [36.7, async page => {
+    await resilientGoto(page, APP + '/searches');
+    await sleep(4000);
+    await smoothScroll(page, 400, 3000);
+    await sleep(2000);
+    // Real self-serve Slack/Telegram integration — public join links + /watch command.
+    await resilientGoto(page, MKT + '/integrations');
     await sleep(3000);
-    await smoothScroll(page, 500, 4000);   // alert channel toggles
+    await tryHover(page, 'section.grid > a.card:nth-child(1)', 1300);
+    await tryHover(page, 'section.grid > a.card:nth-child(2)', 1300);
+    await smoothScroll(page, 500, 3000);   // "Set up in 2 minutes" command cards
     await sleep(2500);
-  }],
+    await smoothScroll(page, 400, 3000);
+    await sleep(1500);
+  }, { healthUrl: APP + '/searches' }],
   '07-concierge': [22.6, async page => {
-    await page.goto(BASE + '/', { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
+    await resilientGoto(page, APP + '/');
     await sleep(2000);
     try {
       await page.locator('[aria-label="Open chat"]').click({ timeout: 4000 });
@@ -124,19 +163,23 @@ const SCENES = {
       console.log('concierge fallback:', e.message);
       await sleep(12000);
     }
-  }],
-  '08-pricing': [31.2, async page => {
-    await page.goto(BASE + '/welcome#pricing', { waitUntil: 'networkidle', timeout: 45000 }).catch(() => {});
+  }, { healthUrl: APP + '/' }],
+  '08-pricing': [42.7, async page => {
+    // Pricing moved off /welcome#pricing onto its own /pricing page. Recorded
+    // logged OUT deliberately: signed in as the owner this shows account
+    // management (Downgrade/Your current plan), not the real "Get early
+    // access" funnel a prospective customer sees.
+    await resilientGoto(page, MKT + '/pricing');
     await sleep(3000);
-    await tryHover(page, '.fc-l-tier:nth-child(1)', 2000);
-    await tryHover(page, '.fc-l-tier.featured', 2600);
-    await tryHover(page, '.fc-l-tier:nth-child(3)', 2000);
-    await sleep(1500);
-    await smoothScroll(page, 900, 5000);   // FAQ
-    await sleep(1500);
-    await smoothScroll(page, 900, 5000);   // final CTA
-    await sleep(2500);
-  }],
+    await tryHover(page, '.grid.md\\:grid-cols-2.lg\\:grid-cols-3 > div:nth-child(1)', 1800);
+    await tryHover(page, '.grid.md\\:grid-cols-2.lg\\:grid-cols-3 > div:nth-child(2)', 2400);
+    await tryHover(page, '.grid.md\\:grid-cols-2.lg\\:grid-cols-3 > div:nth-child(3)', 1800);
+    await sleep(1000);
+    await smoothScroll(page, 700, 4000);   // comparison table
+    await sleep(1800);
+    await smoothScroll(page, 700, 4000);   // billing card
+    await sleep(2000);
+  }, { loggedOut: true, healthUrl: MKT + '/pricing' }],
 };
 
 (async () => {
@@ -144,18 +187,21 @@ const SCENES = {
   fs.mkdirSync(OUT, { recursive: true });
   const browser = await chromium.launch({ channel: 'chrome', headless: true });
   for (const name of only) {
-    const [audioSec, fn] = SCENES[name];
+    const [audioSec, fn, opts] = SCENES[name];
     const budget = (audioSec + 0.8) * 1000;
+    if (opts?.healthUrl) await waitUntilHealthy(opts.healthUrl);
     console.log(`— recording ${name} (${(budget / 1000).toFixed(1)}s)`);
     const ctx = await browser.newContext({
       viewport: { width: 1280, height: 800 },
       recordVideo: { dir: OUT, size: { width: 1280, height: 800 } },
       colorScheme: 'light',
     });
-    await ctx.addCookies([{
-      name: 'fareintel_session', value: TOKEN,
-      domain: '.18dn.com', path: '/', secure: true, httpOnly: true, sameSite: 'Lax',
-    }]);
+    if (!opts?.loggedOut) {
+      await ctx.addCookies([{
+        name: 'fareintel_session', value: TOKEN,
+        domain: '.flycheap.live', path: '/', secure: true, httpOnly: true, sameSite: 'Lax',
+      }]);
+    }
     const page = await ctx.newPage();
     const t0 = Date.now();
     try { await fn(page); } catch (e) { console.log(`  scene error (continuing): ${e.message}`); }
