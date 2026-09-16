@@ -5,6 +5,7 @@ import { getCurrentUser, isOwner } from '@/lib/auth';
 import { Logo } from '@/components/Logo';
 import { AdminSidebar } from './_components/AdminSidebar';
 import { AdminBreadcrumb } from './_components/AdminBreadcrumb';
+import { AdminFarePilotWidget } from '@/components/AdminFarePilotWidget';
 
 export const dynamic = 'force-dynamic';
 
@@ -16,6 +17,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   // Founder-only portal — a single admin identity. Send everyone else to the main site
   // (an in-host '/' would rewrite back to /admin and loop).
   if (!isOwner(user)) redirect('https://flycheap.18dn.com/');
+  // Whether the owner has 2FA available for FarePilot step-up (SQL/shell).
+  const farePilotTotpEnabled = (user.totp_enabled === 1 && !!user.totp_secret) || !!process.env.OWNER_TOTP_SECRET;
 
   return (
     <div
@@ -57,6 +60,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="admin-surface w-full">{children}</div>
         </main>
       </div>
+
+      {/* Owner AI operator console — floating widget, reachable from every admin page. */}
+      <AdminFarePilotWidget totpEnabled={farePilotTotpEnabled} />
 
       <style>{`
         /* ============================================================

@@ -22,6 +22,14 @@ function parseRetrySeconds(body: string): number {
   return Math.max(MIN_RETRY_SECONDS, Math.min(MAX_RETRY_SECONDS, raw));
 }
 
+// A per-DAY (TPD) 429 is different from a per-minute (TPM) one: the daily
+// free-tier cap won't clear for hours, so retrying inside this call just
+// stalls the caller for a minute or two before failing anyway. Detect it and
+// fail fast with a clear message instead.
+export function isDailyLimit(body: string): boolean {
+  return /per day|tokens per day|\bTPD\b/i.test(body);
+}
+
 /**
  * Minimal Groq (OpenAI-compatible) chat-completions call, no tools — used by
  * the Slack support concierge, which only ever needs plain text back.
@@ -72,7 +80,9 @@ export async function groqChat(opts: {
   for (let attempt = 0; !res.ok && attempt < MAX_RETRIES; attempt++) {
     lastBody = await res.text().catch(() => '');
     if (res.status === 429) {
-      // Rate limited: honour the server's retry hint.
+      // A daily-cap 429 won't clear for hours — fail fast, don't stall.
+      if (isDailyLimit(lastBody)) throw new Error(`Groq daily token limit reached (free tier). ${lastBody.slice(0, 200)}`);
+      // Per-minute rate limit: honour the server's retry hint.
       await sleep(parseRetrySeconds(lastBody) * 1000);
     } else if (res.status === 400 && /json_validate_failed/.test(lastBody)) {
       // Transient: the gpt-oss reasoning models occasionally emit an empty

@@ -81,6 +81,19 @@ async function runLoop(
   return { ok: false, error: `Hit max ${MAX_ITERATIONS} tool-use iterations`, executed };
 }
 
+/** Turns raw provider errors into one honest sentence for the owner. The
+ * common real case right now: Groq's free tier is capped at 200k tokens/day
+ * and no paid fallback has credit, so the whole chain is temporarily dry. */
+function humanizeProviderFailure(errors: string[]): string {
+  const blob = errors.join(' | ');
+  const dailyCap = /per day|tokens per day|\bTPD\b|rate limit reached/i.test(blob) && /200000|200,000|limit \d/i.test(blob);
+  const noCredit = /credit balance is too low|billing|quota|insufficient/i.test(blob);
+  if (dailyCap || noCredit) {
+    return 'AI is temporarily unavailable — the free daily token limit is used up and no paid fallback has credit right now. Groq resets at 00:00 UTC, or add credit to Groq (Dev tier) / Anthropic to restore it immediately.';
+  }
+  return `AI providers are failing: ${blob.slice(0, 300)}`;
+}
+
 export async function POST(req: Request) {
   const h = await headers();
   if (!adminHostOk(h)) return NextResponse.json({ error: 'Not found.' }, { status: 404 });          // I3
@@ -119,10 +132,17 @@ export async function POST(req: Request) {
   const stepUpOk = totpEnabled && (stepUpJustGranted || stepUpValid(token));
   const ctx: AdminToolCtx = { adminUserId: me.id, stepUpOk };
 
+  // Provider chain: Groq (free, primary) → Anthropic → OpenAI (both paid
+  // fallbacks). Anthropic runs through its OpenAI-compatible endpoint so the
+  // same runLoop drives it unchanged. When Groq's free daily token cap is
+  // exhausted, the request fails over instead of dead-ending — provided a
+  // fallback has credit. The F7 `executed` guard below still prevents any
+  // re-run of a privileged action across providers.
   const attempts: Array<() => Promise<LoopResult>> = [];
   if (process.env.GROQ_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' }, parsed.data.messages, ctx));
+  if (process.env.ANTHROPIC_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.anthropic.com/v1', apiKey: process.env.ANTHROPIC_API_KEY!, model: process.env.CHAT_MODEL_ANTHROPIC || 'claude-sonnet-4-5-20250929', provider: 'anthropic' }, parsed.data.messages, ctx));
   if (process.env.OPENAI_API_KEY) attempts.push(() => runLoop({ baseUrl: 'https://api.openai.com/v1', apiKey: process.env.OPENAI_API_KEY!, model: process.env.CHAT_MODEL_OPENAI || 'gpt-4o-mini', provider: 'openai' }, parsed.data.messages, ctx));
-  if (attempts.length === 0) return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY or OPENAI_API_KEY).' }, { status: 500 });
+  if (attempts.length === 0) return NextResponse.json({ error: 'No AI provider configured (set GROQ_API_KEY, ANTHROPIC_API_KEY or OPENAI_API_KEY).' }, { status: 500 });
 
   const errors: string[] = [];
   for (const attempt of attempts) {
@@ -131,5 +151,5 @@ export async function POST(req: Request) {
     errors.push(r.error);
     if (r.executed) return NextResponse.json({ error: `Provider failed after a privileged tool ran: ${r.error}. Not retrying to avoid re-executing actions.` }, { status: 502 }); // I2
   }
-  return NextResponse.json({ error: `All providers failed: ${errors.join(' | ')}` }, { status: 502 });
+  return NextResponse.json({ error: humanizeProviderFailure(errors) }, { status: 502 });
 }

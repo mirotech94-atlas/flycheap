@@ -63,7 +63,7 @@ describe('tick', () => {
     const h = io();
     await det.tick(h.io);
     const inc = db.queries.openIncidents().find(i => i.source === 'err')!;
-    expect(inc.title).toBe('Errors: poller (1 in window)');
+    expect(inc.title).toBe('Error in poller');
     await det.tick(h.io);
     expect(db.queries.openIncidents()).toHaveLength(1);              // quiet, but < 60 min
     db.getDb().prepare(`UPDATE ops_incidents SET last_seen = datetime('now', '-61 minutes') WHERE id = ?`).run(inc.id);
@@ -79,7 +79,7 @@ describe('tick', () => {
     expect(r.created).toBe(1);
     const errIncidents = db.queries.openIncidents().filter(i => i.source === 'err');
     expect(errIncidents).toHaveLength(1);
-    expect(errIncidents[0].title).toBe('Errors: jobRunner (2 in window)');
+    expect(errIncidents[0].title).toBe('Error in jobRunner (×2)');
     expect(errIncidents[0].occurrences).toBe(2);
   });
 
@@ -194,7 +194,7 @@ describe('tick', () => {
     await det.tick(io().io);
     const inc = db.queries.openIncidents().find(i => i.source === 'err');
     expect(inc).toBeTruthy();
-    expect(inc?.title).toBe('Errors: poller (1 in window)');
+    expect(inc?.title).toBe('Error in poller');
   });
 
   it('trimEvidence keeps the tail and adds the omitted-prefix when truncated', () => {

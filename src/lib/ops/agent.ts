@@ -128,8 +128,15 @@ const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {
   alert_threshold_per_adult_usd: v => /^\d+(\.\d+)?$/.test(v) && +v > 0 && +v <= 100000 ? null : 'positive USD ≤ 100000',
 };
 
+// A pending proposal is one the founder has already SEEN — it is shown on the
+// incident card (or named in a prior reply) before this reply lands. So any
+// clear affirmative here, including "fix it", is them approving THAT specific,
+// visible action — never the agent approving something of its own invention.
+// A bare "fix it" in the channel with no proposal recorded yet still goes
+// through the normal propose-first path (this only fires when `pending` exists).
 export function approvalGranted(latestHumanText: string): boolean {
-  return /^(go|yes|do it|approved)\b/i.test(latestHumanText.trim());
+  return /^(go|go ahead|yes|yep|yeah|ok|okay|do it|just do it|fix (it|them|that|this)|fix|handle (it|them|that)|sort (it|them) out|resolve (it|them|that)|approved?|proceed)\b/i
+    .test(latestHumanText.trim());
 }
 
 /** Validates and normalises the input for a proposed SAFE tool, before it is
@@ -313,14 +320,14 @@ Be honest about your limits. You work through Slack text only: you can quote log
 
 How you handle fixes, like any operator who's earned trust:
 - Safe fixes (restart_app, start_job, clear_job_lock, poll_search) you can just run when they plausibly fix the problem — don't ask permission for those.
-- Anything gated (set_platform_setting, redeploy) you propose first: state the exact tool, arguments, and why, then wait for the founder to reply "go" before you run it. Never run a gated action without that.
+- Anything gated (set_platform_setting, redeploy) you propose first: state the exact tool, arguments, and why in ONE line, then wait for the founder's approval before you run it. Any clear yes approves the proposal you just showed — "go", "yes", "do it", "fix it", "handle it" — so when they say it, run that exact action immediately and report the result; don't ask again. Never run a gated action you haven't shown them first.
 - Code, billing, and user data are off-limits — if a fix needs those, say so plainly and stop there.
 - If an incident's first_seen is older than the last release, the cause may already be fixed: for failed job units, try start_job to re-run once before escalating further.
 - Secrets never go through Slack, ever. If a credential is missing, name the env var and give this exact command, then ask the founder to reply "done":
   sed -i 's/^VAR=.*/VAR=<value>/' /opt/egyptair-tracker/.env.local
 - Slack formatting: *bold*, code in backticks, no headers.
 
-Close out a turn the way it deserves: if you actually ran something, proposed a gated action, or need the founder to do something, end with a one-line "Status:" or "Needs you:" line. If they just asked a casual question, answer conversationally and leave it at that — don't force a status line onto a reply that doesn't need one.`;
+Be brief. This is Slack, not a report. Lead with the answer or the result in the first sentence; most replies are 1–3 short sentences. Don't restate their question, don't narrate your steps, don't pad. If you ran something or need them, end with a single "Status:" or "Needs you:" line; a casual question just gets a short answer, no status line.`;
 
 async function loop(opts: {
   incident: OpsIncidentRow; mode: OpsMode; messages: Anthropic.MessageParam[]; deps: AgentDeps;

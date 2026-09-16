@@ -145,7 +145,7 @@ export default async function RevenuePage() {
           </div>
           <div className="text-right text-xs text-slate-500 shrink-0">
             <div className="font-semibold text-slate-700 dark:text-slate-300">Withdraw at</div>
-            <a href="https://www.travelpayouts.com/payouts" target="_blank" rel="noopener noreferrer" className="underline decoration-dotted hover:text-slate-700">travelpayouts.com/payouts</a>
+            <a href="https://app.travelpayouts.com" target="_blank" rel="noopener noreferrer" className="underline decoration-dotted hover:text-slate-700">app.travelpayouts.com</a>
             <div className="mt-1 text-slate-400">min $50 · PayPal / wire / crypto</div>
           </div>
         </div>

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint } from '@/lib/ops/probes';
+import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint, tidyErrorMessage } from '@/lib/ops/probes';
 
 describe('probeFailedUnits', () => {
   it('parses systemctl --failed --no-legend output', () => {
@@ -41,7 +41,7 @@ describe('probeErrors', () => {
     const f = probeErrors(rows);
     expect(f).toHaveLength(2);
     expect(f[0].fingerprint).toBe(errorFingerprint('poller', 'ETIMEDOUT travelpayouts (search 12)'));
-    expect(f[0].title).toBe('Errors: poller (2 in window)');
+    expect(f[0].title).toBe('Error in poller (×2)');
   });
   it('fingerprint is stable, short, and ignores numbers', () => {
     const a = errorFingerprint('x', 'a'.repeat(500));
@@ -97,5 +97,21 @@ describe('probeDisk', () => {
   it('unparseable df output produces no finding', () => {
     expect(probeDisk(null, false)).toEqual([]);
     expect(probeDisk(null, true)).toEqual([]);
+  });
+});
+
+describe('tidyErrorMessage', () => {
+  it('keeps a plain one-liner as-is', () => {
+    expect(tidyErrorMessage('ETIMEDOUT contacting travelpayouts for search 33')).toBe('ETIMEDOUT contacting travelpayouts for search 33');
+  });
+  it('extracts code + message from an embedded JSON error body', () => {
+    const raw = 'Groq 400: {"error":{"message":"Failed to validate JSON.","code":"json_validate_failed","type":"invalid_request_error"}}';
+    expect(tidyErrorMessage(raw)).toBe('Groq 400 · json_validate_failed · Failed to validate JSON.');
+  });
+  it('drops stack-trace lines after the first', () => {
+    expect(tidyErrorMessage('Error: boom\n    at foo (x.ts:1:1)\n    at bar (y.ts:2:2)')).toBe('Error: boom');
+  });
+  it('truncates very long messages', () => {
+    expect(tidyErrorMessage('x'.repeat(500)).length).toBeLessThanOrEqual(220);
   });
 });

@@ -136,6 +136,11 @@ export function createGroqMessagesClient(opts: {
         let res = await doFetch(model);
         for (let attempt = 0; res.status === 429 && attempt < MAX_RETRIES; attempt++) {
           const retryText = await res.text().catch(() => '');
+          // A daily-cap (TPD) 429 won't clear for hours — fail fast rather
+          // than stalling the detector for a minute or two per diagnosis.
+          if (/per day|tokens per day|\bTPD\b/i.test(retryText)) {
+            throw new Error(`Groq daily token limit reached (free tier). ${retryText.slice(0, 200)}`);
+          }
           await sleep(parseRetrySeconds(retryText) * 1000);
           res = await doFetch(model);
         }

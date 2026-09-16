@@ -29,8 +29,8 @@ function scripted(turns: Array<Anthropic.Message['content']>): import('@/lib/ops
 
 describe('approval + proposal parsing', () => {
   it('matches the approval words only at the start', () => {
-    for (const s of ['go', 'Go ahead', 'yes please', 'do it', 'APPROVED']) expect(agent.approvalGranted(s)).toBe(true);
-    for (const s of ['no', 'not yet', 'why?', 'goat', 'yesterday it broke']) expect(agent.approvalGranted(s)).toBe(false);
+    for (const s of ['go', 'Go ahead', 'yes please', 'do it', 'APPROVED', 'fix it', 'Fix them', 'handle it', 'just do it', 'ok', 'proceed', 'resolve it']) expect(agent.approvalGranted(s)).toBe(true);
+    for (const s of ['no', 'not yet', 'why?', 'goat', 'yesterday it broke', 'fixate on this', 'okra']) expect(agent.approvalGranted(s)).toBe(false);
   });
   it('parses PROPOSAL: payloads and rejects junk', () => {
     expect(agent.parseProposal('PROPOSAL:{"tool":"redeploy","input":{},"reason":"r"}')).toEqual({ tool: 'redeploy', input: {}, reason: 'r' });
@@ -437,6 +437,6 @@ describe('handleThreadReply trims thread history', () => {
 describe('SYSTEM prompt is conversational', () => {
   it('is honest about not being able to show images/video, and does not force a status line on casual replies', () => {
     expect(agent.SYSTEM).toMatch(/cannot display images, videos, screenshots or files/i);
-    expect(agent.SYSTEM).toMatch(/casual question.*don't force a status line/i);
+    expect(agent.SYSTEM).toMatch(/casual question just gets a short answer, no status line/i);
   });
 });

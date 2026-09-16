@@ -45,6 +45,33 @@ export function normalizeErrorMessage(message: string): string {
   return message.replace(/\d+/g, '#').slice(0, 80);
 }
 
+/**
+ * Turns a raw error string into one clean human line for a Slack card.
+ * Collapses whitespace/newlines, keeps only the first line of a stack trace,
+ * and when the message carries an embedded JSON error body (e.g. a provider
+ * response like `Groq 400: {"error":{"code":"…","message":"…"}}`) pulls the
+ * code and message out so the card reads `Groq 400 · code · message` instead
+ * of a wall of JSON.
+ */
+export function tidyErrorMessage(message: string, max = 220): string {
+  const firstLine = message.split('\n')[0].trim();
+  const braceAt = firstLine.indexOf('{');
+  let out = firstLine;
+  if (braceAt !== -1) {
+    const prefix = firstLine.slice(0, braceAt).replace(/[:\s]+$/, '').trim();
+    try {
+      const obj = JSON.parse(firstLine.slice(braceAt)) as { error?: { code?: string; message?: string; type?: string } };
+      const err = obj?.error;
+      if (err && (err.message || err.code)) {
+        const code = err.code || err.type;
+        out = [prefix, code, err.message].filter(Boolean).join(' · ');
+      }
+    } catch { /* not JSON — keep the first line as-is */ }
+  }
+  out = out.replace(/\s+/g, ' ').trim();
+  return out.length > max ? out.slice(0, max - 1) + '…' : out;
+}
+
 export function errorFingerprint(source: string | null, message: string): string {
   const key = `${source ?? '-'}|${normalizeErrorMessage(message)}`;
   return `err:${source ?? '-'}:${crypto.createHash('sha1').update(key).digest('hex').slice(0, 10)}`;
@@ -61,8 +88,8 @@ export function probeErrors(rows: Array<{ source: string | null; message: string
   return Array.from(groups, ([fingerprint, g]) => ({
     fingerprint,
     source: 'err' as const,
-    title: `Errors: ${g.source ?? 'unknown'} (${g.n} in window)`,
-    detail: `${g.first.slice(0, 300)}${g.first.length > 300 ? '…' : ''} — latest ${g.latest} UTC`,
+    title: `Error in ${g.source ?? 'unknown'}${g.n > 1 ? ` (×${g.n})` : ''}`,
+    detail: `${tidyErrorMessage(g.first)}\nLatest ${g.latest} UTC${g.n > 1 ? ` · ${g.n} in the last hour` : ''}`,
   }));
 }
 
