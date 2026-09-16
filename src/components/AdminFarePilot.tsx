@@ -6,13 +6,10 @@ type Role = 'user' | 'assistant';
 type ToolCall = { name: string; input: unknown; result_preview: string };
 type Msg = { role: Role; content: string; tools?: ToolCall[]; provider?: string; error?: boolean };
 
-// Minimal, safe formatter: fenced code blocks -> <pre>, **bold**, `code`, line breaks.
 function render(text: string) {
   const parts = text.split(/```/);
   return parts.map((chunk, i) => {
-    if (i % 2 === 1) {
-      return <pre key={i} className="my-2 overflow-x-auto rounded bg-slate-900/90 p-3 text-[11px] leading-snug text-slate-100 whitespace-pre-wrap">{chunk.replace(/^\w*\n/, '')}</pre>;
-    }
+    if (i % 2 === 1) return <pre key={i} className="my-2 overflow-x-auto rounded bg-slate-900/90 p-3 text-[11px] leading-snug text-slate-100 whitespace-pre-wrap">{chunk.replace(/^\w*\n/, '')}</pre>;
     const html = chunk
       .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
       .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
@@ -22,7 +19,56 @@ function render(text: string) {
   });
 }
 
+function EnrolCard({ onDone }: { onDone: () => void }) {
+  const [secret, setSecret] = useState('');
+  const [otpauth, setOtpauth] = useState('');
+  const [code, setCode] = useState('');
+  const [err, setErr] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  const begin = useCallback(async () => {
+    setBusy(true); setErr('');
+    try {
+      const res = await fetch('/api/admin/farepilot/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'begin' }) });
+      const d = await res.json();
+      if (res.ok) { setSecret(d.secret); setOtpauth(d.otpauth); } else setErr(d.error || 'Failed to start enrolment.');
+    } finally { setBusy(false); }
+  }, []);
+
+  const confirm = useCallback(async () => {
+    setBusy(true); setErr('');
+    try {
+      const res = await fetch('/api/admin/farepilot/enroll', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'confirm', secret, code: code.replace(/\D/g, '') }) });
+      const d = await res.json();
+      if (res.ok) onDone(); else setErr(d.error || 'That code did not verify.');
+    } finally { setBusy(false); }
+  }, [secret, code, onDone]);
+
+  return (
+    <div className="card border-amber-300 dark:border-amber-700">
+      <div className="eyebrow mb-1 text-amber-700 dark:text-amber-400">Enable two-factor to run SQL / shell</div>
+      <p className="mb-2 text-xs text-slate-500">Read-only questions work now. Running SQL or shell needs an authenticator code, so set one up:</p>
+      {!secret ? (
+        <button onClick={begin} disabled={busy} className="rounded bg-amber-600 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40">Start 2FA setup</button>
+      ) : (
+        <div className="space-y-2 text-xs">
+          <div>1. Add this to your authenticator app (Google Authenticator, 1Password, etc.):</div>
+          <div className="rounded bg-slate-100 p-2 font-mono text-[11px] break-all dark:bg-slate-800">{otpauth}</div>
+          <div>Or enter the secret manually: <span className="font-mono font-semibold">{secret}</span></div>
+          <div className="flex items-center gap-2 pt-1">
+            <span>2. Enter the current 6-digit code:</span>
+            <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" className="w-24 rounded border border-slate-300 bg-white px-2 py-1 tracking-widest dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+            <button onClick={confirm} disabled={busy} className="rounded bg-amber-600 px-3 py-1 font-semibold text-white disabled:opacity-40">Confirm</button>
+          </div>
+        </div>
+      )}
+      {err && <div className="mt-1 text-xs text-red-600">{err}</div>}
+    </div>
+  );
+}
+
 export function AdminFarePilot({ totpEnabled }: { totpEnabled: boolean }) {
+  const [enabled, setEnabled] = useState(totpEnabled);
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [input, setInput] = useState('');
   const [busy, setBusy] = useState(false);
@@ -31,17 +77,11 @@ export function AdminFarePilot({ totpEnabled }: { totpEnabled: boolean }) {
   const [codeErr, setCodeErr] = useState('');
   const lastSent = useRef<Msg[]>([]);
   const scroller = useRef<HTMLDivElement>(null);
-
   const scroll = () => requestAnimationFrame(() => scroller.current?.scrollTo({ top: scroller.current.scrollHeight, behavior: 'smooth' }));
 
   const post = useCallback(async (history: Msg[], totp?: string) => {
-    const res = await fetch('/api/admin/farepilot', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ messages: history.map(m => ({ role: m.role, content: m.content })), ...(totp ? { totp } : {}) }),
-    });
-    const data = await res.json().catch(() => ({}));
-    return { res, data };
+    const res = await fetch('/api/admin/farepilot', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ messages: history.map(m => ({ role: m.role, content: m.content })), ...(totp ? { totp } : {}) }) });
+    return { res, data: await res.json().catch(() => ({})) };
   }, []);
 
   const send = useCallback(async () => {
@@ -52,15 +92,10 @@ export function AdminFarePilot({ totpEnabled }: { totpEnabled: boolean }) {
     lastSent.current = next;
     try {
       const { res, data } = await post(next);
-      if (!res.ok) {
-        setMsgs(m => [...m, { role: 'assistant', content: data.error || `Error ${res.status}`, error: true }]);
-      } else {
-        setMsgs(m => [...m, { role: 'assistant', content: data.reply || '(no reply)', tools: data.tool_calls, provider: data.provider }]);
-        if (data.needs_totp) setStepUpNeeded(true);
-      }
-    } catch (e) {
-      setMsgs(m => [...m, { role: 'assistant', content: (e as Error).message, error: true }]);
-    } finally { setBusy(false); scroll(); }
+      if (!res.ok) setMsgs(m => [...m, { role: 'assistant', content: data.error || `Error ${res.status}`, error: true }]);
+      else { setMsgs(m => [...m, { role: 'assistant', content: data.reply || '(no reply)', tools: data.tool_calls, provider: data.provider }]); if (data.needs_totp) setStepUpNeeded(true); }
+    } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: (e as Error).message, error: true }]); }
+    finally { setBusy(false); scroll(); }
   }, [input, busy, msgs, post]);
 
   const unlock = useCallback(async () => {
@@ -69,84 +104,59 @@ export function AdminFarePilot({ totpEnabled }: { totpEnabled: boolean }) {
     setBusy(true); setCodeErr('');
     try {
       const { res, data } = await post(lastSent.current, c);
-      if (res.status === 401) { setCodeErr(data.error || 'That code did not verify.'); return; }
+      if (res.status === 429 || res.status === 401) { setCodeErr(data.error || 'That code did not verify.'); return; }
       if (!res.ok) { setMsgs(m => [...m, { role: 'assistant', content: data.error || `Error ${res.status}`, error: true }]); setStepUpNeeded(false); }
-      else {
-        setMsgs(m => [...m, { role: 'assistant', content: data.reply || '(no reply)', tools: data.tool_calls, provider: data.provider }]);
-        setStepUpNeeded(!!data.needs_totp);
-        setCode('');
-      }
-    } catch (e) {
-      setMsgs(m => [...m, { role: 'assistant', content: (e as Error).message, error: true }]);
-    } finally { setBusy(false); scroll(); }
+      else { setMsgs(m => [...m, { role: 'assistant', content: data.reply || '(no reply)', tools: data.tool_calls, provider: data.provider }]); setStepUpNeeded(!!data.needs_totp); setCode(''); }
+    } catch (e) { setMsgs(m => [...m, { role: 'assistant', content: (e as Error).message, error: true }]); }
+    finally { setBusy(false); scroll(); }
   }, [code, busy, post]);
 
   return (
-    <div className="card flex h-[70vh] flex-col p-0">
-      <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto p-4">
-        {msgs.length === 0 && (
-          <div className="mx-auto mt-10 max-w-md text-center text-sm text-slate-500">
-            <div className="mb-2 text-2xl">🛩️</div>
-            Ask me to look up a client, inspect the database, check the poller, or fix something.
-            <div className="mt-2 text-[11px] text-slate-400">Read-only questions run immediately. Running SQL or shell asks for your authenticator code first (once per 10 minutes).</div>
-          </div>
-        )}
-        {msgs.map((m, i) => (
-          <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
-            <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${
-              m.role === 'user' ? 'bg-blue-600 text-white'
-                : m.error ? 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300'
-                : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}>
-              {m.tools && m.tools.length > 0 && (
-                <div className="mb-2 space-y-1">
-                  {m.tools.map((t, k) => (
-                    <details key={k} className="text-[11px]">
-                      <summary className="cursor-pointer font-mono text-slate-500">⚙ {t.name}({JSON.stringify(t.input).slice(0, 80)})</summary>
-                      <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-[10px] text-slate-200">{t.result_preview}</pre>
-                    </details>
-                  ))}
-                </div>
-              )}
-              <div>{render(m.content)}</div>
-              {m.provider && <div className="mt-1 text-[10px] text-slate-400">via {m.provider}</div>}
-            </div>
-          </div>
-        ))}
-        {busy && <div className="text-xs text-slate-400">FarePilot is working…</div>}
-      </div>
-
-      {stepUpNeeded && (
-        <div className="border-t border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
-          {totpEnabled ? (
-            <div className="flex items-center gap-2">
-              <span className="text-xs text-amber-800 dark:text-amber-300">Enter your authenticator code to run that action:</span>
-              <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456"
-                onKeyDown={e => { if (e.key === 'Enter') unlock(); }}
-                className="w-24 rounded border border-amber-400 bg-white px-2 py-1 text-sm tracking-widest dark:bg-slate-900 dark:text-white" />
-              <button onClick={unlock} disabled={busy} className="rounded bg-amber-600 px-3 py-1 text-sm font-semibold text-white disabled:opacity-40">Unlock</button>
-              {codeErr && <span className="text-xs text-red-600">{codeErr}</span>}
-            </div>
-          ) : (
-            <div className="text-xs text-amber-800 dark:text-amber-300">
-              Running SQL or shell requires two-factor authentication. Enable an authenticator app on your account first, then retry.
+    <div className="space-y-4">
+      {!enabled && <EnrolCard onDone={() => setEnabled(true)} />}
+      <div className="card flex h-[68vh] flex-col p-0">
+        <div ref={scroller} className="flex-1 space-y-4 overflow-y-auto p-4">
+          {msgs.length === 0 && (
+            <div className="mx-auto mt-10 max-w-md text-center text-sm text-slate-500">
+              <div className="mb-2 text-2xl">🛩️</div>
+              Ask me to look up a client, inspect the database, check the poller, or fix something.
+              <div className="mt-2 text-[11px] text-slate-400">Read-only questions run immediately. Running SQL or shell asks for your authenticator code first (once per 10 minutes).</div>
             </div>
           )}
+          {msgs.map((m, i) => (
+            <div key={i} className={m.role === 'user' ? 'flex justify-end' : 'flex justify-start'}>
+              <div className={`max-w-[85%] rounded-2xl px-4 py-2.5 text-sm ${m.role === 'user' ? 'bg-blue-600 text-white' : m.error ? 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300' : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-100'}`}>
+                {m.tools && m.tools.length > 0 && (
+                  <div className="mb-2 space-y-1">
+                    {m.tools.map((t, k) => (
+                      <details key={k} className="text-[11px]">
+                        <summary className="cursor-pointer font-mono text-slate-500">⚙ {t.name}({JSON.stringify(t.input).slice(0, 80)})</summary>
+                        <pre className="mt-1 overflow-x-auto whitespace-pre-wrap rounded bg-slate-900/80 p-2 text-[10px] text-slate-200">{t.result_preview}</pre>
+                      </details>
+                    ))}
+                  </div>
+                )}
+                <div>{render(m.content)}</div>
+                {m.provider && <div className="mt-1 text-[10px] text-slate-400">via {m.provider}</div>}
+              </div>
+            </div>
+          ))}
+          {busy && <div className="text-xs text-slate-400">FarePilot is working…</div>}
         </div>
-      )}
 
-      <div className="flex gap-2 border-t border-slate-200 p-3 dark:border-slate-700">
-        <textarea
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }}
-          rows={1}
-          placeholder="Ask FarePilot to inspect or fix something…"
-          className="flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white"
-        />
-        <button onClick={send} disabled={busy || !input.trim()}
-          className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">
-          Send
-        </button>
+        {stepUpNeeded && enabled && (
+          <div className="flex items-center gap-2 border-t border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950/30">
+            <span className="text-xs text-amber-800 dark:text-amber-300">Enter your authenticator code to run that action:</span>
+            <input value={code} onChange={e => setCode(e.target.value)} inputMode="numeric" maxLength={6} placeholder="123456" onKeyDown={e => { if (e.key === 'Enter') unlock(); }} className="w-24 rounded border border-amber-400 bg-white px-2 py-1 text-sm tracking-widest dark:bg-slate-900 dark:text-white" />
+            <button onClick={unlock} disabled={busy} className="rounded bg-amber-600 px-3 py-1 text-sm font-semibold text-white disabled:opacity-40">Unlock</button>
+            {codeErr && <span className="text-xs text-red-600">{codeErr}</span>}
+          </div>
+        )}
+
+        <div className="flex gap-2 border-t border-slate-200 p-3 dark:border-slate-700">
+          <textarea value={input} onChange={e => setInput(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } }} rows={1} placeholder="Ask FarePilot to inspect or fix something…" className="flex-1 resize-none rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm outline-none focus:border-blue-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+          <button onClick={send} disabled={busy || !input.trim()} className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white disabled:opacity-40">Send</button>
+        </div>
       </div>
     </div>
   );

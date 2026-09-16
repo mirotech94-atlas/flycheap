@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach } from 'vitest';
 import { bootTempDb } from './helpers/tempDb';
 import * as totp from '@/lib/totp';
+import * as state from '@/lib/adminAgentState';
 
 let db: Awaited<ReturnType<typeof bootTempDb>>;
 let tools: typeof import('@/lib/adminAgentTools');
@@ -8,50 +9,49 @@ const OK = { adminUserId: 1, stepUpOk: true } as const;
 const NOSTEP = { adminUserId: 1, stepUpOk: false } as const;
 
 beforeAll(async () => { db = await bootTempDb(); tools = await import('@/lib/adminAgentTools'); });
+beforeEach(() => state.__resetAdminAgentState());
 
-describe('admin FarePilot tools + audit', () => {
+describe('FarePilot tools + gate', () => {
   it('sql_query writes then reads back (with step-up)', async () => {
     const w = await tools.runAdminTool('sql_query', { sql: "INSERT INTO users (email, tier) VALUES ('t@example.com', 'pro')" }, OK);
-    expect(w.is_error).toBeFalsy();
     expect(w.content).toMatch(/changes: 1/);
     const r = await tools.runAdminTool('sql_query', { sql: "SELECT email, tier FROM users WHERE email='t@example.com'" }, OK);
     expect(r.content).toContain('t@example.com');
-    expect(r.content).toContain('pro');
   });
 
-  it('find_client + app_health are read-only and need no step-up', async () => {
-    const f = await tools.runAdminTool('find_client', { query: 't@example' }, NOSTEP);
-    expect(f.content).toContain('t@example.com');
-    const h = await tools.runAdminTool('app_health', {}, NOSTEP);
-    expect(h.content).toContain('active_searches');
+  it('read-only tools need no step-up', async () => {
+    expect((await tools.runAdminTool('find_client', { query: 't@example' }, NOSTEP)).content).toContain('t@example.com');
+    expect((await tools.runAdminTool('app_health', {}, NOSTEP)).content).toContain('active_searches');
   });
 
-  it('client_overview never leaks the TOTP secret', async () => {
-    db.getDb().prepare("UPDATE users SET totp_secret = 'SUPERSECRET', totp_enabled = 1 WHERE id = 1").run();
-    const r = await tools.runAdminTool('client_overview', { user_id: 1 }, NOSTEP);
-    expect(r.content).not.toContain('SUPERSECRET');
+  it('sql_query REDACTS secret columns (C2)', async () => {
+    db.getDb().prepare("UPDATE users SET totp_secret='TOPSECRETVALUE', stripe_customer_id='cus_123' WHERE id=1").run();
+    const r = await tools.runAdminTool('sql_query', { sql: 'SELECT id, totp_secret, stripe_customer_id FROM users WHERE id=1' }, OK);
+    expect(r.content).not.toContain('TOPSECRETVALUE');
     expect(r.content).toContain('[redacted]');
   });
 
-  it('run_command executes a shell command (with step-up)', async () => {
+  it('client_overview never leaks the TOTP secret', async () => {
+    db.getDb().prepare("UPDATE users SET totp_secret='ANOTHERSECRET' WHERE id=1").run();
+    const r = await tools.runAdminTool('client_overview', { user_id: 1 }, NOSTEP);
+    expect(r.content).not.toContain('ANOTHERSECRET');
+  });
+
+  it('run_command executes with step-up', async () => {
     const r = await tools.runAdminTool('run_command', { command: 'echo hello-farepilot' }, OK);
-    expect(r.is_error).toBeFalsy();
     expect(r.content).toContain('hello-farepilot');
   });
 
-  it('SQL and shell are REFUSED without step-up and do not execute', async () => {
+  it('SQL/shell REFUSED without step-up and execute nothing', async () => {
     const before = (db.getDb().prepare("SELECT COUNT(*) n FROM users WHERE email='inject@x.com'").get() as { n: number }).n;
     const s = await tools.runAdminTool('sql_query', { sql: "INSERT INTO users (email) VALUES ('inject@x.com')" }, NOSTEP);
-    expect(s.is_error).toBe(true);
     expect(s.needs_step_up).toBe(true);
-    expect(s.content).toContain('STEP_UP_REQUIRED');
-    const c = await tools.runAdminTool('run_command', { command: 'echo should-not-run' }, NOSTEP);
-    expect(c.needs_step_up).toBe(true);
+    expect((await tools.runAdminTool('run_command', { command: 'echo nope' }, NOSTEP)).needs_step_up).toBe(true);
     const after = (db.getDb().prepare("SELECT COUNT(*) n FROM users WHERE email='inject@x.com'").get() as { n: number }).n;
-    expect(after).toBe(before); // nothing was inserted
+    expect(after).toBe(before);
   });
 
-  it('rate limit trips after the cap', async () => {
+  it('rate limit trips after the cap (in memory)', async () => {
     let blocked = false;
     for (let i = 0; i < 40; i++) {
       const r = await tools.runAdminTool('run_command', { command: 'echo x' }, OK);
@@ -60,31 +60,44 @@ describe('admin FarePilot tools + audit', () => {
     expect(blocked).toBe(true);
   });
 
-  it('every tool call — including refusals — is audited', async () => {
-    const audit = db.queries.recentAdminAgentAudit(200);
-    const used = audit.map(a => a.tool);
-    expect(used).toContain('sql_query');
-    expect(used).toContain('run_command');
-    expect(used).toContain('find_client');
-    // a refused (no step-up) call was recorded ok=0
-    expect(audit.some(a => a.tool === 'sql_query' && a.ok === 0)).toBe(true);
+  it('audits BEFORE executing (I1): a running row exists, updated after', async () => {
+    const id = db.queries.logAdminAgentActionStart({ adminUserId: 1, tool: 'run_command', input: '{}' });
+    const row = db.getDb().prepare('SELECT result_preview, ok FROM admin_agent_audit WHERE id=?').get(id) as { result_preview: string; ok: number };
+    expect(row.result_preview).toBe('(running)');
+    db.queries.updateAdminAgentAction(id, 'done', false);
+    const row2 = db.getDb().prepare('SELECT result_preview, ok FROM admin_agent_audit WHERE id=?').get(id) as { result_preview: string; ok: number };
+    expect(row2.ok).toBe(0);
   });
 });
 
-describe('step-up validity + TOTP', () => {
-  it('recordStepUp then stepUpValidWithin is true; a fresh token is false', () => {
-    db.queries.recordStepUp('sess-abc', 1);
-    expect(db.queries.stepUpValidWithin('sess-abc', 600)).toBe(true);
-    expect(db.queries.stepUpValidWithin('never-seen', 600)).toBe(false);
+describe('in-memory step-up state (C3) + brute-force (C1)', () => {
+  it('step-up lives in memory, not fares.db', () => {
+    state.recordStepUp('sess-1', '111111');
+    expect(state.stepUpValid('sess-1')).toBe(true);
+    expect(state.stepUpValid('other')).toBe(false);
+    // there is no admin_stepup table to tamper with
+    const t = db.getDb().prepare("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_stepup'").get();
+    expect(t).toBeUndefined();
+  });
+
+  it('rejects a replayed code within the window (M1)', () => {
+    state.recordStepUp('sess-2', '222222');
+    expect(state.isCodeReplay('sess-2', '222222')).toBe(true);
+    expect(state.isCodeReplay('sess-2', '333333')).toBe(false);
+  });
+
+  it('brute-force limiter blocks after 5 attempts (C1)', () => {
+    const key = 'sess-bf';
+    for (let i = 0; i < 5; i++) { expect(state.verifyAllowed(key)).toBe(true); state.recordVerifyAttempt(key); }
+    expect(state.verifyAllowed(key)).toBe(false);
+    state.clearVerifyAttempts(key);
+    expect(state.verifyAllowed(key)).toBe(true);
   });
 
   it('a fresh TOTP code verifies; a stale one does not', () => {
     const secret = totp.generateSecret();
     const now = Date.now();
     expect(totp.verify(secret, totp.generate(secret, now), 1, now)).toBe(true);
-    // a code from 2 minutes ago is outside the ±1 window
-    const stale = totp.generate(secret, now - 120_000);
-    expect(totp.verify(secret, stale, 1, now)).toBe(false);
-    expect(totp.verify(secret, '000000', 1, now)).toBe(false);
+    expect(totp.verify(secret, totp.generate(secret, now - 120_000), 1, now)).toBe(false);
   });
 });

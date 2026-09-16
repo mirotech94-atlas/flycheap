@@ -88,11 +88,6 @@ function init(db: Database.Database) {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE INDEX IF NOT EXISTS idx_admin_agent_audit_time ON admin_agent_audit(id DESC);
-    CREATE TABLE IF NOT EXISTS admin_stepup (
-      session_token TEXT PRIMARY KEY,
-      user_id INTEGER,
-      verified_at TEXT NOT NULL DEFAULT (datetime('now'))
-    );
     CREATE TABLE IF NOT EXISTS error_log (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       occurred_at TEXT NOT NULL DEFAULT (datetime('now')),
@@ -780,20 +775,20 @@ export const queries = {
   logAdminAgentAction: (p: { adminUserId: number | null; tool: string; input: string; resultPreview: string; ok: boolean }) =>
     getDb().prepare(`INSERT INTO admin_agent_audit (admin_user_id, tool, input, result_preview, ok) VALUES (?, ?, ?, ?, ?)`)
       .run(p.adminUserId, p.tool, p.input.slice(0, 4000), p.resultPreview.slice(0, 4000), p.ok ? 1 : 0),
+  // Pre-execution audit: write the row BEFORE running (so a command that kills
+  // the process is still logged), then update it with the outcome.
+  logAdminAgentActionStart: (p: { adminUserId: number | null; tool: string; input: string }): number => {
+    const r = getDb().prepare(`INSERT INTO admin_agent_audit (admin_user_id, tool, input, result_preview, ok) VALUES (?, ?, ?, '(running)', 1)`)
+      .run(p.adminUserId, p.tool, p.input.slice(0, 4000));
+    return Number(r.lastInsertRowid);
+  },
+  updateAdminAgentAction: (id: number, resultPreview: string, ok: boolean) =>
+    getDb().prepare(`UPDATE admin_agent_audit SET result_preview = ?, ok = ? WHERE id = ?`)
+      .run(resultPreview.slice(0, 4000), ok ? 1 : 0, id),
   recentAdminAgentAudit: (limit = 100) =>
     getDb().prepare(`SELECT * FROM admin_agent_audit ORDER BY id DESC LIMIT ?`).all(limit) as Array<{
       id: number; admin_user_id: number | null; tool: string; input: string | null; result_preview: string | null; ok: number; created_at: string;
     }>,
-  // Admin FarePilot step-up (TOTP re-auth, tied to the owner's session, 10-min window).
-  recordStepUp: (sessionToken: string, userId: number) =>
-    getDb().prepare(`INSERT INTO admin_stepup (session_token, user_id, verified_at) VALUES (?, ?, datetime('now'))
-      ON CONFLICT(session_token) DO UPDATE SET verified_at = datetime('now'), user_id = excluded.user_id`).run(sessionToken, userId),
-  stepUpValidWithin: (sessionToken: string, seconds: number): boolean => {
-    if (!sessionToken) return false;
-    const r = getDb().prepare(`SELECT 1 AS ok FROM admin_stepup WHERE session_token = ? AND verified_at > datetime('now', ?)`)
-      .get(sessionToken, `-${seconds} seconds`) as { ok: number } | undefined;
-    return !!r;
-  },
   getUserByEmail: (email: string) => getDb().prepare('SELECT * FROM users WHERE email = ?').get(email) as UserRow | undefined,
   getUserByUsername: (username: string) =>
     getDb().prepare('SELECT * FROM users WHERE username = ? COLLATE NOCASE').get(username) as UserRow | undefined,
@@ -821,6 +816,8 @@ export const queries = {
   setUsername: (userId: number, username: string) =>
     getDb().prepare('UPDATE users SET username = ? WHERE id = ?').run(username, userId),
   /** Promote a confirmed enrollment: set the live secret, claim username, enable TOTP. */
+  enableOwnerTotp: (userId: number, secret: string) =>
+    getDb().prepare(`UPDATE users SET totp_secret = ?, totp_enabled = 1 WHERE id = ?`).run(secret, userId),
   promoteEnrollment: (userId: number, username: string, secret: string) =>
     getDb().prepare(`UPDATE users SET totp_secret = ?, username = ?, totp_enabled = 1 WHERE id = ?`)
       .run(secret, username, userId),
