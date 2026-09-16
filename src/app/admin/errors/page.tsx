@@ -13,6 +13,12 @@ export default async function ErrorsPage() {
   if (!isAdmin) redirect('/');
 
   const errs = queries.recentErrors(200);
+  // Resolve user_id -> a human label (email/username); system events stay 'system'.
+  const userLabel = new Map<number, string>();
+  for (const uid of Array.from(new Set(errs.map(e => e.user_id).filter((v): v is number => typeof v === 'number')))) {
+    const u = queries.getUserById(uid);
+    if (u) userLabel.set(uid, u.username || u.email);
+  }
   const byLevel = errs.reduce<Record<string, number>>((a, e) => { a[e.level] = (a[e.level] ?? 0) + 1; return a; }, {});
 
   return (
@@ -61,8 +67,10 @@ export default async function ErrorsPage() {
                       </details>
                     )}
                   </td>
-                  <td className="text-xs text-slate-500">{e.user_id ?? '—'}</td>
-                  <td className="text-[10px] font-mono text-slate-500 max-w-xs truncate">{e.context ?? ''}</td>
+                  <td className="text-xs text-slate-500">{e.user_id == null
+                    ? <span className="text-slate-400 italic">system</span>
+                    : (userLabel.get(e.user_id) ?? `user #${e.user_id}`)}</td>
+                  <td className="text-[10px] font-mono text-slate-500 max-w-xs truncate" title={e.context ?? ''}>{e.context ?? ''}</td>
                 </tr>
               ))}
             </tbody>

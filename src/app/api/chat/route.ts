@@ -3,6 +3,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { CHAT_SYSTEM_PROMPT, TOOLS, runTool } from '@/lib/chatTools';
 import { buildFlightHudPayload } from '@/lib/flightHud';
+import { getCurrentUser } from '@/lib/auth';
 
 export const maxDuration = 60;
 
@@ -129,6 +130,8 @@ export async function POST(req: Request) {
   const parsed = Schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
+  const me = await getCurrentUser().catch(() => null);
+  const callerId = me?.id ?? null;
   const toolCalls: ToolCallLog = [];
   const toolResults: ToolResultLog = [];
   const latestUserQuestion = [...parsed.data.messages].reverse().find(m => m.role === 'user')?.content || '';
@@ -165,7 +168,7 @@ export async function POST(req: Request) {
       try {
         const { queries } = await import('@/lib/db');
         queries.logChatTurn({
-          userId: null,
+          userId: callerId,
           question: latestUserQuestion,
           replyPreview: r.reply,
           toolCalls: toolCalls.length,
@@ -186,6 +189,11 @@ export async function POST(req: Request) {
   // Never leak raw provider errors (API keys, billing state, request ids) to
   // the end user — log server-side, reply with a friendly concierge message.
   console.error('[chat] all providers failed:', errors.join(' | '));
+  try {
+    const { queries } = await import('@/lib/db');
+    queries.logError({ source: 'chat', message: 'all AI providers failed',
+      userId: callerId ?? undefined, context: { question: latestUserQuestion.slice(0, 200), errors } });
+  } catch { /* best-effort */ }
   return NextResponse.json({
     reply:
       "I'm having trouble reaching my brain right now — the team has been notified. " +
