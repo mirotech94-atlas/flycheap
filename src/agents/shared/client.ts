@@ -123,6 +123,10 @@ export async function complete(opts: {
       messages: [{ role: 'user', content: opts.user }],
       maxTokens: opts.maxTokens ?? 1024,
       json: opts.json,
+      // gpt-oss reasoning tokens count against max_tokens; keep them low so
+      // short agent outputs aren't starved to empty and the free-tier
+      // tokens-per-minute budget lasts. groqChat ignores this on non-gpt-oss.
+      reasoningEffort: 'low',
     })).trim();
   }
   const client = await getAnthropicClient();

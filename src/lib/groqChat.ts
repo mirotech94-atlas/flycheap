@@ -35,6 +35,14 @@ export async function groqChat(opts: {
   // Groq rejects the request; completeJSON already does. Reduces (does not
   // guarantee) non-JSON replies from the gpt-oss models.
   json?: boolean;
+  // reasoning_effort for the gpt-oss reasoning models. Their hidden reasoning
+  // tokens count against max_tokens; with a small budget the reasoning can
+  // eat the whole allowance and leave the content empty (Groq then 400s a
+  // json request as json_validate_failed with an empty failed_generation).
+  // 'low' shrinks that reasoning so short structured/marketing outputs fit,
+  // and conserves the free-tier tokens-per-minute budget. Only sent for
+  // gpt-oss models (Groq rejects the field on models that don't support it).
+  reasoningEffort?: 'low' | 'medium' | 'high';
   baseUrl?: string;
   fetchImpl?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
@@ -51,6 +59,9 @@ export async function groqChat(opts: {
       max_tokens: opts.maxTokens,
       messages: [{ role: 'system', content: opts.system }, ...opts.messages],
       ...(opts.json ? { response_format: { type: 'json_object' } } : {}),
+      ...(opts.reasoningEffort && /gpt-oss/.test(opts.model)
+        ? { reasoning_effort: opts.reasoningEffort }
+        : {}),
     }),
   });
 

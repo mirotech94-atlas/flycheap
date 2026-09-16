@@ -56,6 +56,25 @@ describe('groqChat', () => {
     expect(captured.response_format).toEqual({ type: 'json_object' });
   });
 
+  it('sends reasoning_effort for gpt-oss models but not others', async () => {
+    let body: any = null;
+    const fetchImpl = fakeFetch((_url, init) => {
+      body = JSON.parse(String(init.body));
+      return { status: 200, body: { choices: [{ message: { content: 'ok' } }] } };
+    });
+    await groqChat({
+      apiKey: 'k', model: 'openai/gpt-oss-120b', system: 's',
+      messages: [], maxTokens: 100, reasoningEffort: 'low', fetchImpl,
+    });
+    expect(body.reasoning_effort).toBe('low');
+
+    await groqChat({
+      apiKey: 'k', model: 'llama-3.1-8b-instant', system: 's',
+      messages: [], maxTokens: 100, reasoningEffort: 'low', fetchImpl,
+    });
+    expect(body.reasoning_effort).toBeUndefined();
+  });
+
   it('throws on a non-2xx response', async () => {
     const fetchImpl = fakeFetch(() => ({ status: 401, body: 'unauthorized' }));
     await expect(groqChat({

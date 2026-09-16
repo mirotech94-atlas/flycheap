@@ -87,7 +87,10 @@ export async function runSocialPoster(opts: { perChannelLimit?: number } = {}): 
           system: `${BRAND_VOICE}\n\n${channelRules(channel)}\n\nNever invent details — use only the DEAL JSON. The ONLY percentage you may cite is pct_below_median (omit it if null). Never present any other number as a percentage. Return {"body":"<post text>"}.`,
           user: `DEAL JSON:\n${dealJson(pick)}`,
           schema: PostSchema,
-          maxTokens: 400,
+          // Room for the post body after the gpt-oss reasoning tokens (kept
+          // low via reasoningEffort in complete()); a starved budget returns
+          // empty content that Groq rejects as json_validate_failed.
+          maxTokens: 700,
           // Tolerate the model using a different key (post/text/content/tweet)
           // or returning a bare string instead of {body}.
           normalize: (v) => {
