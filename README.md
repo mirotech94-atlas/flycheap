@@ -90,12 +90,13 @@ Deploy: `DEPLOY_OWNER_TOKEN=… bash deploy/deploy.sh` (run by the deploy owner 
 
 ## Contributing
 
-`main` is protected and **merge-request-only** — direct pushes are rejected, and a merge request cannot merge until its CI pipeline (the Vitest suite) passes. To land a change:
+`main` is protected and **merge-request-only** — direct pushes are rejected, and a merge request cannot merge until its CI pipeline (the Vitest suite) passes. **Approvals are optional** (a review signal, not a merge blocker on the Free tier), and self-approval is allowed. To land a change:
 
 ```bash
 git push gitlab HEAD:my-change     # push a feature branch
 glab mr create --fill              # open a merge request into main
 # CI runs automatically; the MR merges only once it's green
+glab mr approve                    # optional — record a review before merging
 glab mr merge
 ```
 
