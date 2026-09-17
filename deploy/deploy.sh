@@ -26,6 +26,22 @@ fi
 cd "$APP_DIR"
 
 # -------------------------------------------------------------------------
+# 0. SERIALIZE DEPLOYS — prevent concurrent-build corruption.
+#    Multiple sessions each run `rm -rf .next && next build` on the SAME dir;
+#    overlapping builds clobber .next -> an incomplete build -> the app
+#    crash-loops "Could not find a production build". An exclusive lock makes
+#    overlapping deploys QUEUE instead of colliding. (A stray `next build`
+#    invoked directly, outside this script, still bypasses the lock — deploy
+#    only through deploy.sh.)
+# -------------------------------------------------------------------------
+exec 200>"$APP_DIR/.deploy.lock"
+if ! flock -w 600 200; then
+  echo "==> Another deploy is in progress and did not finish within 10 min — aborting." >&2
+  exit 1
+fi
+echo "==> Acquired deploy lock (serialized build)"
+
+# -------------------------------------------------------------------------
 # 1. PRE-FLIGHT CHECK — confirm the app is healthy BEFORE we touch anything.
 #    If it's already down we still proceed (the deploy might fix it), but we
 #    log the state so we don't claim "rolled back to the previous version"
