@@ -30,8 +30,8 @@ tsconfig.tsbuildinfo
 *.sublime-project
 *.sublime-workspace
 
-# test coverage
-coverage/
+# test coverage (root only — do NOT match the app route src/app/api/offers/coverage)
+/coverage/
 .nyc_output/
 *.lcov
 
