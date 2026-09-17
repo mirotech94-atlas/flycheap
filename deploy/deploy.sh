@@ -177,7 +177,9 @@ echo "==> Building as $APP_USER (memory capped at 6GB — survives cold builds)"
 # rather than the kernel OOM-killer hitting at an arbitrary moment. 6GB lets
 # a *cold* build (no node_modules/.cache) complete on this box (9.9GB RAM);
 # warm builds rarely use more than 2GB so the cap doesn't cost anything.
-if ! sudo -u "$APP_USER" NODE_OPTIONS="--max-old-space-size=6144" npm run build; then
+# DEPLOY_LOCK_HELD=1 tells next.config.js this build is running under the deploy
+# lock we hold above; a direct `next build` without it is refused (see config).
+if ! sudo -u "$APP_USER" DEPLOY_LOCK_HELD=1 NODE_OPTIONS="--max-old-space-size=6144" npm run build; then
   echo "==> ❌ BUILD FAILED — rolling back" >&2
   if [ -d "$BACKUP_DIR" ]; then
     rm -rf "$APP_DIR/.next"
