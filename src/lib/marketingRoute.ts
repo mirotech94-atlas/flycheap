@@ -13,7 +13,8 @@ export const MARKETING_PREFIXES = [
 
 export type MarketingDecision =
   | { kind: 'canonical-redirect'; host: string }
-  | { kind: 'rewrite'; pathname: '/welcome' }
+  | { kind: 'rewrite'; pathname: string }
+  | { kind: 'root-redirect' }
   | { kind: 'pass' }
   | { kind: 'app-redirect'; host: string }
   | { kind: 'none' };
@@ -34,8 +35,15 @@ export function marketingDecision(
     return { kind: 'canonical-redirect', host: marketingHost };
   }
 
+  // The standalone /welcome landing is retired — the early-access page is the
+  // single marketing front door. Bounce /welcome (and sub-paths) to the root.
+  if (pathname === '/welcome' || pathname.startsWith('/welcome/')) {
+    return { kind: 'root-redirect' };
+  }
+
+  // The apex serves the early-access page (the one and only front end).
   if (pathname === '/') {
-    return { kind: 'rewrite', pathname: '/welcome' };
+    return { kind: 'rewrite', pathname: '/early-access' };
   }
 
   const isMarketingPath = MARKETING_PREFIXES.some(

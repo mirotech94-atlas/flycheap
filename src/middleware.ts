@@ -51,6 +51,11 @@ export function middleware(req: NextRequest) {
     reqHeaders.set('x-pathname', decision.pathname);
     return NextResponse.rewrite(url, { request: { headers: reqHeaders } });
   }
+  if (decision.kind === 'root-redirect') {
+    const url = req.nextUrl.clone();
+    url.pathname = '/';
+    return NextResponse.redirect(url, 308);
+  }
   if (decision.kind === 'app-redirect') {
     const url = req.nextUrl.clone();
     url.host = decision.host;

@@ -18,9 +18,9 @@ describe('marketingDecision', () => {
       .toEqual({ kind: 'canonical-redirect', host: 'flycheap.live' });
   });
 
-  it('rewrites / to /welcome', () => {
+  it('rewrites / to /early-access (the single front door)', () => {
     expect(marketingDecision('flycheap.live', '/', opts))
-      .toEqual({ kind: 'rewrite', pathname: '/welcome' });
+      .toEqual({ kind: 'rewrite', pathname: '/early-access' });
   });
 
   it('passes through a marketing prefix path', () => {
@@ -48,7 +48,12 @@ describe('marketingDecision', () => {
 
   it('strips the port before matching the host', () => {
     expect(marketingDecision('flycheap.live:443', '/', opts))
-      .toEqual({ kind: 'rewrite', pathname: '/welcome' });
+      .toEqual({ kind: 'rewrite', pathname: '/early-access' });
+  });
+
+  it('redirects /welcome to the root (landing retired)', () => {
+    expect(marketingDecision('flycheap.live', '/welcome', opts)).toEqual({ kind: 'root-redirect' });
+    expect(marketingDecision('flycheap.live', '/welcome/features', opts)).toEqual({ kind: 'root-redirect' });
   });
 });
 
