@@ -67,7 +67,7 @@ describe('FarePilot loop', () => {
 
   it('running out of tool steps still answers instead of throwing the work away', async () => {
     // Model never stops calling tools; the final call has tools disabled.
-    const responses = Array.from({ length: loop.MAX_ITERATIONS }, () => toolCall('app_health'));
+    const responses: unknown[] = Array.from({ length: loop.MAX_ITERATIONS }, () => toolCall('app_health'));
     responses.push(text('summary of what I found'));
     const calls = script(responses);
 
