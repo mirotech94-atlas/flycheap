@@ -14,9 +14,20 @@ set -euo pipefail
 
 APP_USER="egyflights"
 APP_DIR="/opt/egyptair-tracker"
+# Health-check through a REAL Host header on a route that renders an app-router
+# page (the apex rewrites to /early-access). A bare localhost/ with no Host
+# returned 200 even when flycheap.live/ 500'd on a broken build, so the old
+# gate could pass a broken deploy. Hitting the real host exercises the client
+# reference manifests that go missing in a half-written .next.
+HEALTH_HOST="flycheap.live"
 HEALTH_URL="http://localhost:3000/"
 HEALTH_TIMEOUT_S=10
 HEALTH_MAX_ATTEMPTS=12     # 12 × 5s = 60s grace window after restart
+
+# Single place that performs the health request, with the real Host header.
+health_code() {
+  curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" -H "Host: $HEALTH_HOST" "$HEALTH_URL" || echo "000"
+}
 
 if [ "$(id -u)" -ne 0 ]; then
   echo "Run as root (or with sudo)." >&2
@@ -50,8 +61,8 @@ echo "==> Acquired deploy lock (serialized build)"
 echo "==> Pre-flight: service state before deploy"
 PRE_STATE="unknown"
 if systemctl is-active --quiet egyptair; then
-  PRE_HTTP=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
-  echo "    service: active · HTTP $PRE_HTTP"
+  PRE_HTTP=$(health_code)
+  echo "    service: active · HTTP $PRE_HTTP (Host: $HEALTH_HOST)"
   if [ "$PRE_HTTP" = "200" ]; then
     PRE_STATE="healthy"
   else
@@ -194,6 +205,30 @@ echo "==> Fixing ownership (in case anything slipped through)"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
 
 # -------------------------------------------------------------------------
+# 3b. BUILD COMPLETENESS GUARD — an interrupted or collided build (killed
+#     process, disk-full, a concurrent rm -rf) can leave .next with no
+#     BUILD_ID or no client-reference-manifests. Such a build starts the
+#     service but 500s at runtime ("client reference manifest does not
+#     exist"). Verify the artifact is COMPLETE before we restart onto it;
+#     roll back to the previous build if it is not.
+# -------------------------------------------------------------------------
+echo "==> Verifying build completeness (BUILD_ID + client manifests)"
+if [ ! -s "$APP_DIR/.next/BUILD_ID" ] || \
+   [ -z "$(find "$APP_DIR/.next/server/app" -name '*client-reference-manifest*' -print -quit 2>/dev/null)" ]; then
+  echo "==> ❌ Build incomplete (.next missing BUILD_ID or client manifests) — rolling back" >&2
+  if [ -d "$BACKUP_DIR" ]; then
+    rm -rf "$APP_DIR/.next"
+    mv "$BACKUP_DIR" "$APP_DIR/.next"
+    chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
+    systemctl restart egyptair
+    echo "==> Restored previous .next; service restarted." >&2
+  else
+    echo "==> No backup available — service left stopped; debug with journalctl -u egyptair" >&2
+  fi
+  exit 1
+fi
+
+# -------------------------------------------------------------------------
 # 4. RESTART + HEALTH-CHECK with retry. A new build needs ~5-15s to warm up.
 # -------------------------------------------------------------------------
 echo "==> Restarting service"
@@ -216,9 +251,9 @@ for i in $(seq 1 "$HEALTH_MAX_ATTEMPTS"); do
     echo "    [$i/$HEALTH_MAX_ATTEMPTS] service inactive — still booting"
     continue
   fi
-  CODE=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
+  CODE=$(health_code)
   if [ "$CODE" = "200" ]; then
-    echo "    [$i/$HEALTH_MAX_ATTEMPTS] HTTP 200 ✓"
+    echo "    [$i/$HEALTH_MAX_ATTEMPTS] HTTP 200 ✓ (Host: $HEALTH_HOST)"
     HEALTHY="yes"
     break
   else
@@ -238,7 +273,7 @@ if [ "$HEALTHY" != "yes" ]; then
     chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
     systemctl start egyptair
     sleep 5
-    CODE=$(curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" "$HEALTH_URL" || echo "000")
+    CODE=$(health_code)
     echo "==> Rollback complete — HTTP $CODE on previous build" >&2
   else
     echo "==> No backup available — please debug manually (journalctl -u egyptair -f)" >&2
