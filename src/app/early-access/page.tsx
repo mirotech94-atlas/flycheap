@@ -73,7 +73,7 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
             <a href="#fit">{t.nav.who}</a>
           </nav>
           <div className="dc-nav-right">
-            <Link href="/login" className="dc-signin">{t.nav.signin}</Link>
+            <Link href="/login" prefetch={false} className="dc-signin">{t.nav.signin}</Link>
             <details className="dc-lang">
               <summary>{L.flag} {locale.toUpperCase()} <span className="chev">▾</span></summary>
               <div className="dc-lang-menu">

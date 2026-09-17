@@ -46,7 +46,7 @@ export default function DemoPage() {
         </Link>
         <div className="fc-l-topbar-right">
           <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
-          <Link href="/login" className="fc-btn fc-btn-light fc-btn-sm">Log in</Link>
+          <Link href="/login" prefetch={false} className="fc-btn fc-btn-light fc-btn-sm">Log in</Link>
           <Link href="/early-access" className="fc-btn fc-btn-ink fc-btn-sm">Get early access →</Link>
         </div>
       </header>

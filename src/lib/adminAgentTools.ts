@@ -39,7 +39,20 @@ Rules:
 - Never invent data. If a query returns nothing, say so. Keep replies short and concrete; put output in fenced blocks.
 - Every action is logged to an audit trail automatically.
 
-Facts: database is data/fares.db (better-sqlite3). Tables include users, searches, fare_snapshots, alerts_sent, api_calls, error_log. The app runs under systemd unit 'egyptair'; jobs run as egyptair-jobs@<name>.service.`;
+Facts you can rely on — do NOT spend tool steps rediscovering these:
+- run_command starts in /opt/egyptair-tracker (the app root). Build output is .next/ — server chunks are at .next/server/chunks/ssr/, NOT server/chunks/.
+- Database: data/fares.db (better-sqlite3). Real column names:
+  error_log: id, occurred_at (NOT "timestamp"), level, source, message (NOT "error_message"), stack, user_id, context
+  users: id, email, name, phone, username, tier, subscription_status, trial_ends_at, totp_enabled, created_at
+  searches: id, user_id, origin, destination, depart_date, return_date, adults, infants, active, target_per_adult_usd, date_mode, trip_type, stops, airline
+  fare_snapshots: id, search_id, polled_at, price_per_adult_usd, total_price_usd, provider, raw_json
+  api_calls: id, search_id, called_at, ok, status_code, ms, error
+  alerts_sent: id, search_id, fare_snapshot_id, price_per_adult_usd, sent_at, kind
+  admin_agent_audit: id, admin_user_id, tool, input, result_preview, ok, created_at
+- Only run PRAGMA table_info(<table>) for a column that is NOT listed above.
+- The app runs under systemd unit 'egyptair'; jobs run as egyptair-jobs@<name>.service.
+
+Tool steps are limited per turn, so spend them well: never repeat a call you already made this turn (app_health once is enough), never guess a column or path that is listed above, and prefer one precise query over several exploratory ones. If you run out of steps you will be asked to answer from what you have.`;
 
 export const ADMIN_TOOLS = [
   { name: 'find_client', description: 'Find client accounts by email, username, or numeric id (partial match). Returns id, email, username, tier, created_at for up to 20 matches. Read-only, no step-up. Use first when the owner names a client.',

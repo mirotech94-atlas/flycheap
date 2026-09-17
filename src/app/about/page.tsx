@@ -23,7 +23,7 @@ export default function AboutPage() {
         </Link>
         <div className="fc-l-topbar-right">
           <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
-          <Link href="/login" className="fc-btn fc-btn-ink fc-btn-sm">Try free →</Link>
+          <Link href="/login" prefetch={false} className="fc-btn fc-btn-ink fc-btn-sm">Try free →</Link>
         </div>
       </header>
 
@@ -132,7 +132,7 @@ export default function AboutPage() {
         </div>
 
         <div className="fc-hero-cta" style={{ justifyContent: 'center', marginTop: 44 }}>
-          <Link href="/login" className="fc-btn fc-btn-gold">Open the dashboard →</Link>
+          <Link href="/login" prefetch={false} className="fc-btn fc-btn-gold">Open the dashboard →</Link>
           <Link href="/contact" className="fc-btn fc-btn-light">Get in touch</Link>
           <Link href="/status" className="fc-btn fc-btn-light">System status</Link>
         </div>

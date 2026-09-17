@@ -116,7 +116,7 @@ export default async function LandingPage() {
         </nav>
         <div className="fc-l-topbar-right">
           <LanguageMenu locale={locale} variant="topbar" label={dict.common.language} />
-          <Link href="/login" className="fc-btn fc-btn-light fc-btn-sm">{t.nav.signIn}</Link>
+          <Link href="/login" prefetch={false} className="fc-btn fc-btn-light fc-btn-sm">{t.nav.signIn}</Link>
           <Link href="/early-access" className="fc-btn fc-btn-ink fc-btn-sm">{t.nav.earlyAccess}</Link>
         </div>
       </header>
@@ -409,7 +409,7 @@ export default async function LandingPage() {
           <h2><Em r={t.final.title} /></h2>
           <p>{t.final.sub}</p>
           <div className="fc-hero-cta">
-            <Link href="/login" className="fc-btn fc-btn-gold">{t.final.tryFree}</Link>
+            <Link href="/login" prefetch={false} className="fc-btn fc-btn-gold">{t.final.tryFree}</Link>
             <Link href="/about" className="fc-btn fc-btn-ghost">{t.final.docs}</Link>
           </div>
         </div>
@@ -440,7 +440,7 @@ export default async function LandingPage() {
         <div className="fc-l-footer-col">
           <h4>{t.footer.company}</h4>
           <Link href="/about">{t.footer.about}</Link>
-          <Link href="/login">{t.footer.signIn}</Link>
+          <Link href="/login" prefetch={false}>{t.footer.signIn}</Link>
           <a href="mailto:sales@flycheap.18dn.com">{t.footer.contactSales}</a>
         </div>
         <div className="fc-l-footer-col">

@@ -80,7 +80,7 @@ export default function TrialTermsPage() {
         </div>
 
         <div className="fc-trial-gate" style={{ marginTop: 22 }}>
-          <Link href="/login" className="fc-btn fc-btn-gold fc-trial-cta">Start free trial →</Link>
+          <Link href="/login" prefetch={false} className="fc-btn fc-btn-gold fc-trial-cta">Start free trial →</Link>
         </div>
       </section>
 
