@@ -88,9 +88,20 @@ Secrets live in `.env.local` (never committed — see `.env.example`).
 
 Deploy: `DEPLOY_OWNER_TOKEN=… bash deploy/deploy.sh` (run by the deploy owner only).
 
+## Contributing
+
+`main` is protected and **merge-request-only** — direct pushes are rejected, and a merge request cannot merge until its CI pipeline (the Vitest suite) passes. To land a change:
+
+```bash
+git push gitlab HEAD:my-change     # push a feature branch
+glab mr create --fill              # open a merge request into main
+# CI runs automatically; the MR merges only once it's green
+glab mr merge
+```
+
 ## Repo
 
-Private on GitLab: `gitlab.com/mirotech94/flycheap-tracker`. Push with `git push gitlab prod-original:main`.
+Private on GitLab: `gitlab.com/mirotech94/flycheap-tracker`.
 
 ---
 
