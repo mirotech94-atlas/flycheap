@@ -223,7 +223,7 @@ export function ChatWidget() {
       <button
         onClick={() => setOpen(o => !o)}
         aria-label={open ? 'Close chat' : 'Open chat'}
-        className={`fixed bottom-24 right-6 md:bottom-6 z-40 group flex items-center gap-2 px-4 py-3 rounded-full text-white shadow-lift transition-all no-print ${
+        className={`fixed bottom-24 right-6 md:bottom-6 z-40 group flex items-center justify-center w-14 h-14 rounded-full text-white shadow-lift transition-all no-print ${
           open
             ? 'bg-slate-800 hover:bg-slate-900'
             : 'bg-brand-gradient hover:scale-105 motion-pulse'
@@ -232,10 +232,7 @@ export function ChatWidget() {
         {open ? (
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M18 6 6 18M6 6l12 12"/></svg>
         ) : (
-          <>
-            <WingsMark size={22} />
-            <span className="font-semibold text-sm hidden md:inline">Ask FarePilot</span>
-          </>
+          <WingsMark size={24} />
         )}
       </button>
 

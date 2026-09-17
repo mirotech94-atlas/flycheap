@@ -441,7 +441,7 @@ export default async function LandingPage() {
           <h4>{t.footer.company}</h4>
           <Link href="/about">{t.footer.about}</Link>
           <Link href="/login" prefetch={false}>{t.footer.signIn}</Link>
-          <a href="mailto:sales@flycheap.18dn.com">{t.footer.contactSales}</a>
+          <a href="mailto:sales@flycheap.live">{t.footer.contactSales}</a>
         </div>
         <div className="fc-l-footer-col">
           <h4>{t.footer.legal}</h4>

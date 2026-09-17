@@ -15,7 +15,7 @@ export type EarlyAccessRow = {
   approve_token: string | null; approved_at: string | null; declined_at: string | null;
 };
 /** Where new access requests are announced (Approve / Decline links). */
-export const NOTIFY_TO = process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.18dn.com';
+export const NOTIFY_TO = process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.live';
 
 let ensured = false;
 function ensure() {

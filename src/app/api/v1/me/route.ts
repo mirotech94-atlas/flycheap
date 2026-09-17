@@ -19,6 +19,8 @@ export async function GET(req: Request) {
       id: user.id, email: user.email, name: user.name, tier: user.tier,
       username: user.username ?? null,
       subscriptionStatus: user.subscription_status ?? null,
+      // 0/undefined → the app runs its first-run setup wizard.
+      onboarded: user.onboarded === 1,
       trialEndsAt,
     },
   });

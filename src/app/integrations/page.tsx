@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { getCurrentUser, isOwner } from '@/lib/auth';
+import { AiProviderChain } from '@/components/AiProviderChain';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Integrations — FlyCheap' };
@@ -125,7 +127,10 @@ function PlatformIcon({ platform, className = 'w-7 h-7' }: { platform: Card['pla
   );
 }
 
-export default function IntegrationsPage() {
+export default async function IntegrationsPage() {
+  // Owner sees the "how to enable a dormant provider" env hints; everyone else
+  // sees the chain and its health only — this page is publicly reachable.
+  const ownerView = isOwner(await getCurrentUser());
   return (
     <div className="space-y-6 max-w-6xl mx-auto">
       <header className="motion-fade-in">
@@ -186,6 +191,8 @@ export default function IntegrationsPage() {
           );
         })}
       </section>
+
+      <AiProviderChain ownerView={ownerView} />
 
       <section className="card motion-slide-up">
         <div className="eyebrow mb-1">Set up in 2 minutes</div>
@@ -249,7 +256,7 @@ export default function IntegrationsPage() {
           straight away:
         </p>
         <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <a className="text-brand-700 font-semibold" href="mailto:miro@flycheap.18dn.com">miro@flycheap.18dn.com</a>
+          <a className="text-brand-700 font-semibold" href="mailto:miro@flycheap.live">miro@flycheap.live</a>
           <a className="text-brand-700 font-semibold" href="tel:+19176554405">+1 (917) 655-4405</a>
         </div>
       </section>

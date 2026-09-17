@@ -112,8 +112,8 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
           <h3 className="font-display font-bold text-2xl mt-1">$0</h3>
           <p className="text-xs text-slate-500">forever — email alerts only</p>
           <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
-            <li>✓ 3 tracked routes</li>
-            <li>✓ 30-min polling</li>
+            <li>✓ 5 tracked routes</li>
+            <li>✓ Fare checked every 4 hours</li>
             <li>✓ Email alerts</li>
             <li>✓ Mistake-Fare Radar</li>
             <li className="text-slate-400">— no Slack / Telegram / WhatsApp / IG / SMS</li>

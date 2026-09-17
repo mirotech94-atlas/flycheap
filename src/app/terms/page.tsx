@@ -29,7 +29,7 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
   },
   {
     id: 'refunds', h: '5 · Cancellation and refunds',
-    body: <>Cancel at any time from <em>Settings → Billing → Manage subscription</em> — one click, no retention calls. Your paid features stay active until the end of the period you already paid for; then your account moves to Free. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved. Monthly charges already billed are non-refundable, which is why cancellation is self-serve. If you believe you were billed in error, email <a href="mailto:sales@flycheap.18dn.com">sales@flycheap.18dn.com</a> within 7 days of the charge and we will make it right.</>,
+    body: <>Cancel at any time from <em>Settings → Billing → Manage subscription</em> — one click, no retention calls. Your paid features stay active until the end of the period you already paid for; then your account moves to Free. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved. Monthly charges already billed are non-refundable, which is why cancellation is self-serve. If you believe you were billed in error, email <a href="mailto:sales@flycheap.live">sales@flycheap.live</a> within 7 days of the charge and we will make it right.</>,
   },
   {
     id: 'failed-payment', h: '6 · Failed payments',
@@ -53,7 +53,7 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
   },
   {
     id: 'changes', h: '11 · Changes and contact',
-    body: <>We may update these terms; material changes are announced by email or in-app at least 14 days before they take effect. Continued use after that date is acceptance. These terms are governed by the laws of the State of New York, USA. Questions: <a href="mailto:sales@flycheap.18dn.com">sales@flycheap.18dn.com</a>.</>,
+    body: <>We may update these terms; material changes are announced by email or in-app at least 14 days before they take effect. Continued use after that date is acceptance. These terms are governed by the laws of the State of New York, USA. Questions: <a href="mailto:sales@flycheap.live">sales@flycheap.live</a>.</>,
   },
 ];
 

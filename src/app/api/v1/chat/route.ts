@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
 import { apiAuthBearer } from '@/lib/mobileAuth';
-import { FAREPILOT_SYSTEM_PROMPT, FAREPILOT_TOOLS, runFarePilotTool, buildUserSnapshot } from '@/lib/farePilotTools';
+import { FAREPILOT_SYSTEM_PROMPT, FAREPILOT_TOOLS, FAREPILOT_MUTATING_TOOLS, runFarePilotTool, buildUserSnapshot } from '@/lib/farePilotTools';
 import { queries } from '@/lib/db';
-import { llmProvider } from '@/lib/llmProvider';
+import { buildProviderChain } from '@/lib/ai/providers';
 
 export const maxDuration = 60;
 export const dynamic = 'force-dynamic';
@@ -29,24 +29,26 @@ function baseFromReq(req: Request): string {
 }
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
-type LoopResult = { ok: true; reply: string } | { ok: false; error: string; status: number };
+type LoopResult = { ok: true; reply: string } | { ok: false; error: string; status: number; executed?: boolean };
 
 /* ─── Anthropic loop (fallback) ─── */
 async function runAnthropicLoop(
-  system: string, userMessages: ChatMsg[], userId: number, baseUrl: string,
+  system: string, userMessages: ChatMsg[], userId: number, baseUrl: string, model: string = ANTHROPIC_MODEL,
 ): Promise<LoopResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: 'ANTHROPIC_API_KEY not set', status: 500 };
   const client = new Anthropic({ apiKey });
+  // Set once a tool has written something — the caller must not fail over after this.
+  let executed = false;
   const messages: Anthropic.MessageParam[] = userMessages.map((m) => ({ role: m.role, content: m.content }));
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     let response: Anthropic.Message;
     try {
-      response = await client.messages.create({ model: ANTHROPIC_MODEL, max_tokens: 1024, system, tools: FAREPILOT_TOOLS, messages });
+      response = await client.messages.create({ model, max_tokens: 1024, system, tools: FAREPILOT_TOOLS, messages });
     } catch (e) {
-      if (e instanceof Anthropic.APIError) return { ok: false, error: `FarePilot upstream error (${e.status}).`, status: 502 };
-      return { ok: false, error: (e as Error).message, status: 500 };
+      if (e instanceof Anthropic.APIError) return { ok: false, error: `FarePilot upstream error (${e.status}).`, status: 502, executed };
+      return { ok: false, error: (e as Error).message, status: 500, executed };
     }
 
     if (response.stop_reason !== 'tool_use') {
@@ -59,18 +61,21 @@ async function runAnthropicLoop(
     const results: Anthropic.ToolResultBlockParam[] = [];
     for (const t of toolUses) {
       const r = await runFarePilotTool(userId, t.name, (t.input ?? {}) as Record<string, unknown>, baseUrl);
+      if (FAREPILOT_MUTATING_TOOLS.has(t.name) && !r.is_error) executed = true;
       results.push({ type: 'tool_result', tool_use_id: t.id, content: r.content, is_error: r.is_error ?? false });
     }
     messages.push({ role: 'user', content: results });
   }
-  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500 };
+  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500, executed };
 }
 
 /* ─── OpenAI-compatible loop — covers Groq (primary) AND OpenAI (same wire format) ─── */
 async function runOpenAICompatLoop(
-  opts: { baseUrl: string; apiKey: string; model: string; provider: string },
+  opts: { baseUrl: string; apiKey: string; model: string; provider: string; headers?: Record<string, string> },
   system: string, userMessages: ChatMsg[], userId: number, baseUrl: string,
 ): Promise<LoopResult> {
+  // Set once a tool has written something — the caller must not fail over after this.
+  let executed = false;
   const oaTools = FAREPILOT_TOOLS.map((t) => ({
     type: 'function' as const,
     function: { name: t.name, description: t.description, parameters: t.input_schema },
@@ -89,17 +94,17 @@ async function runOpenAICompatLoop(
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const res = await fetch(`${opts.baseUrl}/chat/completions`, {
       method: 'POST',
-      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
+      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
       body: JSON.stringify({ model: opts.model, max_tokens: 1024, messages, tools: oaTools }),
     });
     if (!res.ok) {
       const body = await res.text().catch(() => '');
-      return { ok: false, error: `${opts.provider} API ${res.status}: ${body.slice(0, 200)}`, status: 502 };
+      return { ok: false, error: `${opts.provider} API ${res.status}: ${body.slice(0, 200)}`, status: 502, executed };
     }
     const j = await res.json();
     const choice = j.choices?.[0];
     const msg = choice?.message;
-    if (!msg) return { ok: false, error: `${opts.provider}: empty completion`, status: 502 };
+    if (!msg) return { ok: false, error: `${opts.provider}: empty completion`, status: 502, executed };
 
     const calls = (msg.tool_calls ?? []) as Array<{ id: string; function: { name: string; arguments: string } }>;
     if (calls.length === 0) {
@@ -111,32 +116,32 @@ async function runOpenAICompatLoop(
       let input: Record<string, unknown> = {};
       try { input = JSON.parse(c.function.arguments || '{}'); } catch { /* ignore */ }
       const r = await runFarePilotTool(userId, c.function.name, input, baseUrl);
+      if (FAREPILOT_MUTATING_TOOLS.has(c.function.name) && !r.is_error) executed = true;
       messages.push({ role: 'tool', tool_call_id: c.id, content: r.content });
     }
   }
-  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500 };
+  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500, executed };
 }
 
+/** Message shown when a write already landed and we refuse to replay it. */
+const PARTIAL_WRITE_MSG =
+  'Part of that went through before the AI provider failed. I stopped rather than risk doing it twice — check your routes, then try again.';
+
 function buildAttempts(system: string, userMessages: ChatMsg[], userId: number, baseUrl: string): Array<() => Promise<LoopResult>> {
-  // Provider chain: Groq → Anthropic → OpenAI, same order and env-var
-  // conventions as the web concierge (src/app/api/chat/route.ts).
-  const attempts: Array<() => Promise<LoopResult>> = [];
-  if (process.env.GROQ_API_KEY && llmProvider() === 'groq') {
-    attempts.push(() => runOpenAICompatLoop(
-      { baseUrl: 'https://api.groq.com/openai/v1', apiKey: process.env.GROQ_API_KEY!, model: process.env.CHAT_MODEL_GROQ || 'openai/gpt-oss-120b', provider: 'groq' },
+  // Ordered failover chain from the shared registry (src/lib/ai/providers.ts):
+  // free tiers first (Groq's models each have their own daily bucket), then any
+  // other configured provider. Anthropic is driven through its NATIVE Messages
+  // API rather than the registry's OpenAI-compatible URL, because org-scoped
+  // Anthropic keys are rejected by /v1/chat/completions but work on /v1/messages.
+  return buildProviderChain().map((step) => {
+    if (step.provider.startsWith('anthropic:')) {
+      return () => runAnthropicLoop(system, userMessages, userId, baseUrl, step.model);
+    }
+    return () => runOpenAICompatLoop(
+      { baseUrl: step.baseUrl, apiKey: step.apiKey, model: step.model, provider: step.provider, headers: step.headers },
       system, userMessages, userId, baseUrl,
-    ));
-  }
-  if (process.env.ANTHROPIC_API_KEY) {
-    attempts.push(() => runAnthropicLoop(system, userMessages, userId, baseUrl));
-  }
-  if (process.env.OPENAI_API_KEY) {
-    attempts.push(() => runOpenAICompatLoop(
-      { baseUrl: 'https://api.openai.com/v1', apiKey: process.env.OPENAI_API_KEY!, model: process.env.CHAT_MODEL_OPENAI || 'gpt-4o-mini', provider: 'openai' },
-      system, userMessages, userId, baseUrl,
-    ));
-  }
-  return attempts;
+    );
+  });
 }
 
 /**
@@ -148,7 +153,7 @@ export async function POST(req: Request) {
   const user = await apiAuthBearer(req);
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
 
-  if (llmProvider() === 'none') return NextResponse.json({ error: 'FarePilot is not configured on the server.' }, { status: 500 });
+  if (buildProviderChain().length === 0) return NextResponse.json({ error: 'FarePilot is not configured on the server.' }, { status: 500 });
 
   // Light abuse cap: 30 chat turns / 5 min per user.
   if (!queries.rateLimitCheck('farepilot', String(user.id), 30, 300)) {
@@ -176,33 +181,19 @@ export async function POST(req: Request) {
     const body = new ReadableStream<Uint8Array>({
       async start(controller) {
         try {
-          if (llmProvider() === 'anthropic') {
-            const apiKey = process.env.ANTHROPIC_API_KEY!;
-            const client = new Anthropic({ apiKey });
-            const messages: Anthropic.MessageParam[] = parsed.data.messages.map((m) => ({ role: m.role, content: m.content }));
-            for (let i = 0; i < MAX_ITERATIONS; i++) {
-              const ms = client.messages.stream({ model: ANTHROPIC_MODEL, max_tokens: 1024, system, tools: FAREPILOT_TOOLS, messages });
-              ms.on('text', (delta) => { try { controller.enqueue(encoder.encode(delta)); } catch { /* closed */ } });
-              const final = await ms.finalMessage();
-              if (final.stop_reason !== 'tool_use') break;
-              messages.push({ role: 'assistant', content: final.content });
-              const toolUses = final.content.filter((b): b is Anthropic.ToolUseBlock => b.type === 'tool_use');
-              const results: Anthropic.ToolResultBlockParam[] = [];
-              for (const t of toolUses) {
-                const r = await runFarePilotTool(user.id, t.name, (t.input ?? {}) as Record<string, unknown>, baseUrl);
-                results.push({ type: 'tool_result', tool_use_id: t.id, content: r.content, is_error: r.is_error ?? false });
-              }
-              messages.push({ role: 'user', content: results });
-            }
-          } else {
-            const attempts = buildAttempts(system, parsed.data.messages, user.id, baseUrl);
-            let result: LoopResult = { ok: false, error: 'No AI provider configured.', status: 500 };
-            for (const attempt of attempts) {
-              result = await attempt();
-              if (result.ok) break;
-            }
-            controller.enqueue(encoder.encode(result.ok ? result.reply : `⚠️ ${result.error}`));
+          // Same guarded failover chain as the non-streaming path. The client
+          // treats the stream as opaque until it closes (it renders markdown
+          // only at the end), so flushing the finished reply in one chunk is a
+          // valid delta stream — and it keeps every provider behind the
+          // partial-write guard instead of one branch bypassing it.
+          const attempts = buildAttempts(system, parsed.data.messages, user.id, baseUrl);
+          let result: LoopResult = { ok: false, error: 'No AI provider configured.', status: 500 };
+          for (const attempt of attempts) {
+            result = await attempt();
+            if (result.ok) break;
+            if (result.executed) { result = { ok: false, error: PARTIAL_WRITE_MSG, status: 502 }; break; }
           }
+          controller.enqueue(encoder.encode(result.ok ? result.reply : `⚠️ ${result.error}`));
         } catch (e) {
           try { controller.enqueue(encoder.encode(`\n\n⚠️ ${(e as Error).message}`)); } catch { /* closed */ }
         } finally {
@@ -220,6 +211,8 @@ export async function POST(req: Request) {
   for (const attempt of attempts) {
     last = await attempt();
     if (last.ok) return NextResponse.json({ reply: last.reply });
+    // A tool already wrote something — replaying on the next provider would do it twice.
+    if (last.executed) return NextResponse.json({ error: PARTIAL_WRITE_MSG }, { status: 502 });
   }
   return NextResponse.json({ error: last.ok ? '' : last.error }, { status: last.ok ? 200 : last.status });
 }

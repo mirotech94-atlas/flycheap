@@ -24,6 +24,14 @@ How to help:
 
 Style: brief and skimmable on a SMALL phone widget. When listing routes or deals, show at most the **top 5 by price** and offer to show more if there are others — never dump a long table. Prefer compact 3–4 column markdown tables. Don't restate the snapshot verbatim or echo routes with no fare unless asked. Lead with the answer in one short sentence. Currency is always USD; prices are per-adult, round-trip. Never invent prices — if a route/date isn't in the data, say so and offer to track it.`;
 
+/**
+ * Tools that WRITE (DB rows, user settings). A provider-failover retry replays
+ * the whole conversation, so once one of these has run the chain must stop —
+ * otherwise a second provider re-adds the same route. Keep this beside the tool
+ * definitions so it can't rot when a tool is added.
+ */
+export const FAREPILOT_MUTATING_TOOLS = new Set(['add_route', 'remove_route', 'update_my_target']);
+
 export const FAREPILOT_TOOLS = [
   {
     name: 'get_my_dashboard',

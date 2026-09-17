@@ -266,7 +266,7 @@ html.dark .app-header {
   background: linear-gradient(180deg, rgba(8,28,52,.92) 0%, rgba(8,28,52,.85) 100%);
 }
 .nav-link {
-  @apply px-3 py-1.5 rounded-md text-sm transition-colors;
+  @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm transition-colors;
   color: rgba(255,255,255,.78);
 }
 .nav-link:hover { color: white; background: rgba(255,255,255,.08); }

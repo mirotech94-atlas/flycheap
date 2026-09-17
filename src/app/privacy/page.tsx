@@ -143,7 +143,7 @@ export default function PrivacyPage() {
       <ul className="mt-3 list-disc space-y-2 pl-6">
         <li><strong>Access / delete:</strong> sign in, delete your tracked searches, or close your account from Settings. Account closure removes your email, searches, and alert preferences within 30 days.</li>
         <li><strong>Opt out of marketing emails:</strong> every alert email has a one-click unsubscribe link.</li>
-        <li><strong>Contact:</strong> for any privacy question, email <a className="underline" href="mailto:privacy@flycheap.18dn.com">privacy@flycheap.18dn.com</a>.</li>
+        <li><strong>Contact:</strong> for any privacy question, email <a className="underline" href="mailto:privacy@flycheap.live">privacy@flycheap.live</a>.</li>
       </ul>
 
       <h2 className="mt-10 font-display text-xl font-semibold text-white">Children</h2>
@@ -162,7 +162,7 @@ export default function PrivacyPage() {
 
       <p className="mt-12 text-sm text-neutral-500">
         Operated by the FlyCheap team. Questions:{' '}
-        <a className="underline" href="mailto:privacy@flycheap.18dn.com">privacy@flycheap.18dn.com</a>.
+        <a className="underline" href="mailto:privacy@flycheap.live">privacy@flycheap.live</a>.
       </p>
     </main>
   );

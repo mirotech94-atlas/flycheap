@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { z } from 'zod';
-import { CHAT_SYSTEM_PROMPT, TOOLS, runTool } from '@/lib/chatTools';
+import { CHAT_SYSTEM_PROMPT, TOOLS, CHAT_MUTATING_TOOLS, runTool } from '@/lib/chatTools';
 import { buildFlightHudPayload } from '@/lib/flightHud';
 import { getCurrentUser } from '@/lib/auth';
 import { llmProvider } from '@/lib/llmProvider';
@@ -159,8 +159,22 @@ export async function POST(req: Request) {
       parsed.data.messages, toolCalls, toolResults,
     ));
   }
+  // Backstop for 2026-09-16: Groq's daily TPD quota and the Anthropic key
+  // were both down at once. One OpenRouter key reaches many vendors.
+  if (process.env.OPENROUTER_API_KEY) {
+    attempts.push(() => runOpenAICompatLoop(
+      { baseUrl: 'https://openrouter.ai/api/v1', apiKey: process.env.OPENROUTER_API_KEY!, model: process.env.CHAT_MODEL_OPENROUTER || 'anthropic/claude-sonnet-4.5', provider: 'openrouter' },
+      parsed.data.messages, toolCalls, toolResults,
+    ));
+  }
+  if (process.env.GEMINI_API_KEY) {
+    attempts.push(() => runOpenAICompatLoop(
+      { baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', apiKey: process.env.GEMINI_API_KEY!, model: process.env.CHAT_MODEL_GEMINI || 'gemini-2.0-flash', provider: 'gemini' },
+      parsed.data.messages, toolCalls, toolResults,
+    ));
+  }
   if (attempts.length === 0) {
-    return NextResponse.json({ error: 'No AI provider configured (set ANTHROPIC_API_KEY, GROQ_API_KEY, or OPENAI_API_KEY)' }, { status: 500 });
+    return NextResponse.json({ error: 'No AI provider configured (set ANTHROPIC_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY)' }, { status: 500 });
   }
 
   const errors: string[] = [];
@@ -188,6 +202,20 @@ export async function POST(req: Request) {
       });
     }
     errors.push(r.error);
+    // A side-effecting tool (route write, settings change, report email, poll)
+    // already ran in this attempt. Failing over replays the whole conversation,
+    // so the next provider would do it a second time — stop here instead.
+    if (toolCalls.some(c => CHAT_MUTATING_TOOLS.has(c.name))) {
+      console.error('[chat] provider failed after a write; not failing over:', r.error);
+      return NextResponse.json({
+        reply:
+          'Part of that went through before my AI provider dropped out. I stopped rather than risk '
+          + 'doing it twice — please check your routes/settings, then ask me again if anything is missing.',
+        tool_calls: toolCalls,
+        stop_reason: 'end_turn',
+        provider: 'partial',
+      });
+    }
   }
 
   // Never leak raw provider errors (API keys, billing state, request ids) to

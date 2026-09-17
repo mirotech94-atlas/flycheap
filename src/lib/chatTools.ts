@@ -29,6 +29,13 @@ Your responsibilities:
 - If a user asks to send a report to "me", omit the to: param so the configured ALERT_EMAIL is used.
 - Never invent prices. If data isn't cached for a route/date, say so.`;
 
+/**
+ * Tools with SIDE EFFECTS — DB writes, outbound email, a live poll. A failover
+ * retry replays the conversation, so the chain must stop once one has run or
+ * the user gets a duplicate report email / a second copy of the route.
+ */
+export const CHAT_MUTATING_TOOLS = new Set(['add_search', 'delete_search', 'update_settings', 'send_report', 'poll_now']);
+
 export const TOOLS = [
   {
     name: 'get_summary',

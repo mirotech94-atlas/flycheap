@@ -491,6 +491,14 @@ function init(db: Database.Database) {
     db.exec(`ALTER TABLE users ADD COLUMN totp_secret TEXT`);
     db.exec(`ALTER TABLE users ADD COLUMN totp_enabled INTEGER NOT NULL DEFAULT 0`);
   }
+  // First-run onboarding. 0 until the client finishes the setup wizard, so a
+  // reinstall or a second device does NOT re-run it — "new" means new to the
+  // account, not new to the handset. Existing rows default to 1: people who
+  // already use the app should never be shown a first-run wizard.
+  if (!userCols.some(c => c.name === 'onboarded')) {
+    db.exec(`ALTER TABLE users ADD COLUMN onboarded INTEGER NOT NULL DEFAULT 0`);
+    db.exec(`UPDATE users SET onboarded = 1`);
+  }
   // The founding-trial end date. upsertUserByEmail() has always INSERTed this,
   // but the column had no migration — a fresh DB (or a fresh deploy) broke on
   // first signup. Idempotent: a no-op where the live DB already has it.
@@ -750,6 +758,7 @@ export type UserRow = {
   totp_enabled: number;          // 0 | 1
   created_at: string;
   trial_ends_at?: string | null;   // founding trial / paid-trial end (ISO or SQLite datetime)
+  onboarded?: number;              // 0 = show the first-run setup wizard
   subscription_provider?: 'stripe' | 'paypal' | null;
   subscription_period?: 'month' | 'year' | null;
   paypal_subscription_id?: string | null;
@@ -781,6 +790,8 @@ const AUDIT_NOT_INTERNAL = `coalesce(a.detail, '') NOT LIKE '%"internal":true%'`
 export const queries = {
   // -------- Users --------
   getUserById:    (id: number) => getDb().prepare('SELECT * FROM users WHERE id = ?').get(id) as UserRow | undefined,
+  /** Mark the first-run wizard complete. Idempotent. */
+  setOnboarded:   (id: number) => getDb().prepare('UPDATE users SET onboarded = 1 WHERE id = ?').run(id),
   // -------- Admin FarePilot audit (owner-only agent action trail) --------
   logAdminAgentAction: (p: { adminUserId: number | null; tool: string; input: string; resultPreview: string; ok: boolean }) =>
     getDb().prepare(`INSERT INTO admin_agent_audit (admin_user_id, tool, input, result_preview, ok) VALUES (?, ?, ?, ?, ?)`)

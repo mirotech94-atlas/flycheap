@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useAppI18n } from '@/lib/i18n/client';
 import type { AppNavDict } from '@/lib/i18n/app.en';
+import { NavIcon } from '@/components/NavIcons';
 
 const LINKS: Array<{ href: string; key: keyof AppNavDict }> = [
   { href: '/',             key: 'dashboard' },
@@ -27,6 +28,7 @@ export function NavLinks() {
         const active = l.href === '/' ? pathname === '/' : pathname.startsWith(l.href);
         return (
           <Link key={l.href} href={l.href} className={`nav-link ${active ? 'active' : ''}`}>
+            <NavIcon name={l.key} size={16} />
             {nav[l.key]}
           </Link>
         );

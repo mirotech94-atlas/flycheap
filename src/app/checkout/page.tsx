@@ -75,7 +75,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
         {key === 'enterprise' && (
           <p className="fc-section-sub" style={{ marginTop: 22 }}>
             Need white-label setup, a custom domain, or invoicing instead of card billing?{' '}
-            <a href="mailto:sales@flycheap.18dn.com" style={{ color: 'var(--fc-navy)', textDecoration: 'underline' }}>Talk to sales</a> — we&rsquo;ll set it up with you.
+            <a href="mailto:sales@flycheap.live" style={{ color: 'var(--fc-navy)', textDecoration: 'underline' }}>Talk to sales</a> — we&rsquo;ll set it up with you.
           </p>
         )}
       </section>
