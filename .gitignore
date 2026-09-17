@@ -20,3 +20,25 @@ mobile/
 data/*.db-wal
 data/*.db-shm
 tsconfig.tsbuildinfo
+
+# editor / IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+*.sublime-project
+*.sublime-workspace
+
+# test coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# OS files
+Thumbs.db
+Desktop.ini
+._*
+.Spotlight-V100
+.Trashes
+.AppleDouble
