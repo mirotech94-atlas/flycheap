@@ -44,6 +44,27 @@ fi
 cd "$APP_DIR"
 
 # -------------------------------------------------------------------------
+# 0-owner. SINGLE DEPLOY OWNER — only the owner session may deploy; every
+#   other session hands off its commit (the SHA) to the owner, who ships it.
+#   This funnels all deploys through one path so two sessions can't collide
+#   (the 2026-09-16/17 stale-500 outages). The owner holds a secret token; the
+#   server stores only its SHA-256 in .deploy-owner-hash, so a peer (even root)
+#   can read the hash but cannot deploy. Present the token via
+#   DEPLOY_OWNER_TOKEN. If .deploy-owner-hash is absent, ownership isn't set
+#   and anyone may deploy (recovery: `rm .deploy-owner-hash` reopens deploys).
+# -------------------------------------------------------------------------
+OWNER_HASH_FILE="$APP_DIR/.deploy-owner-hash"
+if [ -f "$OWNER_HASH_FILE" ]; then
+  GIVEN_HASH=$(printf '%s' "${DEPLOY_OWNER_TOKEN:-}" | sha256sum | cut -d' ' -f1)
+  if [ "$GIVEN_HASH" != "$(cat "$OWNER_HASH_FILE" 2>/dev/null)" ]; then
+    echo "==> REFUSED: production deploys are owned by another session." >&2
+    echo "    Do NOT deploy. Commit your changes and hand the commit SHA to the deploy" >&2
+    echo "    owner, who will ship it. (If you ARE the owner, set DEPLOY_OWNER_TOKEN.)" >&2
+    exit 4
+  fi
+fi
+
+# -------------------------------------------------------------------------
 # 0. SERIALIZE DEPLOYS — prevent concurrent-build corruption.
 #    Multiple sessions each run `rm -rf .next && next build` on the SAME dir;
 #    overlapping builds clobber .next -> an incomplete build -> the app
