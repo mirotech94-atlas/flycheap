@@ -24,6 +24,13 @@ HEALTH_URL="http://localhost:3000/"
 HEALTH_TIMEOUT_S=10
 HEALTH_MAX_ATTEMPTS=12     # 12 × 5s = 60s grace window after restart
 
+# Cooldown: refuse a deploy that starts within this many seconds of the last
+# SUCCESSFUL one. Guards against two sessions deploying near-simultaneously
+# (tonight's collision was ~30s apart). Override for a genuine rapid follow-up
+# with DEPLOY_FORCE=1.
+DEPLOY_COOLDOWN_S=60
+COOLDOWN_FILE="$APP_DIR/.last-deploy-epoch"
+
 # Single place that performs the health request, with the real Host header.
 health_code() {
   curl -sL -o /dev/null -w '%{http_code}' --max-time "$HEALTH_TIMEOUT_S" -H "Host: $HEALTH_HOST" "$HEALTH_URL" || echo "000"
@@ -51,6 +58,24 @@ if ! flock -w 600 200; then
   exit 1
 fi
 echo "==> Acquired deploy lock (serialized build)"
+
+# -------------------------------------------------------------------------
+# 0b. COOLDOWN — with the lock held, refuse if a deploy SUCCEEDED very
+#     recently. Two sessions deploying ~simultaneously both pass the lock in
+#     turn; the second reaches here right after the first finished, sees the
+#     fresh timestamp, and skips instead of rewriting .next under the first's
+#     just-restarted service. A real rapid follow-up sets DEPLOY_FORCE=1.
+# -------------------------------------------------------------------------
+if [ "${DEPLOY_FORCE:-0}" != "1" ] && [ -f "$COOLDOWN_FILE" ]; then
+  LAST_EPOCH=$(cat "$COOLDOWN_FILE" 2>/dev/null || echo 0)
+  [[ "$LAST_EPOCH" =~ ^[0-9]+$ ]] || LAST_EPOCH=0
+  AGE=$(( $(date +%s) - LAST_EPOCH ))
+  if [ "$AGE" -ge 0 ] && [ "$AGE" -lt "$DEPLOY_COOLDOWN_S" ]; then
+    echo "==> SKIPPED: a deploy completed ${AGE}s ago (cooldown ${DEPLOY_COOLDOWN_S}s). NOTHING was deployed this run." >&2
+    echo "    The recent deploy already shipped the current code. If you have NEW changes to ship right now, re-run with DEPLOY_FORCE=1." >&2
+    exit 3
+  fi
+fi
 
 # -------------------------------------------------------------------------
 # 1. PRE-FLIGHT CHECK — confirm the app is healthy BEFORE we touch anything.
@@ -301,6 +326,8 @@ if [ -d "$CACHE_DIR" ]; then
 fi
 
 echo "==> Disk: $(df -h --output=avail / | tail -1 | tr -d ' ') free"
+# Record the success time so a near-simultaneous second deploy hits the cooldown.
+date +%s > "$COOLDOWN_FILE" 2>/dev/null || true
 echo "==> ✓ Deploy successful. Service active, HTTP 200. Tail logs: journalctl -u egyptair -f"
 
 # -------------------------------------------------------------------------
