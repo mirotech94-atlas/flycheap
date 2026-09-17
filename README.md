@@ -1,5 +1,7 @@
 # FlyCheap
 
+[![pipeline status](https://gitlab.com/mirotech94/flycheap-tracker/badges/main/pipeline.svg)](https://gitlab.com/mirotech94/flycheap-tracker/-/commits/main)
+
 Fare intelligence for flights. FlyCheap watches 1,000+ airlines on the routes you care about, records every price it sees, and alerts you the moment a fare drops below your target or looks anomalous — with a buy-or-wait verdict grounded in that route's own history.
 
 Production app package name: `egyptair-tracker` (historical). Current brand: **FlyCheap**.
