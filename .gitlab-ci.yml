@@ -1,0 +1,35 @@
+# GitLab CI — run the Vitest suite on every push and merge request.
+# The tests are self-contained: they create a fresh SQLite DB (db.ts init)
+# and set their own env, so no secrets or services are required.
+
+workflow:
+  rules:
+    # Run for merge requests…
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    # …but not a duplicate branch pipeline when an MR is already open…
+    - if: '$CI_COMMIT_BRANCH && $CI_OPEN_MERGE_REQUESTS'
+      when: never
+    # …otherwise run on any branch push.
+    - if: '$CI_COMMIT_BRANCH'
+
+stages:
+  - test
+
+test:
+  stage: test
+  image: node:20
+  interruptible: true
+  # Cache the npm download cache (keyed on the lockfile) to speed up installs.
+  # Not node_modules — it holds the compiled better-sqlite3 native binary.
+  cache:
+    key:
+      files:
+        - package-lock.json
+    paths:
+      - .npm/
+  script:
+    - node --version && npm --version
+    # `npm install` (not `npm ci`): this repo intentionally lets the lockfile
+    # drift, matching deploy.sh, so a strict ci install would fail spuriously.
+    - npm install --no-audit --no-fund --prefer-offline --cache .npm
+    - npm test
