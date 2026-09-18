@@ -5,6 +5,11 @@ import { notifyAll, runSubscriptionAlerts } from './notifier';
 import { detectPriceDrop } from './priceDrops';
 import { effectiveTarget } from './targets';
 
+/** How far back the threshold branch looks for a previous alert when deciding
+ *  whether a fare is "new news". Override with ALERT_FLOOR_DAYS to tune how
+ *  aggressively a route re-arms; 0 restores the old unbounded behaviour. */
+const ALERT_FLOOR_DAYS = Number(process.env.ALERT_FLOOR_DAYS ?? 7);
+
 export type PollResult = {
   search_id: number;
   origin: string;
@@ -183,7 +188,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   // (1) Threshold-cross alert: cheaper than user's target AND cheaper than the last alert sent.
   const underThreshold = !isNearby && summary.price_per_adult_usd < threshold;
   if (underThreshold) {
-    const lastAlert = queries.lastAlertForSearch(search.id);
+    const lastAlert = queries.lastAlertForSearch(search.id, ALERT_FLOOR_DAYS);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {
       const results = await notifyAll({
         kind: 'threshold',
