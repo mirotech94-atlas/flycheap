@@ -4111,24 +4111,19 @@ html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
   .dc .dc-card { background: var(--dc-card); }
 }
 
-/* A scrim between the sky and the copy.
+/* A scrim between the field and the copy.
 
-   Tuning the gradient alone is not enough on its own: it DRIFTS, so any single
-   setting that looks right in a screenshot can still be too bright a few
-   seconds later. The scrim puts a floor under the text that does not depend on
-   where the animation happens to be — heaviest at the top and bottom edges,
-   lightest through the middle so the sky still shows. */
+   The field is already faint, but it DRIFTS, so a setting that looks right in
+   one frame can creep up a few seconds later. The scrim puts a floor under the
+   text that does not depend on where the animation is — and it is what makes
+   the whole band read as one surface rather than as a picture with type on it. */
 .dc .dc-hero::after {
   content: "";
   position: absolute;
   inset: 0;
   z-index: 1;
   pointer-events: none;
-  background: linear-gradient(
-    180deg,
-    rgba(11, 18, 32, .62) 0%,
-    rgba(11, 18, 32, .34) 38%,
-    rgba(11, 18, 32, .52) 72%,
-    rgba(11, 18, 32, .92) 100%
-  );
+  background:
+    radial-gradient(820px 380px at 50% 40%, rgba(11,18,32,.62) 0%, rgba(11,18,32,.18) 62%, rgba(11,18,32,0) 100%),
+    linear-gradient(180deg, rgba(11,18,32,.55) 0%, rgba(11,18,32,0) 26%, rgba(11,18,32,0) 62%, rgba(11,18,32,.95) 100%);
 }
