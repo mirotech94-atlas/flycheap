@@ -4,6 +4,7 @@ import { fmtUSD, fmtDate, fmtDateTime } from './utils';
 import { bookingLink, hotellookLink, airbnbLink, trackedRedirect, hotelCityForDestination, tpBrandConfigured } from './affiliate';
 import type { SearchRow, FareRow } from './db';
 import { APP_URL } from './hosts';
+import { emailFrame, emailMasthead, emailFooter, EMAIL_TOKENS, kindAccent } from './emailLayout';
 
 export type AlertEmailContext = {
   /** Route's "normal" price — 7-day median (same number the anomaly detector uses). */
@@ -155,14 +156,18 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     `<tr><td style="padding:4px 0;color:#475569">${fmtDow(f.depart)} → ${fmtDow(f.return)}${nightsBetween(f.depart, f.return) ? ` · ${nightsBetween(f.depart, f.return)} nights` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:#0a3a6b;${mono}">${fmtUSD(f.price)}</td></tr>`
   ).join('');
 
-  const html = `
-    <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(preheader)}</div>
-    <div style="font-family:Manrope,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:auto;padding:24px;color:#0a1426;background:#faf7ef">
-      <div style="display:inline-block;background:${accentBg};color:${accent};font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:14px;${mono}">${tag}</div>
-
-      <h1 style="font-family:Fraunces,Georgia,'Times New Roman',serif;font-weight:400;font-size:34px;line-height:1.05;letter-spacing:-.01em;color:#0a3a6b;margin:0 0 6px">${route}</h1>
-      <div style="font-size:14px;color:#5b6678;margin:0 0 18px">${datesLine} · ${search.adults} adult${search.adults !== 1 ? 's' : ''}${search.infants ? ` + ${search.infants} infant${search.infants !== 1 ? 's' : ''}` : ''}</div>
-
+  // Chrome swap: the same navy masthead + serif headline + ivory ground +
+  // footer as every other FlyCheap email, wrapped around the existing rich
+  // data cards (price, sparkline, dates, book CTA, stays). The semantic accent
+  // (mistake=gold / drop=red / target=green) stays — it encodes the buy signal.
+  const tagLabel = isMistake ? 'Mistake fare' : isDrop ? 'Price drop' : 'Below target';
+  const bodyInner = `
+    <div style="padding:28px 24px 6px">
+      <div style="font-family:${EMAIL_TOKENS.SERIF};font-size:14px;font-style:italic;color:${accent};margin:0 0 8px">${tagLabel}</div>
+      <h1 style="font-family:${EMAIL_TOKENS.SERIF};font-size:30px;line-height:1.12;font-weight:700;color:${EMAIL_TOKENS.INK};margin:0 0 6px">${route}</h1>
+      <div style="font-family:${EMAIL_TOKENS.SANS};font-size:14px;color:${EMAIL_TOKENS.SLATE};margin:0 0 4px">${datesLine} · ${search.adults} adult${search.adults !== 1 ? 's' : ''}${search.infants ? ` + ${search.infants} infant${search.infants !== 1 ? 's' : ''}` : ''}</div>
+    </div>
+    <div style="padding:0 24px 8px">
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-left:4px solid ${accent};border-radius:12px;padding:16px 18px;margin:0 0 16px">
         <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;${mono}">${normal ? 'Normal price → now' : 'Now · per adult'}</div>
         <div style="margin-top:6px;line-height:1.1">
@@ -209,12 +214,9 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
       <div style="font-size:13px;color:#33405a;margin:0 0 20px">Where to stay in ${stayCity}: <a href="${staysHotelUrl}" style="color:#0a3a6b;font-weight:600">hotels</a> · <a href="${staysAirbnbUrl}" style="color:#0a3a6b;font-weight:600">vacation homes on Airbnb</a> — same dates, ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'}.</div>
       ${insuranceUrl ? `<div style="font-size:13px;color:#33405a;margin:-12px 0 20px">Booking a non-refundable fare? <a href="${insuranceUrl}" style="color:#0a3a6b;font-weight:600">Compare trip insurance</a> — covers cancellation and medical abroad.</div>` : ''}
 
-      <div style="border-top:1px solid rgba(10,20,38,.10);padding-top:14px;color:#8a93a6;font-size:12px;line-height:1.6">
-        Snapshot ${fmtDateTime(fare.polled_at)} · fares move — verify at checkout.<br>
-        <a href="${manageUrl}" style="color:#8a93a6;text-decoration:underline">Manage this watch</a> · <a href="${unsubLink}" style="color:#8a93a6;text-decoration:underline">Unsubscribe</a>
-      </div>
-    </div>
-  `;
+    </div>`;
+  const alertFooterNote = `Snapshot ${fmtDateTime(fare.polled_at)} · fares move — verify at checkout. &nbsp;&middot;&nbsp; <a href="${manageUrl}" style="color:${EMAIL_TOKENS.SLATE};text-decoration:underline">Manage this watch</a>`;
+  const html = emailFrame(preheader, emailMasthead() + bodyInner + emailFooter({ appUrl: SITE, unsubUrl: unsubLink, note: alertFooterNote }));
 
   const text = [
     `${tag.replace(/[✦📉✈️]\s*/g, '')} — ${route}`,
@@ -306,22 +308,26 @@ export async function sendDigestEmail(input: {
   if (!apiKey) return { ok: false, error: 'RESEND_API_KEY not set' };
   const resend = new Resend(apiKey);
   const from = process.env.RESEND_FROM || 'onboarding@resend.dev';
+  const T = EMAIL_TOKENS;
   const cards = input.deals.map(d => `
-    <div style="border:1px solid #e2e8f0;border-radius:8px;padding:16px;margin:0 0 12px">
-      <div style="font-size:13px;color:#64748b">${d.route} · ${d.dates}</div>
-      <div style="font-size:18px;font-weight:700;color:#0a3a6b;margin:2px 0 6px">${d.headline} — ${d.price}</div>
-      <div style="font-size:14px;color:#334155;margin-bottom:12px">${d.blurb}</div>
-      <a href="${d.bookUrl}" style="display:inline-block;background:#0a3a6b;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-weight:600;font-size:14px">See this fare</a>
+    <div style="background:#fff;border:1px solid ${T.LINE_CARD};border-radius:10px;padding:16px 18px;margin:0 0 12px">
+      <div style="font-family:${T.SANS};font-size:13px;color:${T.SLATE}">${d.route} · ${d.dates}</div>
+      <div style="font-family:${T.SERIF};font-size:19px;font-weight:700;color:${T.INK};margin:3px 0 6px">${d.headline} — ${d.price}</div>
+      <div style="font-family:${T.SANS};font-size:14px;line-height:1.55;color:${T.INK};margin-bottom:14px">${d.blurb}</div>
+      <a href="${d.bookUrl}" style="display:inline-block;background:${T.NAVY};border-top:2px solid ${T.GOLD};color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-family:${T.SANS};font-weight:600;font-size:14px">See this fare</a>
     </div>`).join('');
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:600px;margin:auto;padding:24px;color:#0f172a">
-      ${input.preheader ? `<div style="display:none;max-height:0;overflow:hidden">${input.preheader}</div>` : ''}
-      <div style="display:inline-block;background:#eef2ff;color:#0a3a6b;font-weight:700;font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:4px 10px;border-radius:999px;margin-bottom:12px">FlyCheap · Deal digest</div>
-      <p style="font-size:15px;color:#334155;margin:0 0 16px">${input.intro}</p>
+  const bodyInner = `
+    <div style="padding:30px 24px 6px">
+      <div style="font-family:${T.SERIF};font-size:14px;font-style:italic;color:${kindAccent('alert')};margin:0 0 10px">Fare digest</div>
+      <h1 style="font-family:${T.SERIF};font-size:26px;line-height:1.16;font-weight:700;color:${T.INK};margin:0 0 14px">Fresh fares for you.</h1>
+      <p style="font-family:${T.SANS};font-size:15px;line-height:1.62;color:${T.INK};margin:0">${input.intro}</p>
+    </div>
+    <div style="padding:8px 24px 4px">
       ${cards}
-      ${input.outro ? `<p style="font-size:14px;color:#475569;margin-top:16px">${input.outro}</p>` : ''}
-      <p style="color:#94a3b8;font-size:12px;margin-top:24px">You're getting this because you track these routes on FlyCheap. Fares change fast — verify before booking.</p>
+      ${input.outro ? `<p style="font-family:${T.SANS};font-size:14px;line-height:1.6;color:${T.SLATE};margin:12px 0 0">${input.outro}</p>` : ''}
     </div>`;
+  const html = emailFrame(input.preheader || input.intro,
+    emailMasthead() + bodyInner + emailFooter({ appUrl: SITE, note: "You're getting this because you track these routes on FlyCheap. Fares change fast — verify before booking." }));
   try {
     const result = await resend.emails.send({ from, to: input.to, subject: input.subject, html });
     if (result.error) return { ok: false, error: result.error.message };

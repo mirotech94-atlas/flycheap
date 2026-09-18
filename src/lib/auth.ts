@@ -4,6 +4,7 @@ import crypto from 'node:crypto';
 import { Resend } from 'resend';
 import { queries, type UserRow } from './db';
 import { ADMIN_HOSTS, APP_URL } from './hosts';
+import { signInLinkEmail, signInCodeEmail, welcomeQuickStartEmail } from './emailTemplates';
 
 export const SESSION_COOKIE = 'fareintel_session';
 export const COOKIE_MAX_AGE_SEC = 30 * 24 * 60 * 60; // 30 days
@@ -285,27 +286,19 @@ export async function sendMagicLink(
   const resend = new Resend(apiKey);
   const { supportFrom } = await import('./senders');
   const from = supportFrom('FlyCheap Sign-in');
-  // Mobile emails offer a custom-scheme fallback button under the primary (universal) link,
-  // for the email clients that don't honor associated-domain links.
-  const mobileFallback = mode === 'mobile'
-    ? `<p style="margin:16px 0 0"><a href="${schemeLink}" style="display:inline-block;background:#eef4fb;color:#0a3a6b;padding:10px 20px;border-radius:10px;text-decoration:none;font-weight:600;font-size:13px">Open in the FlyCheap app</a></p>`
-    : '';
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
-      <div style="display:inline-block;background:#eef4fb;color:#0a3a6b;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">Sign in</div>
-      <h1 style="font-size:28px;margin:0 0 8px;color:#0a3a6b">Sign in to FlyCheap</h1>
-      <p style="color:#475569;margin:0 0 24px">Click the button below to sign in. Link is valid for 15 minutes.</p>
-      <a href="${link}" style="display:inline-block;background:#0a3a6b;color:#fff;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700">Sign in →</a>
-      ${mobileFallback}
-      <p style="color:#94a3b8;margin:24px 0 0;font-size:12px">If you didn't request this, you can safely ignore it.</p>
-      <p style="color:#94a3b8;margin:8px 0 0;font-size:11px;word-break:break-all">${link}</p>
-    </div>
-  `;
+  // Mobile emails offer a custom-scheme fallback button under the primary
+  // (universal) link, for clients that don't honor associated-domain links.
+  const built = signInLinkEmail({
+    link,
+    minutes: 15, // matches queries.insertMagicLink(token, email, 15)
+    mobileFallbackHref: mode === 'mobile' ? schemeLink : undefined,
+    appUrl: base,
+  });
   try {
     const r = await resend.emails.send({
       from, to: email,
-      subject: 'Sign in to FlyCheap',
-      html,
+      subject: built.subject,
+      html: built.html,
     });
     if (r.error) return { ok: false, error: r.error.message };
     return { ok: true };
@@ -325,18 +318,9 @@ export async function sendEmailCode(email: string, code: string): Promise<{ ok: 
   const resend = new Resend(apiKey);
   const { supportFrom } = await import('./senders');
   const from = supportFrom('FlyCheap Sign-in');
-  const spaced = code.split('').join(' ');
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:480px;margin:auto;padding:32px;color:#0f172a;text-align:center">
-      <div style="display:inline-block;background:#eef4fb;color:#0a3a6b;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:20px">FlyCheap sign-in</div>
-      <h1 style="font-size:24px;margin:0 0 8px;color:#0a3a6b">Your sign-in code</h1>
-      <p style="color:#475569;margin:0 0 24px;font-size:15px">Enter this code in the FlyCheap app. It expires in 10 minutes.</p>
-      <div style="font-size:40px;font-weight:800;letter-spacing:10px;color:#0a3a6b;background:#f6f8fc;border-radius:14px;padding:20px 12px;font-family:'JetBrains Mono',ui-monospace,monospace">${spaced}</div>
-      <p style="color:#94a3b8;margin:24px 0 0;font-size:12px">If you didn't request this, you can safely ignore this email.</p>
-    </div>
-  `;
+  const built = signInCodeEmail({ code, minutes: 10, appUrl: APP_URL });
   try {
-    const r = await resend.emails.send({ from, to: email, subject: `${code} is your FlyCheap sign-in code`, html });
+    const r = await resend.emails.send({ from, to: email, subject: built.subject, html: built.html });
     if (r.error) return { ok: false, error: r.error.message };
     return { ok: true };
   } catch (e) {
@@ -384,32 +368,12 @@ export async function sendWelcomeEmail(email: string): Promise<void> {
   const from = supportFrom('FlyCheap');
   const { unsubscribeUrl } = await import('@/app/api/unsubscribe/route');
   const unsubLink = unsubscribeUrl(email, APP_URL);
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
-      <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">Welcome aboard ✈️</div>
-      <h1 style="font-size:32px;margin:0 0 8px;color:#0a3a6b;line-height:1.1">Welcome to FlyCheap</h1>
-      <p style="color:#475569;margin:0 0 24px;font-size:16px;line-height:1.5">Your first 3 months are on us — full use of the basic capabilities, no card. Here's what to do in your first 60 seconds:</p>
-
-      <ol style="margin:0 0 24px;padding-left:20px;color:#334155;line-height:1.7">
-        <li><strong>Add your first route</strong> — pick a home airport and destination at <a href="${APP_URL}/searches" style="color:#0a3a6b;font-weight:600">/searches</a>. We'll start polling every 30 minutes.</li>
-        <li><strong>Set your target price</strong> in <a href="${APP_URL}/settings" style="color:#0a3a6b;font-weight:600">Settings</a>. Get an email the moment any tracked fare drops below it.</li>
-        <li><strong>Explore worldwide</strong> deals at <a href="${APP_URL}/explore" style="color:#0a3a6b;font-weight:600">/explore</a> — see the cheapest flights from your home city, color-coded on a world map.</li>
-      </ol>
-
-      <a href="${APP_URL}/" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 28px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Open the dashboard →</a>
-
-      <div style="margin-top:32px;padding-top:24px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6">
-        Questions? Reply to this email — it lands in our inbox.<br>
-        Your founding period covers 5 tracked routes, email alerts and worldwide explore for 3 months. Whenever you want more — up to 100 routes, 5-minute polling, SMS/WhatsApp/Telegram alerts — Pro is $9/mo, and Enterprise adds white-label + API.<br><br>
-        <a href="${unsubLink}" style="color:#94a3b8;text-decoration:underline">Unsubscribe</a> · <a href="${APP_URL}/settings" style="color:#94a3b8;text-decoration:underline">Manage preferences</a>
-      </div>
-    </div>
-  `;
+  const built = welcomeQuickStartEmail({ appUrl: APP_URL, unsubUrl: unsubLink });
   try {
     await resend.emails.send({
       from, to: email,
-      subject: 'Welcome to FlyCheap ✈️ — quick start in 60 seconds',
-      html,
+      subject: built.subject,
+      html: built.html,
       headers: {
         // RFC 8058: enables one-click unsub button in Gmail/Apple Mail/Outlook
         'List-Unsubscribe': `<${unsubLink}>`,
