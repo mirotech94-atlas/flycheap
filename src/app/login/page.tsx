@@ -87,8 +87,14 @@ export default async function LoginPage(
   const dest = nextPath || (adminPortal ? '/admin' : '/');
   const existingUser = await getCurrentUser();
   if (existingUser) {
-    if (adminPortal && !isOwner(existingUser)) redirect('https://flycheap.18dn.com/');
-    redirect(dest);
+    // On the admin host a signed-in NON-owner (e.g. a client session, which
+    // shares the .flycheap.live cookie) must NOT be bounced to the marketing
+    // site — that traps them with no way to switch accounts. Fall through to
+    // render the admin login form so they can sign in as the owner (submitting
+    // the owner's code overwrites the shared cookie with an owner session).
+    if (!(adminPortal && !isOwner(existingUser))) {
+      redirect(dest);
+    }
   }
   if (sp.fresh !== '1') {
     const devCookie = (await cookies()).get(DEVICE_COOKIE)?.value;
