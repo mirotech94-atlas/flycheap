@@ -541,6 +541,40 @@ function init(db: Database.Database) {
       created_at TEXT NOT NULL DEFAULT (datetime('now'))
     );
   `);
+  // Support tickets. Clients open a ticket (from the in-app Support screen or
+  // the contact form); each reply — client or operator — is a ticket_messages
+  // row, so the thread is durable even if an email send fails. `ref` (FC-1042)
+  // is the public identifier shown in emails and the client UI; the integer id
+  // stays internal.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS tickets (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ref TEXT NOT NULL UNIQUE,
+      user_id INTEGER REFERENCES users(id) ON DELETE SET NULL,
+      name TEXT NOT NULL,
+      email TEXT NOT NULL,
+      subject TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'open',
+      priority TEXT NOT NULL DEFAULT 'normal',
+      ip TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+      last_reply_at TEXT,
+      last_reply_by TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
+    CREATE INDEX IF NOT EXISTS idx_tickets_user ON tickets(user_id);
+    CREATE INDEX IF NOT EXISTS idx_tickets_updated ON tickets(updated_at);
+    CREATE TABLE IF NOT EXISTS ticket_messages (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      ticket_id INTEGER NOT NULL REFERENCES tickets(id) ON DELETE CASCADE,
+      author TEXT NOT NULL,
+      body TEXT NOT NULL,
+      email_id TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_ticket_messages_ticket ON ticket_messages(ticket_id);
+  `);
   const cols = db.prepare(`PRAGMA table_info(searches)`).all() as Array<{ name: string }>;
   if (!cols.some(c => c.name === 'snoozed_until')) {
     db.exec(`ALTER TABLE searches ADD COLUMN snoozed_until TEXT`);
@@ -779,6 +813,32 @@ export type OpsIncidentRow = {
   last_restart_at: string | null;
   last_deploy_at: string | null;
   resolved_at: string | null;
+};
+
+export type TicketStatus = 'open' | 'in_progress' | 'waiting' | 'resolved';
+export type TicketAuthor = 'client' | 'operator';
+export type TicketRow = {
+  id: number;
+  ref: string;
+  user_id: number | null;
+  name: string;
+  email: string;
+  subject: string;
+  status: TicketStatus;
+  priority: 'low' | 'normal' | 'high';
+  ip: string | null;
+  created_at: string;
+  updated_at: string;
+  last_reply_at: string | null;
+  last_reply_by: TicketAuthor | null;
+};
+export type TicketMessageRow = {
+  id: number;
+  ticket_id: number;
+  author: TicketAuthor;
+  body: string;
+  email_id: string | null;
+  created_at: string;
 };
 
 // Audit rows written for traffic that originated on the server itself (see
@@ -2375,4 +2435,78 @@ export const queries = {
          SELECT origin, destination FROM telegram_subscriptions
        )`
     ).all() as Array<{ origin: string; destination: string }>,
+
+  // -------- Support tickets --------
+  /** Open a ticket with its first (client) message; assigns the FC-#### ref. */
+  createTicket: (p: {
+    user_id?: number | null; name: string; email: string; subject: string; body: string; ip?: string | null;
+  }): { id: number; ref: string } => {
+    const db = getDb();
+    const tx = db.transaction(() => {
+      const r = db.prepare(
+        `INSERT INTO tickets (ref, user_id, name, email, subject, ip, last_reply_at, last_reply_by)
+         VALUES ('', ?, ?, ?, ?, ?, datetime('now'), 'client')`,
+      ).run(p.user_id ?? null, p.name, p.email, p.subject, p.ip ?? null);
+      const id = Number(r.lastInsertRowid);
+      const ref = `FC-${1000 + id}`;
+      db.prepare(`UPDATE tickets SET ref = ? WHERE id = ?`).run(ref, id);
+      db.prepare(`INSERT INTO ticket_messages (ticket_id, author, body) VALUES (?, 'client', ?)`).run(id, p.body);
+      return { id, ref };
+    });
+    return tx();
+  },
+  /** Append a message and move the ticket's state forward. A client reply on a
+   *  resolved/waiting ticket reopens it; an operator reply moves open → in_progress. */
+  addTicketMessage: (p: { ticket_id: number; author: TicketAuthor; body: string; email_id?: string | null }): number => {
+    const db = getDb();
+    const tx = db.transaction(() => {
+      const r = db.prepare(`INSERT INTO ticket_messages (ticket_id, author, body, email_id) VALUES (?, ?, ?, ?)`)
+        .run(p.ticket_id, p.author, p.body, p.email_id ?? null);
+      const t = db.prepare(`SELECT status FROM tickets WHERE id = ?`).get(p.ticket_id) as { status: TicketStatus } | undefined;
+      let next: TicketStatus | null = null;
+      if (p.author === 'operator' && t?.status === 'open') next = 'in_progress';
+      if (p.author === 'client' && (t?.status === 'resolved' || t?.status === 'waiting')) next = 'open';
+      db.prepare(
+        `UPDATE tickets SET updated_at = datetime('now'), last_reply_at = datetime('now'), last_reply_by = ?${next ? ', status = ?' : ''} WHERE id = ?`,
+      ).run(...(next ? [p.author, next, p.ticket_id] : [p.author, p.ticket_id]));
+      return Number(r.lastInsertRowid);
+    });
+    return tx();
+  },
+  setMessageEmailId: (messageId: number, emailId: string): void => {
+    getDb().prepare(`UPDATE ticket_messages SET email_id = ? WHERE id = ?`).run(emailId, messageId);
+  },
+  setTicketStatus: (id: number, status: TicketStatus): void => {
+    getDb().prepare(`UPDATE tickets SET status = ?, updated_at = datetime('now') WHERE id = ?`).run(status, id);
+  },
+  /** Admin queue: newest-active first, with the message count and a snippet. */
+  listTickets: (status?: TicketStatus, limit = 200): Array<TicketRow & { message_count: number }> =>
+    getDb().prepare(
+      `SELECT t.*, (SELECT COUNT(*) FROM ticket_messages m WHERE m.ticket_id = t.id) AS message_count
+         FROM tickets t
+        ${status ? 'WHERE t.status = ?' : ''}
+        ORDER BY (t.status = 'resolved') ASC, t.updated_at DESC
+        LIMIT ?`,
+    ).all(...(status ? [status, limit] : [limit])) as Array<TicketRow & { message_count: number }>,
+  ticketStatusCounts: (): Record<TicketStatus, number> => {
+    const rows = getDb().prepare(`SELECT status, COUNT(*) AS n FROM tickets GROUP BY status`).all() as Array<{ status: TicketStatus; n: number }>;
+    const out: Record<TicketStatus, number> = { open: 0, in_progress: 0, waiting: 0, resolved: 0 };
+    for (const r of rows) if (r.status in out) out[r.status] = r.n;
+    return out;
+  },
+  getTicketByRef: (ref: string): TicketRow | undefined =>
+    getDb().prepare(`SELECT * FROM tickets WHERE ref = ?`).get(ref) as TicketRow | undefined,
+  getTicketMessages: (ticket_id: number): TicketMessageRow[] =>
+    getDb().prepare(`SELECT * FROM ticket_messages WHERE ticket_id = ? ORDER BY id ASC`).all(ticket_id) as TicketMessageRow[],
+  /** Client Support screen: only this user's tickets, active first. */
+  listUserTickets: (user_id: number, limit = 50): Array<TicketRow & { message_count: number }> =>
+    getDb().prepare(
+      `SELECT t.*, (SELECT COUNT(*) FROM ticket_messages m WHERE m.ticket_id = t.id) AS message_count
+         FROM tickets t
+        WHERE t.user_id = ?
+        ORDER BY (t.status = 'resolved') ASC, t.updated_at DESC
+        LIMIT ?`,
+    ).all(user_id, limit) as Array<TicketRow & { message_count: number }>,
+  countOpenTickets: (): number =>
+    (getDb().prepare(`SELECT COUNT(*) AS n FROM tickets WHERE status != 'resolved'`).get() as { n: number }).n,
 };

@@ -23,6 +23,7 @@ const NAV: NavGroup[] = [
   ] },
   { group: 'Operations', items: [
     { href: '/admin/health',       label: 'Fare engine',  icon: 'health' },
+    { href: '/admin/tickets',      label: 'Support tickets', icon: 'tickets', hint: 'Customer messages awaiting a reply' },
     { href: '/admin/queue',        label: 'Content queue', icon: 'queue', hint: 'AI-drafted posts awaiting your approval' },
     { href: '/admin/errors',       label: 'Errors',       icon: 'errors' },
     { href: '/admin/integrations', label: 'Integrations', icon: 'integrations' },
@@ -34,7 +35,7 @@ const NAV: NavGroup[] = [
 
 type IconKey =
   | 'overview' | 'revenue' | 'affiliate' | 'signups' | 'users' | 'clicks' | 'integrations'
-  | 'queue' | 'health' | 'errors' | 'settings' | 'logout' | 'back';
+  | 'queue' | 'health' | 'errors' | 'settings' | 'logout' | 'back' | 'tickets';
 
 function Icon({ kind }: { kind: IconKey }) {
   const p = {
@@ -52,6 +53,7 @@ function Icon({ kind }: { kind: IconKey }) {
     case 'clicks':       return <svg {...p}><path d="M5 3l4 16 2.5-6.5L18 10 5 3z" /></svg>;
     case 'integrations': return <svg {...p}><path d="M14 7l3-3a3 3 0 014 4l-3 3M10 17l-3 3a3 3 0 01-4-4l3-3" /><path d="M9 15l6-6" /></svg>;
     case 'queue':        return <svg {...p}><path d="M12 3l8 4-8 4-8-4 8-4z" /><path d="M4 12l8 4 8-4M4 17l8 4 8-4" /></svg>;
+    case 'tickets':      return <svg {...p}><path d="M4 8a2 2 0 012-2h12a2 2 0 012 2v2a2 2 0 000 4v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2a2 2 0 000-4V8z" /><path d="M13 6v2M13 11v2M13 16v2" /></svg>;
     case 'health':       return <svg {...p}><path d="M3 12h4l2-5 3 10 2-7 2 2h5" /></svg>;
     case 'settings':     return <svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 00-.13-1.3l2-1.5-2-3.4-2.3 1a7 7 0 00-2.2-1.3l-.35-2.5h-3.9l-.35 2.5a7 7 0 00-2.2 1.3l-2.3-1-2 3.4 2 1.5A7 7 0 005 12c0 .44.05.87.13 1.3l-2 1.5 2 3.4 2.3-1a7 7 0 002.2 1.3l.35 2.5h3.9l.35-2.5a7 7 0 002.2-1.3l2.3 1 2-3.4-2-1.5c.08-.43.13-.86.13-1.3z" /></svg>;
     case 'logout':       return <svg {...p}><path d="M15 17l5-5-5-5M20 12H9M11 21H6a2 2 0 01-2-2V5a2 2 0 012-2h5" /></svg>;

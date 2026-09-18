@@ -11,6 +11,7 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
   const [company, setCompany] = useState(''); // honeypot
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [err, setErr] = useState<string | null>(null);
+  const [ref, setRef] = useState<string | null>(null);
   const toast = useToast();
 
   async function submit(e: React.FormEvent) {
@@ -32,8 +33,9 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
         return;
       }
       setStatus('sent');
+      setRef(typeof j.ref === 'string' ? j.ref : null);
       setSubject(''); setMessage('');
-      toast.success('Message sent', `We'll reply to ${email} within one business day.`);
+      toast.success('Ticket opened', `We'll reply to ${email} within one business day.`);
     } catch (e) {
       setStatus('error');
       const m = (e as Error).message;
@@ -46,9 +48,10 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
     return (
       <div className="card text-center py-10">
         <div className="text-4xl mb-2">✅</div>
-        <h2 className="!mb-1">Message sent</h2>
+        <h2 className="!mb-1">Ticket opened</h2>
         <p className="text-sm text-slate-500">
-          Thanks — we&apos;ll reply to <strong>{email}</strong> within one business day. If it&apos;s urgent, mention it in a follow-up.
+          Thanks — we&apos;ll reply to <strong>{email}</strong> within one business day.
+          {ref && <> Your ticket is <strong className="font-mono">{ref}</strong>; we&apos;ve emailed you a copy.</>}
         </p>
         <button onClick={() => setStatus('idle')} className="btn btn-sm mt-4">Send another</button>
       </div>

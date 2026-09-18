@@ -45,6 +45,7 @@ function buildNav(nav: AppNavDict): { top: Item; groups: Group[]; guest: Item[] 
           { href: '/guides',   label: nav.guides,   icon: '☐' },
           { href: '/routes',   label: nav.routes,   icon: '↝' },
           { href: '/searches', label: nav.searches, icon: '⌕' },
+          { href: '/support',  label: 'Support',    icon: '☎' },
           { href: '/settings', label: nav.settings, icon: '◉' },
         ],
       },

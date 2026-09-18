@@ -113,6 +113,47 @@ export function signInLinkEmail(o: { link: string; minutes: number; mobileFallba
   };
 }
 
+/** Support: acknowledgement the moment a client opens a ticket. */
+export function ticketReceivedEmail(o: { ref: string; name?: string; subject: string; threadUrl: string; appUrl?: string }): BuiltEmail {
+  const greet = o.name ? `Hi ${esc(o.name.split(' ')[0])},` : 'Hi there,';
+  return {
+    subject: `We've got it — your request ${o.ref}`,
+    preheader: `Logged as ${o.ref}. A real person will get back to you.`,
+    html: renderEmail({
+      kind: 'support', appUrl: o.appUrl,
+      preheader: `Logged as ${o.ref}. A real person will get back to you.`,
+      headline: "We've got your message.",
+      body: [
+        p(greet),
+        p(`Your request is logged as <strong style="color:${T.INK}">${esc(o.ref)}</strong> — "${esc(o.subject)}". A real person reads every ticket, and we'll get back to you by email. You can also follow the thread in your Support tab.`),
+        `<div style="margin:6px 0 4px">${emailButton('View your ticket', o.threadUrl)}</div>`,
+        emailNote(`Just reply to this email to add anything — it stays on ${esc(o.ref)}.`),
+      ].join(''),
+    }),
+  };
+}
+
+/** Support: an operator's reply on an open ticket. */
+export function ticketReplyEmail(o: { ref: string; name?: string; replyBody: string; threadUrl: string; appUrl?: string }): BuiltEmail {
+  const greet = o.name ? `Hi ${esc(o.name.split(' ')[0])},` : 'Hi there,';
+  const bodyHtml = esc(o.replyBody).replace(/\n{2,}/g, '</p><p style="font-family:' + T.SANS + ';font-size:15px;line-height:1.62;color:' + T.INK + ';margin:0 0 16px">').replace(/\n/g, '<br/>');
+  return {
+    subject: `Re: your FlyCheap request (${o.ref})`,
+    preheader: 'We replied to your support request.',
+    html: renderEmail({
+      kind: 'support', appUrl: o.appUrl,
+      preheader: 'We replied to your support request.',
+      headline: 'We looked into it.',
+      body: [
+        p(greet),
+        p(bodyHtml),
+        `<div style="margin:6px 0 4px">${emailButton('Reply in FlyCheap', o.threadUrl)}</div>`,
+        emailNote(`Or just reply to this email — it stays on ticket <strong style="color:${T.INK}">${esc(o.ref)}</strong>.`),
+      ].join(''),
+    }),
+  };
+}
+
 /** One-time sign-in / recovery code. */
 export function signInCodeEmail(o: { code: string; minutes: number; appUrl?: string }): BuiltEmail {
   return {
