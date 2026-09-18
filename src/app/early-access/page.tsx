@@ -1,4 +1,4 @@
-import { SkyGradient } from '@/components/fc/SkyGradient';
+import { RouteField } from '@/components/fc/RouteField';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -92,23 +92,7 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
 
       {/* ===== Hero ===== */}
       <section className="dc-hero">
-        <SkyGradient
-          className="dc-hero-sky"
-          /* This hero is centred and half the height of the other one, so the
-             bloom comes back to the zenith (tilt 0) and is opened up and lifted
-             — at the stock left-pooled setting it falls outside the box and the
-             canvas reads as flat black. */
-          config={{
-            tilt: 1.57, horizon: 0.05, spread: 1.15, curve: 1.9,
-            // Much darker than the stock ramp. The default top colour is
-            // --nc-teal, which is a LIGHT hue: over a full-width hero it washed
-            // the whole band out and the lede stopped being readable at the
-            // bright end of the drift. The sky should read as night with a
-            // suggestion of dawn, not as daylight.
-            colorC: '#16233A', colorD: '#2C4762',
-            glow: 0.14, sink: 0.34, contrast: 1.15,
-          }}
-        />
+        <RouteField className="dc-hero-sky" />
         <div className="dc-wrap dc-center">
           <div className="dc-pill fc-glass-pill"><span className="dot" />{t.hero.pill}</div>
           <h1>{t.hero.h1a}<br /><span className="dc-accent">{t.hero.h1b}</span></h1>
