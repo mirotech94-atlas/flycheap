@@ -3,6 +3,7 @@ import { Resend } from 'resend';
 import { getDb } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
+import { renderEmail, emailButton, EMAIL_TOKENS as T } from './emailLayout';
 
 const APP = process.env.APP_URL || APP_URL;
 
@@ -13,16 +14,16 @@ export function findUserByStripeCustomer(customerId: string): { id: number; emai
 }
 
 function shell(title: string, body: string, ctaHref: string, ctaLabel: string): string {
-  return `
-  <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
-    <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">FlyCheap · Billing</div>
-    <h1 style="font-size:28px;margin:0 0 12px;color:#0a3a6b;line-height:1.15">${title}</h1>
-    <div style="color:#334155;font-size:15px;line-height:1.6">${body}</div>
-    <a href="${ctaHref}" style="display:inline-block;margin-top:24px;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">${ctaLabel}</a>
-    <div style="margin-top:32px;padding-top:20px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6">
-      Questions? Reply to this email. · <a href="${APP}/terms#refunds" style="color:#94a3b8">Cancellation &amp; refund policy</a>
-    </div>
-  </div>`;
+  // `body` is caller-supplied <p> HTML; give it the shell's body type + color.
+  const styledBody = body.replace(/<p>/g, `<p style="font-family:${T.SANS};font-size:15px;line-height:1.62;color:${T.INK};margin:0 0 16px">`);
+  return renderEmail({
+    kind: 'billing',
+    appUrl: APP,
+    preheader: title,
+    headline: title,
+    body: `${styledBody}<div style="margin:14px 0 4px">${emailButton(ctaLabel, ctaHref)}</div>`,
+    footerNote: `Questions? Just reply to this email — it lands in our inbox. &nbsp;&middot;&nbsp; <a href="${APP}/terms#refunds" style="color:${T.SLATE};text-decoration:underline">Cancellation &amp; refund policy</a>`,
+  });
 }
 
 async function send(to: string, subject: string, html: string): Promise<void> {

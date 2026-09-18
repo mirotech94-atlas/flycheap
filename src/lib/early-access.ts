@@ -4,6 +4,7 @@ import { Resend } from 'resend';
 import { getDb, queries } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
+import { inviteEmail, waitlistPositionEmail } from './emailTemplates';
 
 const APP = process.env.APP_URL || APP_URL;
 /** Each friend who joins through your link moves you up this many spots. */
@@ -108,26 +109,18 @@ export function listEarlyAccess(): EarlyAccessRow[] {
 export async function sendEarlyAccessEmail(to: string, r: JoinResult): Promise<void> {
   const apiKey = process.env.RESEND_API_KEY;
   if (!apiKey) return;
-  const html = `
-  <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
-    <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">FlyCheap · Early access</div>
-    <h1 style="font-size:30px;margin:0 0 10px;color:#0a3a6b;line-height:1.1">You're <span style="color:#b8922a">#${r.effectivePosition}</span> on the list.</h1>
-    <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 18px">Thanks for joining. We're opening FlyCheap to founding members in small batches so every alert pipeline is rock solid. You'll get one email the moment your spot opens — nothing else.</p>
-    <div style="background:#faf7ef;border:1px solid #e6dfc8;border-radius:12px;padding:16px 18px;margin:0 0 18px">
-      <div style="font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#5b6678;margin-bottom:6px">Skip the line</div>
-      <div style="font-size:14px;color:#0f172a;line-height:1.5">Every friend who joins with your link moves you up <strong>${REFERRAL_BOOST} spots</strong>.</div>
-      <a href="${r.shareUrl}" style="display:inline-block;margin-top:10px;font-family:ui-monospace,Menlo,monospace;font-size:13px;color:#0a3a6b">${r.shareUrl}</a>
-    </div>
-    <a href="${APP}/demo" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:13px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Watch the 4-minute demo →</a>
-    <div style="margin-top:30px;padding-top:18px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6">
-      Didn't sign up? Ignore this email and you'll never hear from us again. · <a href="${APP}/privacy" style="color:#94a3b8">Privacy</a>
-    </div>
-  </div>`;
+  const built = waitlistPositionEmail({
+    position: r.effectivePosition,
+    shareUrl: r.shareUrl,
+    referralBoost: REFERRAL_BOOST,
+    demoUrl: `${APP}/demo`,
+    appUrl: APP,
+  });
   try {
     await new Resend(apiKey).emails.send({
       from: supportFrom('FlyCheap'), to,
-      subject: `You're #${r.effectivePosition} on the FlyCheap early-access list`,
-      html,
+      subject: built.subject,
+      html: built.html,
     });
   } catch (e) {
     console.error('[early-access] email failed:', (e as Error).message);
@@ -201,18 +194,13 @@ export async function sendInviteEmail(row: EarlyAccessRow): Promise<void> {
   const token = crypto.randomBytes(32).toString('base64url');
   try { queries.insertMagicLink(token, row.email, 60 * 48); } catch (e) { console.error('[early-access] magic-link insert failed:', (e as Error).message); return; }
   const loginUrl = `${APP}/api/auth/verify?token=${token}`;
-  const hi = row.name ? `${row.name.split(' ')[0]}, your` : 'Your';
-  const html = `
-  <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:32px;color:#0f172a">
-    <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:16px">FlyCheap · You're in</div>
-    <h1 style="font-size:30px;margin:0 0 10px;color:#0a3a6b;line-height:1.1">${hi} founding-member seat is open.</h1>
-    <p style="color:#334155;font-size:15px;line-height:1.6;margin:0 0 22px">Welcome aboard. Your account is ready with a 3-month free trial of the basics — no card, no password. Just tap below to open FlyCheap and add your first route. Upgrade to Pro or Enterprise whenever you want more.</p>
-    <a href="${loginUrl}" style="display:inline-block;background:linear-gradient(180deg,#1f5fa5,#0a3a6b);color:white;padding:14px 26px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Open FlyCheap →</a>
-    <p style="color:#94a3b8;margin:22px 0 0;font-size:12px;line-height:1.6">This one-click sign-in link is valid for 48 hours. After that, sign in any time at <a href="${APP}/login" style="color:#94a3b8">${APP.replace('https://','')}/login</a> with this email.</p>
-    <div style="margin-top:26px;padding-top:18px;border-top:1px solid #e2e8f0;color:#94a3b8;font-size:12px;line-height:1.6"><a href="${APP}/demo" style="color:#94a3b8">4-minute demo</a> · <a href="${APP}/privacy" style="color:#94a3b8">Privacy</a></div>
-  </div>`;
+  const built = inviteEmail({
+    firstName: row.name ? row.name.split(' ')[0] : undefined,
+    loginUrl,
+    appUrl: APP,
+  });
   try {
-    await r.emails.send({ from: supportFrom('FlyCheap'), to: row.email, subject: "You're in — your FlyCheap account is ready", html });
+    await r.emails.send({ from: supportFrom('FlyCheap'), to: row.email, subject: built.subject, html: built.html });
   } catch (e) { console.error('[early-access] invite failed:', (e as Error).message); }
 }
 
