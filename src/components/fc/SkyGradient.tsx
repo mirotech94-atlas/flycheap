@@ -175,12 +175,28 @@ void main() {
 }
 `;
 
-export function SkyGradient({ className, style }: { className?: string; style?: React.CSSProperties }) {
+export function SkyGradient({
+  className,
+  style,
+  config,
+}: {
+  className?: string;
+  style?: React.CSSProperties;
+  /**
+   * Per-placement overrides, merged over CFG. The defaults are tuned for a
+   * TALL hero with its copy on the left — `tilt: 3.1` lays the axis on its side
+   * so the bloom pools left rather than at the zenith. A short, centre-aligned
+   * hero needs the bloom back at the top, or it falls outside the box entirely
+   * and the canvas reads as flat black.
+   */
+  config?: Partial<typeof CONFIG>;
+}) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
+    const CFG = { ...CONFIG, ...(config ?? {}) };
 
     const gl = canvas.getContext('webgl2', {
       alpha: false, antialias: false, depth: false, stencil: false,
@@ -227,7 +243,7 @@ export function SkyGradient({ className, style }: { className?: string; style?: 
     // Sizes to the PARENT BOX, not the window — this is a section backdrop, not a
     // full-screen scene, which is the one structural change from the vendor source.
     const resize = () => {
-      dpr = Math.min(window.devicePixelRatio || 1, CONFIG.maxDpr);
+      dpr = Math.min(window.devicePixelRatio || 1, CFG.maxDpr);
       const w = Math.max(1, Math.round(canvas.clientWidth * dpr));
       const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
       if (canvas.width !== w || canvas.height !== h) { canvas.width = w; canvas.height = h; }
@@ -239,38 +255,38 @@ export function SkyGradient({ className, style }: { className?: string; style?: 
     const applyConfig = () => {
       gl.useProgram(program);
       gl.useProgram(program)
-      u3c('uBg', CONFIG.bgColor)
-      u3c('uColorA', CONFIG.colorA)
-      u3c('uColorB', CONFIG.colorB)
-      u3c('uColorC', CONFIG.colorC)
-      u3c('uColorD', CONFIG.colorD)
-      u1f('uSpeed', CONFIG.speed)
-      u1f('uTilt', CONFIG.tilt)
-      u1f('uLean', CONFIG.lean)
-      u1f('uHorizon', CONFIG.horizon)
-      u1f('uBreathe', CONFIG.breathe)
-      u1f('uSpread', CONFIG.spread)
-      u1f('uCurve', CONFIG.curve)
-      u1f('uWarp', CONFIG.warp)
-      u1f('uScale', CONFIG.scale)
-      u1f('uDrift', CONFIG.drift)
-      u1f('uRoughness', CONFIG.roughness)
-      u1f('uLacunarity', CONFIG.lacunarity)
-      u1f('uContrast', CONFIG.contrast)
-      u1f('uMidpoint', CONFIG.midpoint)
-      u1f('uSink', CONFIG.sink)
-      u1f('uGlow', CONFIG.glow)
-      u1f('uGrain', CONFIG.grain)
-      u1f('uGrainAnim', CONFIG.grainAnim)
-      u1f('uDither', CONFIG.dither)
-      u1f('uVignette', CONFIG.vignette)
-      u1f('uSteer', CONFIG.steer)
-      u1f('uRaise', CONFIG.raise)
-      u1f('uParallax', CONFIG.parallax)
-      u1f('uPourRadius', CONFIG.pourRadius)
-      u1f('uPour', CONFIG.pour)
-      u1f('uSmear', CONFIG.smear)
-      u1f('uInfuse', CONFIG.infuse)
+      u3c('uBg', CFG.bgColor)
+      u3c('uColorA', CFG.colorA)
+      u3c('uColorB', CFG.colorB)
+      u3c('uColorC', CFG.colorC)
+      u3c('uColorD', CFG.colorD)
+      u1f('uSpeed', CFG.speed)
+      u1f('uTilt', CFG.tilt)
+      u1f('uLean', CFG.lean)
+      u1f('uHorizon', CFG.horizon)
+      u1f('uBreathe', CFG.breathe)
+      u1f('uSpread', CFG.spread)
+      u1f('uCurve', CFG.curve)
+      u1f('uWarp', CFG.warp)
+      u1f('uScale', CFG.scale)
+      u1f('uDrift', CFG.drift)
+      u1f('uRoughness', CFG.roughness)
+      u1f('uLacunarity', CFG.lacunarity)
+      u1f('uContrast', CFG.contrast)
+      u1f('uMidpoint', CFG.midpoint)
+      u1f('uSink', CFG.sink)
+      u1f('uGlow', CFG.glow)
+      u1f('uGrain', CFG.grain)
+      u1f('uGrainAnim', CFG.grainAnim)
+      u1f('uDither', CFG.dither)
+      u1f('uVignette', CFG.vignette)
+      u1f('uSteer', CFG.steer)
+      u1f('uRaise', CFG.raise)
+      u1f('uParallax', CFG.parallax)
+      u1f('uPourRadius', CFG.pourRadius)
+      u1f('uPour', CFG.pour)
+      u1f('uSmear', CFG.smear)
+      u1f('uInfuse', CFG.infuse)
       resize()
       resize();
     };
@@ -338,7 +354,7 @@ export function SkyGradient({ className, style }: { className?: string; style?: 
         /* cursor 0: the hand is ignored and the pointer eases back to where it rested — the
            gradient goes fully ambient. Nothing else changes, so it can be flipped live. */
         if (mouse.rest === undefined) mouse.rest = { x: mouse.tx, y: mouse.ty }
-        if (!CONFIG.cursor) { mouse.tx = mouse.rest.x; mouse.ty = mouse.rest.y }
+        if (!CFG.cursor) { mouse.tx = mouse.rest.x; mouse.ty = mouse.rest.y }
         u2f('iMouse', mouse.x, mouse.y)
         u2f('iLead', mouse.ax, mouse.ay)
         gl.drawArrays(gl.TRIANGLES, 0, 3)

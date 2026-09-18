@@ -1,3 +1,4 @@
+import { SkyGradient } from '@/components/fc/SkyGradient';
 import { Logo } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
@@ -91,8 +92,16 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
 
       {/* ===== Hero ===== */}
       <section className="dc-hero">
+        <SkyGradient
+          className="dc-hero-sky"
+          /* This hero is centred and half the height of the other one, so the
+             bloom comes back to the zenith (tilt 0) and is opened up and lifted
+             — at the stock left-pooled setting it falls outside the box and the
+             canvas reads as flat black. */
+          config={{ tilt: 1.57, horizon: 0.05, spread: 0.9, curve: 1.4, glow: 0.38, sink: 0.24 }}
+        />
         <div className="dc-wrap dc-center">
-          <div className="dc-pill"><span className="dot" />{t.hero.pill}</div>
+          <div className="dc-pill fc-glass-pill"><span className="dot" />{t.hero.pill}</div>
           <h1>{t.hero.h1a}<br /><span className="dc-accent">{t.hero.h1b}</span></h1>
           <p className="dc-lede">{t.hero.sub}</p>
           <div className="dc-actions">
