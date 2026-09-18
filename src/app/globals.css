@@ -4110,3 +4110,25 @@ html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
   .dc .dc-feed { background: var(--dc-card); }
   .dc .dc-card { background: var(--dc-card); }
 }
+
+/* A scrim between the sky and the copy.
+
+   Tuning the gradient alone is not enough on its own: it DRIFTS, so any single
+   setting that looks right in a screenshot can still be too bright a few
+   seconds later. The scrim puts a floor under the text that does not depend on
+   where the animation happens to be — heaviest at the top and bottom edges,
+   lightest through the middle so the sky still shows. */
+.dc .dc-hero::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    rgba(11, 18, 32, .62) 0%,
+    rgba(11, 18, 32, .34) 38%,
+    rgba(11, 18, 32, .52) 72%,
+    rgba(11, 18, 32, .92) 100%
+  );
+}
