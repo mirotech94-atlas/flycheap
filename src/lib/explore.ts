@@ -178,6 +178,21 @@ const CITY_NAMES: Record<string, string> = {
   JTR: 'Santorini', JMK: 'Mykonos', CFU: 'Corfu', HER: 'Heraklion', RHO: 'Rhodes',
   PMI: 'Palma de Mallorca', IBZ: 'Ibiza', TFS: 'Tenerife',
   AYT: 'Antalya', BJV: 'Bodrum', LCA: 'Larnaca', PFO: 'Paphos',
+
+  // Destinations the Explore deal/destination cards render from live fare
+  // data. Without an entry the card headline printed the raw IATA.
+  AER: 'Sochi', ALC: 'Alicante', BAH: 'Bahrain', BER: 'Berlin',
+  BIO: 'Bilbao', BJS: 'Beijing', BNA: 'Nashville', CHI: 'Chicago',
+  DEN: 'Denver', DFW: 'Dallas', DUB: 'Dublin', EDI: 'Edinburgh',
+  EVN: 'Yerevan', FUK: 'Fukuoka', GDL: 'Guadalajara', GLA: 'Glasgow',
+  GOT: 'Gothenburg', HAM: 'Hamburg', JAX: 'Jacksonville', JED: 'Jeddah',
+  JKT: 'Jakarta', KSC: 'Kosice', KUL: 'Kuala Lumpur', KWI: 'Kuwait City',
+  LGK: 'Langkawi', LUX: 'Luxembourg', MAN: 'Manchester', MED: 'Medina',
+  NCE: 'Nice', NHA: 'Nha Trang', OKA: 'Okinawa', OSA: 'Osaka',
+  PDX: 'Portland', PEN: 'Penang', PQC: 'Phu Quoc', RBA: 'Rabat',
+  RMO: 'Chisinau', RUH: 'Riyadh', SAC: 'Sacramento', SAT: 'San Antonio',
+  SEL: 'Seoul', SHA: 'Shanghai', SPK: 'Sapporo', TAK: 'Takamatsu',
+  TIA: 'Tirana', UFA: 'Ufa', VCE: 'Venice', YVR: 'Vancouver',
 };
 
 export function cityName(code: string): string {

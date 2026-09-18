@@ -29,6 +29,16 @@
     "place": "Athens",
     "source": "https://upload.wikimedia.org/wikipedia/commons/2/2c/1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "ATL": {
+    "article": "https://en.wikipedia.org/wiki/Atlanta",
+    "author": "AtlChampion",
+    "file": "A2ATL20250614-0721_(cropped).jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:A2ATL20250614-0721_(cropped).jpg",
+    "place": "Atlanta",
+    "source": "https://commons.wikimedia.org/wiki/File:A2ATL20250614-0721_(cropped).jpg"
+  },
   "AYT": {
     "article": "https://en.wikipedia.org/wiki/Antalya",
     "author": "Esginmurat",
@@ -49,6 +59,26 @@
     "place": "Barcelona",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Evening_light_over_Barcelona.jpg/1920px-Evening_light_over_Barcelona.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "BER": {
+    "article": "https://en.wikipedia.org/wiki/Brandenburg_Gate",
+    "author": "Thomas Wolf, www.foto-tw.de",
+    "file": "Brandenburger_Tor_abends.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Brandenburger_Tor_abends.jpg",
+    "place": "Berlin",
+    "source": "https://commons.wikimedia.org/wiki/File:Brandenburger_Tor_abends.jpg"
+  },
+  "BJS": {
+    "article": "https://en.wikipedia.org/wiki/Forbidden_City",
+    "author": "Pixelflake",
+    "file": "The_Forbidden_City_-_View_from_Coal_Hill.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:The_Forbidden_City_-_View_from_Coal_Hill.jpg",
+    "place": "Beijing",
+    "source": "https://commons.wikimedia.org/wiki/File:The_Forbidden_City_-_View_from_Coal_Hill.jpg"
+  },
   "BJV": {
     "article": "https://en.wikipedia.org/wiki/Bodrum",
     "author": "The 3B's",
@@ -68,6 +98,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:4Y1A1159_Bangkok_(33536795515).jpg",
     "place": "Bangkok",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/4Y1A1159_Bangkok_%2833536795515%29.jpg/1920px-4Y1A1159_Bangkok_%2833536795515%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "BNA": {
+    "article": "https://en.wikipedia.org/wiki/Nashville_skyline_Cumberland_River",
+    "author": "MusicCityGreek",
+    "file": "Ghost Ballet with Broadway Background.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ghost_Ballet_with_Broadway_Background.jpg",
+    "place": "Nashville",
+    "source": "https://commons.wikimedia.org/wiki/File:Ghost_Ballet_with_Broadway_Background.jpg"
   },
   "CAI": {
     "article": "https://en.wikipedia.org/wiki/Cairo",
@@ -99,6 +139,16 @@
     "place": "Corfu",
     "source": "https://upload.wikimedia.org/wikipedia/commons/4/44/Pontikonisi.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
   },
+  "CHI": {
+    "article": "https://en.wikipedia.org/wiki/Chicago",
+    "author": "File:Chicago River ferry.jpg: John Picken\nderivative work: Georgfotoart",
+    "file": "Chicago_River_ferry_b.jpg",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Chicago_River_ferry_b.jpg",
+    "place": "Chicago",
+    "source": "https://commons.wikimedia.org/wiki/File:Chicago_River_ferry_b.jpg"
+  },
   "CUN": {
     "article": "https://en.wikipedia.org/wiki/Canc%C3%BAn",
     "author": "dronepicr",
@@ -108,6 +158,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:Cancun_Strand_Luftbild_(22143397586).jpg",
     "place": "Cancún",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Cancun_Strand_Luftbild_%2822143397586%29.jpg/1920px-Cancun_Strand_Luftbild_%2822143397586%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "DEN": {
+    "article": "https://en.wikipedia.org/wiki/Denver",
+    "author": "Quintin Soloviev",
+    "file": "Denver,_Colorado_skyline_(cropped_3x5).jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Denver,_Colorado_skyline_(cropped_3x5).jpg",
+    "place": "Denver",
+    "source": "https://commons.wikimedia.org/wiki/File:Denver,_Colorado_skyline_(cropped_3x5).jpg"
+  },
+  "DFW": {
+    "article": "https://en.wikipedia.org/wiki/Dallas",
+    "author": "IcedCowboyCoffee",
+    "file": "Dallas_Texas_skyline_from_Reunion_Tower_September_2025_(cropped).png",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Dallas_Texas_skyline_from_Reunion_Tower_September_2025_(cropped).png",
+    "place": "Dallas",
+    "source": "https://commons.wikimedia.org/wiki/File:Dallas_Texas_skyline_from_Reunion_Tower_September_2025_(cropped).png"
   },
   "DPS": {
     "article": "https://en.wikipedia.org/wiki/Tanah_Lot",
@@ -119,6 +189,16 @@
     "place": "Bali",
     "source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/TanahLot_2014.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "DUB": {
+    "article": "https://en.wikipedia.org/wiki/Dublin",
+    "author": "瑞丽江的河水",
+    "file": "Dublin_-_aerial_-_2025-07-07_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Dublin_-_aerial_-_2025-07-07_01.jpg",
+    "place": "Dublin",
+    "source": "https://commons.wikimedia.org/wiki/File:Dublin_-_aerial_-_2025-07-07_01.jpg"
+  },
   "DXB": {
     "article": "https://en.wikipedia.org/wiki/Dubai",
     "author": "Francisco Anzola",
@@ -128,6 +208,16 @@
     "page": "https://en.wikipedia.org/wiki/File:Burj_Khalifa_2021.jpg",
     "place": "Dubai",
     "source": "https://thumb.wikimedia.org/wikipedia/en/thumb/c/c7/Burj_Khalifa_2021.jpg/1920px-Burj_Khalifa_2021.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "FRA": {
+    "article": "https://en.wikipedia.org/wiki/Frankfurt",
+    "author": "Dr. Thomas Liptak",
+    "file": "Frankfurt_am_Main,_Central_business_district_(2024).jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg",
+    "place": "Frankfurt",
+    "source": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg"
   },
   "HBE": {
     "article": "https://en.wikipedia.org/wiki/Alexandria",
@@ -148,6 +238,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Venetian_Fortress_of_Koules.jpg",
     "place": "Heraklion",
     "source": "https://upload.wikimedia.org/wikipedia/commons/2/20/Venetian_Fortress_of_Koules.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "HKG": {
+    "article": "https://en.wikipedia.org/wiki/Hong_Kong_Victoria_Harbour_skyline_night",
+    "author": "Benh LIEU SONG (Flickr)",
+    "file": "Hong Kong Harbour Night 2019-06-11.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Hong_Kong_Harbour_Night_2019-06-11.jpg",
+    "place": "Hong Kong",
+    "source": "https://commons.wikimedia.org/wiki/File:Hong_Kong_Harbour_Night_2019-06-11.jpg"
   },
   "HKT": {
     "article": "https://en.wikipedia.org/wiki/Phuket_province",
@@ -199,6 +299,16 @@
     "place": "Istanbul",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Historical_peninsula_and_modern_skyline_of_Istanbul.jpg/1920px-Historical_peninsula_and_modern_skyline_of_Istanbul.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "JKT": {
+    "article": "https://en.wikipedia.org/wiki/Jakarta",
+    "author": "Medelam",
+    "file": "Bundaran_Hotel_Indonesia_(2025)_(cropped).jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bundaran_Hotel_Indonesia_(2025)_(cropped).jpg",
+    "place": "Jakarta",
+    "source": "https://commons.wikimedia.org/wiki/File:Bundaran_Hotel_Indonesia_(2025)_(cropped).jpg"
+  },
   "JMK": {
     "article": "https://en.wikipedia.org/wiki/Mykonos",
     "author": "Warren LeMay from Chicago, IL, United States",
@@ -218,6 +328,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:Oia_sunset_-_panoramio_(2).jpg",
     "place": "Santorini",
     "source": "https://upload.wikimedia.org/wikipedia/commons/3/37/Oia_sunset_-_panoramio_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "KUL": {
+    "article": "https://en.wikipedia.org/wiki/Kuala_Lumpur",
+    "author": "Renek78",
+    "file": "Bukit_Bintang_junction_in_2024_2.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Bukit_Bintang_junction_in_2024_2.jpg",
+    "place": "Kuala Lumpur",
+    "source": "https://commons.wikimedia.org/wiki/File:Bukit_Bintang_junction_in_2024_2.jpg"
+  },
+  "LAS": {
+    "article": "https://en.wikipedia.org/wiki/Las_Vegas_Strip",
+    "author": "Mariordo (Mario Roberto Durán Ortiz)",
+    "file": "Las_Vegas_Strip_09_2017_4897.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Las_Vegas_Strip_09_2017_4897.jpg",
+    "place": "Las Vegas",
+    "source": "https://commons.wikimedia.org/wiki/File:Las_Vegas_Strip_09_2017_4897.jpg"
   },
   "LAX": {
     "article": "https://en.wikipedia.org/wiki/Los_Angeles",
@@ -279,6 +409,16 @@
     "place": "Luxor",
     "source": "https://upload.wikimedia.org/wikipedia/commons/3/35/LuxorHotelsIbnWalidSt.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
   },
+  "MAN": {
+    "article": "https://en.wikipedia.org/wiki/Manchester_England_city_centre_skyline",
+    "author": "Carroll Pierce",
+    "file": "Manchester city centre - geograph.org.uk - 5802916.jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Manchester_city_centre_-_geograph.org.uk_-_5802916.jpg",
+    "place": "Manchester",
+    "source": "https://commons.wikimedia.org/wiki/File:Manchester_city_centre_-_geograph.org.uk_-_5802916.jpg"
+  },
   "MEX": {
     "article": "https://en.wikipedia.org/wiki/Mexico_City",
     "author": "Gobierno CDMX",
@@ -288,6 +428,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:Sobrevuelos_CDMX_HJ2A4913_(25514321687)_(cropped).jpg",
     "place": "Mexico City",
     "source": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "MIA": {
+    "article": "https://en.wikipedia.org/wiki/Miami_skyline",
+    "author": "Wilfredor",
+    "file": "Miami, Florida, Skyline 4.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Miami,_Florida,_Skyline_4.jpg",
+    "place": "Miami",
+    "source": "https://commons.wikimedia.org/wiki/File:Miami,_Florida,_Skyline_4.jpg"
+  },
+  "MIL": {
+    "article": "https://en.wikipedia.org/wiki/Milan_Cathedral",
+    "author": "Jiuguang Wang",
+    "file": "Milan_Cathedral_from_Piazza_del_Duomo.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Milan_Cathedral_from_Piazza_del_Duomo.jpg",
+    "place": "Milan",
+    "source": "https://commons.wikimedia.org/wiki/File:Milan_Cathedral_from_Piazza_del_Duomo.jpg"
   },
   "MLE": {
     "article": "https://en.wikipedia.org/wiki/Mal%C3%A9",
@@ -309,6 +469,16 @@
     "place": "Nassau, Bahamas",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Nassau%2C_Bahamas_aerial_view_%28cropped%29.jpg/1920px-Nassau%2C_Bahamas_aerial_view_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "NCE": {
+    "article": "https://en.wikipedia.org/wiki/Promenade_des_Anglais",
+    "author": "3602kiva",
+    "file": "CollineDuChateau_NiceFrance2022.png",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:CollineDuChateau_NiceFrance2022.png",
+    "place": "Nice",
+    "source": "https://commons.wikimedia.org/wiki/File:CollineDuChateau_NiceFrance2022.png"
+  },
   "NYC": {
     "article": "https://en.wikipedia.org/wiki/New_York_City",
     "author": "Dllu",
@@ -328,6 +498,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:L%C4%81hain%C4%81_oceanfront.JPG",
     "place": "Maui",
     "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/L%C4%81hain%C4%81_oceanfront.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "ORL": {
+    "article": "https://en.wikipedia.org/wiki/Orlando%2C_Florida",
+    "author": "Quintin Soloviev",
+    "file": "Orlando,_Florida_(cropped).jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Orlando,_Florida_(cropped).jpg",
+    "place": "Orlando",
+    "source": "https://commons.wikimedia.org/wiki/File:Orlando,_Florida_(cropped).jpg"
+  },
+  "OSA": {
+    "article": "https://en.wikipedia.org/wiki/Osaka_Castle",
+    "author": "663highland",
+    "file": "Osaka_Castle_03bs3200.jpg",
+    "license": "CC BY 2.5",
+    "license_url": "https://creativecommons.org/licenses/by/2.5",
+    "page": "https://commons.wikimedia.org/wiki/File:Osaka_Castle_03bs3200.jpg",
+    "place": "Osaka",
+    "source": "https://commons.wikimedia.org/wiki/File:Osaka_Castle_03bs3200.jpg"
   },
   "PAR": {
     "article": "https://en.wikipedia.org/wiki/Paris",
@@ -409,6 +599,46 @@
     "place": "Sao Paulo",
     "source": "https://upload.wikimedia.org/wikipedia/commons/7/73/Marginal_Pinheiros_e_Jockey_Club.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "SEA": {
+    "article": "https://en.wikipedia.org/wiki/Seattle",
+    "author": "Jeffery Hayes",
+    "file": "Seattle_Center_as_night_falls.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Seattle_Center_as_night_falls.jpg",
+    "place": "Seattle",
+    "source": "https://commons.wikimedia.org/wiki/File:Seattle_Center_as_night_falls.jpg"
+  },
+  "SEL": {
+    "article": "https://en.wikipedia.org/wiki/Gyeongbokgung",
+    "author": "서울관광 아카이브",
+    "file": "광화문_월대.jpg",
+    "license": "KOGL Type 1",
+    "license_url": "http://www.kogl.or.kr/info/licenseType1.do",
+    "page": "https://commons.wikimedia.org/wiki/File:%EA%B4%91%ED%99%94%EB%AC%B8_%EC%9B%94%EB%8C%80.jpg",
+    "place": "Seoul",
+    "source": "https://commons.wikimedia.org/wiki/File:%EA%B4%91%ED%99%94%EB%AC%B8_%EC%9B%94%EB%8C%80.jpg"
+  },
+  "SFO": {
+    "article": "https://en.wikipedia.org/wiki/San_Francisco_skyline",
+    "author": "Dllu",
+    "file": "View of the Ferry Building from Treasure Island, San Francisco dllu.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:View_of_the_Ferry_Building_from_Treasure_Island,_San_Francisco_dllu.jpg",
+    "place": "San Francisco",
+    "source": "https://commons.wikimedia.org/wiki/File:View_of_the_Ferry_Building_from_Treasure_Island,_San_Francisco_dllu.jpg"
+  },
+  "SHA": {
+    "article": "https://en.wikipedia.org/wiki/The_Bund",
+    "author": "钉钉",
+    "file": "The_Bund_2.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:The_Bund_2.jpg",
+    "place": "Shanghai",
+    "source": "https://commons.wikimedia.org/wiki/File:The_Bund_2.jpg"
+  },
   "SIN": {
     "article": "https://en.wikipedia.org/wiki/Marina_Bay_Sands",
     "author": "This Photo was taken by Supanut Arunoprayote.\n\nFeel free to use any of my images, but please mention me as the author and may send me a message.  (สามารถใช้ภาพได้อิสระ แต่กรุณาใส่เครดิตผู้ถ่ายและอาจส่งข้อความบอกกล่าวด้วย) \n\n\n\nPlease do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
@@ -459,6 +689,16 @@
     "place": "Tokyo",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/1920px-Skyscrapers_of_Shinjuku_2009_January.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "VCE": {
+    "article": "https://en.wikipedia.org/wiki/Venice",
+    "author": "kallerna",
+    "file": "Venezia_aerial_view.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Venezia_aerial_view.jpg",
+    "place": "Venice",
+    "source": "https://commons.wikimedia.org/wiki/File:Venezia_aerial_view.jpg"
+  },
   "WAS": {
     "article": "https://en.wikipedia.org/wiki/United_States_Capitol",
     "author": "Martin Falbisoner",
@@ -468,5 +708,15 @@
     "page": "https://commons.wikimedia.org/wiki/File:US_Capitol_east_side.JPG",
     "place": "Washington DC",
     "source": "https://upload.wikimedia.org/wikipedia/commons/9/9f/US_Capitol_east_side.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "YVR": {
+    "article": "https://en.wikipedia.org/wiki/Vancouver",
+    "author": "Quintin Soloviev",
+    "file": "Skyline_of_Vancouver,_Canada.jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skyline_of_Vancouver,_Canada.jpg",
+    "place": "Vancouver",
+    "source": "https://commons.wikimedia.org/wiki/File:Skyline_of_Vancouver,_Canada.jpg"
   }
 }
