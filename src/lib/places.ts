@@ -66,3 +66,42 @@ export function placePhoto(code: string): string | null {
   const raw = code.trim().toUpperCase();
   return m[raw] ?? m[cityCode(raw)] ?? null;
 }
+
+export type PlaceCredit = {
+  code: string;
+  place: string;
+  file: string;
+  author: string;
+  license: string;
+  license_url?: string;
+  page?: string;
+  article?: string;
+  photo: string;
+};
+
+let creditCache: PlaceCredit[] | null = null;
+
+/**
+ * Every photo in the library with its author and licence, for /credits.
+ *
+ * The images are Wikimedia CC BY / CC BY-SA / CC0 / public domain, and we
+ * resize (and in one case crop) them — derivative works — so the BY and SA
+ * terms require the credit to be visible to the viewer, not just recorded
+ * in the repo.
+ */
+export function placeCredits(): PlaceCredit[] {
+  if (creditCache) return creditCache;
+  let raw: Record<string, Omit<PlaceCredit, 'code' | 'photo'>> = {};
+  try {
+    raw = JSON.parse(fs.readFileSync(
+      path.join(process.cwd(), 'public', 'places', 'ATTRIBUTION.json'), 'utf8'));
+  } catch {
+    return (creditCache = []);
+  }
+  const m = manifest();
+  creditCache = Object.entries(raw)
+    .filter(([code]) => m[code])
+    .map(([code, e]) => ({ ...e, code, photo: m[code] }))
+    .sort((a, b) => a.place.localeCompare(b.place));
+  return creditCache;
+}

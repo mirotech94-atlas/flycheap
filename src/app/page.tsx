@@ -820,6 +820,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           <Link href="/status">{t.status}</Link>
           <Link href="/privacy">{t.privacy}</Link>
           <Link href="/about">{t.about}</Link>
+          <Link href="/credits">Photo credits</Link>
         </div>
       </footer>
 
