@@ -1,6 +1,5 @@
 import 'server-only';
 import { Resend } from 'resend';
-import { queries } from './db';
 import { APP_URL, ADMIN_URL } from './hosts';
 import { ticketReceivedEmail, ticketReplyEmail } from './emailTemplates';
 
@@ -14,12 +13,10 @@ import { ticketReceivedEmail, ticketReplyEmail } from './emailTemplates';
 const clientThreadUrl = (ref: string) => `${APP_URL.replace(/\/$/, '')}/support/${ref}`;
 const adminThreadUrl = (ref: string) => `${ADMIN_URL.replace(/\/$/, '')}/admin/tickets/${ref}`;
 
-/** Where operator notifications land (same resolution the contact form used). */
+/** Where operator ticket notifications land. Tickets go to the support mailbox
+ *  by default; override with TICKETS_INBOX if it should route elsewhere. */
 export function operatorInbox(): string {
-  return (process.env.CONTACT_INBOX
-    || process.env.ADMIN_EMAILS?.split(',')[0]?.trim()
-    || queries.getSetting('alert_email')
-    || '').trim();
+  return (process.env.TICKETS_INBOX || 'support@flycheap.live').trim();
 }
 
 async function slack(channel: 'admin', text: string): Promise<void> {

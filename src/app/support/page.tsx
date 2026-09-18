@@ -52,7 +52,6 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
 
       <div className="card">
         <h2 className="!mb-3 text-base">Open a ticket</h2>
-        {error === 'short' && <p className="text-sm text-rose-600 mb-3">Please describe the problem in a little more detail (at least 10 characters).</p>}
         {error === 'limit' && <p className="text-sm text-rose-600 mb-3">You&apos;ve opened a lot of tickets today. Reply on an existing one, or try again tomorrow.</p>}
         <form action={openTicket} className="space-y-3">
           <div>

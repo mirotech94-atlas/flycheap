@@ -34,7 +34,24 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
         eyebrow={`Ticket ${ticket.ref}`}
         title={ticket.subject}
         sub={`From ${ticket.name} · ${ticket.email}${ticket.user_id ? ` · account #${ticket.user_id}` : ' · not signed in'} · opened ${ago(ticket.created_at)}`}
-        right={<Status tone={meta.tone}>{meta.label}</Status>}
+        right={
+          <div className="flex items-center gap-3">
+            <Status tone={meta.tone}>{meta.label}</Status>
+            {ticket.status === 'resolved' ? (
+              <form action={setTicketStatus}>
+                <input type="hidden" name="ref" value={ticket.ref} />
+                <input type="hidden" name="status" value="open" />
+                <button type="submit" className="ad-btn">Reopen</button>
+              </form>
+            ) : (
+              <form action={setTicketStatus}>
+                <input type="hidden" name="ref" value={ticket.ref} />
+                <input type="hidden" name="status" value="resolved" />
+                <button type="submit" className="ad-btn ad-btn-gold">Mark resolved</button>
+              </form>
+            )}
+          </div>
+        }
       />
 
       <div className="grid lg:grid-cols-[1fr_260px] gap-6 items-start">
