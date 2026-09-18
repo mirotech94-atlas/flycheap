@@ -61,7 +61,7 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
             key={f}
             href={`/admin/queue?filter=${f}`}
             className={`-mb-px border-b-2 px-4 py-2 text-sm capitalize transition ${
-              filter === f ? 'border-[#d4af37] font-semibold text-white' : 'border-transparent text-white/55 hover:text-white/80'
+              filter === f ? 'border-[#E8A33D] font-semibold text-white' : 'border-transparent text-white/55 hover:text-white/80'
             }`}
           >
             {f} · {f === 'skipped' ? counts.skipped + counts.failed : counts[f]}
@@ -93,7 +93,7 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
                         {item.trip_length_days ? ` · ${item.trip_length_days}d` : ''}
                       </span>
                       {item.score != null && (
-                        <span className="text-[11px] font-bold text-[#f0d674]">score {Math.round(item.score)}</span>
+                        <span className="text-[11px] font-bold text-[#F2C67A]">score {Math.round(item.score)}</span>
                       )}
                     </div>
                     <pre className="text-sm text-white/80 whitespace-pre-wrap font-sans bg-black/20 rounded-md p-3 border border-white/5">{item.body}</pre>

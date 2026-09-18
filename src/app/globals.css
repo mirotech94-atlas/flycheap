@@ -3647,12 +3647,24 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 }
 
 /* Surfaces that hardcode a light background in the base sheet. */
+/* The client portal's panels, in the same glass as the marketing site and the
+   admin console — so the three surfaces read as one product rather than three
+   that happen to share a palette. A facing gradient, a lit top lip, and
+   blur+saturate so the shell's own atmosphere shows through the panel. */
 .fc-shell[data-fc-theme="cabin"] .fc-card,
 .fc-shell[data-fc-theme="cabin"] .fc-kpi,
 .fc-shell[data-fc-theme="cabin"] .fc-panel {
-  background: var(--nc-deck);
+  background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
   border-color: var(--nc-rule);
   color: var(--nc-on-dark);
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.12);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .fc-shell[data-fc-theme="cabin"] .fc-card,
+  .fc-shell[data-fc-theme="cabin"] .fc-kpi,
+  .fc-shell[data-fc-theme="cabin"] .fc-panel { background: var(--nc-deck); }
 }
 .fc-shell[data-fc-theme="cabin"] .fc-card-title,
 .fc-shell[data-fc-theme="cabin"] .fc-section-title,
@@ -4127,3 +4139,28 @@ html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
     radial-gradient(820px 380px at 50% 40%, rgba(11,18,32,.62) 0%, rgba(11,18,32,.18) 62%, rgba(11,18,32,0) 100%),
     linear-gradient(180deg, rgba(11,18,32,.55) 0%, rgba(11,18,32,0) 26%, rgba(11,18,32,0) 62%, rgba(11,18,32,.95) 100%);
 }
+
+/* ===================================================================
+   Admin portal — night-cabin, and the same glass as the rest.
+
+   The console had no design system of its own: Tailwind utilities with
+   the old Bloomberg palette written inline, which is why it never got
+   the cabin conversion — it declares no data-fc-theme for a theme block
+   to hook. The colours are now cabin literals; these rules give its two
+   chrome surfaces the glass treatment the client portal and the
+   marketing site already use, so the three read as one product.
+   =================================================================== */
+.ad-glass-bar {
+  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
+  -webkit-backdrop-filter: blur(18px) saturate(170%);
+  backdrop-filter: blur(18px) saturate(170%);
+  border-bottom: 1px solid var(--nc-rule, rgba(255,255,255,.10));
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.14);
+}
+@supports not (backdrop-filter: blur(1px)) {
+  .ad-glass-bar { background: var(--nc-deck, #131C2E); }
+}
+
+/* Admin's card/kpi surfaces are declared !important inside the inline <style>
+   in admin/layout.tsx, so the glass for them lives there too rather than losing
+   a specificity fight from here. Only the sticky bar is styled from this file. */

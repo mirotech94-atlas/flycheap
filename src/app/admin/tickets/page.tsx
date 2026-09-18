@@ -44,7 +44,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams:
               key={f}
               href={`/admin/tickets${f === 'all' ? '' : `?status=${f}`}`}
               className={`-mb-px border-b-2 px-4 py-2 text-sm transition ${
-                active === f ? 'border-[#d4af37] font-semibold text-white' : 'border-transparent text-white/55 hover:text-white/80'
+                active === f ? 'border-[#E8A33D] font-semibold text-white' : 'border-transparent text-white/55 hover:text-white/80'
               }`}
             >
               {label} · {n}
@@ -82,7 +82,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams:
                   <td className="whitespace-nowrap">
                     <Status tone={meta.tone}>{meta.label}</Status>
                     {waitingOnUs && t.status !== 'resolved' && (
-                      <div className="text-[10.5px] font-mono uppercase tracking-wider text-[#f0d674] mt-1">Your move</div>
+                      <div className="text-[10.5px] font-mono uppercase tracking-wider text-[#F2C67A] mt-1">Your move</div>
                     )}
                   </td>
                   <td className="text-[12px] text-white/55 whitespace-nowrap">{ago(t.last_reply_at || t.updated_at)}</td>

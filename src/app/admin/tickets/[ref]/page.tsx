@@ -66,12 +66,12 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                     key={m.id}
                     className={`rounded-lg border p-3.5 ${
                       fromUs
-                        ? 'border-[#d4af37]/25 bg-[#d4af37]/[0.06] ml-6'
+                        ? 'border-[#E8A33D]/25 bg-[#E8A33D]/[0.06] ml-6'
                         : 'border-white/[0.08] bg-white/[0.02] mr-6'
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={`text-[11px] font-mono uppercase tracking-wider ${fromUs ? 'text-[#f0d674]' : 'text-white/50'}`}>
+                      <span className={`text-[11px] font-mono uppercase tracking-wider ${fromUs ? 'text-[#F2C67A]' : 'text-white/50'}`}>
                         {fromUs ? 'FlyCheap' : ticket.name}
                       </span>
                       <span className="text-[11px] text-white/35">{fmtWhen(m.created_at)}</span>
@@ -92,7 +92,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                 required
                 rows={5}
                 placeholder={`Write your reply to ${ticket.name.split(' ')[0]}…`}
-                className="w-full rounded-lg bg-[#0b1830] border border-white/10 px-3.5 py-3 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#d4af37]/50 resize-y"
+                className="w-full rounded-lg bg-[#131C2E] border border-white/10 px-3.5 py-3 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#E8A33D]/50 resize-y"
               />
               <div className="flex items-center justify-between gap-3">
                 <span className="text-[11.5px] text-white/40">Goes to {ticket.email}</span>
@@ -117,7 +117,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                     disabled={isCurrent}
                     className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-[13px] transition ${
                       isCurrent
-                        ? 'border-[#d4af37]/40 bg-[#d4af37]/[0.08] text-white cursor-default'
+                        ? 'border-[#E8A33D]/40 bg-[#E8A33D]/[0.08] text-white cursor-default'
                         : 'border-white/[0.08] text-white/70 hover:text-white hover:border-white/20'
                     }`}
                   >

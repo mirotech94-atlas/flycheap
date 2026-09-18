@@ -25,7 +25,7 @@ export default async function SignupsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <div className="text-[11px] uppercase tracking-[0.18em] text-[#d4af37] mb-1">Admin · signups</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-[#E8A33D] mb-1">Admin · signups</div>
         <h1 className="text-3xl font-bold tracking-tight">Signups</h1>
         <p className="text-sm text-white/55 mt-1">Acquisition + tier funnel for the FlyCheap user base.</p>
       </div>
@@ -65,20 +65,20 @@ export default async function SignupsPage() {
         <Tile label="All-time"  value={m.users.total} accent />
       </div>
 
-      <div className="rounded-xl p-4 border border-white/6 bg-[#0f1f3a]">
+      <div className="rounded-xl p-4 border border-white/6 bg-[#1B2740]">
         <div className="text-[11px] uppercase tracking-[0.14em] text-white/50 mb-3">Daily signups · last 90 days</div>
         <Chart data={daily} />
       </div>
 
-      <div className="rounded-xl p-4 border border-white/6 bg-[#0f1f3a]">
+      <div className="rounded-xl p-4 border border-white/6 bg-[#1B2740]">
         <div className="text-[11px] uppercase tracking-[0.14em] text-white/50 mb-3">Tier funnel</div>
-        <FunnelRow label="All signups" value={total} max={total} color="#1f5fa5" />
-        <FunnelRow label="Free"        value={free}  max={total} color="#64748b" />
-        <FunnelRow label="Pro"         value={pro}   max={total} color="#10b981" />
-        <FunnelRow label="Enterprise"  value={ent}   max={total} color="#d4af37" />
+        <FunnelRow label="All signups" value={total} max={total} color="#3D6B86" />
+        <FunnelRow label="Free"        value={free}  max={total} color="#7E8AA0" />
+        <FunnelRow label="Pro"         value={pro}   max={total} color="#7BC49A" />
+        <FunnelRow label="Enterprise"  value={ent}   max={total} color="#E8A33D" />
       </div>
 
-      <div className="rounded-xl border border-white/6 bg-[#0f1f3a] overflow-hidden">
+      <div className="rounded-xl border border-white/6 bg-[#1B2740] overflow-hidden">
         <div className="px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-white/50 border-b border-white/5">
           50 newest signups
         </div>
@@ -97,7 +97,7 @@ export default async function SignupsPage() {
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2 text-xs">
                   <span className={`px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px] ${
-                    u.tier === 'enterprise' ? 'bg-[#d4af37]/20 text-[#f0d674]' :
+                    u.tier === 'enterprise' ? 'bg-[#E8A33D]/20 text-[#F2C67A]' :
                     u.tier === 'pro'        ? 'bg-emerald-500/20 text-emerald-300' :
                     'bg-white/10 text-white/60'
                   }`}>{u.tier}</span>
@@ -118,8 +118,8 @@ function Tile({ label, value, accent }: { label: string; value: number; accent?:
     <div
       className="rounded-xl p-4 border"
       style={{
-        background: accent ? 'linear-gradient(135deg, rgba(212,175,55,0.10), rgba(15,31,58,1))' : '#0f1f3a',
-        borderColor: accent ? 'rgba(212,175,55,0.25)' : 'rgba(255,255,255,0.06)',
+        background: accent ? 'linear-gradient(135deg, rgba(232,163,61,0.10), rgba(15,31,58,1))' : '#1B2740',
+        borderColor: accent ? 'rgba(232,163,61,0.25)' : 'rgba(255,255,255,0.06)',
       }}
     >
       <div className="text-[10px] uppercase tracking-[0.14em] text-white/50">{label}</div>
@@ -156,7 +156,7 @@ function Chart({ data }: { data: Array<{ day: string; n: number }> }) {
           key={d.day}
           title={`${d.day} · ${d.n} signup${d.n === 1 ? '' : 's'}`}
           className="flex-1 rounded-t-sm"
-          style={{ height: `${(d.n / max) * 100}%`, minHeight: 2, background: '#d4af37' }}
+          style={{ height: `${(d.n / max) * 100}%`, minHeight: 2, background: '#E8A33D' }}
         />
       ))}
     </div>

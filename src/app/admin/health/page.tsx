@@ -87,7 +87,7 @@ export default async function FareEnginePage() {
                 return (
                   <div key={r.hour} className="flex-1 h-full flex items-end" title={`${r.hour.replace('T', ' ')}:00 — ${r.n} snapshots`}>
                     <div className="w-full rounded-t transition-all"
-                      style={{ height: `${pct}%`, background: 'linear-gradient(180deg,#d4af37,#8a6d1a)' }} />
+                      style={{ height: `${pct}%`, background: 'linear-gradient(180deg,#E8A33D,#B87B22)' }} />
                   </div>
                 );
               })}
@@ -112,7 +112,7 @@ export default async function FareEnginePage() {
                   const errPct = t > 0 ? (r.err_count / t) * 100 : 0;
                   const max = Math.max(1, ...hourly.map(x => x.ok_count + x.err_count));
                   const color = t === 0 ? 'rgba(255,255,255,0.06)'
-                    : errPct === 0 ? '#10b981' : errPct < 25 ? '#facc15' : '#f43f5e';
+                    : errPct === 0 ? '#7BC49A' : errPct < 25 ? '#F2C67A' : '#D8433A';
                   return (
                     <div key={i} className="flex-1 h-full flex items-end" title={`${t} calls · ${r.err_count} errors`}>
                       <div className="w-full rounded-t" style={{ height: `${Math.max(3, (t / max) * 100)}%`, background: color }} />
@@ -163,7 +163,7 @@ export default async function FareEnginePage() {
                   <td className="font-mono font-medium text-white/90">{r.origin} → {r.destination}</td>
                   <td className="text-white/55 whitespace-nowrap">{r.depart_date} → {r.return_date}</td>
                   <td className="font-mono tabular-nums">{r.target != null ? `$${Math.round(r.target)}` : <span className="text-white/25">default</span>}</td>
-                  <td className="font-mono tabular-nums text-[#f0d674]">{r.low30 != null ? `$${Math.round(r.low30)}` : '—'}</td>
+                  <td className="font-mono tabular-nums text-[#F2C67A]">{r.low30 != null ? `$${Math.round(r.low30)}` : '—'}</td>
                   <td className="font-mono tabular-nums text-white/50">{fmtInt(r.snaps)}</td>
                   <td className="text-white/50 whitespace-nowrap">{ago(r.last_poll)}</td>
                   <td>

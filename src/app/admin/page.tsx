@@ -271,7 +271,7 @@ export default async function CommandCenter() {
             right={`${b.m.users.enterprise} · ${b.billedEnt} billed`} />
           <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-baseline justify-between">
             <span className="text-[11.5px] text-white/45">Committed monthly revenue</span>
-            <span className="font-mono text-[#f0d674] text-sm tabular-nums">{fmtMoney(b.mrr)}</span>
+            <span className="font-mono text-[#F2C67A] text-sm tabular-nums">{fmtMoney(b.mrr)}</span>
           </div>
           {b.compAccounts > 0 && (
             <div className="text-[11px] text-white/35 mt-1.5 leading-snug">

@@ -79,7 +79,7 @@ export function RowMenu({ userId, email, tier, status, isSelf }: Props) {
       {open && (
         <div
           role="menu"
-          className="absolute right-0 z-30 mt-1 w-60 rounded-lg border border-white/10 bg-[#0d1b33] shadow-[0_18px_40px_-16px_rgba(0,0,0,.8)] overflow-hidden"
+          className="absolute right-0 z-30 mt-1 w-60 rounded-lg border border-white/10 bg-[#131C2E] shadow-[0_18px_40px_-16px_rgba(0,0,0,.8)] overflow-hidden"
         >
           <Link
             href={`/admin/users/${userId}`}
