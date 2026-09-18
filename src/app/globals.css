@@ -3787,3 +3787,9 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
    stock rule drops the hardcoded rgba(212,175,55,.10) glow the token remap can't reach.
    Amber on a background wash is exactly what the reserved-accent rule forbids. */
 .fc-landing[data-fc-theme="cabin"] .fc-hero { background: var(--nc-dark); }
+
+/* The hero headline's italic accents are INK, not amber. Amber is reserved for
+   fares and primary actions (CLAUDE.md); two display-size words in the fare
+   colour at the top of the page compete with the numbers the rule protects.
+   The serif italic already carries the emphasis. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero h1 em { color: var(--nc-on-dark); }
