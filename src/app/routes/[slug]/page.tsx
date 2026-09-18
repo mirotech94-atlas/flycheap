@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: RouteParams) {
   return {
     title,
     description: desc,
-    alternates: { canonical: `https://flycheap.18dn.com/routes/${slug.toLowerCase()}` },
+    alternates: { canonical: `https://flycheap.live/routes/${slug.toLowerCase()}` },
     openGraph: { title, description: desc, type: 'website' },
   };
 }
@@ -124,8 +124,8 @@ export default async function RoutePage({ params }: RouteParams) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Routes', item: 'https://flycheap.18dn.com/routes' },
-          { '@type': 'ListItem', position: 2, name: `${origin!.iata} → ${destination!.iata}`, item: `https://flycheap.18dn.com/routes/${slug.toLowerCase()}` },
+          { '@type': 'ListItem', position: 1, name: 'Routes', item: 'https://flycheap.live/routes' },
+          { '@type': 'ListItem', position: 2, name: `${origin!.iata} → ${destination!.iata}`, item: `https://flycheap.live/routes/${slug.toLowerCase()}` },
         ],
       },
       ...(aiFaqs.length > 0 ? [{

@@ -22,16 +22,16 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FlyCheap — Fare intelligence, monitored for you',
     description: 'Track 1,000+ airlines, get alerts when fares drop, explore worldwide deals.',
-    url: 'https://flycheap.18dn.com/welcome',
+    url: 'https://flycheap.live/welcome',
     siteName: 'FlyCheap',
-    images: [{ url: 'https://flycheap.18dn.com/api/og', width: 1200, height: 630, alt: 'FlyCheap dashboard' }],
+    images: [{ url: 'https://flycheap.live/api/og', width: 1200, height: 630, alt: 'FlyCheap dashboard' }],
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
     title: 'FlyCheap — Fare intelligence, monitored for you',
     description: 'Track 1,000+ airlines, get alerts when fares drop, explore worldwide deals.',
-    images: ['https://flycheap.18dn.com/api/og'],
+    images: ['https://flycheap.live/api/og'],
   },
 };
 
@@ -281,7 +281,7 @@ export default async function LandingPage() {
           <div className="fc-l-preview-window">
             <div className="fc-l-preview-chrome">
               <div className="dots"><div className="dot" /><div className="dot" /><div className="dot" /></div>
-              <div className="url">flycheap.18dn.com / <strong>{t.preview.dashboard}</strong></div>
+              <div className="url">flycheap.live / <strong>{t.preview.dashboard}</strong></div>
             </div>
             <div className="fc-l-preview-body">
               <FcKpiStrip items={[

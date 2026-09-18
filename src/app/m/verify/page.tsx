@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 /**
  * Universal-link landing for the FlyCheap mobile magic link.
  *
- * When the app IS installed, iOS/Android intercept `https://flycheap.18dn.com/m/verify?token=…`
+ * When the app IS installed, iOS/Android intercept `https://my.flycheap.live/m/verify?token=…`
  * and open the app directly — this page never renders. When the app is NOT installed,
  * the browser loads this page. It deliberately does NOT call /api/v1/auth/verify (that token
  * is single-use and belongs to the app); it just bounces the token to the custom scheme and,

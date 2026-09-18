@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   queries.setUserSetting(user.id, 'alert_channels', '');
   return new Response(htmlPage(
     "You're unsubscribed",
-    `${email} will no longer receive fare alerts or digests. Re-enable any time at <a href="https://flycheap.18dn.com/settings" style="color:#0a3a6b">Settings → Alerts</a>.`,
+    `${email} will no longer receive fare alerts or digests. Re-enable any time at <a href="https://my.flycheap.live/settings" style="color:#0a3a6b">Settings → Alerts</a>.`,
     true
   ), { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
@@ -62,6 +62,6 @@ a.btn{display:inline-block;background:#0a3a6b;color:white;padding:12px 22px;bord
 <div class="icon">${ok ? '✓' : '!'}</div>
 <h1>${title}</h1>
 <p>${body}</p>
-<a class="btn" href="https://flycheap.18dn.com/welcome">Back to FlyCheap</a>
+<a class="btn" href="https://flycheap.live/welcome">Back to FlyCheap</a>
 </div></body></html>`;
 }

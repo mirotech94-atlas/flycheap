@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: DestinationParams) {
   return {
     title: guide.seoTitle,
     description: guide.metaDescription,
-    alternates: { canonical: `https://flycheap.18dn.com/destinations/${guide.iata.toLowerCase()}` },
+    alternates: { canonical: `https://flycheap.live/destinations/${guide.iata.toLowerCase()}` },
     openGraph: { title: guide.seoTitle, description: guide.metaDescription, type: 'article' },
   };
 }
@@ -51,8 +51,8 @@ export default async function DestinationPage({ params }: DestinationParams) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Destinations', item: 'https://flycheap.18dn.com/destinations' },
-          { '@type': 'ListItem', position: 2, name: guide!.city, item: `https://flycheap.18dn.com/destinations/${guide!.iata.toLowerCase()}` },
+          { '@type': 'ListItem', position: 1, name: 'Destinations', item: 'https://flycheap.live/destinations' },
+          { '@type': 'ListItem', position: 2, name: guide!.city, item: `https://flycheap.live/destinations/${guide!.iata.toLowerCase()}` },
         ],
       },
     ],

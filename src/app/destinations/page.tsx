@@ -7,7 +7,7 @@ export const revalidate = 86400;
 export const metadata = {
   title: 'Destination guides — FlyCheap',
   description: 'Travel guides for the destinations we track cheap flights to. When to go, visa rules, money, and what to see.',
-  alternates: { canonical: 'https://flycheap.18dn.com/destinations' },
+  alternates: { canonical: 'https://flycheap.live/destinations' },
 };
 
 export default function DestinationsIndexPage() {

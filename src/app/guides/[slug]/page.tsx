@@ -18,7 +18,7 @@ export async function generateMetadata({ params }: GuideParams) {
   return {
     title: g.seoTitle || g.title,
     description: g.metaDescription,
-    alternates: { canonical: `https://flycheap.18dn.com/guides/${g.slug}` },
+    alternates: { canonical: `https://flycheap.live/guides/${g.slug}` },
     openGraph: { title: g.seoTitle || g.title, description: g.metaDescription, type: 'article' },
   };
 }
@@ -59,8 +59,8 @@ export default async function GuidePage({ params }: GuideParams) {
       {
         '@type': 'BreadcrumbList',
         itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Guides', item: 'https://flycheap.18dn.com/guides' },
-          { '@type': 'ListItem', position: 2, name: g!.title, item: `https://flycheap.18dn.com/guides/${g!.slug}` },
+          { '@type': 'ListItem', position: 1, name: 'Guides', item: 'https://flycheap.live/guides' },
+          { '@type': 'ListItem', position: 2, name: g!.title, item: `https://flycheap.live/guides/${g!.slug}` },
         ],
       },
     ],

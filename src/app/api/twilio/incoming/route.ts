@@ -31,7 +31,7 @@ export async function POST(req: Request) {
   }
 
   if (HELP_WORDS.has(body)) {
-    return twiml(`FlyCheap fare alerts. Manage at https://flycheap.18dn.com/settings. Reply STOP to cancel. Msg&data rates may apply.`);
+    return twiml(`FlyCheap fare alerts. Manage at https://my.flycheap.live/settings. Reply STOP to cancel. Msg&data rates may apply.`);
   }
 
   if (START_WORDS.has(body)) {

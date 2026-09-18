@@ -5,7 +5,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       { userAgent: '*', allow: ['/welcome', '/explore', '/login'], disallow: ['/admin', '/settings', '/searches', '/onboarding', '/api/'] },
     ],
-    sitemap: 'https://flycheap.18dn.com/sitemap.xml',
-    host: 'https://flycheap.18dn.com',
+    sitemap: 'https://flycheap.live/sitemap.xml',
+    host: 'https://flycheap.live',
   };
 }
