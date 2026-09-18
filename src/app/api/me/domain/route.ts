@@ -39,9 +39,9 @@ export async function PUT(req: Request) {
   return NextResponse.json({
     ok: true,
     domain: next,
-    cname_target: 'flycheap.18dn.com',
+    cname_target: 'my.flycheap.live',
     note: next
-      ? `Add a CNAME record: ${next} → flycheap.18dn.com. Once DNS propagates, your dashboard will load there with your branding.`
+      ? `Add a CNAME record: ${next} → my.flycheap.live. Once DNS propagates, your dashboard will load there with your branding.`
       : 'Custom domain removed.',
   });
 }

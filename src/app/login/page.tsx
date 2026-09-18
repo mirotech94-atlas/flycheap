@@ -123,7 +123,7 @@ export default async function LoginPage(
               <LoginForm t={t.form} adminOnly />
             </Suspense>
           </div>
-          <p className="legal">Every admin action is written to the audit log · <Link href="https://flycheap.18dn.com/welcome">← back to flycheap</Link></p>
+          <p className="legal">Every admin action is written to the audit log · <Link href="https://flycheap.live/welcome">← back to flycheap</Link></p>
         </div>
       </div>
     );

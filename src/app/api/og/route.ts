@@ -64,7 +64,7 @@ export async function GET() {
     <!-- URL pill -->
     <g transform="translate(940 540)">
       <rect width="180" height="40" rx="20" fill="rgba(255,255,255,.12)"/>
-      <text x="90" y="26" text-anchor="middle" font-family="system-ui,Helvetica" font-size="14" font-weight="700" fill="white">flycheap.18dn.com</text>
+      <text x="90" y="26" text-anchor="middle" font-family="system-ui,Helvetica" font-size="14" font-weight="700" fill="white">flycheap.live</text>
     </g>
   </svg>`;
   return new Response(svg, {

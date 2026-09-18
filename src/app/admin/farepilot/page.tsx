@@ -9,7 +9,7 @@ export const dynamic = 'force-dynamic';
 
 export default async function FarePilotAdminPage() {
   const h = await headers();
-  if (!isAdminHost(h.get('x-forwarded-host') ?? h.get('host'))) redirect('https://flycheap.18dn.com/');
+  if (!isAdminHost(h.get('x-forwarded-host') ?? h.get('host'))) redirect('https://flycheap.live/');
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=/admin/farepilot');
   // OWNER ONLY — this console can run arbitrary SQL + shell on production.

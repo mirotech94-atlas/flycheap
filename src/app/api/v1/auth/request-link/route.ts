@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   if (!emailOk || !ipOk) return NextResponse.json({ ok: true });
 
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+  const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
   const baseUrl = `${proto}://${host}`;
 
   const r = await sendMagicLink(email, baseUrl, { mode: 'mobile' });

@@ -15,7 +15,7 @@ type Health = {
 async function fetchHealth(): Promise<Health | null> {
   const h = await headers();
   const proto = h.get('x-forwarded-proto') ?? 'https';
-  const host  = h.get('x-forwarded-host') ?? h.get('host') ?? 'flycheap.18dn.com';
+  const host  = h.get('x-forwarded-host') ?? h.get('host') ?? 'flycheap.live';
   try {
     const r = await fetch(`${proto}://${host}/api/health`, { cache: 'no-store' });
     return await r.json();

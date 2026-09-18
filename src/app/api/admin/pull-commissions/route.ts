@@ -13,7 +13,7 @@ function isSameOrigin(req: NextRequest): boolean {
   const referer = req.headers.get('referer');
   const host = req.headers.get('host');
   if (!host) return false;
-  const expectedHosts = [host, 'flycheap.18dn.com', 'flycheap.18dn.com'];
+  const expectedHosts = [host, 'flycheap.live'];
   const allowed = (url: string | null) => {
     if (!url) return false;
     try {

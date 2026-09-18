@@ -99,7 +99,7 @@ export async function GET(req: Request) {
       // req.url carries the internal origin behind the proxy (localhost:3000),
       // so derive the public origin from the forwarded host instead.
       const publicHost = req.headers.get('x-forwarded-host')
-        ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+        ?? req.headers.get('host') ?? 'flycheap.live';
       return NextResponse.redirect(`https://${publicHost}/`, 302);
     }
 

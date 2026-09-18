@@ -1,4 +1,4 @@
-// Server component — links into the admin portal at admin.flycheap.18dn.com,
+// Server component — links into the admin portal at admin.flycheap.live,
 // rendered only when the current user is an admin. Hidden entirely for everyone
 // else so we don't leak the existence of the portal.
 import { getCurrentUser, isOwner } from '@/lib/auth';
@@ -9,7 +9,7 @@ export async function AdminChip() {
   if (!user || !isOwner(user)) return null;
   return (
     <a
-      href="https://admin.flycheap.18dn.com/"
+      href="https://admin.flycheap.live/"
       title="Open the admin portal"
       className="hidden md:inline-flex items-center gap-2 text-xs px-3 py-1.5 rounded-md border transition no-print"
       style={{

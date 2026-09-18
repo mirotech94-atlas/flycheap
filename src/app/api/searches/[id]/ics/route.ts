@@ -33,7 +33,7 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
 
   const fare = queries.latestFare(numId);
   const now = new Date().toISOString().replace(/[-:]/g, '').replace(/\.\d+/, '');
-  const stamp = `flycheap-${numId}-${Date.now()}@flycheap.18dn.com`;
+  const stamp = `flycheap-${numId}-${Date.now()}@flycheap.live`;
   const partyTotal = fare ? `Party total $${Math.round(fare.total_price_usd)} (${search.adults}A + ${search.infants}I)` : '';
   const perAdult = fare ? `$${Math.round(fare.price_per_adult_usd)}/adult` : 'no fare polled yet';
   const fno = [fare?.outbound_flight_no, fare?.return_flight_no].filter(Boolean).join(' / ');
