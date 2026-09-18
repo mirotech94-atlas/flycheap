@@ -13,7 +13,9 @@ export async function openTicket(formData: FormData) {
 
   const subject = String(formData.get('subject') || '').trim().slice(0, 120);
   const message = String(formData.get('message') || '').trim();
-  if (message.length < 10) redirect('/support?error=short');
+  // The textarea is `required`, so the browser blocks an empty send; only guard
+  // against a whitespace-only body here — no minimum-length nag.
+  if (!message) redirect('/support');
 
   // Same abuse ceiling as the public form: 10 tickets per account per day.
   if (!queries.rateLimitCheck('ticket_user', String(user.id), 10, 86_400)) {

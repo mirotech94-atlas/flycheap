@@ -18,21 +18,33 @@ KEEP="$APP_DIR/.next.static-keep"
 
 cd "$APP_DIR"
 
-if [ -d "$APP_DIR/.next/static" ]; then
+# Build the dir the service actually reads (deploy.sh's zero-downtime flip
+# points `next start` at .next.a/.next.b via .deploy-active-dist). Default to
+# the legacy .next if that file is absent. NOTE: this rebuilds the LIVE dir in
+# place — quick and fine for a small manual fix, but it briefly disrupts the
+# running server. For a clean zero-downtime deploy use deploy/deploy.sh instead.
+DIST=".next"
+if [ -f "$APP_DIR/.deploy-active-dist" ]; then
+  DIST="$(sed -n 's/^NEXT_DIST_DIR=//p' "$APP_DIR/.deploy-active-dist" | tail -1)"
+  [ -n "$DIST" ] || DIST=".next"
+fi
+echo "quick-rebuild: building active dist $DIST in place"
+
+if [ -d "$APP_DIR/$DIST/static" ]; then
   rm -rf "$KEEP"
-  cp -a "$APP_DIR/.next/static" "$KEEP"
+  cp -a "$APP_DIR/$DIST/static" "$KEEP"
 fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/src" "$APP_DIR/scripts" 2>/dev/null || true
-sudo -u "$APP_USER" bash -lc "cd $APP_DIR && node node_modules/next/dist/bin/next build"
+sudo -u "$APP_USER" bash -lc "cd $APP_DIR && NEXT_DIST_DIR=$DIST DEPLOY_LOCK_HELD=1 node node_modules/next/dist/bin/next build"
 
 if [ -d "$KEEP" ]; then
-  cp -an "$KEEP/." "$APP_DIR/.next/static/" 2>/dev/null || true
+  cp -an "$KEEP/." "$APP_DIR/$DIST/static/" 2>/dev/null || true
   rm -rf "$KEEP"
   echo "restored previous static assets — open tabs keep working"
 fi
 
-chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/$DIST"
 chown "$APP_USER:$APP_USER" "$APP_DIR/.env.local"
 chmod 600 "$APP_DIR/.env.local"
 
