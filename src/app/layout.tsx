@@ -75,7 +75,10 @@ const themeBoot = `
   try {
     var root = document.documentElement;
     // FC dropdown theme (Ivory / Paper / Coal) — global, applied before paint.
-    var fcT = localStorage.getItem('fc-theme') || 'ivory';
+    // Defaults to 'coal' to match the attribute the server renders and the
+    // theme FcTweaks enforces; 'ivory' here caused a hydration mismatch on
+    // <html> and a light flash before the effect ran.
+    var fcT = localStorage.getItem('fc-theme') || 'coal';
     var fcA = localStorage.getItem('fc-accent') || 'gold';
     root.setAttribute('data-fc-theme', fcT);
     root.setAttribute('data-fc-accent', fcA);

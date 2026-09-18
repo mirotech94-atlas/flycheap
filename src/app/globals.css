@@ -746,8 +746,8 @@ html.dark .flight-conversation-panel__stat {
 .fc-hero h1 {
   font-family: var(--fc-font-display);
   font-weight: 400;
-  font-size: clamp(40px, 5vw, 68px);
-  line-height: 1.02;
+  font-size: clamp(34px, 3.9vw, 56px);
+  line-height: 1.04;
   letter-spacing: -.025em;
   margin: 18px 0 18px;
   color: var(--fc-cream);
@@ -1641,10 +1641,10 @@ html.dark .flight-conversation-panel__stat {
   font-family: var(--font-fc-sans, var(--font-sans, system-ui, -apple-system, sans-serif));
 }
 .fc-landing .fc-section { margin-top: 96px; }
-.fc-landing .fc-section-title { font-size: 52px; }
+.fc-landing .fc-section-title { font-size: 40px; }
 @media (max-width: 720px) {
   .fc-landing .fc-section { margin-top: 64px; }
-  .fc-landing .fc-section-title { font-size: 38px; }
+  .fc-landing .fc-section-title { font-size: 30px; }
 }
 
 /* Marketing topbar */
@@ -1677,6 +1677,12 @@ html.dark .flight-conversation-panel__stat {
 .fc-landing .fc-l-topbar-right { display: flex; gap: 8px; }
 @media (max-width: 720px) {
   .fc-landing .fc-l-nav { display: none; }
+  /* The right-hand cluster (language menu + Log in + the primary CTA) is ~280px
+     wide. The bar hid the nav but never let the rest reflow, so on a 375px phone
+     it overflowed the document by ~95px and pushed "Get early access" off-screen
+     — the one thing the landing page exists to be clicked. Let it wrap instead. */
+  .fc-landing .fc-l-topbar { flex-wrap: wrap; gap: 12px; }
+  .fc-landing .fc-l-topbar-right { flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
 }
 
 /* Live pill (dark hero variant) */
@@ -2034,7 +2040,7 @@ html.dark .flight-conversation-panel__stat {
 
 /* Override .fc-hero rounded edge for landing hero */
 .fc-landing .fc-hero { border-radius: 28px; margin-top: 0; }
-.fc-landing .fc-hero h1 { font-size: clamp(54px, 6.8vw, 96px); line-height: .98; }
+.fc-landing .fc-hero h1 { font-size: clamp(40px, 4.6vw, 68px); line-height: 1.0; }
 
 /* ============================================================
    FC override layer — escape the legacy app shell so the design
@@ -3481,7 +3487,10 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
   --nc-on-dark:      #E9EDF5;
   --nc-on-dark-mute: #98A4BA;
-  --nc-on-dark-faint:#65718A;
+  /* Raised from #65718A, which was 3.47:1 on --nc-dark — below AA for the
+     10-12px labels that actually use it ("Watching", "target $900").
+     This clears 4.5:1 while staying a clear step below --nc-on-dark-mute. */
+  --nc-on-dark-faint:#7E8AA0;
 
   --nc-display: var(--font-cabin), 'Archivo', system-ui, sans-serif;
   --nc-mono:    var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
@@ -3590,7 +3599,12 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
    ============================================================ */
 .fc-shell[data-fc-theme="cabin"] {
   --fc-ink:         var(--nc-on-dark);
-  --fc-navy:        var(--nc-deck-2);
+  /* --fc-navy is read as INK (section-title accents, route destinations),
+     not as a surface. Mapping it to a panel grey painted those elements in
+     the colour of the panel behind them — 1.2:1. The landing block always
+     had this right; the shell did not, and nobody saw it because the shell
+     was being reverted to coal before it ever painted. */
+  --fc-navy:        var(--nc-teal);
   --fc-gold:        var(--nc-amber);
   --fc-gold-soft:   #F2C67A;
   --fc-emerald:     var(--nc-mint);
@@ -3762,3 +3776,269 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
   border-color: var(--nc-amber-d);
 }
 .fc-landing[data-fc-theme="cabin"] .fc-btn-ink:hover { filter: brightness(1.07); }
+
+/* ===================================================================
+   Hero sky — GetLayers gradient "firmament", retinted to night-cabin.
+   See docs/design/getlayers.md. The canvas is the hero's ground; the
+   existing ::before graticule stays ON TOP of it as instrument chrome,
+   which is why the three layers are numbered explicitly (a ::before
+   paints before real children, so the canvas would otherwise cover it).
+   =================================================================== */
+.fc-hero-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+.fc-hero::before { z-index: 1; }
+.fc-hero-grid,
+.fc-hero .fc-ticker { position: relative; z-index: 2; }
+
+/* Under cabin the hero's own ground is flat --nc-dark: the sky replaces it, and the
+   stock rule drops the hardcoded rgba(212,175,55,.10) glow the token remap can't reach.
+   Amber on a background wash is exactly what the reserved-accent rule forbids. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero { background: var(--nc-dark); }
+
+/* The hero headline's italic accents are INK, not amber. Amber is reserved for
+   fares and primary actions (CLAUDE.md); two display-size words in the fare
+   colour at the top of the page compete with the numbers the rule protects.
+   The serif italic already carries the emphasis. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero h1 em,
+.fc-shell[data-fc-theme="cabin"] .fc-hero h1 em { color: var(--nc-on-dark); }
+
+/* ===================================================================
+   Hero on a phone. Two compounding bugs made the landing hero CLIP
+   rather than wrap at 375px — and .fc-hero has overflow:hidden, so the
+   headline, lede and second CTA were silently cut off mid-word instead
+   of overflowing visibly.
+
+   1. `@media (max-width:1080px) { .fc-hero-grid { grid-template-columns: 1fr } }`
+      A bare `1fr` cannot shrink below min-content, so the widest word in
+      the headline ("monitored", 54px) set the column width: a 340px column
+      inside a 319px box. minmax(0, 1fr) lets it shrink.
+   2. `.fc-landing .fc-hero h1 { font-size: clamp(54px, 6.8vw, 96px) }`
+      6.8vw is only 25px at this width, so the clamp pinned to its 54px
+      FLOOR. The floor, not the preferred size, was the problem.
+   =================================================================== */
+@media (max-width: 720px) {
+  .fc-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 28px 20px 26px;
+  }
+  .fc-landing .fc-hero h1 { font-size: clamp(28px, 7.2vw, 42px); }
+  .fc-hero h1 { font-size: clamp(26px, 6.4vw, 34px); }
+  .fc-hero-cta { flex-wrap: wrap; }
+}
+
+/* ===================================================================
+   Cabin contrast corrections.
+
+   These were invisible until the theme enforcer stopped reverting the
+   landing to coal — the cabin landing block had literally never rendered
+   in a browser, so nothing here had been looked at.
+
+   The shared cause is that two tokens do double duty. --fc-cream is both
+   the page GROUND and the INK on dark bands; --fc-ink is both the ink and
+   the GROUND of dark chrome. The cabin block remaps each for its dominant
+   use, which silently inverts the other one. Override the inverted uses
+   here rather than re-pointing the tokens — 42 rules read --fc-cream.
+   =================================================================== */
+
+/* The hero's four headline figures read color: var(--fc-cream), which under
+   cabin is --nc-dark: #0B1220 ink on a #14181F ground, contrast 1.05. The
+   numbers the whole page is selling were invisible. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero-stat-value { color: var(--nc-on-dark); }
+
+/* The faux browser chrome uses --fc-ink as a BACKGROUND, so cabin turned the
+   bar light while its label stayed white-at-50% (1.17) and its accent stayed
+   amber (1.84). A dark bar is both legible and truer to the product. */
+.fc-landing[data-fc-theme="cabin"] .fc-l-preview-chrome {
+  background: var(--nc-deck-2);
+  border-bottom-color: var(--nc-rule);
+}
+.fc-landing[data-fc-theme="cabin"] .fc-l-preview-chrome .url { color: var(--nc-on-dark-mute); }
+
+/* The price highlight in the how-it-works terminals was dark gold (#7c5c10)
+   on a light gold wash — a light-theme chip left on a dark surface. It marks
+   a FARE, so amber is right here; it just needed inverting. */
+.fc-landing[data-fc-theme="cabin"] .fc-l-howit-screen .hl {
+  background: rgba(232, 163, 61, .14);
+  color: var(--nc-amber);
+}
+
+/* ===================================================================
+   Cabin contrast corrections — dashboard shell.
+
+   Same story as the landing: these only became visible once the theme
+   enforcer stopped reverting .fc-shell from 'cabin' to 'coal', so the
+   shell's cabin block had never actually been rendered either.
+
+   Same two inversions: --fc-paper / --fc-ink are read as INK by some
+   rules and as a GROUND by others, and cabin remaps each for one use.
+   =================================================================== */
+
+/* The ghost button (1.04) and the fares ticker (1.17) were fixed on main in
+   !11, with a fuller treatment than the one written here: it covers .fc-landing
+   as well as .fc-shell, styles the ticker's route/price/separator, and adds the
+   hover state. Two partial definitions would fight — the later one winning per
+   property — so the narrower pair is dropped and main's kept. Same root cause
+   either way: --fc-ink read as a GROUND, --fc-cream read as ink. */
+
+/* A "light" button is a white pill; on a dark shell its near-white label
+   disappeared into it (1.17). The landing already resolves this by turning
+   the light button into the quiet outline — do the same here. */
+.fc-shell[data-fc-theme="cabin"] .fc-btn-light {
+  background: transparent;
+  color: var(--nc-on-dark);
+  border: 1px solid var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-btn-light:hover { background: var(--nc-deck-2); }
+
+/* The white-label brand injection in layout.tsx writes
+   `.text-brand-700,.text-brand-600 { color: <brand> !important }`, and the
+   default brand is the original navy #0a3a6b — 1.55:1 on the cabin ground.
+   The !important is deliberate there (tenant branding must win), so this has
+   to out-specify rather than out-order it: both declarations are !important,
+   so the higher-specificity selector takes it.
+
+   A tenant's own brand colour is overridden on dark surfaces too. That is the
+   right trade for now — an arbitrary tenant hex is not guaranteed legible on
+   any ground — but the real fix is to derive a contrast-safe variant of the
+   brand colour per surface instead of using the raw hex for text. */
+html[data-fc-theme="coal"] .text-brand-700,
+html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
+
+/* Status badges kept their light-theme inks over their own tinted washes. */
+.fc-shell[data-fc-theme="cabin"] .fc-badge-ok {
+  background: rgba(123, 196, 154, .14);
+  color: var(--nc-mint);
+}
+
+/* The login intel panel is always dark, so its figures were written in
+   --fc-cream — the light theme's ground doubling as ink. Under cabin that
+   token is a panel grey (#131C2E), so the stats sat at 1.13:1 on their own
+   panel. The .gold variant is untouched: those are fares. */
+.fc-shell[data-fc-theme="cabin"] .fc-login-stats .v { color: var(--nc-on-dark); }
+.fc-shell[data-fc-theme="cabin"] .fc-login-stats .v.gold { color: var(--nc-amber); }
+
+/* ===================================================================
+   The scan — adapted from GetLayers' "kimi" instrument map.
+
+   Two ambient loops, both deliberately slight. An instrument panel is
+   never quite still, but neither should it compete with the fares.
+   Both are pure CSS so they run on the compositor rather than through
+   React, and both stop dead under reduced motion.
+   =================================================================== */
+
+/* A ping out of the hub and gone. The opacity falls off QUADRATICALLY —
+   linear reads as a ring being deleted, squared reads as something
+   dissipating into distance. */
+@keyframes fc-globe-ping {
+  0%   { r: 6;  opacity: .45; }
+  100% { r: 96; opacity: 0; }
+}
+.fc-globe-ping { animation: fc-globe-ping 4.2s cubic-bezier(.16, 1, .3, 1) infinite; }
+
+/* The poll head running each route. Driven by stroke-dashoffset against
+   pathLength=1, so it is immune to `d` being rebuilt every frame as the
+   globe turns. */
+@keyframes fc-globe-poll {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+.fc-globe-poll { animation: fc-globe-poll 4.6s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-globe-ping { animation: none; opacity: 0; }
+  .fc-globe-poll { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ===================================================================
+   Liquid glass.
+
+   The Apple treatment is not "a translucent panel" — it is four things
+   at once, and dropping any one makes it read as flat plastic:
+
+     1. blur AND saturate behind it, so colour blooms through instead of
+        going grey. The saturation is what sells it.
+     2. a gradient fill, lighter at the top, so the sheet faces a
+        direction instead of being uniformly milky.
+     3. a specular edge — a bright hairline on the TOP lip only, as an
+        inset shadow. Real glass catches light on the edge facing it.
+     4. a soft drop shadow, so it floats above the ground rather than
+        reading as a hole cut into it.
+
+   SPECIFICITY: the landing's own rules are written `.fc-landing .fc-x`
+   (0,2,0), so a bare utility class (0,1,0) loses to them — the live pill
+   kept its old flat blur(8px) until these selectors were raised to match.
+   Listed at both weights, with the scoped pair later in source order so it
+   wins the tie.
+   =================================================================== */
+.fc-glass,
+.fc-landing .fc-glass,
+.fc-shell .fc-glass {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, .10) 0%,
+    rgba(255, 255, 255, .045) 42%,
+    rgba(255, 255, 255, .025) 100%
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 0 0 rgba(255, 255, 255, .05),
+    0 10px 30px -12px rgba(0, 0, 0, .55);
+}
+
+.fc-glass-sm,
+.fc-landing .fc-glass-sm { border-radius: 12px; }
+
+.fc-glass-pill,
+.fc-landing .fc-glass-pill,
+.fc-shell .fc-glass-pill {
+  border-radius: 999px;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, .26),
+    0 6px 18px -8px rgba(0, 0, 0, .5);
+}
+
+/* Without backdrop-filter the fill alone is nearly invisible and the panel
+   loses its edges, so fall back to an opaque deck surface. Written as a
+   single plain condition: `@supports not ((a) or (b))` did not survive the
+   PostCSS pass — it took the backdrop-filter declarations above it with it,
+   which is why the first cut of this rendered as a flat gradient. */
+@supports not (backdrop-filter: blur(1px)) {
+  .fc-glass,
+  .fc-landing .fc-glass,
+  .fc-glass-pill,
+  .fc-landing .fc-glass-pill { background: var(--nc-deck-2); }
+}
+
+/* The hero's instrument elements, in glass. The stat strip had a bare top rule;
+   as a floating panel it needs its own padding and no longer borrows one. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero-stats.fc-glass {
+  border-top: none;
+  padding: 18px 20px;
+  margin-top: 26px;
+}
+/* -webkit- first, then the standard property — the same ordering the block
+   above needs, and the tag rule is scoped hard enough to beat .fc-globe-tag. */
+.fc-landing[data-fc-theme="cabin"] .fc-globe-tag.fc-glass-sm {
+  padding: 6px 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.20);
+}

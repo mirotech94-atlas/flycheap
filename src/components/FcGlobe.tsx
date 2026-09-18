@@ -70,6 +70,8 @@ const LAND_DOTS = generateLandDots();
 
 type Proj = { x: number; y: number; z: number; front: boolean };
 
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
 function project(lat: number, lon: number, rotLon: number, cx: number, cy: number, R: number): Proj | null {
   const phi = (lat * Math.PI) / 180;
   const lam = ((lon + rotLon) * Math.PI) / 180;
@@ -77,25 +79,64 @@ function project(lat: number, lon: number, rotLon: number, cx: number, cy: numbe
   const y = Math.sin(phi);
   const z = Math.cos(phi) * Math.cos(lam);
   if (z < -0.05) return null;
-  return { x: cx + x * R, y: cy - y * R, z, front: z > 0.05 };
+  // Rounded because Math.sin/cos differ between Node and the browser in the last
+  // couple of ULPs, and React then reports a hydration mismatch on every landmass
+  // dot ("this won't be patched up"). 3dp is far below a pixel on a 480 viewBox.
+  return { x: round3(cx + x * R), y: round3(cy - y * R), z, front: z > 0.05 };
 }
 
-export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
-  const [rot, setRot] = useState(0);
+export function FcGlobe({
+  accentColor = 'var(--nc-amber, #E8A33D)',
+  arcColor = 'var(--nc-teal, #6FB3C9)',
+}: { accentColor?: string; arcColor?: string }) {
+  // rot drives the render, so it has to be state. The POINTER does not: it is
+  // damped every frame and only read while drawing, so it lives in a ref and
+  // never schedules a render of its own.
+  const [frame, setFrame] = useState({ rot: 0, px: 0, py: 0 });
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<number>(0);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const ptr = useRef({ x: 0, y: 0, tx: 0, ty: 0 });
 
   useEffect(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    // Off-screen it costs nothing. This matters more here than usual: the globe
+    // re-renders ~400 nodes per frame, so an unseen one was burning a full
+    // React pass 60x a second behind whatever you were actually looking at.
+    let visible = true;
+    const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
+    if (svgRef.current) io.observe(svgRef.current);
+
     lastRef.current = performance.now();
     const tick = (t: number) => {
-      const dt = (t - lastRef.current) / 1000;
-      lastRef.current = t;
-      setRot(r => (r + dt * 8) % 360);
       rafRef.current = requestAnimationFrame(tick);
+      // Clamped so an alt-tab costs a pause rather than a jump.
+      const dt = Math.min((t - lastRef.current) / 1000, 0.05);
+      lastRef.current = t;
+      if (!visible || document.hidden) return;
+
+      const p = ptr.current;
+      // One frame-rate-independent damp. The lag IS the weight — the globe
+      // arrives a beat after your hand instead of being welded to it.
+      const k = 1 - Math.exp(-4.2 * dt);
+      p.x += (p.tx - p.x) * k;
+      p.y += (p.ty - p.y) * k;
+
+      setFrame(f => ({
+        rot: reduce.matches ? f.rot : (f.rot + dt * 8) % 360,
+        px: p.x,
+        py: p.y,
+      }));
     };
     rafRef.current = requestAnimationFrame(tick);
-    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+    return () => {
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      io.disconnect();
+    };
   }, []);
+
+  const { rot, px, py } = frame;
 
   const SIZE = 480;
   const cx = SIZE / 2, cy = SIZE / 2;
@@ -135,12 +176,32 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
     return { d, hot: !!a.hot, priceUsd: a.priceUsd, from: a.from, to: a.to, i };
   }).filter((a): a is { d: string; hot: boolean; priceUsd: number; from: string; to: string; i: number } => a !== null);
 
+  // The pointer in the svg's own coordinates — what the proximity light measures against.
+  const pxSvg = cx + px * R * 0.9;
+  const pySvg = cy + py * R * 0.9;
+
   return (
     <svg
+      ref={svgRef}
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       width="100%"
       height="100%"
-      style={{ maxWidth: 520, display: 'block' }}
+      style={{
+        maxWidth: 520,
+        display: 'block',
+        // Parallax, not rotation. Turning the sphere toward the cursor fights the
+        // ambient spin; shifting it reads as the globe sitting in space that your
+        // hand moves through. 7px is under a degree of apparent swing.
+        transform: `translate(${(px * 7).toFixed(2)}px, ${(py * 7).toFixed(2)}px)`,
+        willChange: 'transform',
+      }}
+      onPointerMove={e => {
+        const r = e.currentTarget.getBoundingClientRect();
+        if (!r.width || !r.height) return;
+        ptr.current.tx = ((e.clientX - r.left) / r.width - 0.5) * 2;
+        ptr.current.ty = ((e.clientY - r.top) / r.height - 0.5) * 2;
+      }}
+      onPointerLeave={() => { ptr.current.tx = 0; ptr.current.ty = 0; }}
     >
       <defs>
         <radialGradient id="fcSphereGrad" cx="35%" cy="32%" r="70%">
@@ -149,9 +210,9 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
           <stop offset="100%" stopColor="#020a1a" />
         </radialGradient>
         <radialGradient id="fcGlowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#3fd6c8" stopOpacity=".18" />
-          <stop offset="60%" stopColor="#3fd6c8" stopOpacity=".04" />
-          <stop offset="100%" stopColor="#3fd6c8" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".18" />
+          <stop offset="60%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".04" />
+          <stop offset="100%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -163,7 +224,7 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         const rx = R * Math.abs(Math.cos(phiRad));
         return (
           <ellipse key={`m${off}`} cx={cx} cy={cy} rx={rx} ry={R}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
         );
       })}
       {[-60, -30, 0, 30, 60].map(lat => {
@@ -172,30 +233,80 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         const rx = R * Math.cos(phi);
         return (
           <ellipse key={`p${lat}`} cx={cx} cy={cy + ry} rx={rx} ry={rx * 0.0001 + 0.5}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
         );
       })}
       <line x1={cx - R} y1={cy} x2={cx + R} y2={cy}
-        stroke="rgba(212,175,55,.18)" strokeWidth="0.6" strokeDasharray="3 5" />
+        stroke="var(--nc-rule-2, rgba(255,255,255,.18))" strokeWidth="0.6" strokeDasharray="3 5" />
 
-      {dots.map((p, i) => (
-        <circle key={i} cx={p.x} cy={p.y} r={p.front ? 1.2 : 0.8}
-          fill={p.front ? 'rgba(63,214,200,.55)' : 'rgba(63,214,200,.18)'} />
-      ))}
+      {/* Proximity light. Vesper disturbs its orb by the ANGLE between the
+          cursor and each point, with a smooth falloff; flattened to this
+          projection that is just distance in svg units. Only front-facing land
+          lights, so the far hemisphere does not glow through the sphere. */}
+      {dots.map((p, i) => {
+        const near = p.front
+          ? Math.max(0, 1 - Math.hypot(p.x - pxSvg, p.y - pySvg) / 96)
+          : 0;
+        // Cubed, not squared: a tighter pool still. And the light is PALE, not
+        // amber — amber means a fare. A cursor glow is decoration, and tinting
+        // 400 land dots with the fare colour is exactly the failure the
+        // reserved-accent rule exists to prevent.
+        const lit = near * near * near;
+        return (
+          <circle key={i} cx={p.x} cy={p.y}
+            r={(p.front ? 1.2 : 0.8) + lit * 0.8}
+            fill={lit > 0.06 ? 'var(--nc-on-dark, #E9EDF5)' : arcColor}
+            fillOpacity={(p.front ? 0.55 : 0.18) + lit * 0.42} />
+        );
+      })}
+
+      {/* THE SCAN. Range rings around the hub with a ping running out through
+          them — Kimi's instrument-panel move, which is a poll made visible:
+          something leaves the hub, reaches, and is gone. Only drawn while the
+          hub is on the near face, or it would sit over the sphere like a
+          sticker instead of on the ground. */}
+      {(() => {
+        const hub = cityProjs.find(c => c.code === 'CAI');
+        if (!hub?.proj?.front) return null;
+        return (
+          <g key="scan">
+            {[24, 44, 68].map((r, i) => (
+              <circle key={r} cx={hub.proj!.x} cy={hub.proj!.y} r={r} fill="none"
+                stroke={i === 1
+                  ? 'var(--nc-rule-2, rgba(255,255,255,.18))'
+                  : 'var(--nc-rule, rgba(255,255,255,.10))'}
+                strokeWidth="0.6" />
+            ))}
+            <circle className="fc-globe-ping" cx={hub.proj!.x} cy={hub.proj!.y}
+              r={6} fill="none" stroke={accentColor} strokeWidth="0.9" />
+          </g>
+        );
+      })()}
 
       {arcs.map(a => (
         <g key={a.i}>
           <path d={a.d} fill="none"
-            stroke={a.hot ? accentColor : 'rgba(63,214,200,.55)'}
+            stroke={a.hot ? accentColor : arcColor}
             strokeWidth={a.hot ? 1.6 : 1}
             strokeLinecap="round"
-            style={{ filter: a.hot ? 'drop-shadow(0 0 4px rgba(212,175,55,.55))' : 'none' }}
-            opacity={a.hot ? 1 : 0.7} />
-          <circle r="3" fill={a.hot ? accentColor : '#3fd6c8'}>
-            <animateMotion dur={`${4 + a.i * 0.4}s`} repeatCount="indefinite" path={a.d} />
-            <animate attributeName="opacity" dur={`${4 + a.i * 0.4}s`} repeatCount="indefinite"
-              values="0;1;1;0" keyTimes="0;0.1;0.9;1" />
-          </circle>
+            style={{ filter: a.hot ? `drop-shadow(0 0 4px ${accentColor})` : 'none' }}
+            opacity={a.hot ? 1 : 0.4} />
+          {/* The poll head. Kimi fills its lap by stroking the SAME path under an
+              animated dash mask rather than moving a token along it, and that is
+              what this needed: `d` is rebuilt every frame as the globe turns, so
+              the <animateMotion> this replaces was restarting its path
+              constantly. pathLength=1 normalises the dash to the arc's own
+              length, so the animation survives `d` changing underneath it. */}
+          <path d={a.d} fill="none" pathLength={1}
+            className="fc-globe-poll"
+            stroke={a.hot ? accentColor : arcColor}
+            strokeWidth={a.hot ? 2.4 : 1.7}
+            strokeLinecap="round"
+            strokeDasharray="0.1 1"
+            style={{
+              animationDelay: `${(a.i * 0.42).toFixed(2)}s`,
+              filter: a.hot ? `drop-shadow(0 0 5px ${accentColor})` : 'none',
+            }} />
         </g>
       ))}
 
@@ -206,8 +317,9 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
           <g key={c.code}>
             <circle cx={c.proj.x} cy={c.proj.y}
               r={isHub ? 4 : 2.2}
-              fill={isHub ? accentColor : '#3fd6c8'}
-              stroke={isHub ? 'rgba(212,175,55,.4)' : 'rgba(63,214,200,.4)'}
+              fill={isHub ? accentColor : arcColor}
+              stroke={isHub ? accentColor : arcColor}
+              strokeOpacity={0.4}
               strokeWidth={isHub ? 3 : 2}
               style={{ filter: isHub ? `drop-shadow(0 0 6px ${accentColor})` : 'none' }} />
             {isHub && (
@@ -222,7 +334,7 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         );
       })}
 
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(63,214,200,.18)" strokeWidth="0.8" />
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--nc-teal, #6FB3C9)" strokeOpacity={0.18} strokeWidth="0.8" />
     </svg>
   );
 }

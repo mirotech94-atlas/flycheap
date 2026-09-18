@@ -4,6 +4,7 @@ import { TIER_LIMITS } from '@/lib/db';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import type { Metadata } from 'next';
 import { FcGlobe } from '@/components/FcGlobe';
+import { SkyGradient } from '@/components/fc/SkyGradient';
 import { FcKpiStrip } from '@/components/FcKpiStrip';
 import { FcBestDealsTable, type FcDealRow } from '@/components/FcBestDealsTable';
 import { FcLiveFeed, type LiveFeedItem } from '@/components/FcLiveFeed';
@@ -123,9 +124,10 @@ export default async function LandingPage() {
 
       {/* ===== Hero ===== */}
       <section className="fc-hero" style={{ marginTop: 28 }}>
+        <SkyGradient className="fc-hero-sky" />
         <div className="fc-hero-grid">
           <div>
-            <div className="fc-l-live-pill">
+            <div className="fc-l-live-pill fc-glass-pill">
               <span className="dot" />
               {singular(fill(t.hero.pill, { providers, fares: fmtCompact(m.snapshots) }))}
             </div>
@@ -140,7 +142,7 @@ export default async function LandingPage() {
               <Link href="/early-access" className="fc-btn fc-btn-gold">{t.hero.ctaEarly}</Link>
               <a href="/demo" target="_blank" rel="noopener" className="fc-btn fc-btn-ghost">{t.hero.ctaDemo}</a>
             </div>
-            <div className="fc-hero-stats">
+            <div className="fc-hero-stats fc-glass">
               <div>
                 <div className="fc-hero-stat-label">{t.hero.statSnapshots}</div>
                 <div className="fc-hero-stat-value">{fmtCompact(m.snapshots)}<span className="delta fc-delta-flat">{t.hero.live}</span></div>
@@ -166,9 +168,9 @@ export default async function LandingPage() {
               <span className="fc-corner tl" /><span className="fc-corner tr" />
               <span className="fc-corner bl" /><span className="fc-corner br" />
             </div>
-            <div className="fc-globe-tag tl">{t.hero.globeTl}</div>
-            <div className="fc-globe-tag br">{fill(t.hero.globeBr, { n: m.activeRoutes })}</div>
-            <FcGlobe accentColor="#d4af37" />
+            <div className="fc-globe-tag tl fc-glass-sm">{t.hero.globeTl}</div>
+            <div className="fc-globe-tag br fc-glass-sm">{fill(t.hero.globeBr, { n: m.activeRoutes })}</div>
+            <FcGlobe />
           </div>
         </div>
         {/* Ticker */}

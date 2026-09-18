@@ -675,7 +675,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
             </div>
             <div className="fc-globe-tag tl">{fill(t.globeTl, { n: filteredDeals.length || 87 })}</div>
             <div className="fc-globe-tag br">{fill(t.globeBr, { a: belowThresholdCount || 2, t: trackedRoutes.length })}</div>
-            <FcGlobe accentColor="#d4af37" />
+            <FcGlobe />
           </div>
         </div>
         {/* Ticker tape */}
@@ -747,7 +747,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           value: String(belowThresholdCount).padStart(2, '0'),
           sub: fill(t.kpiBelowSub, { n: filteredDeals.length }),
           trend: [0, 1, 1, 2, 3, 3, belowThresholdCount],
-          trendColor: '#d4af37',
+          trendColor: 'var(--nc-amber, #E8A33D)',
         },
       ]} />
 

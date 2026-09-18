@@ -36,7 +36,7 @@ const TERMS: Array<{ h: string; body: React.ReactNode }> = [
 
 export default function TrialTermsPage() {
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="ivory" data-fc-accent="gold">
+    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       <header className="fc-l-topbar">
         <Link href="/welcome" className="fc-l-brand">
           <div className="fc-l-brand-mark">

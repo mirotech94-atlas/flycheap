@@ -45,7 +45,7 @@ export function FcKpiStrip({ items }: { items: FcKpi[] }) {
           <div className="fc-kpi-sub">{k.sub}</div>
           {k.trend && (
             <div className="fc-kpi-trend">
-              <FcSparkline data={k.trend} color={k.accent ? '#d4af37' : (k.trendColor || '#1f8a5b')} />
+              <FcSparkline data={k.trend} color={k.accent ? 'var(--nc-amber, #E8A33D)' : (k.trendColor || '#1f8a5b')} />
             </div>
           )}
         </div>
