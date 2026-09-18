@@ -1,0 +1,385 @@
+{
+  "AMS": {
+    "article": "https://en.wikipedia.org/wiki/Amsterdam",
+    "file": "Imagen_de_los_canales_concéntricos_en_Ámsterdam.png",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Amsterdam",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/5/57/Imagen_de_los_canales_conc%C3%A9ntricos_en_%C3%81msterdam.png/1920px-Imagen_de_los_canales_conc%C3%A9ntricos_en_%C3%81msterdam.png?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "ASW": {
+    "article": "https://en.wikipedia.org/wiki/Aswan",
+    "file": "Panoramic_view_of_Aswan,_Egypt.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Aswan",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/0/06/Panoramic_view_of_Aswan%2C_Egypt.jpg/1920px-Panoramic_view_of_Aswan%2C_Egypt.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "ATH": {
+    "article": "https://en.wikipedia.org/wiki/Acropolis_of_Athens",
+    "author": "Giles Laurent",
+    "file": "1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg",
+    "place": "Athens",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/2c/1029_Acropolis_of_Athens_in_Greece_at_night_Photo_by_Giles_Laurent.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "AYT": {
+    "article": "https://en.wikipedia.org/wiki/Antalya",
+    "file": "Falezlerden_Antalya_Konyaaltı_Plajına_doğru_bir_görünüm.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Antalya",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/73/Falezlerden_Antalya_Konyaalt%C4%B1_Plaj%C4%B1na_do%C4%9Fru_bir_g%C3%B6r%C3%BCn%C3%BCm.jpg/1920px-Falezlerden_Antalya_Konyaalt%C4%B1_Plaj%C4%B1na_do%C4%9Fru_bir_g%C3%B6r%C3%BCn%C3%BCm.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "BCN": {
+    "article": "https://en.wikipedia.org/wiki/Barcelona",
+    "file": "Evening_light_over_Barcelona.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Barcelona",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a6/Evening_light_over_Barcelona.jpg/1920px-Evening_light_over_Barcelona.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "BJV": {
+    "article": "https://en.wikipedia.org/wiki/Bodrum",
+    "file": "Sunset_over_Bodrum_I.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Bodrum",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4a/Sunset_over_Bodrum_I.jpg/1920px-Sunset_over_Bodrum_I.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "BKK": {
+    "article": "https://en.wikipedia.org/wiki/Bangkok",
+    "file": "4Y1A1159_Bangkok_(33536795515).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Bangkok",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7d/4Y1A1159_Bangkok_%2833536795515%29.jpg/1920px-4Y1A1159_Bangkok_%2833536795515%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "CAI": {
+    "article": "https://en.wikipedia.org/wiki/Cairo",
+    "file": "Cairo_Opera_House,_Al_Hurriyah_Park_and_the_Nile_river_(14797782354).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Cairo",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/72/Cairo_Opera_House%2C_Al_Hurriyah_Park_and_the_Nile_river_%2814797782354%29.jpg/1920px-Cairo_Opera_House%2C_Al_Hurriyah_Park_and_the_Nile_river_%2814797782354%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "CDG": {
+    "article": "https://en.wikipedia.org/wiki/Paris",
+    "file": "La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques,_Paris_août_2014_(2).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Paris",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/1920px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "CFU": {
+    "article": "https://en.wikipedia.org/wiki/Corfu",
+    "file": "Pontikonisi.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Corfu",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/4/44/Pontikonisi.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "CUN": {
+    "article": "https://en.wikipedia.org/wiki/Canc%C3%BAn",
+    "file": "Cancun_Strand_Luftbild_(22143397586).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Cancún",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d8/Cancun_Strand_Luftbild_%2822143397586%29.jpg/1920px-Cancun_Strand_Luftbild_%2822143397586%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "DPS": {
+    "article": "https://en.wikipedia.org/wiki/Tanah_Lot",
+    "author": "Grayswoodsurrey",
+    "file": "TanahLot_2014.JPG",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:TanahLot_2014.JPG",
+    "place": "Bali",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/8d/TanahLot_2014.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "DXB": {
+    "article": "https://en.wikipedia.org/wiki/Dubai",
+    "file": "Burj_Khalifa_2021.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Dubai",
+    "source": "https://thumb.wikimedia.org/wikipedia/en/thumb/c/c7/Burj_Khalifa_2021.jpg/1920px-Burj_Khalifa_2021.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "HBE": {
+    "article": "https://en.wikipedia.org/wiki/Alexandria",
+    "file": "San_Stefano_Grand_Plaza.JPG",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Alexandria",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/79/San_Stefano_Grand_Plaza.JPG/1920px-San_Stefano_Grand_Plaza.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "HER": {
+    "article": "https://en.wikipedia.org/wiki/Koules_Fortress",
+    "author": "PeterWikiSK",
+    "file": "Venetian_Fortress_of_Koules.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Venetian_Fortress_of_Koules.jpg",
+    "place": "Heraklion",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/20/Venetian_Fortress_of_Koules.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "HKT": {
+    "article": "https://en.wikipedia.org/wiki/Phuket_province",
+    "file": "Phuket_Aerial.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Phuket",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/60/Phuket_Aerial.jpg/1920px-Phuket_Aerial.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "HNL": {
+    "article": "https://en.wikipedia.org/wiki/Honolulu",
+    "file": "2022_Views_from_Diamond_Head_02.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Honolulu",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/e8/2022_Views_from_Diamond_Head_02.jpg/1920px-2022_Views_from_Diamond_Head_02.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "HRG": {
+    "article": "https://en.wikipedia.org/wiki/Hurghada",
+    "file": "Hurghada_Hotels_R03.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Hurghada",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/d/d6/Hurghada_Hotels_R03.jpg/1920px-Hurghada_Hotels_R03.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "IBZ": {
+    "article": "https://en.wikipedia.org/wiki/Sant_Antoni_de_Portmany",
+    "author": "JanManu",
+    "file": "Sant-Antoni-Bahia.JPG",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sant-Antoni-Bahia.JPG",
+    "place": "Ibiza",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/3a/Sant-Antoni-Bahia.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "IST": {
+    "article": "https://en.wikipedia.org/wiki/Istanbul",
+    "file": "Historical_peninsula_and_modern_skyline_of_Istanbul.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Istanbul",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Historical_peninsula_and_modern_skyline_of_Istanbul.jpg/1920px-Historical_peninsula_and_modern_skyline_of_Istanbul.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "JMK": {
+    "article": "https://en.wikipedia.org/wiki/Mykonos",
+    "author": "Warren LeMay from Chicago, IL, United States",
+    "file": "Chora Windmills, Mykonos, Greece (53507023890).jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Chora_Windmills,_Mykonos,_Greece_(53507023890).jpg",
+    "place": "Mykonos",
+    "source": "https://commons.wikimedia.org/wiki/File:Chora_Windmills,_Mykonos,_Greece_(53507023890).jpg"
+  },
+  "JTR": {
+    "article": "https://en.wikipedia.org/wiki/Oia%2C_Greece",
+    "author": "TomasEE",
+    "file": "Oia_sunset_-_panoramio_(2).jpg",
+    "license": "CC BY 3.0",
+    "license_url": "https://creativecommons.org/licenses/by/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Oia_sunset_-_panoramio_(2).jpg",
+    "place": "Santorini",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/37/Oia_sunset_-_panoramio_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "LAX": {
+    "article": "https://en.wikipedia.org/wiki/Los_Angeles",
+    "author": "Gnaphron",
+    "file": "Hollywood_sign_(8485145044).jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Hollywood_sign_(8485145044).jpg",
+    "place": "Los Angeles",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/2/2f/Hollywood_sign_%288485145044%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "LCA": {
+    "article": "https://en.wikipedia.org/wiki/Larnaca",
+    "file": "Larnaca_01-2017_img27_Finikoudes.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Larnaca",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Larnaca_01-2017_img27_Finikoudes.jpg/1920px-Larnaca_01-2017_img27_Finikoudes.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "LHR": {
+    "article": "https://en.wikipedia.org/wiki/London",
+    "file": "London_Skyline_(125508655).jpeg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "London",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/London_Skyline_%28125508655%29.jpeg/1920px-London_Skyline_%28125508655%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "LIS": {
+    "article": "https://en.wikipedia.org/wiki/Lisbon",
+    "author": "Vitor Oliveira from Torres Vedras, PORTUGAL",
+    "file": "Lisboa_-_Portugal_(52597836992).jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Lisboa_-_Portugal_(52597836992).jpg",
+    "place": "Lisbon",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/f/f2/Lisboa_-_Portugal_%2852597836992%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "LON": {
+    "article": "https://en.wikipedia.org/wiki/London",
+    "file": "London_Skyline_(125508655).jpeg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "London",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/London_Skyline_%28125508655%29.jpeg/1920px-London_Skyline_%28125508655%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "LXR": {
+    "article": "https://en.wikipedia.org/wiki/Luxor",
+    "file": "LuxorHotelsIbnWalidSt.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Luxor",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/3/35/LuxorHotelsIbnWalidSt.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "MEX": {
+    "article": "https://en.wikipedia.org/wiki/Mexico_City",
+    "author": "Gobierno CDMX",
+    "file": "Sobrevuelos_CDMX_HJ2A4913_(25514321687)_(cropped).jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Sobrevuelos_CDMX_HJ2A4913_(25514321687)_(cropped).jpg",
+    "place": "Mexico City",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/4/4f/Sobrevuelos_CDMX_HJ2A4913_%2825514321687%29_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "MLE": {
+    "article": "https://en.wikipedia.org/wiki/Mal%C3%A9",
+    "author": "Shahee Ilyas",
+    "file": "Malé.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mal%C3%A9.jpg",
+    "place": "Maldives",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/8/83/Mal%C3%A9.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "NAS": {
+    "article": "https://en.wikipedia.org/wiki/Nassau,_Bahamas",
+    "file": "Nassau,_Bahamas_aerial_view_(cropped).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Nassau, Bahamas",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/8/88/Nassau%2C_Bahamas_aerial_view_%28cropped%29.jpg/1920px-Nassau%2C_Bahamas_aerial_view_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "NYC": {
+    "article": "https://en.wikipedia.org/wiki/New_York_City",
+    "file": "View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_(cropped).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "New York City",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7a/View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg/1920px-View_of_Empire_State_Building_from_Rockefeller_Center_New_York_City_dllu_%28cropped%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "OGG": {
+    "article": "https://en.wikipedia.org/wiki/Lahaina%2C_Hawaii",
+    "author": "en:User:Calbear22",
+    "file": "Lāhainā_oceanfront.JPG",
+    "license": "Public domain",
+    "license_url": "",
+    "page": "https://commons.wikimedia.org/wiki/File:L%C4%81hain%C4%81_oceanfront.JPG",
+    "place": "Maui",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/L%C4%81hain%C4%81_oceanfront.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "PAR": {
+    "article": "https://en.wikipedia.org/wiki/Paris",
+    "file": "La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques,_Paris_août_2014_(2).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Paris",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/1920px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "PFO": {
+    "article": "https://en.wikipedia.org/wiki/Paphos",
+    "file": "Paphos_Marine,_Cyprus_-_panoramio.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Paphos",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/1/1e/Paphos_Marine%2C_Cyprus_-_panoramio.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "PMI": {
+    "article": "https://en.wikipedia.org/wiki/Palma_de_Mallorca",
+    "author": "Thomas Wolf, www.foto-tw.de",
+    "file": "Kathedrale_von_Palma.jpg",
+    "license": "CC BY-SA 3.0 de",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Kathedrale_von_Palma.jpg",
+    "place": "Palma de Mallorca",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Kathedrale_von_Palma.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "PUJ": {
+    "article": "https://en.wikipedia.org/wiki/Punta_Cana",
+    "file": "Cap_Cana_Marina_Dominican_Republic.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Punta Cana",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/Cap_Cana_Marina_Dominican_Republic.jpg/1920px-Cap_Cana_Marina_Dominican_Republic.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "RHO": {
+    "article": "https://en.wikipedia.org/wiki/Lindos",
+    "author": "Thomas Berwing",
+    "file": "20210826-Lindos-DJI_0205.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:20210826-Lindos-DJI_0205.jpg",
+    "place": "Rhodes",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/e/e9/20210826-Lindos-DJI_0205.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "RMF": {
+    "article": "https://en.wikipedia.org/wiki/Marsa_Alam",
+    "file": "Carnelia_Beach,_Marsa_Alam_(2232052889).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Marsa Alam",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Carnelia_Beach%2C_Marsa_Alam_%282232052889%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
+  },
+  "ROM": {
+    "article": "https://en.wikipedia.org/wiki/Rome",
+    "file": "Trevi_Fountain,_Rome,_Italy_2_-_May_2007.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Rome",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1920px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "SAO": {
+    "article": "https://en.wikipedia.org/wiki/S%C3%A3o_Paulo",
+    "author": "Agent010",
+    "file": "Marginal_Pinheiros_e_Jockey_Club.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Marginal_Pinheiros_e_Jockey_Club.jpg",
+    "place": "Sao Paulo",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/7/73/Marginal_Pinheiros_e_Jockey_Club.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "SIN": {
+    "article": "https://en.wikipedia.org/wiki/Marina_Bay_Sands",
+    "author": "This Photo was taken by Supanut Arunoprayote.\n\nFeel free to use any of my images, but please mention me as the author and may send me a message.  (สามารถใช้ภาพได้อิสระ แต่กรุณาใส่เครดิตผู้ถ่ายและอาจส่งข้อความบอกกล่าวด้วย) \n\n\n\nPlease do not upload an updated image here without consultation with the Author. The author would like to make corrections only at his own source. This ensures that the changes are preserved.Please if you think that any changes should be required, please inform the author.Otherwise you can upload a new image with a new name. Please use one of the templates derivative or extract.",
+    "file": "Marina_Bay_Sands_(I).jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Marina_Bay_Sands_(I).jpg",
+    "place": "Singapore",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Marina_Bay_Sands_%28I%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "SSH": {
+    "article": "https://en.wikipedia.org/wiki/Sharm_El_Sheikh",
+    "file": "Sharm_El_Sheikh_-_panoramio_(15).jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Sharm El Sheikh",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Sharm_El_Sheikh_-_panoramio_%2815%29.jpg/1920px-Sharm_El_Sheikh_-_panoramio_%2815%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "SYD": {
+    "article": "https://en.wikipedia.org/wiki/Sydney",
+    "author": "Benh LIEU SONG (Flickr)",
+    "file": "Sydney_Opera_House_and_Harbour_Bridge_Dusk_(2)_2019-06-21.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sydney_Opera_House_and_Harbour_Bridge_Dusk_(2)_2019-06-21.jpg",
+    "place": "Sydney",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/5/53/Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "TFS": {
+    "article": "https://en.wikipedia.org/wiki/Teide",
+    "author": "Thomas Wolf, www.foto-tw.de",
+    "file": "Roque_Cinchado_und_Teide.jpg",
+    "license": "CC BY-SA 3.0 de",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0/de/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Roque_Cinchado_und_Teide.jpg",
+    "place": "Tenerife",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Roque_Cinchado_und_Teide.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "TYO": {
+    "article": "https://en.wikipedia.org/wiki/Tokyo",
+    "file": "Skyscrapers_of_Shinjuku_2009_January.jpg",
+    "license": "See the file page on Wikimedia Commons for the exact licence and author",
+    "place": "Tokyo",
+    "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/b2/Skyscrapers_of_Shinjuku_2009_January.jpg/1920px-Skyscrapers_of_Shinjuku_2009_January.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "WAS": {
+    "article": "https://en.wikipedia.org/wiki/United_States_Capitol",
+    "author": "Martin Falbisoner",
+    "file": "US_Capitol_east_side.JPG",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:US_Capitol_east_side.JPG",
+    "place": "Washington DC",
+    "source": "https://upload.wikimedia.org/wikipedia/commons/9/9f/US_Capitol_east_side.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  }
+}
