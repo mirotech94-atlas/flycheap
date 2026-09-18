@@ -9,6 +9,7 @@ import { DealSlideshow } from '@/components/DealSlideshow';
 import { StayHeroSlide } from '@/components/StayHeroSlide';
 import { bookingLink } from '@/lib/affiliate';
 import { getCityGradient } from '@/lib/cityGradients';
+import { placePhoto } from '@/lib/places';
 import { queries } from '@/lib/db';
 import { buildShowcaseDestinations } from '@/lib/showcaseDestinations';
 
@@ -390,6 +391,7 @@ function HeroDealSlide({ deal, originCity }: { deal: DealRow; originCity: string
   const grad = getCityGradient(deal.destination);
   const isDeal = deal.price < 200;
   const city = cityName(deal.destination);
+  const photo = placePhoto(deal.destination);
 
   const href = bookingLink({
     origin: deal.origin,
@@ -403,13 +405,20 @@ function HeroDealSlide({ deal, originCity }: { deal: DealRow; originCity: string
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      {/* Gradient scene */}
-      <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from}dd 100%)` }} />
-      <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      {/* Giant IATA watermark */}
-      <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[200px] md:text-[260px] font-black text-white/6 font-mono leading-none select-none pointer-events-none">
-        {deal.destination}
-      </div>
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt={city} className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <>
+          {/* Gradient scene */}
+          <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from}dd 100%)` }} />
+          <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+          {/* Giant IATA watermark */}
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[200px] md:text-[260px] font-black text-white/6 font-mono leading-none select-none pointer-events-none">
+            {deal.destination}
+          </div>
+        </>
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
 
       {/* Content */}
@@ -463,6 +472,7 @@ function HeroDestinationSlide({
   price: number; departAt: string | null; returnAt: string | null;
 }) {
   const grad = getCityGradient(destination);
+  const photo = placePhoto(destination);
   const dep = (departAt ?? '').slice(0, 10) || new Date(Date.now() + 30 * 86400000).toISOString().slice(0, 10);
   const ret = (returnAt ?? '').slice(0, 10) || new Date(new Date(dep).getTime() + 7 * 86400000).toISOString().slice(0, 10);
   const href = bookingLink({
@@ -472,11 +482,18 @@ function HeroDestinationSlide({
 
   return (
     <div className="relative w-full h-full overflow-hidden">
-      <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from}dd 100%)` }} />
-      <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
-      <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[180px] md:text-[230px] font-black text-white/6 font-mono leading-none select-none pointer-events-none">
-        {destination}
-      </div>
+      {photo ? (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img src={photo} alt={destinationName} className="absolute inset-0 w-full h-full object-cover" />
+      ) : (
+        <>
+          <div className="absolute inset-0" style={{ background: `linear-gradient(120deg, ${grad.from} 0%, ${grad.to} 60%, ${grad.from}dd 100%)` }} />
+          <div className="absolute inset-0 opacity-[0.05]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '22px 22px' }} />
+          <div className="absolute -right-6 top-1/2 -translate-y-1/2 text-[180px] md:text-[230px] font-black text-white/6 font-mono leading-none select-none pointer-events-none">
+            {destination}
+          </div>
+        </>
+      )}
       <div className="absolute inset-0 bg-gradient-to-r from-black/55 via-black/20 to-transparent" />
 
       <div className="relative h-full flex flex-col justify-center px-8 md:px-14 max-w-2xl">
