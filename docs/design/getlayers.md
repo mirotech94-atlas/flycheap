@@ -255,3 +255,72 @@ only** and never touches a surface declaring a dark one.
   the CTA and the live route arc.
 - `scene_lab` timed out at 300s on the first (detailed) call; a shorter description succeeded.
   Set a per-server `timeout` in MCP settings if authoring scenes becomes routine.
+
+---
+
+## 8. The theme rollout, finished — 2026-09-18
+
+Converting the last six pages to `cabin` and deleting the enforcer's sweep turned
+night-cabin on for real. That surfaced a batch of bugs that had been invisible because
+**the cabin CSS had never actually painted in a browser**.
+
+### The lesson worth keeping
+
+**A dark-looking page is not evidence the right dark theme is applied.** Coal and cabin are
+both dark, so the revert was undetectable by eye for weeks. The tell is the computed token:
+
+```js
+getComputedStyle(el).getPropertyValue('--fc-gold')   // #e8a33d = cabin · #d4af37 = stale
+```
+
+### The structural cause of nearly every contrast bug
+
+Three tokens do double duty, and the cabin blocks remapped each for its dominant use:
+
+| Token | Used as | Also used as | Result under cabin |
+|---|---|---|---|
+| `--fc-cream` | page ground | ink on dark bands | ink became the ground colour (1.05) |
+| `--fc-ink` | ink | ground of dark chrome | chrome bars inverted to light (1.17) |
+| `--fc-navy` | surface (shell block) | **ink** (title accents, route codes) | ink became a panel grey (1.2) |
+
+`--fc-navy` was a genuine mapping error — the shell block pointed it at `--nc-deck-2` while
+the landing block correctly used `--nc-teal`. Fixing the mapping cleared several symptoms at
+once. The other two are legitimately ambiguous, so their inverted *uses* are overridden
+individually rather than re-pointing tokens that 40+ rules depend on.
+
+**If you add a cabin override, first ask whether the token mapping is wrong.** Patching the
+symptom hides the next five instances.
+
+### The audit
+
+Run this in the console on any page; it reports every text node below 4.5:1 against its
+nearest painted ancestor background. All 14 pages currently return zero.
+
+```js
+const L=c=>{const m=c.match(/[\d.]+/g);if(!m)return null;const[r,g,b]=m.slice(0,3).map(Number);
+if(m[3]!==undefined&&+m[3]<0.3)return null;const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4};
+return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b)};
+const B=e=>{while(e){const l=L(getComputedStyle(e).backgroundColor);if(l!==null)return l;e=e.parentElement}return 0};
+[...document.querySelectorAll('body *')].filter(e=>[...e.childNodes].some(n=>n.nodeType===3&&n.textContent.trim()))
+ .map(e=>{const f=L(getComputedStyle(e).color);if(f===null)return null;const b=B(e);
+  return {e,r:(Math.max(f,b)+.05)/(Math.min(f,b)+.05)}}).filter(x=>x&&x.r<4.5);
+```
+
+Two deliberate exclusions: the white-label **"Brand text" swatch** in settings exists to show
+the tenant their own colour, and elements under 30% alpha are skipped as decorative.
+
+### Still open
+
+- **Stale domain on the landing.** `src/app/welcome/page.tsx` hardcodes `flycheap.18dn.com` in
+  the OpenGraph url, the OG/Twitter image urls, and the visible faux-browser URL in the preview
+  section — the cutover moved marketing to `flycheap.live`. The OG ones affect every shared
+  link. Not changed here because the correct value depends on which host serves marketing;
+  derive it from `MARKETING_HOST` / `PUBLIC_CLIENT_HOST` rather than hardcoding again.
+- **White-label brand colour is not contrast-checked.** An arbitrary tenant hex is used raw for
+  link text, so a dark brand on a dark ground is unreadable. Cabin now overrides it; the real
+  fix is to derive a contrast-safe variant per surface.
+- **The test suite does not run.** `tests/helpers/*` and most test files are deleted in the
+  working tree (pre-existing, unstaged), so vitest cannot resolve `@/` and collects nothing.
+- `.fc-shell[data-fc-theme="ivory"]` / `"paper"` rules in globals.css are now dead — no markup
+  declares a light theme.
+
