@@ -26,6 +26,11 @@ export type AlertEmailInput = {
   pctDrop?: number;
   median7d?: number | null;
   context?: Partial<AlertEmailContext>;
+  /** Set when the fare is for dates OTHER than the ones the search tracks.
+   *  The provider's month feed often has no cache for the exact trip and
+   *  quotes a nearby departure instead; the alert must say so plainly rather
+   *  than print the requested dates over someone else's flight. */
+  nearby?: { depart: string; return: string };
 };
 
 const SITE = (process.env.APP_URL || APP_URL).replace(/\/$/, '');
@@ -107,12 +112,19 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
   const isMistake = now < thresholdPerAdult * 0.7 || (pctBelowNormal != null && pctBelowNormal >= 30);
   const tag = isMistake ? '✦ MISTAKE FARE' : isDrop ? '📉 PRICE DROP' : '✈️ BELOW TARGET';
   const route = `${search.origin} → ${search.destination}`;
-  const nights = nightsBetween(search.depart_date, search.return_date);
-  const datesLine = `${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''}`;
+  // When the fare is for shifted dates, every date in this email must be the
+  // fare's own — printing the tracked dates over a different flight would be
+  // a lie, and it is the one thing that makes a fare alert untrustworthy.
+  const fareDepart = input.nearby?.depart ?? search.depart_date;
+  const fareReturn = input.nearby?.return ?? search.return_date;
+  const nights = nightsBetween(fareDepart, fareReturn);
+  const datesLine = `${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}${nights ? ` · ${nights} nights` : ''}`
+    + (input.nearby ? ` · not your tracked ${fmtDow(search.depart_date)}` : '');
   const headlinePrice = normal
     ? `normal ${fmtUSD(normal)} → now ${fmtUSD(now)}${pctBelowNormal && pctBelowNormal > 0 ? ` (−${pctBelowNormal.toFixed(0)}%)` : ''}`
     : `now ${fmtUSD(now)} · target ${fmtUSD(thresholdPerAdult)}`;
-  const subject = `${tag} · ${route} ${headlinePrice} · ${fmtDate(search.depart_date)}`;
+  const subject = `${tag} · ${route} ${headlinePrice} · ${fmtDate(fareDepart)}`
+    + (input.nearby ? ' (nearby date)' : '');
 
   const lastDelta = ctx.lastAlert ? now - ctx.lastAlert.price_per_adult_usd : null;
   const lastAlertLine = ctx.lastAlert && lastDelta != null
@@ -193,10 +205,16 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
         </div>
       </div>` : ''}
 
+      ${input.nearby ? `<div style="background:#fff8e6;border:1px solid #e8a33d;border-radius:12px;padding:12px 16px;margin:0 0 16px;font-size:13px;color:#5a4410">
+        <strong>Heads up — these are not the dates you're tracking.</strong><br>
+        You track <strong>${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}</strong>, and we have no fare cached for those days.
+        The price below is for <strong>${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}</strong>.
+      </div>` : ''}
+
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
         <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-bottom:6px;${mono}">Dates that work</div>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:4px 0;font-weight:700;color:#0a1426">${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''}${fare.outbound_flight_no ? ` · ${esc(fare.outbound_flight_no)}${fare.return_flight_no ? ` / ${esc(fare.return_flight_no)}` : ''}` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</td></tr>
+          <tr><td style="padding:4px 0;font-weight:700;color:#0a1426">${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}${nights ? ` · ${nights} nights` : ''}${fare.outbound_flight_no ? ` · ${esc(fare.outbound_flight_no)}${fare.return_flight_no ? ` / ${esc(fare.return_flight_no)}` : ''}` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</td></tr>
           ${flexRows}
         </table>
         ${ctx.flexDates.length ? `<div style="font-size:11px;color:#8a93a6;margin-top:6px">Nearby dates from our cache priced within 5% of this fare (±3 days).</div>` : ''}
@@ -230,7 +248,10 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     hist30 ? `Last 30 days: low ${fmtUSD(hist30.low)} / high ${fmtUSD(hist30.high)} over ${hist30.days} polled days` : '',
     '',
     'Dates that work:',
-    `  ${fmtDow(search.depart_date)} -> ${fmtDow(search.return_date)}${nights ? ` (${nights} nights)` : ''}  ${fmtUSD(now)}`,
+    `  ${fmtDow(fareDepart)} -> ${fmtDow(fareReturn)}${nights ? ` (${nights} nights)` : ''}  ${fmtUSD(now)}`,
+    ...(input.nearby
+      ? [`  NOTE: these are NOT your tracked dates (${fmtDow(search.depart_date)} -> ${fmtDow(search.return_date)}).`]
+      : []),
     ...ctx.flexDates.map(f => `  ${fmtDow(f.depart)} -> ${fmtDow(f.return)}  ${fmtUSD(f.price)}`),
     '',
     isMistake ? 'BOOK FAST — fares like this get pulled within hours.\n' : '',

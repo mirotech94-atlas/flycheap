@@ -1881,10 +1881,26 @@ export const queries = {
       'INSERT INTO alerts_sent (search_id, fare_snapshot_id, price_per_adult_usd, kind) VALUES (?, ?, ?, ?)'
     ).run(searchId, snapshotId, pricePerAdult, kind),
 
-  lastAlertForSearch: (searchId: number) =>
-    getDb().prepare(
-      'SELECT * FROM alerts_sent WHERE search_id = ? ORDER BY sent_at DESC LIMIT 1'
-    ).get(searchId) as { id: number; price_per_adult_usd: number; sent_at: string; kind?: string } | undefined,
+  /** Most recent alert for a search, optionally only within the last
+   *  `withinDays` days.
+   *
+   *  The window matters: the threshold branch in the poller only re-alerts
+   *  when a fare beats the last alerted price, so an unbounded lookup lets a
+   *  single historic low silence a route permanently (EWR-DXB alerted at $361
+   *  on 2026-08-01 and never fired again while the market sat at $506). Bounding
+   *  the comparison lets the floor decay, so the route re-arms once the old
+   *  alert ages out. */
+  lastAlertForSearch: (searchId: number, withinDays?: number) =>
+    (withinDays && withinDays > 0
+      ? getDb().prepare(
+          `SELECT * FROM alerts_sent WHERE search_id = ?
+             AND sent_at > datetime('now', ?)
+           ORDER BY sent_at DESC LIMIT 1`
+        ).get(searchId, `-${Math.floor(withinDays)} days`)
+      : getDb().prepare(
+          'SELECT * FROM alerts_sent WHERE search_id = ? ORDER BY sent_at DESC LIMIT 1'
+        ).get(searchId)
+    ) as { id: number; price_per_adult_usd: number; sent_at: string; kind?: string } | undefined,
 
   // Cheapest cached deal for each (depart_date, return_date) pair within
   // ±windowDays of a target. Used by the flex-date heatmap on the dashboard.
