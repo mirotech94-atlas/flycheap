@@ -3668,6 +3668,36 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 /* The page bleeds past its own max-width, so paint the viewport too. */
 body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
 
+/* Two more surfaces that read the light sheet's tokens with the light
+   sheet's meaning. Under cabin, --fc-ink is a near-white TEXT colour and
+   --fc-cream is a dark one, so the ticker painted itself white and the
+   ghost CTA's label went dark-on-dark. Same fix as .fc-btn-light above. */
+.fc-shell[data-fc-theme="cabin"] .fc-ticker,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker {
+  background: var(--nc-deck);
+  color: var(--nc-on-dark);
+  border-top: 1px solid var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-route,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-route { color: var(--nc-on-dark); }
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-price,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-price { color: var(--nc-amber); }
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-sep,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-sep { background: var(--nc-rule-2); }
+
+.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost,
+.fc-landing[data-fc-theme="cabin"] .fc-btn-ghost {
+  background: rgba(255,255,255,.06);
+  color: var(--nc-on-dark);
+  border-color: var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost:hover,
+.fc-landing[data-fc-theme="cabin"] .fc-btn-ghost:hover {
+  background: var(--nc-deck-2);
+  border-color: var(--nc-amber);
+  color: var(--nc-on-dark);
+}
+
 /* Surfaces that hardcode a light value rather than reading a token. */
 .fc-landing[data-fc-theme="cabin"] .fc-l-nav a:hover { background: var(--nc-deck-2); }
 
