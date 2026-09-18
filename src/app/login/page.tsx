@@ -130,7 +130,7 @@ export default async function LoginPage(
   }
 
   return (
-    <div className="fc-shell fc-login -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="ivory" data-fc-accent="gold">
+    <div className="fc-shell fc-login -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       {/* ── Left: live intelligence panel (real data) ── */}
       <div className="fc-login-intel">
         <div className="fc-login-intel-inner">

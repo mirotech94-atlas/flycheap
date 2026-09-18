@@ -3792,4 +3792,5 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
    fares and primary actions (CLAUDE.md); two display-size words in the fare
    colour at the top of the page compete with the numbers the rule protects.
    The serif italic already carries the emphasis. */
-.fc-landing[data-fc-theme="cabin"] .fc-hero h1 em { color: var(--nc-on-dark); }
+.fc-landing[data-fc-theme="cabin"] .fc-hero h1 em,
+.fc-shell[data-fc-theme="cabin"] .fc-hero h1 em { color: var(--nc-on-dark); }
