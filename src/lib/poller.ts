@@ -8,7 +8,7 @@ import { effectiveTarget } from './targets';
 /** How far back the threshold branch looks for a previous alert when deciding
  *  whether a fare is "new news". Override with ALERT_FLOOR_DAYS to tune how
  *  aggressively a route re-arms; 0 restores the old unbounded behaviour. */
-const ALERT_FLOOR_DAYS = Number(process.env.ALERT_FLOOR_DAYS ?? 7);
+export const ALERT_FLOOR_DAYS = Number(process.env.ALERT_FLOOR_DAYS ?? 7);
 
 export type PollResult = {
   search_id: number;
@@ -235,7 +235,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   // threshold alert above; they just don't get "this is unusually cheap".
   const ownerLimits = limitsForUser(queries.getUserById(ownerId));
   if (!alerted && ownerLimits.priceDropAlerts && !isNearby) {
-    const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct);
+    const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct, ALERT_FLOOR_DAYS);
     if (drop.isDrop) {
       const results = await notifyAll({
         kind: 'price-drop',

@@ -38,6 +38,7 @@ export function detectPriceDrop(
   searchId: number,
   todayPricePerAdult: number,
   dropPct: number,
+  floorDays?: number,
 ): PriceDropResult {
   const median = median7dForSearch(searchId);
   if (median === null) {
@@ -50,7 +51,12 @@ export function detectPriceDrop(
     return { isDrop: false, pctBelowMedian: pctBelow, median7d: median, reason: `only ${pctBelow.toFixed(1)}% below median (need ${dropPct}%)` };
   }
 
-  const last = queries.lastAlertForSearch(searchId);
+  // Same decaying floor the threshold branch uses. Without a window this
+  // check re-created the ratchet here: every active route was pinned to a
+  // historic alert price (EWR-DXB to $361 from 2026-08-01) and a genuine
+  // 10%-below-median drop was thrown away because it did not also beat that
+  // old low. Bounding the lookup lets the floor age out.
+  const last = queries.lastAlertForSearch(searchId, floorDays);
   if (last && todayPricePerAdult >= last.price_per_adult_usd) {
     return { isDrop: false, pctBelowMedian: pctBelow, median7d: median, reason: 'already alerted on equal/lower price' };
   }
