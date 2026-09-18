@@ -3923,3 +3923,122 @@ html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
    panel. The .gold variant is untouched: those are fares. */
 .fc-shell[data-fc-theme="cabin"] .fc-login-stats .v { color: var(--nc-on-dark); }
 .fc-shell[data-fc-theme="cabin"] .fc-login-stats .v.gold { color: var(--nc-amber); }
+
+/* ===================================================================
+   The scan — adapted from GetLayers' "kimi" instrument map.
+
+   Two ambient loops, both deliberately slight. An instrument panel is
+   never quite still, but neither should it compete with the fares.
+   Both are pure CSS so they run on the compositor rather than through
+   React, and both stop dead under reduced motion.
+   =================================================================== */
+
+/* A ping out of the hub and gone. The opacity falls off QUADRATICALLY —
+   linear reads as a ring being deleted, squared reads as something
+   dissipating into distance. */
+@keyframes fc-globe-ping {
+  0%   { r: 6;  opacity: .45; }
+  100% { r: 96; opacity: 0; }
+}
+.fc-globe-ping { animation: fc-globe-ping 4.2s cubic-bezier(.16, 1, .3, 1) infinite; }
+
+/* The poll head running each route. Driven by stroke-dashoffset against
+   pathLength=1, so it is immune to `d` being rebuilt every frame as the
+   globe turns. */
+@keyframes fc-globe-poll {
+  from { stroke-dashoffset: 1; }
+  to   { stroke-dashoffset: 0; }
+}
+.fc-globe-poll { animation: fc-globe-poll 4.6s linear infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .fc-globe-ping { animation: none; opacity: 0; }
+  .fc-globe-poll { animation: none; stroke-dashoffset: 0; }
+}
+
+/* ===================================================================
+   Liquid glass.
+
+   The Apple treatment is not "a translucent panel" — it is four things
+   at once, and dropping any one makes it read as flat plastic:
+
+     1. blur AND saturate behind it, so colour blooms through instead of
+        going grey. The saturation is what sells it.
+     2. a gradient fill, lighter at the top, so the sheet faces a
+        direction instead of being uniformly milky.
+     3. a specular edge — a bright hairline on the TOP lip only, as an
+        inset shadow. Real glass catches light on the edge facing it.
+     4. a soft drop shadow, so it floats above the ground rather than
+        reading as a hole cut into it.
+
+   SPECIFICITY: the landing's own rules are written `.fc-landing .fc-x`
+   (0,2,0), so a bare utility class (0,1,0) loses to them — the live pill
+   kept its old flat blur(8px) until these selectors were raised to match.
+   Listed at both weights, with the scoped pair later in source order so it
+   wins the tie.
+   =================================================================== */
+.fc-glass,
+.fc-landing .fc-glass,
+.fc-shell .fc-glass {
+  position: relative;
+  background: linear-gradient(
+    160deg,
+    rgba(255, 255, 255, .10) 0%,
+    rgba(255, 255, 255, .045) 42%,
+    rgba(255, 255, 255, .025) 100%
+  );
+  -webkit-backdrop-filter: blur(18px) saturate(180%);
+  backdrop-filter: blur(18px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, .10);
+  border-radius: 16px;
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, .22),
+    inset 0 -1px 0 0 rgba(255, 255, 255, .05),
+    0 10px 30px -12px rgba(0, 0, 0, .55);
+}
+
+.fc-glass-sm,
+.fc-landing .fc-glass-sm { border-radius: 12px; }
+
+.fc-glass-pill,
+.fc-landing .fc-glass-pill,
+.fc-shell .fc-glass-pill {
+  border-radius: 999px;
+  background: linear-gradient(160deg, rgba(255,255,255,.12), rgba(255,255,255,.04));
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, .26),
+    0 6px 18px -8px rgba(0, 0, 0, .5);
+}
+
+/* Without backdrop-filter the fill alone is nearly invisible and the panel
+   loses its edges, so fall back to an opaque deck surface. Written as a
+   single plain condition: `@supports not ((a) or (b))` did not survive the
+   PostCSS pass — it took the backdrop-filter declarations above it with it,
+   which is why the first cut of this rendered as a flat gradient. */
+@supports not (backdrop-filter: blur(1px)) {
+  .fc-glass,
+  .fc-landing .fc-glass,
+  .fc-glass-pill,
+  .fc-landing .fc-glass-pill { background: var(--nc-deck-2); }
+}
+
+/* The hero's instrument elements, in glass. The stat strip had a bare top rule;
+   as a floating panel it needs its own padding and no longer borrows one. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero-stats.fc-glass {
+  border-top: none;
+  padding: 18px 20px;
+  margin-top: 26px;
+}
+/* -webkit- first, then the standard property — the same ordering the block
+   above needs, and the tag rule is scoped hard enough to beat .fc-globe-tag. */
+.fc-landing[data-fc-theme="cabin"] .fc-globe-tag.fc-glass-sm {
+  padding: 6px 10px;
+  background: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,.03));
+  -webkit-backdrop-filter: blur(14px) saturate(170%);
+  backdrop-filter: blur(14px) saturate(170%);
+  border: 1px solid rgba(255,255,255,.10);
+  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.20);
+}
