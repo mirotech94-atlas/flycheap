@@ -70,6 +70,8 @@ const LAND_DOTS = generateLandDots();
 
 type Proj = { x: number; y: number; z: number; front: boolean };
 
+const round3 = (n: number) => Math.round(n * 1000) / 1000;
+
 function project(lat: number, lon: number, rotLon: number, cx: number, cy: number, R: number): Proj | null {
   const phi = (lat * Math.PI) / 180;
   const lam = ((lon + rotLon) * Math.PI) / 180;
@@ -77,10 +79,16 @@ function project(lat: number, lon: number, rotLon: number, cx: number, cy: numbe
   const y = Math.sin(phi);
   const z = Math.cos(phi) * Math.cos(lam);
   if (z < -0.05) return null;
-  return { x: cx + x * R, y: cy - y * R, z, front: z > 0.05 };
+  // Rounded because Math.sin/cos differ between Node and the browser in the last
+  // couple of ULPs, and React then reports a hydration mismatch on every landmass
+  // dot ("this won't be patched up"). 3dp is far below a pixel on a 480 viewBox.
+  return { x: round3(cx + x * R), y: round3(cy - y * R), z, front: z > 0.05 };
 }
 
-export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
+export function FcGlobe({
+  accentColor = 'var(--nc-amber, #E8A33D)',
+  arcColor = 'var(--nc-teal, #6FB3C9)',
+}: { accentColor?: string; arcColor?: string }) {
   const [rot, setRot] = useState(0);
   const rafRef = useRef<number | null>(null);
   const lastRef = useRef<number>(0);
@@ -149,9 +157,9 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
           <stop offset="100%" stopColor="#020a1a" />
         </radialGradient>
         <radialGradient id="fcGlowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="#3fd6c8" stopOpacity=".18" />
-          <stop offset="60%" stopColor="#3fd6c8" stopOpacity=".04" />
-          <stop offset="100%" stopColor="#3fd6c8" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".18" />
+          <stop offset="60%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".04" />
+          <stop offset="100%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity="0" />
         </radialGradient>
       </defs>
 
@@ -163,7 +171,7 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         const rx = R * Math.abs(Math.cos(phiRad));
         return (
           <ellipse key={`m${off}`} cx={cx} cy={cy} rx={rx} ry={R}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
         );
       })}
       {[-60, -30, 0, 30, 60].map(lat => {
@@ -172,26 +180,26 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         const rx = R * Math.cos(phi);
         return (
           <ellipse key={`p${lat}`} cx={cx} cy={cy + ry} rx={rx} ry={rx * 0.0001 + 0.5}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
         );
       })}
       <line x1={cx - R} y1={cy} x2={cx + R} y2={cy}
-        stroke="rgba(212,175,55,.18)" strokeWidth="0.6" strokeDasharray="3 5" />
+        stroke="var(--nc-rule-2, rgba(255,255,255,.18))" strokeWidth="0.6" strokeDasharray="3 5" />
 
       {dots.map((p, i) => (
         <circle key={i} cx={p.x} cy={p.y} r={p.front ? 1.2 : 0.8}
-          fill={p.front ? 'rgba(63,214,200,.55)' : 'rgba(63,214,200,.18)'} />
+          fill={arcColor} fillOpacity={p.front ? 0.55 : 0.18} />
       ))}
 
       {arcs.map(a => (
         <g key={a.i}>
           <path d={a.d} fill="none"
-            stroke={a.hot ? accentColor : 'rgba(63,214,200,.55)'}
+            stroke={a.hot ? accentColor : arcColor}
             strokeWidth={a.hot ? 1.6 : 1}
             strokeLinecap="round"
-            style={{ filter: a.hot ? 'drop-shadow(0 0 4px rgba(212,175,55,.55))' : 'none' }}
-            opacity={a.hot ? 1 : 0.7} />
-          <circle r="3" fill={a.hot ? accentColor : '#3fd6c8'}>
+            style={{ filter: a.hot ? `drop-shadow(0 0 4px ${accentColor})` : 'none' }}
+            opacity={a.hot ? 1 : 0.4} />
+          <circle r="3" fill={a.hot ? accentColor : arcColor}>
             <animateMotion dur={`${4 + a.i * 0.4}s`} repeatCount="indefinite" path={a.d} />
             <animate attributeName="opacity" dur={`${4 + a.i * 0.4}s`} repeatCount="indefinite"
               values="0;1;1;0" keyTimes="0;0.1;0.9;1" />
@@ -206,8 +214,9 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
           <g key={c.code}>
             <circle cx={c.proj.x} cy={c.proj.y}
               r={isHub ? 4 : 2.2}
-              fill={isHub ? accentColor : '#3fd6c8'}
-              stroke={isHub ? 'rgba(212,175,55,.4)' : 'rgba(63,214,200,.4)'}
+              fill={isHub ? accentColor : arcColor}
+              stroke={isHub ? accentColor : arcColor}
+              strokeOpacity={0.4}
               strokeWidth={isHub ? 3 : 2}
               style={{ filter: isHub ? `drop-shadow(0 0 6px ${accentColor})` : 'none' }} />
             {isHub && (
@@ -222,7 +231,7 @@ export function FcGlobe({ accentColor = '#d4af37' }: { accentColor?: string }) {
         );
       })}
 
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="rgba(63,214,200,.18)" strokeWidth="0.8" />
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--nc-teal, #6FB3C9)" strokeOpacity={0.18} strokeWidth="0.8" />
     </svg>
   );
 }

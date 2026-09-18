@@ -4,6 +4,7 @@ import { TIER_LIMITS } from '@/lib/db';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import type { Metadata } from 'next';
 import { FcGlobe } from '@/components/FcGlobe';
+import { SkyGradient } from '@/components/fc/SkyGradient';
 import { FcKpiStrip } from '@/components/FcKpiStrip';
 import { FcBestDealsTable, type FcDealRow } from '@/components/FcBestDealsTable';
 import { FcLiveFeed, type LiveFeedItem } from '@/components/FcLiveFeed';
@@ -123,6 +124,7 @@ export default async function LandingPage() {
 
       {/* ===== Hero ===== */}
       <section className="fc-hero" style={{ marginTop: 28 }}>
+        <SkyGradient className="fc-hero-sky" />
         <div className="fc-hero-grid">
           <div>
             <div className="fc-l-live-pill">
@@ -168,7 +170,7 @@ export default async function LandingPage() {
             </div>
             <div className="fc-globe-tag tl">{t.hero.globeTl}</div>
             <div className="fc-globe-tag br">{fill(t.hero.globeBr, { n: m.activeRoutes })}</div>
-            <FcGlobe accentColor="#d4af37" />
+            <FcGlobe />
           </div>
         </div>
         {/* Ticker */}

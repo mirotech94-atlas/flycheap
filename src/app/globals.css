@@ -3762,3 +3762,28 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
   border-color: var(--nc-amber-d);
 }
 .fc-landing[data-fc-theme="cabin"] .fc-btn-ink:hover { filter: brightness(1.07); }
+
+/* ===================================================================
+   Hero sky — GetLayers gradient "firmament", retinted to night-cabin.
+   See docs/design/getlayers.md. The canvas is the hero's ground; the
+   existing ::before graticule stays ON TOP of it as instrument chrome,
+   which is why the three layers are numbered explicitly (a ::before
+   paints before real children, so the canvas would otherwise cover it).
+   =================================================================== */
+.fc-hero-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+.fc-hero::before { z-index: 1; }
+.fc-hero-grid,
+.fc-hero .fc-ticker { position: relative; z-index: 2; }
+
+/* Under cabin the hero's own ground is flat --nc-dark: the sky replaces it, and the
+   stock rule drops the hardcoded rgba(212,175,55,.10) glow the token remap can't reach.
+   Amber on a background wash is exactly what the reserved-accent rule forbids. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero { background: var(--nc-dark); }
