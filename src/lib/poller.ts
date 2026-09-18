@@ -145,10 +145,23 @@ async function pollOne(search: SearchRow): Promise<PollResult> {
 /** Shared tail: snapshot the offer, evaluate alert rules, notify. */
 async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<PollResult> {
   const summary = summarizeOffer(cheapest, search.adults, search.infants);
-  // Offers sourced from the /get_latest_prices month feed are NEARBY dates
-  // (often weeks off the requested days), not the exact trip the user tracks.
-  // Record them for coverage/history, but never fire a price alert on them.
-  const isNearby = ((cheapest as { raw?: { source?: string } }).raw?.source) === 'get_latest_prices';
+  // Offers sourced from the /get_latest_prices month feed are usually NEARBY
+  // dates (often weeks off the requested days), not the exact trip the user
+  // tracks. Record them for coverage/history, but never fire a price alert on
+  // them.
+  //
+  // "Usually", not "always": the month feed sometimes happens to return the
+  // exact dates the search asked for. Treating the FEED as the signal rather
+  // than the DATES made those fares permanently unalertable — JFK-SYD wanted
+  // 2026-12-15, was quoted 2026-12-15, and was still suppressed as nearby. So
+  // compare the dates and only call it nearby when they actually differ.
+  const fromMonthFeed = ((cheapest as { raw?: { source?: string } }).raw?.source) === 'get_latest_prices';
+  const day = (iso: string | null | undefined) => (iso ? String(iso).slice(0, 10) : null);
+  const datesMatchRequest =
+    search.date_mode !== 'any' &&
+    day(cheapest.outbound_depart_iso) === day(search.depart_date) &&
+    day(cheapest.return_depart_iso) === day(search.return_date);
+  const isNearby = fromMonthFeed && !datesMatchRequest;
   const inserted = queries.insertFare({
     search_id: search.id,
     ...summary,
