@@ -209,6 +209,26 @@
     "place": "Dubai",
     "source": "https://thumb.wikimedia.org/wikipedia/en/thumb/c/c7/Burj_Khalifa_2021.jpg/1920px-Burj_Khalifa_2021.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "EDI": {
+    "article": "https://en.wikipedia.org/wiki/Edinburgh",
+    "author": "Andrew Colin",
+    "file": "Skyline_of_Edinburgh.jpg",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skyline_of_Edinburgh.jpg",
+    "place": "Edinburgh",
+    "source": "https://commons.wikimedia.org/wiki/File:Skyline_of_Edinburgh.jpg"
+  },
+  "FLL": {
+    "article": "https://en.wikipedia.org/wiki/Fort_Lauderdale%2C_Florida",
+    "author": "KeanoManu",
+    "file": "Skyline_of_Fort_Lauderdale,_Nov-15.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skyline_of_Fort_Lauderdale,_Nov-15.jpg",
+    "place": "Fort Lauderdale",
+    "source": "https://commons.wikimedia.org/wiki/File:Skyline_of_Fort_Lauderdale,_Nov-15.jpg"
+  },
   "FRA": {
     "article": "https://en.wikipedia.org/wiki/Frankfurt",
     "author": "Dr. Thomas Liptak",
@@ -218,6 +238,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg",
     "place": "Frankfurt",
     "source": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg"
+  },
+  "GLA": {
+    "article": "https://en.wikipedia.org/wiki/Glasgow_Scotland_city",
+    "author": "Michael D Beckwith",
+    "file": "Glasgow City Chambers Exterior.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Glasgow_City_Chambers_Exterior.jpg",
+    "place": "Glasgow",
+    "source": "https://commons.wikimedia.org/wiki/File:Glasgow_City_Chambers_Exterior.jpg"
+  },
+  "GOT": {
+    "article": "https://en.wikipedia.org/wiki/Gothenburg_Sweden",
+    "author": "Virtual-Pano",
+    "file": "0660 Sweden Gothenburg Waterfront.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:0660_Sweden_Gothenburg_Waterfront.jpg",
+    "place": "Gothenburg",
+    "source": "https://commons.wikimedia.org/wiki/File:0660_Sweden_Gothenburg_Waterfront.jpg"
   },
   "HBE": {
     "article": "https://en.wikipedia.org/wiki/Alexandria",
@@ -299,6 +339,16 @@
     "place": "Istanbul",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/cb/Historical_peninsula_and_modern_skyline_of_Istanbul.jpg/1920px-Historical_peninsula_and_modern_skyline_of_Istanbul.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "JAX": {
+    "article": "https://en.wikipedia.org/wiki/Jacksonville_Florida_skyline",
+    "author": "Quintin Soloviev",
+    "file": "Jacksonville skyline.jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Jacksonville_skyline.jpg",
+    "place": "Jacksonville",
+    "source": "https://commons.wikimedia.org/wiki/File:Jacksonville_skyline.jpg"
+  },
   "JKT": {
     "article": "https://en.wikipedia.org/wiki/Jakarta",
     "author": "Medelam",
@@ -328,6 +378,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Oia_sunset_-_panoramio_(2).jpg",
     "place": "Santorini",
     "source": "https://upload.wikimedia.org/wikipedia/commons/3/37/Oia_sunset_-_panoramio_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "KSC": {
+    "article": "https://en.wikipedia.org/wiki/Kosice_Slovakia",
+    "author": "Ingo Mehling",
+    "file": "Kosice - National Theatre.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Kosice_-_National_Theatre.jpg",
+    "place": "Kosice",
+    "source": "https://commons.wikimedia.org/wiki/File:Kosice_-_National_Theatre.jpg"
   },
   "KUL": {
     "article": "https://en.wikipedia.org/wiki/Kuala_Lumpur",
@@ -398,6 +458,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:London_Skyline_(125508655).jpeg",
     "place": "London",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/6/67/London_Skyline_%28125508655%29.jpeg/1920px-London_Skyline_%28125508655%29.jpeg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "LUX": {
+    "article": "https://en.wikipedia.org/wiki/Luxembourg_City",
+    "author": "Cayambe",
+    "file": "Luxembourg_Grand_Ducal_Palace_01.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Luxembourg_Grand_Ducal_Palace_01.jpg",
+    "place": "Luxembourg",
+    "source": "https://commons.wikimedia.org/wiki/File:Luxembourg_Grand_Ducal_Palace_01.jpg"
   },
   "LXR": {
     "article": "https://en.wikipedia.org/wiki/Luxor",
@@ -529,6 +599,16 @@
     "place": "Paris",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/1920px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "PDX": {
+    "article": "https://en.wikipedia.org/wiki/Portland%2C_Oregon",
+    "author": "Spicypepper999",
+    "file": "Portland_Oregon_Aerial,_June_2025.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Portland_Oregon_Aerial,_June_2025.jpg",
+    "place": "Portland",
+    "source": "https://commons.wikimedia.org/wiki/File:Portland_Oregon_Aerial,_June_2025.jpg"
+  },
   "PFO": {
     "article": "https://en.wikipedia.org/wiki/Paphos",
     "author": "Dmitry Panov",
@@ -589,6 +669,16 @@
     "place": "Rome",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1920px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "SAC": {
+    "article": "https://en.wikipedia.org/wiki/Sacramento_California_skyline",
+    "author": "Quintin Soloviev",
+    "file": "Sacramento, CA skyline.jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sacramento,_CA_skyline.jpg",
+    "place": "Sacramento",
+    "source": "https://commons.wikimedia.org/wiki/File:Sacramento,_CA_skyline.jpg"
+  },
   "SAO": {
     "article": "https://en.wikipedia.org/wiki/S%C3%A3o_Paulo",
     "author": "Agent010",
@@ -598,6 +688,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Marginal_Pinheiros_e_Jockey_Club.jpg",
     "place": "Sao Paulo",
     "source": "https://upload.wikimedia.org/wikipedia/commons/7/73/Marginal_Pinheiros_e_Jockey_Club.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "SAT": {
+    "article": "https://en.wikipedia.org/wiki/San_Antonio_Texas_downtown_skyline",
+    "author": "Katie Haugland Bowen",
+    "file": "San antonio blue hour.jpg",
+    "license": "CC BY 2.0",
+    "license_url": "https://creativecommons.org/licenses/by/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:San_antonio_blue_hour.jpg",
+    "place": "San Antonio",
+    "source": "https://commons.wikimedia.org/wiki/File:San_antonio_blue_hour.jpg"
   },
   "SEA": {
     "article": "https://en.wikipedia.org/wiki/Seattle",
@@ -659,6 +759,16 @@
     "place": "Sharm El Sheikh",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/ac/Sharm_El_Sheikh_-_panoramio_%2815%29.jpg/1920px-Sharm_El_Sheikh_-_panoramio_%2815%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
   },
+  "STO": {
+    "article": "https://en.wikipedia.org/wiki/Stockholm_Sweden_city",
+    "author": "ArildV",
+    "file": "Stockholms stadshus February 2026 03.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Stockholms_stadshus_February_2026_03.jpg",
+    "place": "Stockholm",
+    "source": "https://commons.wikimedia.org/wiki/File:Stockholms_stadshus_February_2026_03.jpg"
+  },
   "SYD": {
     "article": "https://en.wikipedia.org/wiki/Sydney",
     "author": "Benh LIEU SONG (Flickr)",
@@ -678,6 +788,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Roque_Cinchado_und_Teide.jpg",
     "place": "Tenerife",
     "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Roque_Cinchado_und_Teide.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "TPA": {
+    "article": "https://en.wikipedia.org/wiki/Tampa%2C_Florida",
+    "author": "Clément Bardot",
+    "file": "Downtown_Tampa,_Florida.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Downtown_Tampa,_Florida.jpg",
+    "place": "Tampa",
+    "source": "https://commons.wikimedia.org/wiki/File:Downtown_Tampa,_Florida.jpg"
   },
   "TYO": {
     "article": "https://en.wikipedia.org/wiki/Tokyo",
