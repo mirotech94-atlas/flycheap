@@ -15,7 +15,7 @@ type Channel = (typeof CHANNELS)[number];
 
 const PostSchema = z.object({ body: z.string().min(5).max(900) });
 
-const BASE = 'https://flycheap.18dn.com';
+const BASE = 'https://flycheap.live';
 
 function bookUrl(pick: { origin: string; destination: string; outbound_date: string; return_date: string }, channel: Channel) {
   // Aviasales search deep-link (the surface our /go redirect attributes).

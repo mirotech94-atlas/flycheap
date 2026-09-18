@@ -19,12 +19,12 @@ afterEach(() => {
 });
 
 describe('hosts (no env set)', () => {
-  it('defaults to the legacy hosts', async () => {
+  it('defaults to the live flycheap.live hosts', async () => {
     vi.resetModules();
     const hosts = await import('@/lib/hosts');
-    expect(hosts.CLIENT_HOST).toBe('flycheap.18dn.com');
-    expect(hosts.ADMIN_HOST).toBe('admin.flycheap.18dn.com');
-    expect(hosts.APP_URL).toBe('https://flycheap.18dn.com');
+    expect(hosts.CLIENT_HOST).toBe('my.flycheap.live');
+    expect(hosts.ADMIN_HOST).toBe('admin.flycheap.live');
+    expect(hosts.APP_URL).toBe('https://my.flycheap.live');
   });
 
   it('isOurHost recognizes our hosts and rejects others', async () => {

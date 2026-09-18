@@ -1,12 +1,12 @@
 /**
- * Canonical hostnames. Set CLIENT_HOST / ADMIN_HOST in .env.local to cut over
- * (e.g. my.flycheap.live / admin.flycheap.live); defaults are the legacy hosts
- * so a deploy without the env vars changes nothing.
+ * Canonical hostnames. Set CLIENT_HOST / ADMIN_HOST in .env.local to override;
+ * defaults are the live flycheap.live hosts (the retired flycheap.18dn.com is
+ * kept only in OUR_HOSTS/ADMIN_HOSTS below as a recognizer safety net).
  */
 const clean = (v: string | undefined) => (v ?? '').trim().toLowerCase().replace(/^https?:\/\//, '').replace(/\/$/, '');
 
-export const CLIENT_HOST = clean(process.env.CLIENT_HOST) || 'flycheap.18dn.com';
-export const ADMIN_HOST = clean(process.env.ADMIN_HOST) || 'admin.flycheap.18dn.com';
+export const CLIENT_HOST = clean(process.env.CLIENT_HOST) || 'my.flycheap.live';
+export const ADMIN_HOST = clean(process.env.ADMIN_HOST) || 'admin.flycheap.live';
 export const APP_URL = `https://${CLIENT_HOST}`;
 export const ADMIN_URL = `https://${ADMIN_HOST}`;
 
