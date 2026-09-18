@@ -5,6 +5,11 @@ import { notifyAll, runSubscriptionAlerts } from './notifier';
 import { detectPriceDrop } from './priceDrops';
 import { effectiveTarget } from './targets';
 
+/** How far back the threshold branch looks for a previous alert when deciding
+ *  whether a fare is "new news". Override with ALERT_FLOOR_DAYS to tune how
+ *  aggressively a route re-arms; 0 restores the old unbounded behaviour. */
+export const ALERT_FLOOR_DAYS = Number(process.env.ALERT_FLOOR_DAYS ?? 7);
+
 export type PollResult = {
   search_id: number;
   origin: string;
@@ -140,10 +145,29 @@ async function pollOne(search: SearchRow): Promise<PollResult> {
 /** Shared tail: snapshot the offer, evaluate alert rules, notify. */
 async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<PollResult> {
   const summary = summarizeOffer(cheapest, search.adults, search.infants);
-  // Offers sourced from the /get_latest_prices month feed are NEARBY dates
-  // (often weeks off the requested days), not the exact trip the user tracks.
-  // Record them for coverage/history, but never fire a price alert on them.
-  const isNearby = ((cheapest as { raw?: { source?: string } }).raw?.source) === 'get_latest_prices';
+  // Offers sourced from the /get_latest_prices month feed are usually NEARBY
+  // dates (often weeks off the requested days), not the exact trip the user
+  // tracks. Record them for coverage/history, but never fire a price alert on
+  // them.
+  //
+  // "Usually", not "always": the month feed sometimes happens to return the
+  // exact dates the search asked for. Treating the FEED as the signal rather
+  // than the DATES made those fares permanently unalertable — JFK-SYD wanted
+  // 2026-12-15, was quoted 2026-12-15, and was still suppressed as nearby. So
+  // compare the dates and only call it nearby when they actually differ.
+  const fromMonthFeed = ((cheapest as { raw?: { source?: string } }).raw?.source) === 'get_latest_prices';
+  const day = (iso: string | null | undefined) => (iso ? String(iso).slice(0, 10) : null);
+  const datesMatchRequest =
+    search.date_mode !== 'any' &&
+    day(cheapest.outbound_depart_iso) === day(search.depart_date) &&
+    day(cheapest.return_depart_iso) === day(search.return_date);
+  const isNearby = fromMonthFeed && !datesMatchRequest;
+  // Passed to every channel so a shifted-date fare is labelled as such rather
+  // than silently printed over the tracked dates.
+  const nearbyDates = isNearby
+    ? { depart: day(cheapest.outbound_depart_iso) ?? search.depart_date,
+        return: day(cheapest.return_depart_iso) ?? search.return_date }
+    : undefined;
   const inserted = queries.insertFare({
     search_id: search.id,
     ...summary,
@@ -180,10 +204,17 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   let alertKind: 'threshold' | 'price-drop' | undefined;
   let dropPctActual: number | undefined;
 
-  // (1) Threshold-cross alert: cheaper than user's target AND cheaper than the last alert sent.
-  const underThreshold = !isNearby && summary.price_per_adult_usd < threshold;
+  // (1) Threshold-cross alert: cheaper than user's target AND cheaper than the
+  // last alert sent.
+  //
+  // Nearby-date fares used to be excluded here. That silenced four of five
+  // live routes outright: the provider has no cache for their exact days and
+  // only ever quotes a shifted departure, so no price could ever alert. A
+  // labelled alert beats no alert — the notifier now prints the fare's own
+  // dates and says plainly that they are not the tracked ones.
+  const underThreshold = summary.price_per_adult_usd < threshold;
   if (underThreshold) {
-    const lastAlert = queries.lastAlertForSearch(search.id);
+    const lastAlert = queries.lastAlertForSearch(search.id, ALERT_FLOOR_DAYS);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {
       const results = await notifyAll({
         kind: 'threshold',
@@ -191,6 +222,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
         fare: fareRow,
         thresholdPerAdult: threshold,
         ownerUserId: ownerId,
+        nearby: nearbyDates,
       });
       const anyOk = results.some(r => r.ok);
       if (anyOk) {
@@ -229,8 +261,8 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   // anything, so it is a paid capability. Free users still get every
   // threshold alert above; they just don't get "this is unusually cheap".
   const ownerLimits = limitsForUser(queries.getUserById(ownerId));
-  if (!alerted && ownerLimits.priceDropAlerts && !isNearby) {
-    const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct);
+  if (!alerted && ownerLimits.priceDropAlerts) {
+    const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct, ALERT_FLOOR_DAYS);
     if (drop.isDrop) {
       const results = await notifyAll({
         kind: 'price-drop',
@@ -240,6 +272,7 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
         pctDrop: drop.pctBelowMedian,
         median7d: drop.median7d,
         ownerUserId: ownerId,
+        nearby: nearbyDates,
       });
       const anyOk = results.some(r => r.ok);
       if (anyOk) {

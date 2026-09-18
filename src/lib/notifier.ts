@@ -23,15 +23,21 @@ function shortMessage(opts: {
   fare: FareRow;
   thresholdPerAdult: number;
   pctDrop?: number;
+  nearby?: { depart: string; return: string };
 }): string {
-  const { kind, search, fare, thresholdPerAdult, pctDrop } = opts;
+  const { kind, search, fare, thresholdPerAdult, pctDrop, nearby } = opts;
   const tag = kind === 'price-drop'
     ? `📉 PRICE DROP ${pctDrop ? `−${pctDrop.toFixed(0)}%` : ''}`
     : kind === 'ready'
       ? '🎯 Your fare is ready!'
       : '✈️ Cheap fare';
   const route = `${search.origin}→${search.destination}`;
-  const dates = `${fmtDate(search.depart_date)}→${fmtDate(search.return_date)}`;
+  // Show the fare's OWN dates when they differ from the tracked ones, and say
+  // so — an SMS that prints the tracked dates over a different flight is worse
+  // than no SMS.
+  const dates = nearby
+    ? `${fmtDate(nearby.depart)}→${fmtDate(nearby.return)} (NOT your ${fmtDate(search.depart_date)})`
+    : `${fmtDate(search.depart_date)}→${fmtDate(search.return_date)}`;
   const price = fmtUSD(fare.price_per_adult_usd);
   const total = fmtUSD(fare.total_price_usd);
   const vsThresh = fare.price_per_adult_usd < thresholdPerAdult
@@ -406,6 +412,9 @@ export async function notifyAll(opts: {
   median7d?: number | null;
   /** Per-tenant: when set, look up the owner's email/phone/channels first. */
   ownerUserId?: number;
+  /** Fare is for dates other than the tracked ones (provider had no cache for
+   *  the exact trip). Every channel must surface this rather than hide it. */
+  nearby?: { depart: string; return: string };
 }): Promise<NotifyResult[]> {
   const uid = opts.ownerUserId;
 
@@ -460,6 +469,7 @@ export async function notifyAll(opts: {
       kind: (opts.kind === 'digest' || opts.kind === 'ready') ? 'threshold' : opts.kind,
       pctDrop: opts.pctDrop,
       median7d: opts.median7d,
+      nearby: opts.nearby,
       context: buildAlertContext({ search: opts.search, fare: opts.fare, median7d: opts.median7d }),
     };
     const r = await sendFareAlert(emailInput);

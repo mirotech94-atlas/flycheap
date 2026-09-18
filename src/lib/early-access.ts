@@ -16,7 +16,8 @@ export type EarlyAccessRow = {
   approve_token: string | null; approved_at: string | null; declined_at: string | null;
 };
 /** Where new access requests are announced (Approve / Decline links). */
-export const NOTIFY_TO = process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.live';
+export const NOTIFY_TO: string[] = (process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.live')
+  .split(',').map(s => s.trim()).filter(Boolean);
 
 let ensured = false;
 function ensure() {
@@ -173,7 +174,9 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
     <p style="margin-top:22px;color:#94a3b8;font-size:12px">Approving emails ${row.email} a sign-up link. Full list: <a href="${APP}/api/early-access?format=csv" style="color:#94a3b8">CSV export</a> (admin login required).</p>
   </div>`;
   try {
-    await r.emails.send({ from: supportFrom('FlyCheap Early Access'), to: NOTIFY_TO, replyTo: row.email, subject: `Access request #${row.position}: ${row.email}`, html });
+    const sent = await r.emails.send({ from: supportFrom('FlyCheap Early Access'), to: NOTIFY_TO, replyTo: row.email, subject: `Access request #${row.position}: ${row.email}`, html });
+    if (sent.error) console.error('[early-access] notify rejected:', JSON.stringify(sent.error));
+    else console.log('[early-access] notify sent id=' + sent.data?.id + ' to=' + NOTIFY_TO.join(',') + ' for #' + row.position + ' ' + row.email);
   } catch (e) { console.error('[early-access] notify failed:', (e as Error).message); }
 }
 

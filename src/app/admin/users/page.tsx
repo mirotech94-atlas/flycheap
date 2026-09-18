@@ -1,6 +1,8 @@
 import Link from 'next/link';
 import { queries } from '@/lib/db';
+import { getCurrentUser } from '@/lib/auth';
 import { fmtRelative } from '@/lib/utils';
+import { RowMenu } from './RowMenu';
 
 export const dynamic = 'force-dynamic';
 
@@ -8,6 +10,7 @@ export default async function UsersPage({
   searchParams,
 }: { searchParams: Promise<{ q?: string; tier?: string }> }) {
   const params = await searchParams;
+  const me = await getCurrentUser();
   const q = (params.q ?? '').trim().toLowerCase();
   const tierFilter = params.tier ?? '';
 
@@ -63,11 +66,12 @@ export default async function UsersPage({
               <th className="px-4 py-2 text-right">Live sessions</th>
               <th className="px-4 py-2">Last seen</th>
               <th className="px-4 py-2">Joined</th>
+              <th className="px-4 py-2 w-10"><span className="sr-only">Actions</span></th>
             </tr>
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={7} className="px-4 py-6 text-center text-white/50 text-sm">No users match.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-white/50 text-sm">No users match.</td></tr>
             )}
             {filtered.map(u => (
               <tr key={u.id} className="border-t border-white/5 hover:bg-white/3">
@@ -90,6 +94,15 @@ export default async function UsersPage({
                 <td className="px-4 py-2 text-right tabular-nums">{u.live_sessions}</td>
                 <td className="px-4 py-2 text-xs text-white/55">{u.last_action_at ? fmtRelative(u.last_action_at + 'Z') : '—'}</td>
                 <td className="px-4 py-2 text-xs text-white/55">{fmtRelative(u.created_at + 'Z')}</td>
+                <td className="px-4 py-2 text-right">
+                  <RowMenu
+                    userId={u.id}
+                    email={u.email}
+                    tier={u.tier}
+                    status={u.subscription_status}
+                    isSelf={me?.id === u.id}
+                  />
+                </td>
               </tr>
             ))}
           </tbody>
