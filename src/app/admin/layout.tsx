@@ -14,9 +14,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const h = await headers();
   const nextPath = h.get('x-pathname') || '/admin';
   if (!user) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
-  // Founder-only portal — a single admin identity. Send everyone else to the main site
-  // (an in-host '/' would rewrite back to /admin and loop).
-  if (!isOwner(user)) redirect('https://flycheap.18dn.com/');
+  // Founder-only portal. A signed-in NON-owner (e.g. a client session — the
+  // session cookie is shared across *.flycheap.live) must NOT be bounced to the
+  // marketing site: that traps them with no way to switch accounts. Send them to
+  // the admin login form, which lets them sign in as the owner.
+  if (!isOwner(user)) redirect(`/login?next=${encodeURIComponent(nextPath)}`);
   // Whether the owner has 2FA available for FarePilot step-up (SQL/shell).
   const farePilotTotpEnabled = (user.totp_enabled === 1 && !!user.totp_secret) || !!process.env.OWNER_TOTP_SECRET;
 
