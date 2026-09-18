@@ -3880,16 +3880,12 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
    rules and as a GROUND by others, and cabin remaps each for one use.
    =================================================================== */
 
-/* "Add a new watch" was --nc-deck ink on a white-5% wash: 1.04. The button
-   label was, in practice, not there. */
-.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost { color: var(--nc-on-dark); }
-
-/* The fares ticker used --fc-ink as its GROUND, so cabin turned the strip
-   light while its text stayed white-at-75% (1.17). */
-.fc-shell[data-fc-theme="cabin"] .fc-ticker {
-  background: var(--nc-deck-2);
-  border-color: var(--nc-rule);
-}
+/* The ghost button (1.04) and the fares ticker (1.17) were fixed on main in
+   !11, with a fuller treatment than the one written here: it covers .fc-landing
+   as well as .fc-shell, styles the ticker's route/price/separator, and adds the
+   hover state. Two partial definitions would fight — the later one winning per
+   property — so the narrower pair is dropped and main's kept. Same root cause
+   either way: --fc-ink read as a GROUND, --fc-cream read as ink. */
 
 /* A "light" button is a white pill; on a dark shell its near-white label
    disappeared into it (1.17). The landing already resolves this by turning
