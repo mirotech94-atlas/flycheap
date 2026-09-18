@@ -154,6 +154,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
               <a href="/about#affiliate-partners" className="underline">Disclosure</a>
               <a href="/terms" className="underline">Terms</a>
               <a href="/privacy" className="underline">Privacy</a>
+              <a href="/credits" className="underline">Photo credits</a>
             </div>
           </div>
         </footer>

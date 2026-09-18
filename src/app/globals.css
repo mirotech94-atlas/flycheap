@@ -3668,6 +3668,66 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 /* The page bleeds past its own max-width, so paint the viewport too. */
 body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
 
+/* Two more surfaces that read the light sheet's tokens with the light
+   sheet's meaning. Under cabin, --fc-ink is a near-white TEXT colour and
+   --fc-cream is a dark one, so the ticker painted itself white and the
+   ghost CTA's label went dark-on-dark. Same fix as .fc-btn-light above. */
+.fc-shell[data-fc-theme="cabin"] .fc-ticker,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker {
+  background: var(--nc-deck);
+  color: var(--nc-on-dark);
+  border-top: 1px solid var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-route,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-route { color: var(--nc-on-dark); }
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-price,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-price { color: var(--nc-amber); }
+.fc-shell[data-fc-theme="cabin"] .fc-ticker-sep,
+.fc-landing[data-fc-theme="cabin"] .fc-ticker-sep { background: var(--nc-rule-2); }
+
+.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost,
+.fc-landing[data-fc-theme="cabin"] .fc-btn-ghost {
+  background: rgba(255,255,255,.06);
+  color: var(--nc-on-dark);
+  border-color: var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost:hover,
+.fc-landing[data-fc-theme="cabin"] .fc-btn-ghost:hover {
+  background: var(--nc-deck-2);
+  border-color: var(--nc-amber);
+  color: var(--nc-on-dark);
+}
+
+/* Photo credits (/credits). CC BY / CC BY-SA want the credit where a
+   reader can see it, so this is a real page, not a footnote. */
+.fc-credits {
+  list-style: none; margin: 32px 0 0; padding: 0;
+  display: grid; gap: 18px;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+.fc-credit {
+  display: flex; flex-direction: column;
+  border: 1px solid var(--fc-line); border-radius: 12px; overflow: hidden;
+  background: var(--fc-paper);
+}
+.fc-credit img {
+  width: 100%; aspect-ratio: 16 / 10; object-fit: cover; display: block;
+  background: var(--fc-line);
+}
+.fc-credit-body { padding: 10px 12px 12px; }
+.fc-credit-place {
+  font-family: var(--fc-font-display); font-weight: 700; font-size: 15px;
+  line-height: 1.2; color: var(--fc-ink);
+}
+.fc-credit-code {
+  font-family: var(--fc-font-mono); font-size: 10.5px; letter-spacing: .1em;
+  color: var(--fc-faint); margin-left: 4px;
+}
+.fc-credit-author { font-size: 13px; color: var(--fc-muted); margin-top: 3px; }
+.fc-credit-meta { font-size: 11.5px; color: var(--fc-faint); margin-top: 5px; }
+.fc-credit-meta a { color: inherit; text-decoration: underline; }
+.fc-credit-meta a:hover { color: var(--fc-gold); }
+
 /* Surfaces that hardcode a light value rather than reading a token. */
 .fc-landing[data-fc-theme="cabin"] .fc-l-nav a:hover { background: var(--nc-deck-2); }
 

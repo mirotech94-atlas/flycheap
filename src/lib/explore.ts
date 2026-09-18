@@ -166,6 +166,18 @@ const CITY_NAMES: Record<string, string> = {
   ATL: 'Atlanta', LAS: 'Las Vegas', SFO: 'San Francisco', SEA: 'Seattle',
   TAS: 'Tashkent', MOW: 'Moscow', LOS: 'Lagos',
   ALG: 'Algiers', RAK: 'Marrakech', NBO: 'Nairobi', CMN: 'Casablanca',
+
+  // Codes that reached the slideshow from real tracked searches but had no
+  // entry here, so the hero headline printed the raw IATA ("IAD", "ATH").
+  WAS: 'Washington DC', IAD: 'Washington Dulles', DCA: 'Washington National', BWI: 'Baltimore',
+  LGA: 'New York (LGA)', ATH: 'Athens', LIS: 'Lisbon',
+  SAO: 'Sao Paulo', GRU: 'Sao Paulo', VCP: 'Campinas',
+  MLE: 'Maldives', ASW: 'Aswan', LXR: 'Luxor', HBE: 'Alexandria',
+  SSH: 'Sharm El Sheikh', HRG: 'Hurghada', RMF: 'Marsa Alam',
+  DPS: 'Bali', HKT: 'Phuket', HNL: 'Honolulu', OGG: 'Maui', NAS: 'Nassau',
+  JTR: 'Santorini', JMK: 'Mykonos', CFU: 'Corfu', HER: 'Heraklion', RHO: 'Rhodes',
+  PMI: 'Palma de Mallorca', IBZ: 'Ibiza', TFS: 'Tenerife',
+  AYT: 'Antalya', BJV: 'Bodrum', LCA: 'Larnaca', PFO: 'Paphos',
 };
 
 export function cityName(code: string): string {
