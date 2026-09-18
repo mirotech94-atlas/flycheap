@@ -100,6 +100,8 @@ glab mr approve                    # optional — record a review before merging
 glab mr merge
 ```
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full guide (setup, commit style, tests).
+
 ## Repo
 
 Private on GitLab: `gitlab.com/mirotech94/flycheap-tracker`.
