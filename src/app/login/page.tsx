@@ -139,7 +139,7 @@ export default async function LoginPage(
               <LogoMark size={22} />
             </div>
             <div>
-              <div className="fc-l-brand-name" style={{ color: 'var(--fc-cream)' }}>FlyCheap</div>
+              <div className="fc-l-brand-name" style={{ color: 'var(--fc-ink)' }}>FlyCheap</div>
               <div className="fc-l-brand-meta" style={{ color: 'rgba(255,255,255,.5)' }}>{t.brandMeta}</div>
             </div>
           </Link>

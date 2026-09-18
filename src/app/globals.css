@@ -1677,6 +1677,12 @@ html.dark .flight-conversation-panel__stat {
 .fc-landing .fc-l-topbar-right { display: flex; gap: 8px; }
 @media (max-width: 720px) {
   .fc-landing .fc-l-nav { display: none; }
+  /* The right-hand cluster (language menu + Log in + the primary CTA) is ~280px
+     wide. The bar hid the nav but never let the rest reflow, so on a 375px phone
+     it overflowed the document by ~95px and pushed "Get early access" off-screen
+     — the one thing the landing page exists to be clicked. Let it wrap instead. */
+  .fc-landing .fc-l-topbar { flex-wrap: wrap; gap: 12px; }
+  .fc-landing .fc-l-topbar-right { flex-wrap: wrap; justify-content: flex-end; margin-left: auto; }
 }
 
 /* Live pill (dark hero variant) */
@@ -3481,7 +3487,10 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
   --nc-on-dark:      #E9EDF5;
   --nc-on-dark-mute: #98A4BA;
-  --nc-on-dark-faint:#65718A;
+  /* Raised from #65718A, which was 3.47:1 on --nc-dark — below AA for the
+     10-12px labels that actually use it ("Watching", "target $900").
+     This clears 4.5:1 while staying a clear step below --nc-on-dark-mute. */
+  --nc-on-dark-faint:#7E8AA0;
 
   --nc-display: var(--font-cabin), 'Archivo', system-ui, sans-serif;
   --nc-mono:    var(--font-mono), 'JetBrains Mono', ui-monospace, monospace;
@@ -3590,7 +3599,12 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
    ============================================================ */
 .fc-shell[data-fc-theme="cabin"] {
   --fc-ink:         var(--nc-on-dark);
-  --fc-navy:        var(--nc-deck-2);
+  /* --fc-navy is read as INK (section-title accents, route destinations),
+     not as a surface. Mapping it to a panel grey painted those elements in
+     the colour of the panel behind them — 1.2:1. The landing block always
+     had this right; the shell did not, and nobody saw it because the shell
+     was being reverted to coal before it ever painted. */
+  --fc-navy:        var(--nc-teal);
   --fc-gold:        var(--nc-amber);
   --fc-gold-soft:   #F2C67A;
   --fc-emerald:     var(--nc-mint);
@@ -3794,3 +3808,122 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
    The serif italic already carries the emphasis. */
 .fc-landing[data-fc-theme="cabin"] .fc-hero h1 em,
 .fc-shell[data-fc-theme="cabin"] .fc-hero h1 em { color: var(--nc-on-dark); }
+
+/* ===================================================================
+   Hero on a phone. Two compounding bugs made the landing hero CLIP
+   rather than wrap at 375px — and .fc-hero has overflow:hidden, so the
+   headline, lede and second CTA were silently cut off mid-word instead
+   of overflowing visibly.
+
+   1. `@media (max-width:1080px) { .fc-hero-grid { grid-template-columns: 1fr } }`
+      A bare `1fr` cannot shrink below min-content, so the widest word in
+      the headline ("monitored", 54px) set the column width: a 340px column
+      inside a 319px box. minmax(0, 1fr) lets it shrink.
+   2. `.fc-landing .fc-hero h1 { font-size: clamp(54px, 6.8vw, 96px) }`
+      6.8vw is only 25px at this width, so the clamp pinned to its 54px
+      FLOOR. The floor, not the preferred size, was the problem.
+   =================================================================== */
+@media (max-width: 720px) {
+  .fc-hero-grid {
+    grid-template-columns: minmax(0, 1fr);
+    padding: 28px 20px 26px;
+  }
+  .fc-landing .fc-hero h1 { font-size: clamp(32px, 8.5vw, 54px); }
+  .fc-hero h1 { font-size: clamp(30px, 7.5vw, 40px); }
+  .fc-hero-cta { flex-wrap: wrap; }
+}
+
+/* ===================================================================
+   Cabin contrast corrections.
+
+   These were invisible until the theme enforcer stopped reverting the
+   landing to coal — the cabin landing block had literally never rendered
+   in a browser, so nothing here had been looked at.
+
+   The shared cause is that two tokens do double duty. --fc-cream is both
+   the page GROUND and the INK on dark bands; --fc-ink is both the ink and
+   the GROUND of dark chrome. The cabin block remaps each for its dominant
+   use, which silently inverts the other one. Override the inverted uses
+   here rather than re-pointing the tokens — 42 rules read --fc-cream.
+   =================================================================== */
+
+/* The hero's four headline figures read color: var(--fc-cream), which under
+   cabin is --nc-dark: #0B1220 ink on a #14181F ground, contrast 1.05. The
+   numbers the whole page is selling were invisible. */
+.fc-landing[data-fc-theme="cabin"] .fc-hero-stat-value { color: var(--nc-on-dark); }
+
+/* The faux browser chrome uses --fc-ink as a BACKGROUND, so cabin turned the
+   bar light while its label stayed white-at-50% (1.17) and its accent stayed
+   amber (1.84). A dark bar is both legible and truer to the product. */
+.fc-landing[data-fc-theme="cabin"] .fc-l-preview-chrome {
+  background: var(--nc-deck-2);
+  border-bottom-color: var(--nc-rule);
+}
+.fc-landing[data-fc-theme="cabin"] .fc-l-preview-chrome .url { color: var(--nc-on-dark-mute); }
+
+/* The price highlight in the how-it-works terminals was dark gold (#7c5c10)
+   on a light gold wash — a light-theme chip left on a dark surface. It marks
+   a FARE, so amber is right here; it just needed inverting. */
+.fc-landing[data-fc-theme="cabin"] .fc-l-howit-screen .hl {
+  background: rgba(232, 163, 61, .14);
+  color: var(--nc-amber);
+}
+
+/* ===================================================================
+   Cabin contrast corrections — dashboard shell.
+
+   Same story as the landing: these only became visible once the theme
+   enforcer stopped reverting .fc-shell from 'cabin' to 'coal', so the
+   shell's cabin block had never actually been rendered either.
+
+   Same two inversions: --fc-paper / --fc-ink are read as INK by some
+   rules and as a GROUND by others, and cabin remaps each for one use.
+   =================================================================== */
+
+/* "Add a new watch" was --nc-deck ink on a white-5% wash: 1.04. The button
+   label was, in practice, not there. */
+.fc-shell[data-fc-theme="cabin"] .fc-btn-ghost { color: var(--nc-on-dark); }
+
+/* The fares ticker used --fc-ink as its GROUND, so cabin turned the strip
+   light while its text stayed white-at-75% (1.17). */
+.fc-shell[data-fc-theme="cabin"] .fc-ticker {
+  background: var(--nc-deck-2);
+  border-color: var(--nc-rule);
+}
+
+/* A "light" button is a white pill; on a dark shell its near-white label
+   disappeared into it (1.17). The landing already resolves this by turning
+   the light button into the quiet outline — do the same here. */
+.fc-shell[data-fc-theme="cabin"] .fc-btn-light {
+  background: transparent;
+  color: var(--nc-on-dark);
+  border: 1px solid var(--nc-rule-2);
+}
+.fc-shell[data-fc-theme="cabin"] .fc-btn-light:hover { background: var(--nc-deck-2); }
+
+/* The white-label brand injection in layout.tsx writes
+   `.text-brand-700,.text-brand-600 { color: <brand> !important }`, and the
+   default brand is the original navy #0a3a6b — 1.55:1 on the cabin ground.
+   The !important is deliberate there (tenant branding must win), so this has
+   to out-specify rather than out-order it: both declarations are !important,
+   so the higher-specificity selector takes it.
+
+   A tenant's own brand colour is overridden on dark surfaces too. That is the
+   right trade for now — an arbitrary tenant hex is not guaranteed legible on
+   any ground — but the real fix is to derive a contrast-safe variant of the
+   brand colour per surface instead of using the raw hex for text. */
+html[data-fc-theme="coal"] .text-brand-700,
+html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
+
+/* Status badges kept their light-theme inks over their own tinted washes. */
+.fc-shell[data-fc-theme="cabin"] .fc-badge-ok {
+  background: rgba(123, 196, 154, .14);
+  color: var(--nc-mint);
+}
+
+/* The login intel panel is always dark, so its figures were written in
+   --fc-cream — the light theme's ground doubling as ink. Under cabin that
+   token is a panel grey (#131C2E), so the stats sat at 1.13:1 on their own
+   panel. The .gold variant is untouched: those are fares. */
+.fc-shell[data-fc-theme="cabin"] .fc-login-stats .v { color: var(--nc-on-dark); }
+.fc-shell[data-fc-theme="cabin"] .fc-login-stats .v.gold { color: var(--nc-amber); }

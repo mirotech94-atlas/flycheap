@@ -205,8 +205,10 @@ export function HotelsBoard({
               onClick={() => setView(v)}
               className="px-3 py-1 transition-colors"
               style={{
-                background: view === v ? 'var(--accent, #0ea5e9)' : 'transparent',
-                color: view === v ? 'white' : 'var(--text)',
+                // The accent is a LIGHT hue, so a white label on it was 2.77:1.
+                // Dark ink on the fill is the legible pairing.
+                background: view === v ? 'var(--nc-teal, #6FB3C9)' : 'transparent',
+                color: view === v ? 'var(--nc-dark, #0B1220)' : 'var(--text)',
               }}
             >
               {v === 'list' ? 'List view' : v === 'split' ? 'Split view' : 'Map view'}
