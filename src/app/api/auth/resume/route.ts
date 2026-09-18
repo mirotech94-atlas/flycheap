@@ -39,7 +39,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const next = safeNext(url.searchParams.get('next')) || (adminPortal ? '/admin' : '/');
   const dest = new URL(next, base);
-  const marketing = new URL('https://flycheap.18dn.com/');
+  const marketing = new URL('https://flycheap.live/');
   const freshLogin = new URL(`/login?fresh=1&next=${encodeURIComponent(next)}`, base);
 
   // 1) Somehow already have a live session — just go where they were headed.

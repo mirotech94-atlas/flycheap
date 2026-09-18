@@ -15,7 +15,7 @@ const Query = z.object({
 
 function baseFromReq(req: Request): string {
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
   return `${proto}://${host}`;
 }
 function todayPlus(days: number): string {

@@ -182,7 +182,7 @@ export function DemoCarousel() {
             <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
             <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
             <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
-            <span className="ml-3 text-[10px] text-slate-400 font-mono">flycheap.18dn.com / {slide.tag.toLowerCase()}</span>
+            <span className="ml-3 text-[10px] text-slate-400 font-mono">flycheap.live / {slide.tag.toLowerCase()}</span>
           </div>
           <div className="aspect-[480/280] rounded-lg overflow-hidden border border-slate-200 dark:border-slate-700 bg-white">
             {slide.svg}

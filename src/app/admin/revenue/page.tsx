@@ -10,7 +10,7 @@ export const dynamic = 'force-dynamic';
 export default async function RevenuePage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?next=/admin/revenue');
-  if (!isAdminUser(user)) redirect('https://flycheap.18dn.com/');
+  if (!isAdminUser(user)) redirect('https://flycheap.live/');
 
   const stats = queries.monthlyAffiliateStats();
   const byProvider = queries.clicksByProvider30d(); // weights the EPC forecast by click mix

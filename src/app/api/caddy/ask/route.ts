@@ -18,7 +18,7 @@ export const dynamic = 'force-dynamic';
  * either (a) one of our owned subdomains, or (b) a verified user custom domain.
  * Anything else → 404 (Caddy will refuse to issue a cert).
  */
-const OWNED = new Set(['flycheap.18dn.com', 'flycheap.18dn.com']);
+const OWNED = new Set(['flycheap.live', 'www.flycheap.live', 'my.flycheap.live', 'admin.flycheap.live']);
 
 export async function GET(req: Request) {
   const url = new URL(req.url);
