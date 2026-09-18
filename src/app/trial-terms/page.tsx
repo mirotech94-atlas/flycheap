@@ -87,7 +87,7 @@ export default function TrialTermsPage() {
       <footer className="fc-l-footer" style={{ marginTop: 64 }}>
         <div className="fc-l-footer-legal" style={{ borderTop: 'none', paddingTop: 0 }}>
           <div>© 2026 FlyCheap · All rights reserved</div>
-          <div><Link href="/privacy" style={{ color: 'inherit' }}>Privacy</Link> · v2.4 · NYC</div>
+          <div><Link href="/privacy" style={{ color: 'inherit' }}>Privacy</Link> · v2.5 · NYC</div>
         </div>
       </footer>
     </div>
