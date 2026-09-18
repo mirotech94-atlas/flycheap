@@ -1,4 +1,14 @@
 {
+  "AER": {
+    "article": "https://en.wikipedia.org/wiki/Sochi",
+    "author": "Trace",
+    "file": "Sochi_harbour.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Sochi_harbour.jpg",
+    "place": "Sochi",
+    "source": "https://commons.wikimedia.org/wiki/File:Sochi_harbour.jpg"
+  },
   "AMS": {
     "article": "https://en.wikipedia.org/wiki/Amsterdam",
     "author": "Andrés Barrios",
@@ -48,6 +58,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Falezlerden_Antalya_Konyaalt%C4%B1_Plaj%C4%B1na_do%C4%9Fru_bir_g%C3%B6r%C3%BCn%C3%BCm.jpg",
     "place": "Antalya",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/73/Falezlerden_Antalya_Konyaalt%C4%B1_Plaj%C4%B1na_do%C4%9Fru_bir_g%C3%B6r%C3%BCn%C3%BCm.jpg/1920px-Falezlerden_Antalya_Konyaalt%C4%B1_Plaj%C4%B1na_do%C4%9Fru_bir_g%C3%B6r%C3%BCn%C3%BCm.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "BAH": {
+    "article": "https://en.wikipedia.org/wiki/Manama",
+    "author": "Wadiia",
+    "file": "Manama,_Bahrain_Decembre_2014.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Manama,_Bahrain_Decembre_2014.jpg",
+    "place": "Bahrain",
+    "source": "https://commons.wikimedia.org/wiki/File:Manama,_Bahrain_Decembre_2014.jpg"
   },
   "BCN": {
     "article": "https://en.wikipedia.org/wiki/Barcelona",
@@ -128,6 +148,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques,_Paris_ao%C3%BBt_2014_(2).jpg",
     "place": "Paris",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg/1920px-La_Tour_Eiffel_vue_de_la_Tour_Saint-Jacques%2C_Paris_ao%C3%BBt_2014_%282%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "CEB": {
+    "article": "https://en.wikipedia.org/wiki/Cebu_City",
+    "author": "DisRaptor18",
+    "file": "Cebu_city_skyline_2025.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Cebu_city_skyline_2025.jpg",
+    "place": "Cebu",
+    "source": "https://commons.wikimedia.org/wiki/File:Cebu_city_skyline_2025.jpg"
   },
   "CFU": {
     "article": "https://en.wikipedia.org/wiki/Corfu",
@@ -219,6 +249,16 @@
     "place": "Edinburgh",
     "source": "https://commons.wikimedia.org/wiki/File:Skyline_of_Edinburgh.jpg"
   },
+  "EVN": {
+    "article": "https://en.wikipedia.org/wiki/Yerevan",
+    "author": "Սէրուժ Ուրիշեան (Serouj Ourishian)",
+    "file": "Mount_Ararat_and_the_Yerevan_skyline_(June_2018).jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_the_Yerevan_skyline_(June_2018).jpg",
+    "place": "Yerevan",
+    "source": "https://commons.wikimedia.org/wiki/File:Mount_Ararat_and_the_Yerevan_skyline_(June_2018).jpg"
+  },
   "FLL": {
     "article": "https://en.wikipedia.org/wiki/Fort_Lauderdale%2C_Florida",
     "author": "KeanoManu",
@@ -238,6 +278,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg",
     "place": "Frankfurt",
     "source": "https://commons.wikimedia.org/wiki/File:Frankfurt_am_Main,_Central_business_district_(2024).jpg"
+  },
+  "FUK": {
+    "article": "https://en.wikipedia.org/wiki/Fukuoka",
+    "author": "Nryate",
+    "file": "Fukuoka_Skyline_of_Seaside_Momochi.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Fukuoka_Skyline_of_Seaside_Momochi.jpg",
+    "place": "Fukuoka",
+    "source": "https://commons.wikimedia.org/wiki/File:Fukuoka_Skyline_of_Seaside_Momochi.jpg"
   },
   "GLA": {
     "article": "https://en.wikipedia.org/wiki/Glasgow_Scotland_city",
@@ -349,6 +399,16 @@
     "place": "Jacksonville",
     "source": "https://commons.wikimedia.org/wiki/File:Jacksonville_skyline.jpg"
   },
+  "JED": {
+    "article": "https://en.wikipedia.org/wiki/Jeddah_Corniche",
+    "author": "Tahir mq",
+    "file": "Jeddah_Corniche_36.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Jeddah_Corniche_36.jpg",
+    "place": "Jeddah",
+    "source": "https://commons.wikimedia.org/wiki/File:Jeddah_Corniche_36.jpg"
+  },
   "JKT": {
     "article": "https://en.wikipedia.org/wiki/Jakarta",
     "author": "Medelam",
@@ -399,6 +459,16 @@
     "place": "Kuala Lumpur",
     "source": "https://commons.wikimedia.org/wiki/File:Bukit_Bintang_junction_in_2024_2.jpg"
   },
+  "KWI": {
+    "article": "https://en.wikipedia.org/wiki/Kuwait_City",
+    "author": "Zairon",
+    "file": "Kuwait_City_Skyline_1.jpg",
+    "license": "CC BY 4.0",
+    "license_url": "https://creativecommons.org/licenses/by/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Kuwait_City_Skyline_1.jpg",
+    "place": "Kuwait City",
+    "source": "https://commons.wikimedia.org/wiki/File:Kuwait_City_Skyline_1.jpg"
+  },
   "LAS": {
     "article": "https://en.wikipedia.org/wiki/Las_Vegas_Strip",
     "author": "Mariordo (Mario Roberto Durán Ortiz)",
@@ -428,6 +498,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Larnaca_01-2017_img27_Finikoudes.jpg",
     "place": "Larnaca",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/97/Larnaca_01-2017_img27_Finikoudes.jpg/1920px-Larnaca_01-2017_img27_Finikoudes.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "LGK": {
+    "article": "https://en.wikipedia.org/wiki/Langkawi",
+    "author": "Ttt.Osakanman",
+    "file": "Eagle_square_at_Kuah_Langkawi.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Eagle_square_at_Kuah_Langkawi.jpg",
+    "place": "Langkawi",
+    "source": "https://commons.wikimedia.org/wiki/File:Eagle_square_at_Kuah_Langkawi.jpg"
   },
   "LHR": {
     "article": "https://en.wikipedia.org/wiki/London",
@@ -479,6 +559,16 @@
     "place": "Luxor",
     "source": "https://upload.wikimedia.org/wikipedia/commons/3/35/LuxorHotelsIbnWalidSt.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
   },
+  "MAD": {
+    "article": "https://en.wikipedia.org/wiki/Madrid",
+    "author": "Zarateman",
+    "file": "Madrid_-_Sky_Bar_360º_(Hotel_Riu_Plaza_España),_vistas_19.jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Madrid_-_Sky_Bar_360%C2%BA_(Hotel_Riu_Plaza_Espa%C3%B1a),_vistas_19.jpg",
+    "place": "Madrid",
+    "source": "https://commons.wikimedia.org/wiki/File:Madrid_-_Sky_Bar_360%C2%BA_(Hotel_Riu_Plaza_Espa%C3%B1a),_vistas_19.jpg"
+  },
   "MAN": {
     "article": "https://en.wikipedia.org/wiki/Manchester_England_city_centre_skyline",
     "author": "Carroll Pierce",
@@ -488,6 +578,26 @@
     "page": "https://commons.wikimedia.org/wiki/File:Manchester_city_centre_-_geograph.org.uk_-_5802916.jpg",
     "place": "Manchester",
     "source": "https://commons.wikimedia.org/wiki/File:Manchester_city_centre_-_geograph.org.uk_-_5802916.jpg"
+  },
+  "MCX": {
+    "article": "https://en.wikipedia.org/wiki/Makhachkala",
+    "author": "Suleymannabiev",
+    "file": "Махачкала,_сквер_Сулеймана_Стальского.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%B0%D1%85%D0%B0%D1%87%D0%BA%D0%B0%D0%BB%D0%B0,_%D1%81%D0%BA%D0%B2%D0%B5%D1%80_%D0%A1%D1%83%D0%BB%D0%B5%D0%B9%D0%BC%D0%B0%D0%BD%D0%B0_%D0%A1%D1%82%D0%B0%D0%BB%D1%8C%D1%81%D0%BA%D0%BE%D0%B3%D0%BE.jpg",
+    "place": "Makhachkala",
+    "source": "https://commons.wikimedia.org/wiki/File:%D0%9C%D0%B0%D1%85%D0%B0%D1%87%D0%BA%D0%B0%D0%BB%D0%B0,_%D1%81%D0%BA%D0%B2%D0%B5%D1%80_%D0%A1%D1%83%D0%BB%D0%B5%D0%B9%D0%BC%D0%B0%D0%BD%D0%B0_%D0%A1%D1%82%D0%B0%D0%BB%D1%8C%D1%81%D0%BA%D0%BE%D0%B3%D0%BE.jpg"
+  },
+  "MED": {
+    "article": "https://en.wikipedia.org/wiki/Medina",
+    "author": "Konevi",
+    "file": "Al-Masjid_An-Nabawi_(Bird's_Eye_View).jpg",
+    "license": "CC0",
+    "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
+    "page": "https://commons.wikimedia.org/wiki/File:Al-Masjid_An-Nabawi_(Bird%27s_Eye_View).jpg",
+    "place": "Medina",
+    "source": "https://commons.wikimedia.org/wiki/File:Al-Masjid_An-Nabawi_(Bird%27s_Eye_View).jpg"
   },
   "MEX": {
     "article": "https://en.wikipedia.org/wiki/Mexico_City",
@@ -529,6 +639,26 @@
     "place": "Maldives",
     "source": "https://upload.wikimedia.org/wikipedia/commons/8/83/Mal%C3%A9.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "MNL": {
+    "article": "https://en.wikipedia.org/wiki/Manila",
+    "author": "Bahnfrend",
+    "file": "Cityscape_of_Manila,_2025_(01).jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Cityscape_of_Manila,_2025_(01).jpg",
+    "place": "Manila",
+    "source": "https://commons.wikimedia.org/wiki/File:Cityscape_of_Manila,_2025_(01).jpg"
+  },
+  "MRV": {
+    "article": "https://en.wikipedia.org/wiki/Pyatigorsk_Russia_city",
+    "author": "Thomas Taylor Hammond (1920-1993)",
+    "file": "Bird's Eye View Pyatigorsk.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Bird%27s_Eye_View_Pyatigorsk.jpg",
+    "place": "Mineralnye Vody",
+    "source": "https://commons.wikimedia.org/wiki/File:Bird%27s_Eye_View_Pyatigorsk.jpg"
+  },
   "NAS": {
     "article": "https://en.wikipedia.org/wiki/Nassau,_Bahamas",
     "author": "Quintin Soloviev",
@@ -549,6 +679,16 @@
     "place": "Nice",
     "source": "https://commons.wikimedia.org/wiki/File:CollineDuChateau_NiceFrance2022.png"
   },
+  "NHA": {
+    "article": "https://en.wikipedia.org/wiki/Nha_Trang",
+    "author": "Kaz Ish",
+    "file": "Nha_Trang_,_Vietnam_-_panoramio_(35).jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Nha_Trang_,_Vietnam_-_panoramio_(35).jpg",
+    "place": "Nha Trang",
+    "source": "https://commons.wikimedia.org/wiki/File:Nha_Trang_,_Vietnam_-_panoramio_(35).jpg"
+  },
   "NYC": {
     "article": "https://en.wikipedia.org/wiki/New_York_City",
     "author": "Dllu",
@@ -568,6 +708,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:L%C4%81hain%C4%81_oceanfront.JPG",
     "place": "Maui",
     "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/L%C4%81hain%C4%81_oceanfront.JPG?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "OKA": {
+    "article": "https://en.wikipedia.org/wiki/Shuri_Castle",
+    "author": "CEphoto, Uwe Aranas",
+    "file": "Naha_Okinawa_Japan_Shuri-Castle-01.jpg",
+    "license": "CC BY-SA 3.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Naha_Okinawa_Japan_Shuri-Castle-01.jpg",
+    "place": "Okinawa",
+    "source": "https://commons.wikimedia.org/wiki/File:Naha_Okinawa_Japan_Shuri-Castle-01.jpg"
   },
   "ORL": {
     "article": "https://en.wikipedia.org/wiki/Orlando%2C_Florida",
@@ -609,6 +759,16 @@
     "place": "Portland",
     "source": "https://commons.wikimedia.org/wiki/File:Portland_Oregon_Aerial,_June_2025.jpg"
   },
+  "PEN": {
+    "article": "https://en.wikipedia.org/wiki/George_Town%2C_Penang",
+    "author": "HundenvonPenang",
+    "file": "Skyline_of_George_Town,_Penang_at_night_Nov2024-29-17.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skyline_of_George_Town,_Penang_at_night_Nov2024-29-17.jpg",
+    "place": "Penang",
+    "source": "https://commons.wikimedia.org/wiki/File:Skyline_of_George_Town,_Penang_at_night_Nov2024-29-17.jpg"
+  },
   "PFO": {
     "article": "https://en.wikipedia.org/wiki/Paphos",
     "author": "Dmitry Panov",
@@ -629,6 +789,16 @@
     "place": "Palma de Mallorca",
     "source": "https://upload.wikimedia.org/wikipedia/commons/e/e7/Kathedrale_von_Palma.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "PQC": {
+    "article": "https://en.wikipedia.org/wiki/Phu_Quoc_Vietnam_beach",
+    "author": "Vivu Vietnam",
+    "file": "Kem Beach aerial view Phu Quoc Island Vietnam.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Kem_Beach_aerial_view_Phu_Quoc_Island_Vietnam.jpg",
+    "place": "Phu Quoc",
+    "source": "https://commons.wikimedia.org/wiki/File:Kem_Beach_aerial_view_Phu_Quoc_Island_Vietnam.jpg"
+  },
   "PUJ": {
     "article": "https://en.wikipedia.org/wiki/Punta_Cana",
     "author": "https://www.flickr.com/photos/uira/",
@@ -638,6 +808,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Cap_Cana_Marina_Dominican_Republic.jpg",
     "place": "Punta Cana",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/45/Cap_Cana_Marina_Dominican_Republic.jpg/1920px-Cap_Cana_Marina_Dominican_Republic.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "RAK": {
+    "article": "https://en.wikipedia.org/wiki/Marrakech_Morocco_Koutoubia",
+    "author": "Jonjobaker",
+    "file": "Koutoubia Mosque Marakesh Morocco 4.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Koutoubia_Mosque_Marakesh_Morocco_4.jpg",
+    "place": "Marrakech",
+    "source": "https://commons.wikimedia.org/wiki/File:Koutoubia_Mosque_Marakesh_Morocco_4.jpg"
   },
   "RHO": {
     "article": "https://en.wikipedia.org/wiki/Lindos",
@@ -659,6 +839,16 @@
     "place": "Marsa Alam",
     "source": "https://upload.wikimedia.org/wikipedia/commons/c/c3/Carnelia_Beach%2C_Marsa_Alam_%282232052889%29.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail_unscaled"
   },
+  "RMO": {
+    "article": "https://en.wikipedia.org/wiki/Chisinau_Moldova_city",
+    "author": "Diego Delso",
+    "file": "Ayuntamiento, Chisináu, Moldavia, 2023-11-03, DD 20.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Ayuntamiento,_Chisin%C3%A1u,_Moldavia,_2023-11-03,_DD_20.jpg",
+    "place": "Chisinau",
+    "source": "https://commons.wikimedia.org/wiki/File:Ayuntamiento,_Chisin%C3%A1u,_Moldavia,_2023-11-03,_DD_20.jpg"
+  },
   "ROM": {
     "article": "https://en.wikipedia.org/wiki/Rome",
     "author": "Diliff",
@@ -668,6 +858,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Trevi_Fountain,_Rome,_Italy_2_-_May_2007.jpg",
     "place": "Rome",
     "source": "https://thumb.wikimedia.org/wikipedia/commons/thumb/7/7e/Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg/1920px-Trevi_Fountain%2C_Rome%2C_Italy_2_-_May_2007.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=thumbnail"
+  },
+  "RUH": {
+    "article": "https://en.wikipedia.org/wiki/Riyadh",
+    "author": "B.alotaby",
+    "file": "Riyadh_Skyline.jpg",
+    "license": "CC BY-SA 4.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Riyadh_Skyline.jpg",
+    "place": "Riyadh",
+    "source": "https://commons.wikimedia.org/wiki/File:Riyadh_Skyline.jpg"
   },
   "SAC": {
     "article": "https://en.wikipedia.org/wiki/Sacramento_California_skyline",
@@ -779,6 +979,16 @@
     "place": "Sydney",
     "source": "https://upload.wikimedia.org/wikipedia/commons/5/53/Sydney_Opera_House_and_Harbour_Bridge_Dusk_%282%29_2019-06-21.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
   },
+  "TAK": {
+    "article": "https://en.wikipedia.org/wiki/Ritsurin_Garden",
+    "author": "663highland",
+    "file": "Ritsurin_park16s3200.jpg",
+    "license": "CC BY 2.5",
+    "license_url": "https://creativecommons.org/licenses/by/2.5",
+    "page": "https://commons.wikimedia.org/wiki/File:Ritsurin_park16s3200.jpg",
+    "place": "Takamatsu",
+    "source": "https://commons.wikimedia.org/wiki/File:Ritsurin_park16s3200.jpg"
+  },
   "TFS": {
     "article": "https://en.wikipedia.org/wiki/Teide",
     "author": "Thomas Wolf, www.foto-tw.de",
@@ -788,6 +998,16 @@
     "page": "https://commons.wikimedia.org/wiki/File:Roque_Cinchado_und_Teide.jpg",
     "place": "Tenerife",
     "source": "https://upload.wikimedia.org/wikipedia/commons/a/a5/Roque_Cinchado_und_Teide.jpg?utm_source=en.wikipedia.org&utm_campaign=api&utm_content=original"
+  },
+  "TIA": {
+    "article": "https://en.wikipedia.org/wiki/Tirana",
+    "author": "Photo: Chris Walts",
+    "file": "Skanderbeg_square_tirana_2016.jpg",
+    "license": "CC BY-SA 2.0",
+    "license_url": "https://creativecommons.org/licenses/by-sa/2.0",
+    "page": "https://commons.wikimedia.org/wiki/File:Skanderbeg_square_tirana_2016.jpg",
+    "place": "Tirana",
+    "source": "https://commons.wikimedia.org/wiki/File:Skanderbeg_square_tirana_2016.jpg"
   },
   "TPA": {
     "article": "https://en.wikipedia.org/wiki/Tampa%2C_Florida",

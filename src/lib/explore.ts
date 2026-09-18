@@ -194,6 +194,8 @@ const CITY_NAMES: Record<string, string> = {
   SEL: 'Seoul', SHA: 'Shanghai', SPK: 'Sapporo', TAK: 'Takamatsu',
   TIA: 'Tirana', UFA: 'Ufa', VCE: 'Venice', YVR: 'Vancouver',
   STO: 'Stockholm', TPA: 'Tampa',
+  CEB: 'Cebu', DMM: 'Dammam', ELQ: 'Buraydah', MCX: 'Makhachkala',
+  MNL: 'Manila', MRV: 'Mineralnye Vody',
 };
 
 export function cityName(code: string): string {
