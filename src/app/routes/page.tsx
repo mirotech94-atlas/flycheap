@@ -10,7 +10,7 @@ export const revalidate = 3600;
 export const metadata = {
   title: 'All tracked flight routes — FlyCheap',
   description: 'Live cheap-flight tracking for routes from New York (JFK/EWR) to destinations worldwide. Real prices, refreshed hourly.',
-  alternates: { canonical: 'https://flycheap.18dn.com/routes' },
+  alternates: { canonical: 'https://flycheap.live/routes' },
 };
 
 function distinctRoutes(): Array<{ origin: string; destination: string; deals: number; min_usd: number }> {

@@ -1,7 +1,7 @@
 import type { MetadataRoute } from 'next';
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const base = 'https://flycheap.18dn.com';
+  const base = 'https://flycheap.live';
   const now = new Date();
   return [
     { url: `${base}/welcome`, lastModified: now, changeFrequency: 'weekly',  priority: 1.0 },

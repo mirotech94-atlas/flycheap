@@ -17,8 +17,8 @@ export const metadata: Metadata = {
   openGraph: {
     title: 'FlyCheap — overpaying for flights stops here',
     description: 'Founding-member early access: a 3-month free trial, then upgrade to Pro or Enterprise only if you want more.',
-    url: 'https://flycheap.18dn.com/early-access', siteName: 'FlyCheap', type: 'website',
-    images: [{ url: 'https://flycheap.18dn.com/api/og', width: 1200, height: 630, alt: 'FlyCheap' }],
+    url: 'https://flycheap.live/early-access', siteName: 'FlyCheap', type: 'website',
+    images: [{ url: 'https://flycheap.live/api/og', width: 1200, height: 630, alt: 'FlyCheap' }],
   },
 };
 

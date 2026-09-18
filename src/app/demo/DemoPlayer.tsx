@@ -33,7 +33,7 @@ export function DemoPlayer({ src, poster, chapters }: { src: string; poster: str
       <div className="fc-demo-stage">
         <div className="fc-l-preview-chrome">
           <div className="dots"><div className="dot" /><div className="dot" /><div className="dot" /></div>
-          <div className="url">flycheap.18dn.com / <strong>live demo</strong></div>
+          <div className="url">flycheap.live / <strong>live demo</strong></div>
         </div>
         <video
           ref={ref}

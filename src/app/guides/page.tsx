@@ -8,7 +8,7 @@ export const revalidate = 86400;
 export const metadata = {
   title: 'Travel & flight booking guides — FlyCheap',
   description: 'Practical, data-backed guides on when to book cheap flights, NYC airport comparisons, and getting the best fares to specific destinations.',
-  alternates: { canonical: 'https://flycheap.18dn.com/guides' },
+  alternates: { canonical: 'https://flycheap.live/guides' },
 };
 
 // One unique gradient per guide article — editorial, not destination-keyed

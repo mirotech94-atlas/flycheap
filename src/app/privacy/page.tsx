@@ -3,7 +3,7 @@ import { travelpayoutsReferralUrl } from '@/lib/affiliate';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy · FlyCheap',
-  description: 'How FlyCheap (flycheap.18dn.com) collects and uses your data.',
+  description: 'How FlyCheap (flycheap.live) collects and uses your data.',
 };
 
 export default function PrivacyPage() {
@@ -16,7 +16,7 @@ export default function PrivacyPage() {
 
       <p className="mt-8">
         FlyCheap (the &quot;Service&quot;, available at{' '}
-        <a className="underline" href="https://flycheap.18dn.com">flycheap.18dn.com</a>)
+        <a className="underline" href="https://flycheap.live">flycheap.live</a>)
         is operated by Myron Mekhael (sole proprietor, New York, USA) and is a fare-monitoring tool that lets you track flight prices across
         1,000+ airlines and notifies you when fares drop on routes you choose.
         This page explains what data we collect, why, and how it&apos;s used.
