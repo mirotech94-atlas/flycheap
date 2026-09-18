@@ -231,10 +231,27 @@ Layering in `.fc-hero` is explicit (`sky 0 → ::before graticule 1 → content 
    won't be patched up". Verified pre-existing by reverting the file and reproducing it. Fixed by
    rounding the projection to 3dp — far below a pixel on a 480 viewBox.
 
-### Still open
+### The theme enforcer was undoing the whole conversion (found + fixed, `64fa08a`)
 
-- **The hero headline's italic accents are amber** (`.fc-hero h1 em`). Two large words in the
-  reserved fare colour at the top of the page, competing with the fare numbers. It is a visible
-  brand decision, so it was flagged rather than changed — Myron's call.
+Trying to preview the headline in teal vs ink revealed that **night-cabin had not been rendering
+at all**. `FcTweaks` rewrote *every* `[data-fc-theme]` element to `'coal'` on hydration, so
+`/welcome` and the dashboard were served `cabin` and immediately reverted. Both themes are dark,
+so it looked plausible while every `[data-fc-theme="cabin"]` remap silently stopped applying —
+which is why `--fc-gold` still resolved to `#d4af37` instead of `#e8a33d`.
+
+**The lesson worth keeping: a dark-looking page is not evidence the right dark theme is applied.**
+Check the computed token (`getComputedStyle(el).getPropertyValue('--fc-gold')`), not the vibe.
+
+Removing the sweep outright was wrong — `/about`, `/terms`, `/checkout`, `/demo` and
+`/trial-terms` still declare the pre-cabin `ivory` theme, and they turned into white pages inside
+a dark product. Caught in the browser before committing. The sweep now normalises **light themes
+only** and never touches a surface declaring a dark one.
+
+**Next step:** convert those five pages to `cabin` and the sweep can be deleted entirely.
+
+### Resolved
+
+- Hero headline italics are now **ink** (`--nc-on-dark`). On `/welcome` the only amber left is
+  the CTA and the live route arc.
 - `scene_lab` timed out at 300s on the first (detailed) call; a shorter description succeeded.
   Set a per-server `timeout` in MCP settings if authoring scenes becomes routine.
