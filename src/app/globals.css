@@ -3151,10 +3151,20 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
    sans headlines with one gold phrase, bordered dark cards)
    ============================================================ */
 .dc {
-  --dc-bg: #0a0e17; --dc-bg2: #070a11; --dc-bg3: #0f1420;
-  --dc-card: #10151f; --dc-line: rgba(255,255,255,.07); --dc-line2: rgba(255,255,255,.12);
-  --dc-text: #f2f4f6; --dc-muted: #9aa3b2; --dc-dim: #6b7383;
-  --dc-gold: #d4af37; --dc-gold2: #e9c65a;
+  /* The marketing front door was the last surface still on the retired
+     Bloomberg gold (#d4af37) over its own near-black. It is the first thing a
+     prospect sees, so it now runs the product's own palette — the tokens below
+     are night-cabin, reached through the dc-* names the page already uses.
+
+     --dc-gold keeps its NAME because 140-odd rules reference it, but it now
+     resolves to the cabin amber, and the decorative uses of it (the pill, the
+     icons, the hero glow) were moved to teal — amber is fares and primary
+     actions, and a page where the accent is everywhere has no accent. */
+  --dc-bg: var(--nc-dark, #0B1220); --dc-bg2: #070a11; --dc-bg3: var(--nc-deck, #131C2E);
+  --dc-card: var(--nc-deck, #131C2E); --dc-line: var(--nc-rule, rgba(255,255,255,.10)); --dc-line2: var(--nc-rule-2, rgba(255,255,255,.18));
+  --dc-text: var(--nc-on-dark, #E9EDF5); --dc-muted: var(--nc-on-dark-mute, #98A4BA); --dc-dim: var(--nc-on-dark-faint, #7E8AA0);
+  --dc-gold: var(--nc-amber, #E8A33D); --dc-gold2: #F2C67A;
+  --dc-teal: var(--nc-teal, #6FB3C9);
   background: var(--dc-bg); color: var(--dc-text);
   font-family: var(--font-fc-sans, Manrope, ui-sans-serif, system-ui, sans-serif);
   -webkit-font-smoothing: antialiased; min-height: 100vh; overflow-x: hidden;
@@ -3167,8 +3177,8 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 .dc .dc-wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 .dc .dc-center { text-align: center; }
 .dc .dc-accent { color: var(--dc-gold); }
-.dc h1 { font-size: clamp(42px, 6.2vw, 76px); font-weight: 800; letter-spacing: -.035em; line-height: 1.02; margin: 26px 0 22px; }
-.dc h2 { font-size: clamp(30px, 3.8vw, 44px); font-weight: 800; letter-spacing: -.03em; line-height: 1.08; margin: 14px auto 16px; max-width: 820px; }
+.dc h1 { font-size: clamp(34px, 4.4vw, 60px); font-weight: 800; letter-spacing: -.035em; line-height: 1.05; margin: 22px 0 20px; }
+.dc h2 { font-size: clamp(26px, 3vw, 36px); font-weight: 800; letter-spacing: -.03em; line-height: 1.08; margin: 14px auto 16px; max-width: 820px; }
 .dc h2.big { font-size: clamp(34px, 4.4vw, 50px); }
 .dc h3 { font-size: 22px; font-weight: 800; letter-spacing: -.02em; margin: 10px 0 8px; }
 .dc h4 { font-size: 15.5px; font-weight: 700; letter-spacing: -.01em; margin: 12px 0 6px; }
@@ -3189,6 +3199,21 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 .dc .dc-links a:hover { color: var(--dc-text); background: rgba(255,255,255,.04); }
 .dc .dc-nav-right { display: flex; align-items: center; gap: 10px; }
 @media (max-width: 820px) { .dc .dc-links { display: none; } }
+/* Below ~470px the right-hand cluster (Log in + language + the primary CTA) is
+   wider than the bar, and `.dc` sets overflow-x:hidden — so the CTA was not
+   pushed off to be scrolled to, it was CLIPPED. The nav bar is the one place a
+   marketing page cannot afford to lose its call to action. Let it size down and
+   stop the sticky bar from fixing its own height. */
+@media (max-width: 470px) {
+  .dc .dc-nav-in { gap: 8px; }
+  .dc .dc-nav-right { gap: 6px; }
+  .dc .dc-nav-right .dc-btn { height: 36px; padding: 0 12px; font-size: 12.5px; white-space: nowrap; }
+  /* Sign-in drops out of the bar rather than squeezing the CTA: it still sits in
+     the page body and the footer, whereas the CTA exists nowhere else up here.
+     Shrinking all three just made three cramped things instead of one clear one. */
+  .dc .dc-nav-right .dc-signin { display: none; }
+  .dc .dc-lang > summary { padding: 6px 8px; font-size: 12px; }
+}
 
 /* buttons */
 .dc .dc-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: 38px; padding: 0 16px; border-radius: 8px; font-size: 13.5px; font-weight: 700; border: 1px solid transparent; cursor: pointer; font-family: inherit; transition: transform .15s ease, background .15s ease, border-color .15s ease; white-space: nowrap; }
@@ -3211,21 +3236,21 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 
 /* hero */
 .dc .dc-hero { padding: 88px 0 56px; position: relative; }
-.dc .dc-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(700px 360px at 50% -10%, rgba(212,175,55,.14), transparent 65%); pointer-events: none; }
+.dc .dc-hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(760px 380px at 50% -12%, rgba(111,179,201,.10), transparent 68%); pointer-events: none; }
 .dc .dc-hero > * { position: relative; }
-.dc .dc-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid rgba(212,175,55,.35); background: rgba(212,175,55,.06); font-size: 12px; font-weight: 600; color: var(--dc-gold2); }
-.dc .dc-pill .dot, .dc .dc-feed-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dc-gold); box-shadow: 0 0 0 3px rgba(212,175,55,.2); animation: fc-blink 1.6s ease-in-out infinite; }
+.dc .dc-pill { display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid var(--nc-rule-2, rgba(255,255,255,.18)); font-size: 12px; font-weight: 600; color: var(--nc-on-dark, #E9EDF5); }
+.dc .dc-pill .dot, .dc .dc-feed-head .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--dc-gold); box-shadow: 0 0 0 3px rgba(232,163,61,.22); animation: fc-blink 1.6s ease-in-out infinite; }
 .dc .dc-lede { color: var(--dc-muted); font-size: 17px; line-height: 1.65; max-width: 640px; margin: 0 auto; }
 .dc .dc-actions { display: flex; gap: 12px; justify-content: center; margin-top: 30px; flex-wrap: wrap; }
 
 /* live feed */
-.dc .dc-feed { margin: 48px auto 0; max-width: 960px; text-align: start; background: rgba(16,21,31,.9); border: 1px solid var(--dc-line2); border-radius: 14px; overflow: hidden; box-shadow: 0 40px 80px -40px rgba(0,0,0,.8), 0 0 0 1px rgba(212,175,55,.06); }
+.dc .dc-feed { margin: 48px auto 0; max-width: 960px; text-align: start; background: rgba(16,21,31,.9); border: 1px solid var(--dc-line2); border-radius: 14px; overflow: hidden; box-shadow: 0 40px 80px -40px rgba(0,0,0,.8), 0 0 0 1px rgba(255,255,255,.05); }
 .dc .dc-feed-head { display: flex; justify-content: space-between; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--dc-line); font-size: 12px; font-weight: 700; color: var(--dc-muted); }
 .dc .dc-feed-head > span:first-child { display: inline-flex; align-items: center; gap: 8px; }
 .dc .dc-feed-row { display: grid; grid-template-columns: auto 1fr auto auto; gap: 16px; align-items: center; padding: 13px 18px; border-bottom: 1px solid var(--dc-line); animation: fc-rise-in .5s ease both; }
 .dc .dc-feed-row:last-of-type { border-bottom: none; }
 .dc .dc-tag { font-family: var(--fc-font-mono, ui-monospace, monospace); font-size: 9.5px; letter-spacing: .14em; padding: 4px 8px; border-radius: 5px; font-weight: 700; }
-.dc .dc-tag.drop { background: rgba(212,175,55,.16); color: var(--dc-gold2); }
+.dc .dc-tag.drop { background: rgba(232,163,61,.16); color: var(--dc-gold2); }
 .dc .dc-tag.low { background: rgba(255,255,255,.06); color: var(--dc-muted); }
 .dc .dc-feed-main .r { font-weight: 700; font-size: 14px; }
 .dc .dc-feed-main .s { font-size: 11.5px; color: var(--dc-dim); margin-top: 2px; font-family: var(--fc-font-mono, ui-monospace, monospace); }
@@ -3251,7 +3276,7 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 .dc .dc-card { background: var(--dc-card); border: 1px solid var(--dc-line); border-radius: 12px; padding: 22px 22px 24px; transition: border-color .2s ease, transform .2s ease; }
 .dc .dc-card:hover { border-color: var(--dc-line2); transform: translateY(-2px); }
 .dc .dc-card p { color: var(--dc-muted); font-size: 13.5px; line-height: 1.6; }
-.dc .dc-icon, .dc .dc-qicon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: rgba(212,175,55,.1); color: var(--dc-gold); border: 1px solid rgba(212,175,55,.25); }
+.dc .dc-icon, .dc .dc-qicon { width: 34px; height: 34px; border-radius: 9px; display: grid; place-items: center; background: rgba(111,179,201,.10); color: var(--dc-teal); border: 1px solid rgba(111,179,201,.28); }
 .dc .dc-qicon { width: 26px; height: 26px; border-radius: 7px; }
 .dc .dc-card-q { display: grid; grid-template-columns: auto 1fr; gap: 0 12px; }
 .dc .dc-card-q h4 { margin: 4px 0 6px; }
@@ -3283,14 +3308,14 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 
 /* CTA card */
 .dc .dc-cta-wrap { border-bottom: none; position: relative; }
-.dc .dc-cta-wrap::after { content: ""; position: absolute; left: 50%; bottom: -60px; width: 900px; height: 300px; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(212,175,55,.16), transparent); pointer-events: none; }
+.dc .dc-cta-wrap::after { content: ""; position: absolute; left: 50%; bottom: -60px; width: 900px; height: 300px; transform: translateX(-50%); background: radial-gradient(closest-side, rgba(232,163,61,.14), transparent); pointer-events: none; }
 .dc .dc-cta { position: relative; z-index: 1; max-width: 760px; margin: 0 auto; text-align: center; background: var(--dc-bg3); border: 1px solid var(--dc-line2); border-radius: 18px; padding: 56px 40px 40px; box-shadow: 0 50px 100px -50px rgba(0,0,0,.9); }
 @media (max-width: 640px) { .dc .dc-cta { padding: 40px 22px 30px; } }
 .dc .dc-form { margin-top: 28px; position: relative; }
 .dc .dc-form-row { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) auto; gap: 8px; max-width: 620px; margin: 0 auto; }
 @media (max-width: 600px) { .dc .dc-form-row { grid-template-columns: 1fr; } }
 .dc .dc-form-row input { height: 46px; padding: 0 14px; border-radius: 8px; border: 1px solid var(--dc-line2); background: #0a0e17; color: var(--dc-text); font-size: 14px; font-family: inherit; outline: none; }
-.dc .dc-form-row input:focus { border-color: var(--dc-gold); box-shadow: 0 0 0 3px rgba(212,175,55,.2); }
+.dc .dc-form-row input:focus { border-color: var(--dc-gold); box-shadow: 0 0 0 3px rgba(232,163,61,.22); }
 .dc .dc-form-row input::placeholder { color: var(--dc-dim); }
 .dc .dc-form-airport { font-family: var(--fc-font-mono, ui-monospace, monospace); letter-spacing: .1em; text-transform: uppercase; }
 .dc .dc-form-row .dc-btn { height: 46px; }
@@ -3330,7 +3355,7 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-ea-perk p { color: rgba(2
 .dc[dir="rtl"] .dc-step::before { inset-inline-start: 0; }
 .dc[dir="rtl"] h1, .dc[dir="rtl"] h2 { letter-spacing: 0; }
 .dc .dc-feed-row.fresh { animation: dc-slide-in .45s ease both; }
-@keyframes dc-slide-in { from { opacity: 0; transform: translateY(-10px); background: rgba(212,175,55,.08); } to { opacity: 1; transform: none; } }
+@keyframes dc-slide-in { from { opacity: 0; transform: translateY(-10px); background: rgba(232,163,61,.10); } to { opacity: 1; transform: none; } }
 .dc .dc-feed-main .al { color: var(--dc-muted); font-weight: 600; font-size: 12.5px; }
 .dc .dc-form-row { grid-template-columns: minmax(0, 1fr) auto; max-width: 520px; }
 .dc .dc-signin { font-size: 13.5px; font-weight: 700; color: var(--dc-muted); padding: 8px 10px; border-radius: 8px; }
@@ -4041,4 +4066,47 @@ html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
   backdrop-filter: blur(14px) saturate(170%);
   border: 1px solid rgba(255,255,255,.10);
   box-shadow: inset 0 1px 0 0 rgba(255,255,255,.20);
+}
+
+/* ===================================================================
+   Marketing front door — the sky, and glass on the surfaces.
+
+   `.dc .dc-hero > *` sets position:relative on every child, and a
+   ::before paints before real children, so all three layers are
+   numbered explicitly or the canvas covers the hero's own wash.
+   =================================================================== */
+.dc .dc-hero-sky {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  z-index: 0;
+  pointer-events: none;
+}
+.dc .dc-hero::before { z-index: 1; }
+.dc .dc-hero > .dc-wrap { z-index: 2; }
+
+/* The live feed and the feature cards, in glass. The feed sits directly over
+   the sky, which is exactly where a backdrop-filter earns its keep — the
+   gradient blooms through it instead of being covered by an opaque panel. */
+.dc .dc-feed {
+  background: linear-gradient(160deg, rgba(255,255,255,.075) 0%, rgba(255,255,255,.03) 100%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, .10);
+  box-shadow:
+    inset 0 1px 0 0 rgba(255, 255, 255, .20),
+    0 40px 80px -40px rgba(0, 0, 0, .8);
+}
+.dc .dc-card {
+  background: linear-gradient(160deg, rgba(255,255,255,.055) 0%, rgba(255,255,255,.02) 100%);
+  -webkit-backdrop-filter: blur(14px) saturate(160%);
+  backdrop-filter: blur(14px) saturate(160%);
+  box-shadow: inset 0 1px 0 0 rgba(255, 255, 255, .14);
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .dc .dc-feed { background: var(--dc-card); }
+  .dc .dc-card { background: var(--dc-card); }
 }
