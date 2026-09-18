@@ -193,6 +193,7 @@ const CITY_NAMES: Record<string, string> = {
   RMO: 'Chisinau', RUH: 'Riyadh', SAC: 'Sacramento', SAT: 'San Antonio',
   SEL: 'Seoul', SHA: 'Shanghai', SPK: 'Sapporo', TAK: 'Takamatsu',
   TIA: 'Tirana', UFA: 'Ufa', VCE: 'Venice', YVR: 'Vancouver',
+  STO: 'Stockholm', TPA: 'Tampa',
 };
 
 export function cityName(code: string): string {
