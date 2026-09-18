@@ -47,3 +47,8 @@ Desktop.ini
 .Spotlight-V100
 .Trashes
 .AppleDouble
+
+# `data/` is ignored as a directory, but a SYMLINK named `data` is a file and
+# slips past that — twice now a verification worktree pointed at the real sqlite
+# file and `git add -A` committed an absolute link to a developer's machine.
+/data
