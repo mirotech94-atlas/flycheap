@@ -30,7 +30,7 @@ const DigestOutput = z.object({
   })).min(1).max(6),
 });
 
-const BASE = 'https://flycheap.18dn.com';
+const BASE = 'https://flycheap.live';
 function bookUrl(p: Pick) {
   const to = `https://www.aviasales.com/search/${p.origin}${p.outbound_date.slice(5).replace('-', '')}${p.destination}${p.return_date.slice(5).replace('-', '')}1`;
   return `${BASE}/go?to=${encodeURIComponent(to)}&surface=agent-email`;

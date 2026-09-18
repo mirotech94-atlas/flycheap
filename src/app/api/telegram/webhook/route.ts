@@ -156,7 +156,7 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   if (url.searchParams.get('action') === 'setWebhook') {
     const proto = req.headers.get('x-forwarded-proto') ?? 'https';
-    const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+    const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
     const result = await setWebhook(`${proto}://${host}`);
     return NextResponse.json(result, { status: result.ok ? 200 : 500 });
   }

@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
   // req.url is the internal localhost origin behind Caddy — always build
   // redirects from the forwarded host.
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+  const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
   const baseUrl = `${proto}://${host}`;
 
   const user = await getCurrentUser();

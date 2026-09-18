@@ -9,7 +9,7 @@ export function GET(req: NextRequest) {
   const nextPath = req.nextUrl.searchParams.get('next') || '/';
   const safeNext = nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/';
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
-  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.18dn.com';
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
   const res = NextResponse.redirect(`${proto}://${host}${safeNext}`, 303);
   if (isLocale(set)) {
     res.cookies.set(LOCALE_COOKIE, set, { path: '/', maxAge: 60 * 60 * 24 * 365, sameSite: 'lax', secure: true });
