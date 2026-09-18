@@ -4,6 +4,14 @@ const { PHASE_PRODUCTION_BUILD } = require('next/constants');
 const nextConfig = {
   reactStrictMode: true,
   serverExternalPackages: ['better-sqlite3'],
+  // Zero-downtime deploys: the build writes into an INACTIVE dist dir
+  // (.next.a / .next.b) via NEXT_DIST_DIR while the running server keeps
+  // serving the ACTIVE one, so the live .next is never rewritten mid-build.
+  // deploy.sh then flips which dir the service reads and restarts. Runtime
+  // (systemd) sets NEXT_DIST_DIR from .deploy-active-dist; a bare build or dev
+  // run with no env falls back to the default '.next'. The value must match at
+  // build and start time — Next embeds distDir into the build manifests.
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   // Next 16 + Turbopack occasionally races on generated .next/types/*.d.ts
   // files during the build's typecheck phase, causing transient
   // "File not found" errors even when the files exist. We run TS validation

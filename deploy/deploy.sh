@@ -120,25 +120,46 @@ else
 fi
 
 # -------------------------------------------------------------------------
-# 2. BACKUP CURRENT BUILD so we can roll back if the new one is broken.
+# 2. ZERO-DOWNTIME BUILD TARGET — build into the INACTIVE dist dir so the
+#    running server keeps serving the ACTIVE one, untouched, for the whole
+#    build. `.deploy-active-dist` holds `NEXT_DIST_DIR=.next.<a|b>` and is read
+#    by BOTH this script and the systemd unit. The ACTIVE dir doubles as the
+#    rollback: on any failure we leave it in place (or flip back to it).
 # -------------------------------------------------------------------------
-BACKUP_DIR="$APP_DIR/.next.previous"
-if [ -d "$APP_DIR/.next" ] && [ "$PRE_STATE" = "healthy" ]; then
-  echo "==> Snapshotting current .next → .next.previous"
-  rm -rf "$BACKUP_DIR"
-  cp -r "$APP_DIR/.next" "$BACKUP_DIR"
+ACTIVE_FILE="$APP_DIR/.deploy-active-dist"
+ACTIVE_DIST=".next"   # legacy default, before the first color-flip deploy
+if [ -f "$ACTIVE_FILE" ]; then
+  ACTIVE_DIST="$(sed -n 's/^NEXT_DIST_DIR=//p' "$ACTIVE_FILE" | tail -1)"
+  [ -n "$ACTIVE_DIST" ] || ACTIVE_DIST=".next"
 fi
+case "$ACTIVE_DIST" in
+  .next.a) TARGET_DIST=".next.b" ;;
+  *)       TARGET_DIST=".next.a" ;;   # from .next.b OR the legacy .next
+esac
+echo "==> Active build: $ACTIVE_DIST → building into $TARGET_DIST (live dir stays up)"
+
+# Deps-change detection: `npm install` renames node_modules/next, which fails
+# (ENOTEMPTY) while `next start` holds it open — the ONLY reason we stop the
+# service. A code-only deploy (unchanged lockfile) skips install and stays up.
+DEPS_FILE="$APP_DIR/.deploy-deps-hash"
+DEPS_NOW="$(md5sum "$APP_DIR/package-lock.json" 2>/dev/null | cut -d' ' -f1)"
+DEPS_CHANGED=yes
+if [ -n "$DEPS_NOW" ] && [ -f "$DEPS_FILE" ] && [ "$DEPS_NOW" = "$(cat "$DEPS_FILE" 2>/dev/null)" ] && [ -d "$APP_DIR/node_modules/next" ]; then
+  DEPS_CHANGED=no
+fi
+echo "==> Dependencies changed since last deploy: $DEPS_CHANGED"
 
 # -------------------------------------------------------------------------
 # 3. INSTALL + BUILD as the service user so file ownership stays sane.
 # -------------------------------------------------------------------------
-echo "==> Stop egyptair service (it holds node_modules/next files open → ENOTEMPTY on rename)"
-# `npm install` updates node_modules/next via atomic rename. If next start is
-# running, the directory is busy and rename fails with ENOTEMPTY. We restart
-# the service after the build completes.
+# Only stop the service when deps actually change (npm install must rename
+# node_modules/next, impossible while `next start` holds it open). A code-only
+# deploy keeps the service RUNNING and serving $ACTIVE_DIST throughout — the
+# build writes a DIFFERENT dir, so there is no build-window outage.
 WAS_ACTIVE=no
-if systemctl is-active --quiet egyptair; then
-  WAS_ACTIVE=yes
+if systemctl is-active --quiet egyptair; then WAS_ACTIVE=yes; fi
+if [ "$DEPS_CHANGED" = "yes" ] && [ "$WAS_ACTIVE" = "yes" ]; then
+  echo "==> Deps changed — stopping service for npm install (brief downtime THIS deploy only)"
   systemctl stop egyptair
 fi
 
@@ -180,7 +201,7 @@ trap restore_timers EXIT
 echo "==> Defensive chown: ensure $APP_USER owns .next, node_modules, and source"
 # A prior failed deploy may have left root-owned files. The build runs as
 # $APP_USER, so any root-owned residue causes EACCES half-way through.
-chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next" "$APP_DIR/node_modules" 2>/dev/null || true
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next" "$APP_DIR/.next.a" "$APP_DIR/.next.b" "$APP_DIR/node_modules" 2>/dev/null || true
 
 # -------------------------------------------------------------------------
 # DISK GUARD — npm's content-addressable cache (_cacache) grows unbounded
@@ -196,12 +217,16 @@ if [ "${FREE_KB:-0}" -lt 2097152 ]; then
   echo "    free now: $(df -h --output=avail / | tail -1 | tr -d ' ')"
 fi
 
-echo "==> Installing deps as $APP_USER"
 # `npm ci` is faster + deterministic but breaks hard on any lockfile drift.
 # Today's app evolves the lockfile faster than we can keep prod in lock-step,
 # so prefer `npm install` which auto-heals drift. Add `--prefer-offline` to
 # use the cached tarballs when possible (faster, fewer registry hits).
-sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
+if [ "$DEPS_CHANGED" = "yes" ]; then
+  echo "==> Installing deps as $APP_USER (lockfile changed)"
+  sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
+else
+  echo "==> Skipping npm install — lockfile unchanged (service stays up)"
+fi
 
 # DO NOT wipe node_modules/.cache here — Next's Turbopack cache makes builds
 # fit in 2-3GB RAM; cold-build needs ~5GB and OOMs on small VPS instances.
@@ -223,32 +248,30 @@ sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
 # alive across a deploy.
 # ---------------------------------------------------------------------------
 STATIC_KEEP="$APP_DIR/.next.static-keep"
-if [ -d "$APP_DIR/.next/static" ]; then
+if [ -d "$APP_DIR/$ACTIVE_DIST/static" ]; then
   rm -rf "$STATIC_KEEP"
-  cp -a "$APP_DIR/.next/static" "$STATIC_KEEP"
-  echo "==> Snapshotted previous static assets for open tabs"
+  cp -a "$APP_DIR/$ACTIVE_DIST/static" "$STATIC_KEEP"
+  echo "==> Snapshotted current static assets for open tabs"
 fi
 
-echo "==> Building as $APP_USER (memory capped at 6GB — survives cold builds)"
+echo "==> Building into $TARGET_DIST as $APP_USER (memory capped at 6GB)"
 # --max-old-space-size caps the Node heap so an OOM kills the build cleanly
 # rather than the kernel OOM-killer hitting at an arbitrary moment. 6GB lets
-# a *cold* build (no node_modules/.cache) complete on this box (9.9GB RAM);
-# warm builds rarely use more than 2GB so the cap doesn't cost anything.
-# DEPLOY_LOCK_HELD=1 tells next.config.js this build is running under the deploy
-# lock we hold above; a direct `next build` without it is refused (see config).
-if ! sudo -u "$APP_USER" DEPLOY_LOCK_HELD=1 NODE_OPTIONS="--max-old-space-size=6144" npm run build; then
-  echo "==> ❌ BUILD FAILED — rolling back" >&2
-  if [ -d "$BACKUP_DIR" ]; then
-    rm -rf "$APP_DIR/.next"
-    mv "$BACKUP_DIR" "$APP_DIR/.next"
-    systemctl restart egyptair
-    echo "==> Restored previous .next; service restarted." >&2
-  fi
+# a *cold* build (no node_modules/.cache) complete on this box (9.9GB RAM).
+# NEXT_DIST_DIR sends the build into the INACTIVE dir — on a code-only deploy
+# the service is still serving $ACTIVE_DIST, so a build failure here costs
+# NOTHING: we discard the half-built dir and the live site was never touched.
+# DEPLOY_LOCK_HELD=1 tells next.config.js this build holds the deploy lock.
+rm -rf "$APP_DIR/$TARGET_DIST"
+if ! sudo -u "$APP_USER" NEXT_DIST_DIR="$TARGET_DIST" DEPLOY_LOCK_HELD=1 NODE_OPTIONS="--max-old-space-size=6144" npm run build; then
+  echo "==> ❌ BUILD FAILED — live site untouched (still serving $ACTIVE_DIST)" >&2
+  rm -rf "$APP_DIR/$TARGET_DIST"
+  [ "$DEPS_CHANGED" = "yes" ] && [ "$WAS_ACTIVE" = "yes" ] && systemctl start egyptair
   exit 1
 fi
 
-echo "==> Fixing ownership (in case anything slipped through)"
-chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
+echo "==> Fixing ownership on $TARGET_DIST"
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/$TARGET_DIST"
 
 # -------------------------------------------------------------------------
 # 3b. BUILD COMPLETENESS GUARD — an interrupted or collided build (killed
@@ -259,34 +282,35 @@ chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
 #     roll back to the previous build if it is not.
 # -------------------------------------------------------------------------
 echo "==> Verifying build completeness (BUILD_ID + client manifests)"
-if [ ! -s "$APP_DIR/.next/BUILD_ID" ] || \
-   [ -z "$(find "$APP_DIR/.next/server/app" -name '*client-reference-manifest*' -print -quit 2>/dev/null)" ]; then
-  echo "==> ❌ Build incomplete (.next missing BUILD_ID or client manifests) — rolling back" >&2
-  if [ -d "$BACKUP_DIR" ]; then
-    rm -rf "$APP_DIR/.next"
-    mv "$BACKUP_DIR" "$APP_DIR/.next"
-    chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
-    systemctl restart egyptair
-    echo "==> Restored previous .next; service restarted." >&2
-  else
-    echo "==> No backup available — service left stopped; debug with journalctl -u egyptair" >&2
-  fi
+if [ ! -s "$APP_DIR/$TARGET_DIST/BUILD_ID" ] || \
+   [ -z "$(find "$APP_DIR/$TARGET_DIST/server/app" -name '*client-reference-manifest*' -print -quit 2>/dev/null)" ]; then
+  echo "==> ❌ Build incomplete ($TARGET_DIST missing BUILD_ID or client manifests) — discarding; live site untouched" >&2
+  rm -rf "$APP_DIR/$TARGET_DIST"
+  [ "$DEPS_CHANGED" = "yes" ] && [ "$WAS_ACTIVE" = "yes" ] && systemctl start egyptair
   exit 1
 fi
 
 # -------------------------------------------------------------------------
 # 4. RESTART + HEALTH-CHECK with retry. A new build needs ~5-15s to warm up.
 # -------------------------------------------------------------------------
-echo "==> Restarting service"
-# Put the previous build's hashed assets back alongside the new ones so tabs
-# opened before this deploy keep rendering. --no-clobber: new build wins.
+# Carry the previous build's hashed assets into the new dir so tabs opened
+# before this deploy keep rendering after the flip. --no-clobber: new wins.
 if [ -d "$STATIC_KEEP" ]; then
-  cp -an "$STATIC_KEEP/." "$APP_DIR/.next/static/" 2>/dev/null || true
-  chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next/static"
+  mkdir -p "$APP_DIR/$TARGET_DIST/static"
+  cp -an "$STATIC_KEEP/." "$APP_DIR/$TARGET_DIST/static/" 2>/dev/null || true
+  chown -R "$APP_USER:$APP_USER" "$APP_DIR/$TARGET_DIST/static"
   rm -rf "$STATIC_KEEP"
-  echo "==> Restored previous static assets (open tabs keep working)"
+  echo "==> Carried previous static assets into $TARGET_DIST (open tabs keep working)"
 fi
 
+# THE FLIP — atomically point the service (and future runs) at the fresh dir.
+# Until this line the service is still serving $ACTIVE_DIST; the restart below
+# is the ONLY moment of impact, and it's a fast `next start` boot, not a build.
+echo "==> Flipping active build → $TARGET_DIST"
+printf 'NEXT_DIST_DIR=%s\n' "$TARGET_DIST" > "$ACTIVE_FILE.tmp"
+mv "$ACTIVE_FILE.tmp" "$ACTIVE_FILE"
+
+echo "==> Restarting service onto $TARGET_DIST"
 systemctl restart egyptair
 
 echo "==> Health-check loop (up to $((HEALTH_MAX_ATTEMPTS * 5))s grace)"
@@ -311,18 +335,16 @@ done
 # 5. ROLLBACK if the new build can't serve a 200 within the grace window.
 # -------------------------------------------------------------------------
 if [ "$HEALTHY" != "yes" ]; then
-  echo "==> ❌ NEW BUILD UNHEALTHY — rolling back to .next.previous" >&2
-  if [ -d "$BACKUP_DIR" ]; then
-    systemctl stop egyptair
-    rm -rf "$APP_DIR/.next"
-    mv "$BACKUP_DIR" "$APP_DIR/.next"
-    chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next"
-    systemctl start egyptair
+  echo "==> ❌ NEW BUILD UNHEALTHY — flipping back to $ACTIVE_DIST" >&2
+  if [ -d "$APP_DIR/$ACTIVE_DIST" ] && [ "$ACTIVE_DIST" != "$TARGET_DIST" ]; then
+    printf 'NEXT_DIST_DIR=%s\n' "$ACTIVE_DIST" > "$ACTIVE_FILE.tmp"
+    mv "$ACTIVE_FILE.tmp" "$ACTIVE_FILE"
+    systemctl restart egyptair
     sleep 5
     CODE=$(health_code)
-    echo "==> Rollback complete — HTTP $CODE on previous build" >&2
+    echo "==> Rollback complete — flipped back to $ACTIVE_DIST, HTTP $CODE" >&2
   else
-    echo "==> No backup available — please debug manually (journalctl -u egyptair -f)" >&2
+    echo "==> No previous build dir to roll back to — debug: journalctl -u egyptair -f" >&2
   fi
   exit 1
 fi
@@ -330,9 +352,14 @@ fi
 # -------------------------------------------------------------------------
 # 6. SUCCESS — clean up the backup so we don't keep growing disk usage.
 # -------------------------------------------------------------------------
-if [ -d "$BACKUP_DIR" ]; then
-  echo "==> Cleaning up previous-build snapshot"
-  rm -rf "$BACKUP_DIR"
+# Record the deps hash so the next code-only deploy can skip npm install and
+# stay fully up. Retire the legacy in-place .next once we're safely running
+# from a color dir (the first zero-downtime deploy migrates off it); KEEP the
+# previous color dir — it's the rollback and the next build's target.
+[ -n "$DEPS_NOW" ] && printf '%s\n' "$DEPS_NOW" > "$DEPS_FILE"
+if [ "$TARGET_DIST" != ".next" ] && [ -d "$APP_DIR/.next" ]; then
+  echo "==> Removing legacy in-place .next (now serving $TARGET_DIST)"
+  rm -rf "$APP_DIR/.next"
 fi
 
 # Proactively trim the npm cache if it has ballooned past 500 MB — keeps it

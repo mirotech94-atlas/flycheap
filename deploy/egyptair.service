@@ -8,6 +8,10 @@ User=egyflights
 Group=egyflights
 WorkingDirectory=/opt/egyptair-tracker
 EnvironmentFile=/opt/egyptair-tracker/.env.local
+# Zero-downtime deploys: deploy.sh writes NEXT_DIST_DIR here (.next.a/.next.b)
+# to point `next start` at the freshly-built dir. Optional (leading '-'): if the
+# file is absent the app falls back to the default '.next'.
+EnvironmentFile=-/opt/egyptair-tracker/.deploy-active-dist
 ExecStart=/usr/bin/node node_modules/next/dist/bin/next start -p 3000
 Restart=on-failure
 RestartSec=5s
