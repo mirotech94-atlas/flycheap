@@ -30,13 +30,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         inset: 0,
         overflow: 'auto',
         background:
-          'linear-gradient(180deg, #0a3a6b 0%, #061a35 40%, #04101f 100%)',
+          'linear-gradient(180deg, #1B2740 0%, #0B1220 40%, #080D16 100%)',
       }}
     >
       <AdminSidebar email={user.email} />
 
       <div className="md:pl-[220px] min-h-screen flex flex-col">
-        <header className="flex items-center justify-between px-6 py-3 border-b border-white/5 bg-[#0a1426]/60 backdrop-blur sticky top-0 z-30">
+        <header className="ad-glass-bar flex items-center justify-between px-6 py-3 sticky top-0 z-30">
           <div className="md:hidden flex items-center gap-2">
             <Logo size={28} />
             <span className="font-semibold text-sm">Admin</span>
@@ -69,18 +69,18 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <style>{`
         /* ============================================================
            FlyCheap Admin — Executive Command-Center
-           Always-dark cockpit on the navy+gold token system. Restyles the
+           Always-dark cockpit on the NIGHT-CABIN token system (--nc-*). Restyles the
            shared primitives (.card / .eyebrow / h1-3 / tables / StatCard)
            so every admin page inherits the look from one place.
            ============================================================ */
         .admin-shell {
-          --ad-panel:    #0e1d36;
-          --ad-panel-2:  #0b1830;
+          --ad-panel:    #131C2E;
+          --ad-panel-2:  #131C2E;
           --ad-line:     rgba(255,255,255,.09);
           --ad-line-soft:rgba(255,255,255,.055);
-          --ad-gold:     #d4af37;
-          --ad-gold-soft:#f0d674;
-          --ad-text:     #e8ecf4;
+          --ad-gold:     #E8A33D;
+          --ad-gold-soft:#F2C67A;
+          --ad-text:     #E9EDF5;
           --ad-muted:    rgba(255,255,255,.56);
           --ad-faint:    rgba(255,255,255,.4);
           font-family: var(--fc-font-sans, 'Manrope', system-ui, sans-serif);
@@ -89,9 +89,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         /* Atmospheric main surface — subtle grid + radial brand glows */
         .admin-shell .admin-main {
           background:
-            radial-gradient(820px 480px at 90% -10%, rgba(212,175,55,.10), transparent 60%),
-            radial-gradient(720px 480px at -6% 112%, rgba(63,214,200,.07), transparent 55%),
-            #0a1426 !important;
+            radial-gradient(820px 480px at 90% -10%, rgba(232,163,61,.10), transparent 60%),
+            radial-gradient(720px 480px at -6% 112%, rgba(111,179,201,.07), transparent 55%),
+            #0B1220 !important;
           position: relative;
         }
         .admin-shell .admin-main::before {
@@ -125,17 +125,28 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         /* Cards / KPI → cockpit panels with gold hairline + depth */
         .admin-shell .card,
         .admin-shell .kpi {
-          background: linear-gradient(180deg, var(--ad-panel), var(--ad-panel-2)) !important;
+          /* Glass, matching the client portal and the marketing site: a lit top
+             lip, a facing gradient, and blur+saturate so the page's own glows
+             bloom through the panel instead of being covered by it. */
+          background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.018)) !important;
+          -webkit-backdrop-filter: blur(14px) saturate(160%);
+          backdrop-filter: blur(14px) saturate(160%);
           border: 1px solid var(--ad-line) !important;
           border-radius: 16px !important;
           color: var(--ad-text) !important;
-          box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 20px 44px -30px rgba(0,0,0,.85) !important;
+          box-shadow: 0 1px 0 rgba(255,255,255,.14) inset, 0 20px 44px -30px rgba(0,0,0,.85) !important;
           position: relative;
         }
+        @supports not (backdrop-filter: blur(1px)) {
+          .admin-shell .card,
+          .admin-shell .kpi {
+            background: linear-gradient(180deg, var(--ad-panel), var(--ad-panel-2)) !important;
+          }
+        }
         .admin-shell .card-elevated {
-          border-color: rgba(212,175,55,.22) !important;
+          border-color: rgba(232,163,61,.22) !important;
           background:
-            linear-gradient(180deg, rgba(212,175,55,.05), transparent 40%),
+            linear-gradient(180deg, rgba(232,163,61,.05), transparent 40%),
             linear-gradient(180deg, var(--ad-panel), var(--ad-panel-2)) !important;
         }
         .admin-shell .card:hover { border-color: rgba(255,255,255,.14) !important; }
@@ -151,7 +162,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         .admin-shell .kpi-label { color: var(--ad-muted) !important; }
         .admin-shell .kpi-value { color: #fff !important; }
         .admin-shell .kpi-sub   { color: var(--ad-muted) !important; }
-        .admin-shell .kpi-brand { background: linear-gradient(135deg,#0a3a6b,#1f5fa5) !important; }
+        .admin-shell .kpi-brand { background: linear-gradient(135deg,#1B2740,#3D6B86) !important; }
 
         /* Tables → hairline rows, mono headers, gold hover, green money */
         .admin-shell table thead th {
@@ -163,11 +174,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }
         .admin-shell table tbody td { color: rgba(255,255,255,.82); border-color: var(--ad-line-soft) !important; }
         .admin-shell table tbody tr { transition: background .12s; }
-        .admin-shell table tbody tr:hover td { background: rgba(212,175,55,.05); }
+        .admin-shell table tbody tr:hover td { background: rgba(232,163,61,.05); }
 
         /* Inline code → gold chips */
         .admin-shell code {
-          background: rgba(212,175,55,.1); color: var(--ad-gold-soft);
+          background: rgba(232,163,61,.1); color: var(--ad-gold-soft);
           padding: 1px 5px; border-radius: 4px; font-size: .85em;
           font-family: var(--fc-font-mono, 'JetBrains Mono', monospace);
         }
@@ -203,8 +214,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           box-shadow: 0 18px 38px -28px rgba(0,0,0,.85);
         }
         .admin-shell .ad-panel-gold {
-          border-color: rgba(212,175,55,.34);
-          box-shadow: 0 0 0 1px rgba(212,175,55,.06), 0 18px 38px -28px rgba(0,0,0,.85);
+          border-color: rgba(232,163,61,.34);
+          box-shadow: 0 0 0 1px rgba(232,163,61,.06), 0 18px 38px -28px rgba(0,0,0,.85);
         }
         .admin-shell .ad-panel-title {
           font-family: var(--fc-font-display, 'Fraunces', serif);
@@ -218,7 +229,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }
         .admin-shell .ad-kpi-link { transition: border-color .16s, transform .16s; text-decoration: none; }
         .admin-shell .ad-kpi-link:hover {
-          border-color: rgba(212,175,55,.45); transform: translateY(-2px);
+          border-color: rgba(232,163,61,.45); transform: translateY(-2px);
         }
         .admin-shell .ad-chip {
           font-family: var(--fc-font-mono, ui-monospace, monospace);
@@ -239,9 +250,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           background: rgba(255,255,255,.09); color: #fff; border-color: rgba(255,255,255,.2);
         }
         .admin-shell .ad-btn-gold {
-          border-color: rgba(212,175,55,.4); background: rgba(212,175,55,.12); color: var(--ad-gold-soft);
+          border-color: rgba(232,163,61,.4); background: rgba(232,163,61,.12); color: var(--ad-gold-soft);
         }
-        .admin-shell .ad-btn-gold:hover { background: rgba(212,175,55,.22); color: #fff; }
+        .admin-shell .ad-btn-gold:hover { background: rgba(232,163,61,.22); color: #fff; }
         .admin-shell .ad-table { border-collapse: collapse; font-size: 12.5px; }
         .admin-shell .ad-table th {
           text-align: left; padding: 7px 10px;
@@ -254,7 +265,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           padding: 8px 10px; border-top: 1px solid var(--ad-line-soft);
           color: rgba(255,255,255,.8); vertical-align: middle;
         }
-        .admin-shell .ad-table tbody tr:hover td { background: rgba(212,175,55,.045); }
+        .admin-shell .ad-table tbody tr:hover td { background: rgba(232,163,61,.045); }
         .admin-shell .ad-input {
           width: 190px; max-width: 46vw;
           background: rgba(0,0,0,.28); border: 1px solid var(--ad-line);
@@ -264,8 +275,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           outline: none; transition: border-color .14s, box-shadow .14s;
         }
         .admin-shell .ad-input:focus {
-          border-color: rgba(212,175,55,.55);
-          box-shadow: 0 0 0 3px rgba(212,175,55,.14);
+          border-color: rgba(232,163,61,.55);
+          box-shadow: 0 0 0 3px rgba(232,163,61,.14);
         }
         .admin-shell .ad-btn:disabled { opacity: .4; cursor: not-allowed; }
         /* Live environment pill in the top bar */
@@ -274,10 +285,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           font-family: var(--fc-font-mono, ui-monospace, monospace);
           font-size: 9.5px; letter-spacing: .16em; text-transform: uppercase;
           padding: 4px 9px; border-radius: 999px;
-          border: 1px solid rgba(52,211,153,.3); background: rgba(52,211,153,.08); color: #6ee7b7;
+          border: 1px solid rgba(52,211,153,.3); background: rgba(52,211,153,.08); color: #9FD4B5;
         }
         .admin-shell .ad-env .dot {
-          width: 5px; height: 5px; border-radius: 50%; background: #34d399;
+          width: 5px; height: 5px; border-radius: 50%; background: #7BC49A;
           box-shadow: 0 0 0 3px rgba(52,211,153,.18);
         }
       `}</style>

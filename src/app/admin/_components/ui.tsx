@@ -11,14 +11,14 @@ export type Tone = 'neutral' | 'gold' | 'good' | 'warn' | 'bad';
 
 const TONE_TEXT: Record<Tone, string> = {
   neutral: 'text-white',
-  gold: 'text-[#f0d674]',
+  gold: 'text-[#F2C67A]',
   good: 'text-emerald-300',
   warn: 'text-amber-300',
   bad: 'text-rose-300',
 };
 const TONE_DOT: Record<Tone, string> = {
   neutral: 'bg-white/40',
-  gold: 'bg-[#d4af37]',
+  gold: 'bg-[#E8A33D]',
   good: 'bg-emerald-400',
   warn: 'bg-amber-400',
   bad: 'bg-rose-400',
@@ -27,7 +27,7 @@ const TONE_DOT: Record<Tone, string> = {
 /** Small uppercase mono label used above every value. */
 export function Eyebrow({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: Tone }) {
   return (
-    <div className={`ad-eyebrow ${tone === 'gold' ? 'text-[#d4af37]' : 'text-white/45'}`}>
+    <div className={`ad-eyebrow ${tone === 'gold' ? 'text-[#E8A33D]' : 'text-white/45'}`}>
       {children}
     </div>
   );
@@ -107,7 +107,7 @@ export function Spark({ data, tone = 'neutral', h = 26 }: { data: number[]; tone
     const y = h - ((v - min) / span) * (h - 4) - 2;
     return `${x.toFixed(1)},${y.toFixed(1)}`;
   });
-  const stroke = tone === 'gold' ? '#d4af37' : tone === 'good' ? '#34d399' : tone === 'bad' ? '#fb7185' : '#5a9bd8';
+  const stroke = tone === 'gold' ? '#E8A33D' : tone === 'good' ? '#7BC49A' : tone === 'bad' ? '#E0655C' : '#6FB3C9';
   return (
     <svg viewBox={`0 0 ${w} ${h}`} className="w-full mt-2" style={{ height: h }} preserveAspectRatio="none" aria-hidden>
       <polyline points={`0,${h} ${pts.join(' ')} ${w},${h}`} fill={stroke} fillOpacity="0.10" stroke="none" />
@@ -154,7 +154,7 @@ export function BarRow({
   label, value, max, tone = 'neutral', right,
 }: { label: React.ReactNode; value: number; max: number; tone?: Tone; right?: React.ReactNode }) {
   const pct = max > 0 ? Math.max(1, Math.round((value / max) * 100)) : 0;
-  const fill = tone === 'gold' ? '#d4af37' : tone === 'good' ? '#10b981' : tone === 'bad' ? '#f43f5e' : '#1f5fa5';
+  const fill = tone === 'gold' ? '#E8A33D' : tone === 'good' ? '#7BC49A' : tone === 'bad' ? '#D8433A' : '#3D6B86';
   return (
     <div className="py-2 border-t border-white/[0.06] first:border-t-0">
       <div className="flex items-baseline justify-between gap-3 text-[12.5px]">

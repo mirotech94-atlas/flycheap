@@ -73,7 +73,7 @@ export function AdminSidebar({ email }: { email: string }) {
       <button
         aria-label="Toggle admin nav"
         onClick={() => setOpen(v => !v)}
-        className="md:hidden fixed top-3 left-3 z-50 w-9 h-9 rounded-md bg-[#0f1f3a] border border-white/10 text-white flex items-center justify-center"
+        className="md:hidden fixed top-3 left-3 z-50 w-9 h-9 rounded-md bg-[#1B2740] border border-white/10 text-white flex items-center justify-center"
       >
         <span className="block w-4 h-[2px] bg-white relative before:content-[''] before:absolute before:left-0 before:-top-1.5 before:w-4 before:h-[2px] before:bg-white after:content-[''] after:absolute after:left-0 after:top-1.5 after:w-4 after:h-[2px] after:bg-white" />
       </button>
@@ -83,17 +83,17 @@ export function AdminSidebar({ email }: { email: string }) {
           fixed top-0 left-0 z-40 h-screen w-[220px]
           flex flex-col
           border-r border-white/[0.06]
-          bg-gradient-to-b from-[#0a3a6b] via-[#061a35] to-[#04101f]
+          bg-gradient-to-b from-[#1B2740] via-[#0B1220] to-[#080D16]
           transition-transform duration-200
           ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
         `}
-        style={{ boxShadow: 'inset -1px 0 0 rgba(212,175,55,0.07)' }}
+        style={{ boxShadow: 'inset -1px 0 0 rgba(232,163,61,0.07)' }}
       >
         {/* Brand */}
         <div className="px-5 pt-5 pb-4 border-b border-white/[0.06]">
           <Link href="/admin" className="flex items-center gap-2.5 group">
             <div className="relative">
-              <div className="absolute inset-0 rounded-md bg-[#d4af37] blur-md opacity-30 group-hover:opacity-50 transition" />
+              <div className="absolute inset-0 rounded-md bg-[#E8A33D] blur-md opacity-30 group-hover:opacity-50 transition" />
               <Logo size={30} className="relative" />
             </div>
             <div className="leading-tight">
@@ -103,7 +103,7 @@ export function AdminSidebar({ email }: { email: string }) {
               >
                 FlyCheap
               </div>
-              <div className="text-[9px] tracking-[0.24em] uppercase text-[#d4af37] font-mono">
+              <div className="text-[9px] tracking-[0.24em] uppercase text-[#E8A33D] font-mono">
                 Command Center
               </div>
             </div>
@@ -113,8 +113,8 @@ export function AdminSidebar({ email }: { email: string }) {
         {/* Operator */}
         <div className="px-5 py-3 border-b border-white/[0.06]">
           <div className="text-[11px] text-white/55 truncate" title={email}>{email}</div>
-          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-[#d4af37]/15 text-[#f0d674] border border-[#d4af37]/30 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4ade80] shadow-[0_0_6px_#4ade80]" />
+          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-[#E8A33D]/15 text-[#F2C67A] border border-[#E8A33D]/30 font-mono">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#7BC49A] shadow-[0_0_6px_#7BC49A]" />
             Admin · Live
           </div>
         </div>
@@ -143,9 +143,9 @@ export function AdminSidebar({ email }: { email: string }) {
                     `}
                   >
                     {active && (
-                      <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#d4af37] shadow-[0_0_8px_rgba(212,175,55,0.6)]" />
+                      <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#E8A33D] shadow-[0_0_8px_rgba(232,163,61,0.6)]" />
                     )}
-                    <span className={active ? 'text-[#d4af37]' : 'text-white/45'}>
+                    <span className={active ? 'text-[#E8A33D]' : 'text-white/45'}>
                       <Icon kind={item.icon} />
                     </span>
                     <span>{item.label}</span>
