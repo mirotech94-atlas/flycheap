@@ -198,7 +198,7 @@ export function ClientSidebar({
             <Link
               href="/login"
               onClick={() => setMobileOpen(false)}
-              className="mt-5 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold bg-[var(--nc-amber)] text-[#241703] hover:bg-[#f0cc50] transition"
+              className="mt-5 w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-sm font-bold bg-[var(--nc-amber)] text-[#241703] hover:bg-[#F2B961] transition"
             >
               {nav.signInArrow}
             </Link>

@@ -126,7 +126,7 @@ export function GlobeHUD() {
     () => arcs.map(a => ({
       startLat: a.startLat, startLng: a.startLng,
       endLat: a.endLat, endLng: a.endLng,
-      color: [colorForPrice(a.price), '#d4af37'],
+      color: [colorForPrice(a.price), '#E8A33D'],
       label: a.label,
     })),
     [arcs]

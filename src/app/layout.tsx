@@ -48,7 +48,10 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  themeColor: '#0a3a6b',
+  // The browser/phone chrome tint. Still the retired navy while every surface
+  // behind it had moved to the cabin ground, so the status bar did not match
+  // the page under it.
+  themeColor: '#0B1220',
   width: 'device-width',
   initialScale: 1,
 };

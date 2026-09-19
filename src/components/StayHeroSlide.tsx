@@ -79,7 +79,7 @@ export function StayHeroSlide({ iata, checkIn, checkOut, adults, mode }: {
           <a
             href={href}
             {...(mode === 'explore' ? {} : { target: '_blank', rel: 'noopener sponsored' })}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] transition shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] transition shadow-lg"
           >
             {cta}
           </a>

@@ -54,7 +54,7 @@ function Illustration({ kind }: { kind: 'flight' | 'world' | 'chart' }) {
         <svg viewBox="0 0 200 80" className="mx-auto w-48 h-32" aria-hidden>
           <defs>
             <linearGradient id="planeGrad" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stopColor="#1f5fa5" /><stop offset="100%" stopColor="#0a3a6b" />
+              <stop offset="0%" stopColor="#1f5fa5" /><stop offset="100%" stopColor="#0B1220" />
             </linearGradient>
           </defs>
           {/* Dotted flight path */}
@@ -64,11 +64,11 @@ function Illustration({ kind }: { kind: 'flight' | 'world' | 'chart' }) {
             <path d="M -16 0 L 16 0 L 14 -3 L -10 -3 Z" fill="url(#planeGrad)" />
             <path d="M 4 0 L 12 -10 L 10 -10 L 0 0 Z" fill="url(#planeGrad)" />
             <path d="M -14 0 L -8 -8 L -10 -8 L -16 0 Z" fill="url(#planeGrad)" />
-            <circle cx="-12" cy="0" r="1.5" fill="#d4af37" />
+            <circle cx="-12" cy="0" r="1.5" fill="#E8A33D" />
           </g>
           {/* Origin / destination dots */}
-          <circle cx="10" cy="60" r="4" fill="#d4af37" stroke="white" strokeWidth="1.5" />
-          <circle cx="190" cy="50" r="4" fill="#0a3a6b" stroke="white" strokeWidth="1.5" />
+          <circle cx="10" cy="60" r="4" fill="#E8A33D" stroke="white" strokeWidth="1.5" />
+          <circle cx="190" cy="50" r="4" fill="#0B1220" stroke="white" strokeWidth="1.5" />
         </svg>
       </div>
     );

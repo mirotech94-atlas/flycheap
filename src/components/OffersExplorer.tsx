@@ -613,7 +613,7 @@ export function OffersExplorer(props: {
                       href={bookHref}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] transition whitespace-nowrap"
+                      className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] transition whitespace-nowrap"
                     >
                       Book →
                     </a>

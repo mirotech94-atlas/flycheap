@@ -200,11 +200,11 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             <Link
               key={c.id}
               href={c.href}
-              className={`card hover:!shadow-lift hover:-translate-y-0.5 transition-all relative ${isActive ? 'ring-2 ring-[#d4af37] !border-[#d4af37]/60' : ''}`}
+              className={`card hover:!shadow-lift hover:-translate-y-0.5 transition-all relative ${isActive ? 'ring-2 ring-[#E8A33D] !border-[#E8A33D]/60' : ''}`}
             >
               <div className={`eyebrow ${c.eyebrowCls} flex items-center gap-1.5`}>
                 {c.label}
-                {isActive && <span className="text-[10px] text-[#d4af37]">● active</span>}
+                {isActive && <span className="text-[10px] text-[#E8A33D]">● active</span>}
               </div>
               <div className="font-display font-bold text-lg mt-1">{c.title}</div>
               <p className="text-xs text-slate-500 mt-1">{c.desc}</p>
@@ -428,7 +428,7 @@ function HeroDealSlide({ deal, originCity }: { deal: DealRow; originCity: string
             <span className="text-[10px] font-bold uppercase tracking-wider bg-emerald-500/90 text-white px-2.5 py-1 rounded-full">Nonstop</span>
           )}
           {isDeal && (
-            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#d4af37] text-[#0a3a6b] px-2.5 py-1 rounded-full">Deal</span>
+            <span className="text-[10px] font-bold uppercase tracking-wider bg-[#E8A33D] text-[#0B1220] px-2.5 py-1 rounded-full">Deal</span>
           )}
           {deal.number_of_changes > 0 && (
             <span className="text-[10px] font-bold uppercase tracking-wider bg-white/20 text-white px-2.5 py-1 rounded-full">
@@ -448,13 +448,13 @@ function HeroDealSlide({ deal, originCity }: { deal: DealRow; originCity: string
         <div className="flex items-end gap-4 mt-5">
           <div>
             <div className="text-white/55 text-[10px] uppercase tracking-wider">from</div>
-            <div className="text-[#d4af37] font-black text-4xl tabular leading-none">{fmtUSD(deal.price)}</div>
+            <div className="text-[#E8A33D] font-black text-4xl tabular leading-none">{fmtUSD(deal.price)}</div>
           </div>
           <a
             href={href}
             target="_blank"
             rel="noopener sponsored"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] transition shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] transition shadow-lg"
           >
             Book now →
           </a>
@@ -509,13 +509,13 @@ function HeroDestinationSlide({
         <div className="flex items-end gap-4 mt-5">
           <div>
             <div className="text-white/55 text-[10px] uppercase tracking-wider">from</div>
-            <div className="text-[#d4af37] font-black text-4xl tabular leading-none">{fmtUSD(price)}</div>
+            <div className="text-[#E8A33D] font-black text-4xl tabular leading-none">{fmtUSD(price)}</div>
           </div>
           <a
             href={href}
             target="_blank"
             rel="noopener sponsored"
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] transition shadow-lg"
+            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl font-bold text-sm bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] transition shadow-lg"
           >
             Book now →
           </a>

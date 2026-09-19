@@ -99,7 +99,7 @@ export function DealSlideshow({
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => go(i)}
               className={`rounded-full transition-all duration-300 ${
-                i === idx ? 'w-6 h-2 bg-[#d4af37]' : 'w-2 h-2 bg-white/50 hover:bg-white/80'
+                i === idx ? 'w-6 h-2 bg-[#E8A33D]' : 'w-2 h-2 bg-white/50 hover:bg-white/80'
               }`}
             />
           ))}

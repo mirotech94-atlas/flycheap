@@ -129,7 +129,7 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                       <div style={{ width: 38, height: 4, background: '#eef2f7', borderRadius: 999, overflow: 'hidden' }}>
                         <div style={{
                           width: `${r.conf}%`, height: '100%',
-                          background: r.conf > 80 ? '#1f8a5b' : r.conf > 70 ? '#d4af37' : '#c1426b',
+                          background: r.conf > 80 ? '#1f8a5b' : r.conf > 70 ? '#E8A33D' : '#c1426b',
                         }} />
                       </div>
                       <span className="fc-mono" style={{ fontSize: 11, color: 'var(--fc-muted)' }}>{r.conf}%</span>

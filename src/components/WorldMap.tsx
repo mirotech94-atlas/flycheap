@@ -134,7 +134,7 @@ export function WorldMap({
         </g>
 
         {/* Route arcs from origin to each destination */}
-        <g fill="none" strokeOpacity="0.15" stroke="#0a3a6b">
+        <g fill="none" strokeOpacity="0.15" stroke="#0B1220">
           {known.map(d => {
             const [lng, lat] = CITY_COORDS[d.destination];
             const [x, y] = project(lng, lat, W, H);
@@ -147,7 +147,7 @@ export function WorldMap({
         {/* Origin dot */}
         <g>
           <circle cx={ox} cy={oy} r="9" fill="rgba(212,175,55,0.18)" />
-          <circle cx={ox} cy={oy} r="5" fill="#d4af37" stroke="white" strokeWidth="1.5" />
+          <circle cx={ox} cy={oy} r="5" fill="#E8A33D" stroke="white" strokeWidth="1.5" />
         </g>
 
         {/* Destination dots */}

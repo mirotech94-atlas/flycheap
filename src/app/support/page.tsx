@@ -18,7 +18,7 @@ function statusClasses(s: TicketStatus): string {
     case 'resolved':    return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/20';
     case 'waiting':     return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20';
     case 'in_progress': return 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/20';
-    default:            return 'text-[#8a6d1a] bg-[#faf3dc] border-[#e6d9a8] dark:text-[#f0d674] dark:bg-[#d4af37]/10 dark:border-[#d4af37]/25';
+    default:            return 'text-[#8a6d1a] bg-[#faf3dc] border-[#e6d9a8] dark:text-[#F2C67A] dark:bg-[#E8A33D]/10 dark:border-[#E8A33D]/25';
   }
 }
 function ago(ts: string | null): string {
@@ -59,7 +59,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             <input
               id="t-subject" name="subject" maxLength={120}
               placeholder="e.g. My fare alerts stopped arriving"
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40"
+              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40"
             />
           </div>
           <div>
@@ -67,7 +67,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
             <textarea
               id="t-message" name="message" required rows={5}
               placeholder="Tell us what you expected, what happened instead, and the page or route it affects. Screenshots help — paste them in."
-              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 resize-y"
+              className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 resize-y"
             />
           </div>
           <div className="flex items-center justify-between gap-3">
@@ -89,7 +89,7 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
               <Link
                 key={t.id}
                 href={`/support/${t.ref}`}
-                className="card flex items-center justify-between gap-4 hover:border-[#d4af37]/40 transition"
+                className="card flex items-center justify-between gap-4 hover:border-[#E8A33D]/40 transition"
               >
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">

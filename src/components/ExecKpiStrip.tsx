@@ -18,7 +18,7 @@ function Sparkline({ data, color = '#1f8a5b', accent = false }: { data: number[]
   const points = data
     .map((v, i) => `${i * step},${height - ((v - min) / range) * height}`)
     .join(' ');
-  const stroke = accent ? '#d4af37' : color;
+  const stroke = accent ? '#E8A33D' : color;
   return (
     <svg width={width} height={height} style={{ overflow: 'visible' }}>
       <polyline
@@ -161,7 +161,7 @@ export function ExecKpiStrip({
         value={String(anomalyCount).padStart(2, '0')}
         sub={anomalyCount > 0 ? `${anomalyCount} still bookable` : 'None right now'}
         trend={[0, 1, 1, 2, anomalyCount > 2 ? 3 : anomalyCount, anomalyCount, anomalyCount]}
-        trendColor="#d4af37"
+        trendColor="#E8A33D"
       />
     </div>
   );

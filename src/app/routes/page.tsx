@@ -70,7 +70,7 @@ export default function RoutesIndexPage() {
         /* ─── Empty state ─── */
         <section className="grid sm:grid-cols-3 gap-4">
           {[
-            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start polling immediately — every 30 minutes (5 on Pro) — and keep going indefinitely.', href: '/searches', cta: 'Add route →', grad: { from: '#0a3a6b', to: '#1a6ba0' } },
+            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start polling immediately — every 30 minutes (5 on Pro) — and keep going indefinitely.', href: '/searches', cta: 'Add route →', grad: { from: '#0B1220', to: '#1a6ba0' } },
             { title: 'Explore cheap deals', desc: 'Browse current deals from your home city with live price filters.', href: '/explore', cta: 'Browse deals →', grad: { from: '#0a5a3a', to: '#1a8b60' } },
             { title: 'Search live fares', desc: 'Run a live multi-provider search across Aviasales, Google Flights, and more.', href: '/offers', cta: 'Search now →', grad: { from: '#5a3a0a', to: '#8b5a1a' } },
           ].map(c => (
@@ -133,7 +133,7 @@ export default function RoutesIndexPage() {
                           </div>
                         </div>
                         <div className="relative text-right shrink-0">
-                          <div className="text-[#d4af37] font-black text-base tabular">from {fmtUSD(r.min_usd)}</div>
+                          <div className="text-[#E8A33D] font-black text-base tabular">from {fmtUSD(r.min_usd)}</div>
                           <div className="text-white/50 text-[9px] uppercase tracking-wide">{r.deals} cached</div>
                         </div>
                         <div className="relative text-white/30 group-hover:text-white/70 text-sm transition">›</div>
