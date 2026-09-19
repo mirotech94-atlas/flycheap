@@ -140,7 +140,13 @@ export function WhiteLabelSettings() {
               <span>Brand preview</span>
               <span className="text-[10px] uppercase tracking-wider opacity-70">Header</span>
             </div>
-            <div className="px-4 py-3 bg-white dark:bg-slate-900 flex items-center gap-2">
+            {/* This row previews the tenant's raw brand hex as ink. It used to sit
+                on dark:bg-slate-900, where the DEFAULT brand (#0a3a6b) read at
+                1.55:1 -- the preview was unreadable for every tenant who had
+                not picked a colour yet. A preview card is a document surface,
+                so it is pinned to ticket stock in both themes: the swatch is
+                then judged against the light chrome it actually ships on. */}
+            <div className="px-4 py-3 bg-[var(--nc-stock)] flex items-center gap-2">
               <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white" style={{ background: color }}>Primary CTA</button>
               <span className="text-xs font-semibold" style={{ color }}>Brand text</span>
             </div>
