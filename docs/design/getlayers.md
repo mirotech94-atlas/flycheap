@@ -90,7 +90,7 @@ Night-cabin is finished and Myron's standing instruction is not to revert it. Ge
 
 | Surface | GetLayers | Why |
 |---|---|---|
-| **flycheap.live** (marketing) — `/welcome`, `/about`, `/pricing`, `/integrations`, `/demo` | **Yes** — templates, hero scenes, backgrounds, gradients | First impression for big clients; exactly the page type GetLayers is built for |
+| **flycheap.live** (marketing) — `/early-access` (the front door), `/about`, `/pricing`, `/integrations`, `/demo` | **Yes** — templates, hero scenes, backgrounds, gradients | First impression for big clients; exactly the page type GetLayers is built for |
 | **my.flycheap.live** (client portal) — dashboard, searches, explore, hotels, offers, settings | **Selective** — a background or gradient behind a hero at most. No templates. | A data product. Animated marketing sections fight the ticket-stub language and the "fares are the one loud thing" rule |
 | **admin.flycheap.live** (admin) | **No** | Operator console. WebGL costs load time and buys nothing |
 
@@ -114,6 +114,12 @@ onto the `--nc-*` tokens:
 | `secondary` / `gl-bg-alt`, `gl-surface` | `--nc-deck` `#131C2E`, `--nc-deck-2` `#1B2740` | panels |
 | `primary` / `gl-ink` | `--nc-on-dark` `#E9EDF5` | body ink |
 | `accent` / `gl-accent` | **`--nc-teal` `#6FB3C9`** | — NOT amber |
+
+**This is now a system-wide rule, not just a retint rule for GetLayers layers.** Shipped in
+MR !30: `brand.gold`/`brand.accent` are deleted, every non-fare accent in the app takes
+`--nc-teal`, and the only sanctioned amber outside a fare or primary action is the logo mark
+(whose subject is a fare falling). So a GetLayers layer tinted per this table lands already
+consistent with the rest of the product.
 
 **`--nc-amber` must never be mapped to the accent role.** GetLayers spends its accent on
 instrumentation, glows, rules and hover states — decoration, by design. Night-cabin reserves
@@ -159,8 +165,13 @@ fine; keep alpha in `strokeOpacity`/`fillOpacity` so the token stays a flat hue.
 
 ## 6. Suggested first build
 
-Lowest risk, highest value: `/welcome`. It is public, it is the prospect's first impression, and
-it is already night-cabin so the retint pass is a diff, not a rewrite.
+> **`/welcome` IS RETIRED — it is not the marketing site.** The apex serves
+> **`/early-access`**, which is a separate `dc-*` design system, not the `--nc-*` one.
+> Check what a host actually serves before designing for it; this doc told two
+> earlier passes to design for a dead route.
+
+Lowest risk, highest value: `/early-access`. It is public, it is the prospect's first
+impression, and it is already themed so the retint pass is a diff, not a rewrite.
 
 1. `getlayers_start`
 2. `getlayers_compositions` — find a hero + feature-grid skeleton for a SaaS/data product
@@ -215,6 +226,22 @@ fullscreen triangle, one fragment shader) — **no assets, no library, no networ
 Layering in `.fc-hero` is explicit (`sky 0 → ::before graticule 1 → content 2`) because a
 `::before` paints before real children and the canvas would otherwise cover the graticule.
 
+### `RouteField` — `src/components/fc/RouteField.tsx`
+
+The second GetLayers-derived component, and the one actually on the marketing front door.
+Canvas 2D (not WebGL), drawing great-circle flight paths as the backdrop behind
+`/early-access` — the "register" Myron pointed at with guarder.io.
+
+- **Every stroke is under 20% alpha.** It is a backdrop; the moment it competes with the
+  headline it has failed. A `destination-in` radial plus a vertical fade keeps the centre and
+  the bottom clear so copy always sits on near-flat ground.
+- Palette is read from `--nc-teal` / `--nc-amber` **at runtime** rather than baked, so it can
+  never drift from the tokens the way the globe's hardcoded `#d4af37` prop did.
+- Pauses off-screen, and renders a single static frame under `prefers-reduced-motion`.
+
+Why Canvas 2D and not a GetLayers WebGL scene: the doc's own bundle budget. A flight-path field
+is cheap in 2D and the marketing pages hold 80–90+ PageSpeed.
+
 ### Bugs fixed on the way
 
 1. **The globe was still drawing Bloomberg gold.** `FcGlobe accentColor="#d4af37"` was hardcoded
@@ -247,7 +274,9 @@ Removing the sweep outright was wrong — `/about`, `/terms`, `/checkout`, `/dem
 a dark product. Caught in the browser before committing. The sweep now normalises **light themes
 only** and never touches a surface declaring a dark one.
 
-**Next step:** convert those five pages to `cabin` and the sweep can be deleted entirely.
+**Next step:** ~~convert those five pages to `cabin` and the sweep can be deleted entirely.~~
+**Done** — see §8. But it was *six*, then it turned out to be **seven**: `/credits` was missed
+and only found on 2026-09-19. See §9.
 
 ### Resolved
 
@@ -311,16 +340,44 @@ the tenant their own colour, and elements under 30% alpha are skipped as decorat
 
 ### Still open
 
-- **Stale domain on the landing.** `src/app/welcome/page.tsx` hardcodes `flycheap.18dn.com` in
-  the OpenGraph url, the OG/Twitter image urls, and the visible faux-browser URL in the preview
-  section — the cutover moved marketing to `flycheap.live`. The OG ones affect every shared
-  link. Not changed here because the correct value depends on which host serves marketing;
-  derive it from `MARKETING_HOST` / `PUBLIC_CLIENT_HOST` rather than hardcoding again.
 - **White-label brand colour is not contrast-checked.** An arbitrary tenant hex is used raw for
-  link text, so a dark brand on a dark ground is unreadable. Cabin now overrides it; the real
-  fix is to derive a contrast-safe variant per surface.
-- **The test suite does not run.** `tests/helpers/*` and most test files are deleted in the
-  working tree (pre-existing, unstaged), so vitest cannot resolve `@/` and collects nothing.
-- `.fc-shell[data-fc-theme="ivory"]` / `"paper"` rules in globals.css are now dead — no markup
-  declares a light theme.
+  link text, so a dark brand on a dark ground is unreadable. Cabin overrides it (and the
+  override now covers bare `.text-brand` too, which was missed); the real fix is still to
+  derive a contrast-safe variant per surface rather than override tenant branding wholesale.
+- `.fc-shell[data-fc-theme="ivory"]` / `"paper"` rules in globals.css are dead **as of
+  2026-09-19** — `/credits` was the last markup declaring a light theme (§9).
+
+### Closed since
+
+- ~~Stale domain on the landing (`src/app/welcome/page.tsx`).~~ That route is retired; the only
+  remaining `flycheap.18dn.com` strings in `src/` are comments, not live values.
+- ~~The test suite does not run.~~ It runs: **20 files, 185 tests, all passing** (verified
+  2026-09-19). The deletions were an unstaged working-tree state, not a repo state — which
+  matters, because it means a green CI pipeline on an MR is meaningful again.
+
+---
+
+## 9. `/credits` — the seventh ivory page — 2026-09-19
+
+§8 says "the last six pages". **There were seven.** `/credits` still declared
+`data-fc-theme="ivory"` and was never converted.
+
+The failure mode is worth remembering because it is *not* the obvious one. It did not render as
+a white page in a dark product — that would have been caught immediately. Instead:
+
+- the page GROUND went dark, because the html-level `coal` theme won;
+- the credit cards kept `background: var(--fc-paper)`, which the ivory block resolved to cream;
+- but `--fc-muted` / `--fc-faint` are remapped by the cabin blocks to `--nc-on-dark-mute` /
+  `--nc-on-dark-faint`, inks meant for DARK grounds.
+
+Result: light-grey text on cream cards — photographer, IATA code and licence line under all 106
+photographs. **426 failing text nodes on a public page linked from the footer.** Textbook token
+double-duty inversion, the same class §8 documents.
+
+Fixed with the one-word conversion the other six already had: under cabin `--fc-paper` resolves
+to `--nc-deck`, so the cards become dark panels and the dark-ground inks are correct on them.
+426 → 0.
+
+**The lesson: it survived every audit because no audit ever visited `/credits`.** A per-page
+audit only proves the pages you list. Enumerate routes from the filesystem, not from memory.
 
