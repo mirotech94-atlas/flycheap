@@ -18,8 +18,14 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
           went teal precisely so this stays legible as the fare colour. */}
       <defs>
         <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%"   stopColor="#1B2740" />
-          <stop offset="55%"  stopColor="#131C2E" />
+          {/* Lifted one step off the panel greys. The first cut ran
+              #1B2740 -> #131C2E -> #0B1220, i.e. the deck colours exactly --
+              which meant the tile VANISHED on the admin console, whose panel
+              IS #131C2E. The admin header logo has no halo behind it, so the
+              mark was left floating with no tile at all. These sit just above
+              the panel range so the tile reads on both grounds. */}
+          <stop offset="0%"   stopColor="#24314D" />
+          <stop offset="55%"  stopColor="#16203A" />
           <stop offset="100%" stopColor="#0B1220" />
         </linearGradient>
         <linearGradient id="logo-amber" x1="0" y1="0" x2="1" y2="1">
@@ -29,7 +35,9 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="14" fill="url(#logo-bg)" />
-      <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="rgba(255,255,255,.10)" />
+      {/* --nc-rule-2 weight, not --nc-rule: at the 28-30px the chrome renders
+          this at, a .10 hairline disappears and the tile loses its edge. */}
+      <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.5" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.5" />
       {/* Fare-drop: a plane descending a dotted price line — fares falling to target. */}
       <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="url(#logo-amber)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="1 5" />
       <circle cx="12" cy="20" r="2.8" fill="url(#logo-amber)" />
