@@ -77,17 +77,25 @@ function shadeColor(hex: string, percent: number): string {
 const themeBoot = `
   try {
     var root = document.documentElement;
-    // FC dropdown theme (Ivory / Paper / Coal) — global, applied before paint.
-    // Defaults to 'coal' to match the attribute the server renders and the
-    // theme FcTweaks enforces; 'ivory' here caused a hydration mismatch on
-    // <html> and a light flash before the effect ran.
-    var fcT = localStorage.getItem('fc-theme') || 'coal';
+    // Theme, applied before paint. CLAMPED to the themes that still exist.
+    //
+    // This used to apply whatever string localStorage held. The old FC dropdown
+    // could store 'ivory' or 'paper', and those values outlive the dropdown: a
+    // returning visitor still carrying one got it written onto <html> before
+    // paint, and because the dark class is only added for 'coal', the WHOLE
+    // app rendered in light mode until FcTweaks corrected it after hydration.
+    // A stale client value must never be able to pick a theme the app no
+    // longer ships.
+    var fcStored = localStorage.getItem('fc-theme');
+    var fcT = (fcStored === 'coal' || fcStored === 'cabin') ? fcStored : 'coal';
     var fcA = localStorage.getItem('fc-accent') || 'gold';
     root.setAttribute('data-fc-theme', fcT);
     root.setAttribute('data-fc-accent', fcA);
-    // Coal flips Tailwind dark mode too so non-FC routes (Settings, Searches…)
-    // also re-skin instead of looking out of place against the rest of the app.
-    if (fcT === 'coal') { root.classList.add('dark'); }
+    // Both live themes are dark, so both flip Tailwind dark mode -- otherwise
+    // non-FC routes (Settings, Searches...) render light against a dark app.
+    // The else-branch is now unreachable given the clamp above; it is kept as
+    // the honest fallback if a light theme is ever reintroduced.
+    if (fcT === 'coal' || fcT === 'cabin') { root.classList.add('dark'); }
     else {
       var t = localStorage.getItem('egyptair-theme');
       if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
