@@ -41,14 +41,14 @@ export default function RoutesIndexPage() {
       {/* HERO */}
       <section className="relative rounded-3xl bg-brand-gradient text-white border border-slate-200/60 dark:border-slate-700/60 overflow-hidden">
         <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-brand-gold/25 blur-3xl" />
+          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[var(--nc-teal)]/20 blur-3xl" />
           <div className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-brand-400/20 blur-3xl" />
         </div>
         <div className="relative px-8 py-10">
           <div className="eyebrow !text-white/70 mb-1">All routes</div>
           <h1 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight">
             Track any route,{' '}
-            <span className="text-brand-gold">real pricing every 30 minutes</span>
+            <span className="text-[var(--nc-teal)]">real pricing every 30 minutes</span>
           </h1>
           <p className="text-white/75 mt-2 max-w-xl text-sm md:text-base">
             We poll Travelpayouts for every route below, every hour. Click a route for cached cheapest

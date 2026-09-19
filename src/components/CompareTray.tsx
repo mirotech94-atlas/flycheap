@@ -34,7 +34,7 @@ export function CompareTray() {
         onClick={() => setOpen(true)}
         className="fixed bottom-6 left-6 z-30 inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-brand text-white shadow-lift hover:bg-brand-600 transition no-print"
       >
-        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand-gold text-brand-900 text-xs font-bold">
+        <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-[var(--nc-teal)] text-[var(--nc-dark)] text-xs font-bold">
           {pins.length}
         </span>
         <span className="text-sm font-semibold">Compare pinned</span>

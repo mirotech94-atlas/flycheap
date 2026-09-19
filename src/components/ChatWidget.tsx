@@ -241,7 +241,7 @@ export function ChatWidget() {
         <div className="fixed bottom-44 right-6 md:bottom-24 z-40 w-[400px] max-w-[calc(100vw-32px)] h-[600px] max-h-[calc(100vh-180px)] flex flex-col rounded-2xl shadow-lift border border-slate-200 dark:border-slate-700 overflow-hidden bg-white dark:bg-slate-900 motion-slide-right no-print">
           {/* Gradient header with avatar + status */}
           <div className="relative bg-brand-gradient text-white px-4 py-3 flex items-center justify-between overflow-hidden">
-            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-brand-gold/20 blur-2xl pointer-events-none" />
+            <div className="absolute -top-8 -right-8 w-32 h-32 rounded-full bg-[var(--nc-teal)]/15 blur-2xl pointer-events-none" />
             <div className="relative flex items-center gap-3">
               <ConciergeAvatar size="md" />
               <div>
@@ -341,7 +341,7 @@ export function ChatWidget() {
                   onClick={() => setVoiceMode(v => !v)}
                   className={`w-7 h-7 rounded-full grid place-items-center text-[11px] shrink-0 transition ${
                     voiceMode
-                      ? 'bg-brand-gold/20 text-brand-700 ring-1 ring-brand-gold/40'
+                      ? 'bg-[var(--nc-teal)]/20 text-[var(--nc-teal)] ring-1 ring-[var(--nc-teal)]/40'
                       : 'text-slate-400 hover:text-slate-600'
                   }`}
                   title={voiceMode ? 'Voice replies on' : 'Voice replies off'}

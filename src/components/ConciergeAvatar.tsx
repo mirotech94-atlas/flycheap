@@ -11,7 +11,7 @@
  *   - listening → erratic, mic-active wave (0.6s cycle) when the user is
  *                 talking; red accent ring
  *   - speaking  → tighter, higher-amplitude wave when TTS is reading the
- *                 reply aloud; brand-gold accent ring
+ *                 reply aloud; teal accent ring
  *
  * State is passed in from the consumer (ChatWidget) so the same component
  * can render the launcher button, the chat-panel header, and per-message
@@ -48,7 +48,7 @@ export function ConciergeAvatar({
   // we list them here rather than building strings dynamically (which would
   // get purged).
   const ringTone =
-    mode === 'speaking' ? 'ring-amber-300/70 shadow-[0_0_18px_rgba(212,175,55,0.55)]'
+    mode === 'speaking' ? 'ring-[var(--nc-teal)]/70 shadow-[0_0_18px_rgba(111,179,201,0.50)]'
     : mode === 'listening' ? 'ring-red-300/70 shadow-[0_0_18px_rgba(239,68,68,0.5)]'
     : mode === 'thinking' ? 'ring-emerald-300/60 shadow-[0_0_14px_rgba(16,185,129,0.45)]'
     : 'ring-white/30 shadow-[0_0_10px_rgba(255,255,255,0.18)]';
@@ -66,10 +66,10 @@ export function ConciergeAvatar({
     >
       <svg viewBox="0 0 64 64" width="72%" height="72%" className={waveClass} aria-hidden="true">
         {/* Aviator wings — FarePilot. Gold on the navy badge. */}
-        <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="#efcd6b" />
-        <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="#efcd6b" />
-        <circle cx="32" cy="32" r="7.5" fill="none" stroke="#efcd6b" strokeWidth="2.2" />
-        <circle cx="32" cy="32" r="2.6" fill="#efcd6b" />
+        <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="var(--nc-teal)" />
+        <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="var(--nc-teal)" />
+        <circle cx="32" cy="32" r="7.5" fill="none" stroke="var(--nc-teal)" strokeWidth="2.2" />
+        <circle cx="32" cy="32" r="2.6" fill="var(--nc-teal)" />
       </svg>
       {/* Online indicator — a tiny pulse dot bottom-right, only for sm/md */}
       {size !== 'lg' && (

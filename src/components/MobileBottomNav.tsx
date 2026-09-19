@@ -43,7 +43,7 @@ export function MobileBottomNav() {
                 <NavIcon name={t.key} size={21} />
               </span>
               {nav[t.key]}
-              {active && <span className="absolute top-0 h-0.5 w-10 bg-brand-gold rounded-full" />}
+              {active && <span className="absolute top-0 h-0.5 w-10 bg-[var(--nc-teal)] rounded-full" />}
             </Link>
           );
         })}

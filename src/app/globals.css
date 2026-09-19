@@ -3502,7 +3502,12 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
   --nc-amber:   #E8A33D;   /* reading light — FARES AND PRIMARY ACTIONS ONLY */
   --nc-amber-d: #B87B22;
-  --nc-teal:    #6FB3C9;   /* dawn through the window — links, route arcs */
+  --nc-teal:    #6FB3C9;   /* dawn through the window — links, route arcs,
+                              and EVERY non-fare accent: selection and pinned
+                              state, progress, active nav, legend keys,
+                              headline accents, and atmosphere at low alpha.
+                              Decoration is cool on purpose — that is what
+                              leaves the amber free to be the loudest thing. */
   --nc-signal:  #D8433A;   /* fare-drop alerts only, never decoration */
   --nc-mint:    #7BC49A;   /* under target / good */
 
@@ -3946,7 +3951,12 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
    any ground — but the real fix is to derive a contrast-safe variant of the
    brand colour per surface instead of using the raw hex for text. */
 html[data-fc-theme="coal"] .text-brand-700,
-html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
+html[data-fc-theme="coal"] .text-brand-600,
+/* Bare `.text-brand` takes brand.DEFAULT, the darkest end of the ramp, so it
+   has exactly the same problem as -700/-600 did: the /pricing "log in" link
+   sat at 1.85:1 on the cabin ground. It was simply missed when those two
+   were fixed. */
+html[data-fc-theme="coal"] .text-brand { color: var(--nc-teal) !important; }
 
 /* The same injection also writes the brand hex straight into three BACKGROUND
    roles — `.bg-brand`, `.btn-primary`, `.kpi-brand` and the `.bg-brand-gradient`

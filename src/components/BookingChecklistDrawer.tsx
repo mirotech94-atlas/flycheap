@@ -93,7 +93,7 @@ export function BookingChecklistDrawer({
               <span>{pct}%</span>
             </div>
             <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
-              <div className="h-full bg-brand-gold transition-all" style={{ width: `${pct}%` }} />
+              <div className="h-full bg-[var(--nc-teal)] transition-all" style={{ width: `${pct}%` }} />
             </div>
           </div>
         </div>

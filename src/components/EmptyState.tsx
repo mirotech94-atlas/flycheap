@@ -20,7 +20,7 @@ export function EmptyState({
   return (
     <div className="card card-feature relative overflow-hidden text-center py-12 px-6 motion-fade-in">
       <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-brand/5 blur-3xl pointer-events-none" />
-      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-brand-gold/10 blur-3xl pointer-events-none" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[var(--nc-teal)]/10 blur-3xl pointer-events-none" />
 
       {illustration && <Illustration kind={illustration} />}
 

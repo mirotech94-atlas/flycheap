@@ -104,7 +104,11 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const sessionUser = await getCurrentUser();
   // Owner-only — non-owner admins (support / ops) don't see the portal affordance.
   const showAdminLink = isOwner(sessionUser);
-  const brand = user?.brand_color || '#0a3a6b';
+  // Kept in step with tailwind's `brand.DEFAULT` on purpose -- these are two
+  // separate literals for one idea ("the house blue"), and letting them drift
+  // means `bg-brand/10` and the injected `.border-brand-500` stop matching.
+  // Both moved off the retired Bloomberg navy together.
+  const brand = user?.brand_color || '#1A4459';
   const brandStyle = `:root{--brand:${brand};--brand-rgb:${hexToRgb(brand)};} .bg-brand-gradient{background:linear-gradient(135deg,${brand} 0%, ${shadeColor(brand, 12)} 55%, ${shadeColor(brand, 28)} 100%)!important;} .bg-brand,.btn-primary,.kpi-brand{background:${brand}!important;} .text-brand-700,.text-brand-600{color:${brand}!important;} .border-brand-500,.ring-brand-500{border-color:${brand};}`;
 
   // UI locale: fc_lang cookie → Accept-Language → en. Drives <html lang dir>,

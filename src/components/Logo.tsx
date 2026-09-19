@@ -8,25 +8,33 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
       className={className}
       aria-label="FlyCheap"
     >
+      {/* The tile is the cabin at night: deck-2 -> deck -> dark, the same three
+          greys the panels use, so the mark sits on the product rather than on
+          the retired navy it was drawn against.
+
+          The fare-drop line and plane stay WARM, and this is the one place
+          amber is allowed outside a fare or a primary action: the mark's
+          subject IS a fare falling to target. Everything decorative elsewhere
+          went teal precisely so this stays legible as the fare colour. */}
       <defs>
         <linearGradient id="logo-bg" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%"   stopColor="#1f5fa5" />
-          <stop offset="55%"  stopColor="#0a3a6b" />
-          <stop offset="100%" stopColor="#051d36" />
+          <stop offset="0%"   stopColor="#1B2740" />
+          <stop offset="55%"  stopColor="#131C2E" />
+          <stop offset="100%" stopColor="#0B1220" />
         </linearGradient>
-        <linearGradient id="logo-gold" x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%"   stopColor="#f5d56b" />
-          <stop offset="60%"  stopColor="#d4af37" />
-          <stop offset="100%" stopColor="#a17e1f" />
+        <linearGradient id="logo-amber" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%"   stopColor="#F2C67A" />
+          <stop offset="60%"  stopColor="#E8A33D" />
+          <stop offset="100%" stopColor="#B87B22" />
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="14" fill="url(#logo-bg)" />
       <rect x="0.5" y="0.5" width="63" height="63" rx="13.5" fill="none" stroke="rgba(255,255,255,.10)" />
       {/* Fare-drop: a plane descending a dotted price line — fares falling to target. */}
-      <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="url(#logo-gold)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="1 5" />
-      <circle cx="12" cy="20" r="2.8" fill="url(#logo-gold)" />
+      <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="url(#logo-amber)" strokeWidth="2.6" strokeLinecap="round" strokeDasharray="1 5" />
+      <circle cx="12" cy="20" r="2.8" fill="url(#logo-amber)" />
       <g transform="translate(52,50) rotate(35)">
-        <path d="M0 -7 L6 6 L0 2 L-6 6 Z" fill="url(#logo-gold)" />
+        <path d="M0 -7 L6 6 L0 2 L-6 6 Z" fill="url(#logo-amber)" />
       </g>
     </svg>
   );
