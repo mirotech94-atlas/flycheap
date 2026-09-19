@@ -75,7 +75,7 @@ export default function GuidesIndexPage() {
                   <div className="text-white/50 text-[10px] uppercase tracking-[0.15em] font-semibold mb-1">
                     {g.publishedAt}
                   </div>
-                  <h2 className="text-white font-bold text-lg font-display leading-snug group-hover:text-brand-gold transition-colors">
+                  <h2 className="text-white font-bold text-lg font-display leading-snug group-hover:text-[var(--nc-teal)] transition-colors">
                     {g.title}
                   </h2>
                   <p className="text-white/60 text-xs mt-1.5 leading-relaxed line-clamp-2">

@@ -33,7 +33,7 @@ export default function OnboardingPage() {
           <Link href="/onboarding" className="flex items-center gap-2">
             <Logo size={32} />
             <span className="font-display font-bold text-slate-900 dark:text-white tracking-tight">
-              FlyCheap<span className="text-brand-gold">.</span>
+              FlyCheap<span className="text-[var(--nc-teal)]">.</span>
             </span>
           </Link>
           <nav className="flex items-center gap-1">
@@ -48,7 +48,7 @@ export default function OnboardingPage() {
       {/* HERO */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-brand-gradient" />
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-brand-gold/20 blur-3xl pointer-events-none" />
+        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[var(--nc-teal)]/15 blur-3xl pointer-events-none" />
         <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-brand-400/30 blur-3xl pointer-events-none" />
 
         <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-28 text-white">
@@ -62,7 +62,7 @@ export default function OnboardingPage() {
           <h1 className="motion-slide-up motion-delay-1 font-display font-extrabold text-5xl md:text-7xl tracking-tight mt-6 max-w-4xl leading-[1.05]">
             The cheapest fares,
             <br />
-            <span className="text-brand-gold">monitored for you.</span>
+            <span className="text-[var(--nc-teal)]">monitored for you.</span>
           </h1>
 
           <p className="motion-slide-up motion-delay-2 text-lg md:text-xl text-white/80 mt-6 max-w-2xl leading-relaxed">
@@ -72,7 +72,7 @@ export default function OnboardingPage() {
           </p>
 
           <div className="motion-slide-up motion-delay-3 mt-8 flex items-center gap-3 flex-wrap">
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-brand-gold hover:bg-yellow-400 text-brand-900 font-bold shadow-lift hover:scale-105 transition">
+            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--nc-amber)] hover:bg-[#F2B961] text-[var(--nc-dark)] font-bold shadow-lift hover:scale-105 transition">
               Try it free →
             </Link>
             <Link href="/explore" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 backdrop-blur font-semibold transition">
@@ -89,7 +89,7 @@ export default function OnboardingPage() {
               { v: '4',  l: 'Live data providers' },
             ].map(s => (
               <div key={s.l} className="text-white">
-                <div className="font-display font-extrabold text-3xl text-brand-gold">{s.v}</div>
+                <div className="font-display font-extrabold text-3xl text-[var(--nc-teal)]">{s.v}</div>
                 <div className="text-xs uppercase tracking-wide text-white/70 mt-1">{s.l}</div>
               </div>
             ))}
@@ -179,7 +179,7 @@ export default function OnboardingPage() {
             ].map(t => (
               <div key={t.name} className={`card relative ${t.accent}`}>
                 {t.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-brand-gold text-brand-900 text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--nc-teal)] text-[var(--nc-dark)] text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow">
                     {t.badge}
                   </div>
                 )}
@@ -236,7 +236,7 @@ export default function OnboardingPage() {
 
       {/* FINAL CTA */}
       <section className="relative bg-brand-gradient text-white py-20 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-brand-gold/20 blur-3xl" />
+        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[var(--nc-teal)]/15 blur-3xl" />
         <div className="relative max-w-3xl mx-auto px-6 text-center">
           <h2 className="font-display font-extrabold text-4xl md:text-5xl tracking-tight">
             Stop refreshing flight sites.
@@ -244,7 +244,7 @@ export default function OnboardingPage() {
           <p className="text-white/80 mt-4 text-lg">
             Set your routes once. We watch them forever. You get an email the moment they drop.
           </p>
-          <Link href="/" className="inline-flex items-center gap-2 mt-8 px-8 py-4 rounded-xl bg-brand-gold hover:bg-yellow-400 text-brand-900 font-bold shadow-lift hover:scale-105 transition text-lg">
+          <Link href="/" className="inline-flex items-center gap-2 mt-8 px-8 py-4 rounded-xl bg-[var(--nc-amber)] hover:bg-[#F2B961] text-[var(--nc-dark)] font-bold shadow-lift hover:scale-105 transition text-lg">
             Open the dashboard →
           </Link>
         </div>

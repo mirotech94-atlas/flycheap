@@ -126,7 +126,7 @@ export function crossShopLinks(opts: {
   return [
     {
       name: 'Aviasales (cached)', short: 'Aviasales',
-      color: '#0a3a6b', earns: true,
+      color: '#7FB6CB', earns: true,   // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
       href: bookingLink(opts),
     },
     {
@@ -159,7 +159,7 @@ export function crossShopLinks(opts: {
     // is issued by Aviasales' GDS partner that does the OTA booking.
     ...(showEgyptair ? [{
       name: 'EgyptAir flights', short: 'EgyptAir',
-      color: '#0a3a6b', earns: true,
+      color: '#7FB6CB', earns: true,   // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
       href: `https://www.aviasales.com/search/${origin}${(() => { const [, m, d] = departDate.split('-'); return d + m; })()}${destination}${(() => { const [, m, d] = returnDate.split('-'); return d + m; })()}${adults}?currency=usd&airlines=MS`,
     }] : []),
   ]

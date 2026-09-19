@@ -136,7 +136,7 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
           const isCurrent = currentTier === plan;
           return (
             <div key={plan} className="card flex flex-col relative overflow-hidden border-brand-700">
-              <div className="absolute top-3 right-3 text-[10px] uppercase tracking-wide font-bold bg-brand-gold text-brand-900 px-2 py-0.5 rounded-full">Most popular</div>
+              <div className="absolute top-3 right-3 text-[10px] uppercase tracking-wide font-bold bg-[var(--nc-teal)] text-[var(--nc-dark)] px-2 py-0.5 rounded-full">Most popular</div>
               <div className="eyebrow text-brand-700">Pro</div>
               <h3 className="font-display font-bold text-2xl mt-1">{lbl.headline}</h3>
               <p className="text-xs text-slate-500">{lbl.sub}</p>

@@ -69,7 +69,7 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
       <div className="relative bg-white dark:bg-slate-900 w-full max-w-lg rounded-2xl shadow-lift border border-slate-200 dark:border-slate-700 overflow-hidden motion-slide-up">
         {/* Top progress + skip */}
         <div className="bg-brand-gradient text-white px-6 py-4 relative overflow-hidden">
-          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-brand-gold/20 blur-2xl pointer-events-none" />
+          <div className="absolute -top-12 -right-12 w-40 h-40 rounded-full bg-[var(--nc-teal)]/15 blur-2xl pointer-events-none" />
           <div className="relative flex items-center justify-between">
             <div>
               <div className="text-[10px] uppercase tracking-[0.14em] text-white/70 font-semibold">Welcome, {userEmail}</div>
@@ -79,7 +79,7 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
           </div>
           <div className="relative mt-4 flex items-center gap-1">
             {[1, 2, 3].map(s => (
-              <div key={s} className={`flex-1 h-1.5 rounded-full transition ${s <= step ? 'bg-brand-gold' : 'bg-white/20'}`} />
+              <div key={s} className={`flex-1 h-1.5 rounded-full transition ${s <= step ? 'bg-[var(--nc-teal)]' : 'bg-white/20'}`} />
             ))}
           </div>
         </div>

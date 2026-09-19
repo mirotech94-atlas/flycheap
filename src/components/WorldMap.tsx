@@ -172,7 +172,7 @@ export function WorldMap({
       </svg>
 
       <div className="px-5 py-3 text-[11px] text-slate-500 border-t border-slate-200/50 dark:border-slate-700/50 flex items-center justify-between flex-wrap gap-2">
-        <span><span className="inline-block w-2 h-2 rounded-full bg-brand-gold mr-1" /> Origin</span>
+        <span><span className="inline-block w-2 h-2 rounded-full bg-[var(--nc-teal)] mr-1" /> Origin</span>
         <span>Hover any dot for price & city</span>
         <span>{known.length} of {destinations.length} mapped</span>
       </div>

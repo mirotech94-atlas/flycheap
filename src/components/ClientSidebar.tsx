@@ -141,6 +141,11 @@ export function ClientSidebar({
         <div className="px-5 pt-5 pb-4 border-b border-white/5">
           <Link href="/" className="flex items-center gap-2 group" onClick={() => setMobileOpen(false)}>
             <div className="relative">
+              {/* Deliberately amber, and the only glow on the site that is.
+                  Every other blur glow went teal with the rest of the
+                  decoration; this one belongs to the MARK, which is amber
+                  because it draws a fare falling. It is the mark's own light,
+                  not page atmosphere -- leave it warm. */}
               <div className="absolute inset-0 rounded-md bg-[var(--nc-amber)] blur-md opacity-30 group-hover:opacity-50 transition" />
               <Logo size={32} className="relative" />
             </div>
