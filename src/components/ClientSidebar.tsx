@@ -8,7 +8,7 @@ import { Logo } from '@/components/Logo';
 import { LanguageMenu } from '@/components/LanguageMenu';
 import { useAppI18n } from '@/lib/i18n/client';
 import type { AppNavDict } from '@/lib/i18n/app.en';
-import { PUBLIC_ADMIN_HOST } from '@/lib/hosts';
+import { PUBLIC_ADMIN_HOST, PUBLIC_MARKETING_HOST } from '@/lib/hosts';
 
 type Item = { href: string; label: string; icon: string };
 type Group = { id: string; label: string; icon: string; items: Item[] };
@@ -51,7 +51,9 @@ function buildNav(nav: AppNavDict): { top: Item; groups: Group[]; guest: Item[] 
       },
     ],
     guest: [
-      { href: '/welcome', label: nav.whatIs,       icon: '✈' },
+      // Absolute, not '/': on the client host '/' is the DASHBOARD, so a
+      // relative link here would send "What is FlyCheap?" to the app.
+      { href: `https://${PUBLIC_MARKETING_HOST}/`, label: nav.whatIs, icon: '✈' },
       { href: '/explore', label: nav.exploreDeals, icon: '◷' },
       { href: '/guides',  label: nav.guides,       icon: '☐' },
       { href: '/pricing', label: nav.pricing,      icon: '◯' },

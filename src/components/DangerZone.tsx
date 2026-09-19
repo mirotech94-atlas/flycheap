@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { PUBLIC_MARKETING_HOST } from '@/lib/hosts';
 
 export function DangerZone({ email }: { email: string }) {
   const [confirm, setConfirm] = useState('');
@@ -18,7 +19,7 @@ export function DangerZone({ email }: { email: string }) {
       const r = await fetch('/api/me', { method: 'DELETE' });
       const j = await r.json().catch(() => ({}));
       if (j.ok) {
-        window.location.href = '/welcome?deleted=1';
+        window.location.href = `https://${PUBLIC_MARKETING_HOST}/`;
       } else {
         setErr(j.error || 'Could not delete account.');
       }

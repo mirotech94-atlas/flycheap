@@ -62,6 +62,6 @@ a.btn{display:inline-block;background:#0a3a6b;color:white;padding:12px 22px;bord
 <div class="icon">${ok ? '✓' : '!'}</div>
 <h1>${title}</h1>
 <p>${body}</p>
-<a class="btn" href="https://flycheap.live/welcome">Back to FlyCheap</a>
+<a class="btn" href="https://flycheap.live/">Back to FlyCheap</a>
 </div></body></html>`;
 }

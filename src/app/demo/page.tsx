@@ -32,7 +32,7 @@ export default function DemoPage() {
   return (
     <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       <header className="fc-l-topbar">
-        <Link href="/welcome" className="fc-l-brand">
+        <Link href="/" className="fc-l-brand">
           <div className="fc-l-brand-mark">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M5 5 L5 19 M5 5 L14 5 M5 12 L11 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
@@ -45,7 +45,7 @@ export default function DemoPage() {
           </div>
         </Link>
         <div className="fc-l-topbar-right">
-          <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
+          <Link href="/" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
           <Link href="/login" prefetch={false} className="fc-btn fc-btn-light fc-btn-sm">Log in</Link>
           <Link href="/early-access" className="fc-btn fc-btn-ink fc-btn-sm">Get early access →</Link>
         </div>
