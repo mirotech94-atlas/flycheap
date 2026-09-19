@@ -26,6 +26,15 @@ export const PUBLIC_CLIENT_HOST = clean(process.env.NEXT_PUBLIC_CLIENT_HOST) || 
 
 /** Public marketing site host (bare domain). Empty = feature off (legacy single-host setup). */
 export const MARKETING_HOST = clean(process.env.MARKETING_HOST) || '';
+
+/**
+ * Marketing host reference safe for client bundles. `process.env.MARKETING_HOST`
+ * is server-only, so a client component linking to the marketing site has to use
+ * this — the same arrangement PUBLIC_ADMIN_HOST already has. Falls back to the
+ * client host so a link is never emitted against an empty origin.
+ */
+export const PUBLIC_MARKETING_HOST =
+  clean(process.env.NEXT_PUBLIC_MARKETING_HOST) || MARKETING_HOST || PUBLIC_CLIENT_HOST;
 export const MARKETING_HOSTS: ReadonlySet<string> = new Set(MARKETING_HOST ? [MARKETING_HOST, `www.${MARKETING_HOST}`] : []);
 
 /** Every hostname the app has ever been served on; used for "is this one of ours" checks. */

@@ -195,8 +195,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // Signed-out visitors get the marketing landing, not the operational
   // dashboard — the cockpit is a signed-in surface. With a marketing host
   // configured, the landing lives there — send visitors straight to /login
-  // instead of rendering /welcome a second time on the client host.
-  if (!sessionUser) redirect(MARKETING_HOST ? '/login' : '/welcome');
+  // instead of rendering the marketing page a second time on the client host.
+  // Without a marketing host (local dev) the front door IS /early-access.
+  if (!sessionUser) redirect(MARKETING_HOST ? '/login' : '/early-access');
   const t = getAppDict(await getRequestLocale()).dashboard;
   const allRows = loadDashboard(sessionUser
     ? { userId: sessionUser.id }

@@ -27,10 +27,11 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const host = (req.headers.get('host') ?? '').toLowerCase();
 
-  // 308 redirect for the legacy /landing route — content moved to /welcome.
+  // 308 redirect for the legacy /landing route. It pointed at /welcome until
+  // that page was retired; sending it to the front door avoids a second hop.
   if (pathname === '/landing' || pathname.startsWith('/landing/')) {
     const url = req.nextUrl.clone();
-    url.pathname = pathname.replace(/^\/landing/, '/welcome') || '/welcome';
+    url.pathname = '/';
     return NextResponse.redirect(url, 308);
   }
 

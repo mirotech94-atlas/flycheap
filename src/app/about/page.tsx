@@ -12,7 +12,7 @@ export default function AboutPage() {
   return (
     <div className="fc-landing fc-about -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       <header className="fc-l-topbar">
-        <Link href="/welcome" className="fc-l-brand">
+        <Link href="/" className="fc-l-brand">
           <div className="fc-l-brand-mark">
             <LogoMark size={22} />
           </div>
@@ -22,7 +22,7 @@ export default function AboutPage() {
           </div>
         </Link>
         <div className="fc-l-topbar-right">
-          <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
+          <Link href="/" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
           <Link href="/login" prefetch={false} className="fc-btn fc-btn-ink fc-btn-sm">Try free →</Link>
         </div>
       </header>

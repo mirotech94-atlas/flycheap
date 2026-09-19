@@ -123,7 +123,7 @@ export default async function LoginPage(
               <LoginForm t={t.form} adminOnly />
             </Suspense>
           </div>
-          <p className="legal">Every admin action is written to the audit log · <Link href="https://flycheap.live/welcome">← back to flycheap</Link></p>
+          <p className="legal">Every admin action is written to the audit log · <Link href="https://flycheap.live/">← back to flycheap</Link></p>
         </div>
       </div>
     );
@@ -134,7 +134,7 @@ export default async function LoginPage(
       {/* ── Left: live intelligence panel (real data) ── */}
       <div className="fc-login-intel">
         <div className="fc-login-intel-inner">
-          <Link href="/welcome" className="fc-l-brand" style={{ color: 'var(--fc-cream)' }}>
+          <Link href="/" className="fc-l-brand" style={{ color: 'var(--fc-cream)' }}>
             <div className="fc-l-brand-mark" style={{ background: 'rgba(255,255,255,.08)' }}>
               <LogoMark size={22} />
             </div>

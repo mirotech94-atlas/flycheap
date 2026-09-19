@@ -61,7 +61,7 @@ export default function TermsPage() {
   return (
     <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       <header className="fc-l-topbar">
-        <Link href="/welcome" className="fc-l-brand">
+        <Link href="/" className="fc-l-brand">
           <div className="fc-l-brand-mark">
             <LogoMark size={22} />
           </div>
@@ -71,7 +71,7 @@ export default function TermsPage() {
           </div>
         </Link>
         <div className="fc-l-topbar-right">
-          <Link href="/welcome" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
+          <Link href="/" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
         </div>
       </header>
 

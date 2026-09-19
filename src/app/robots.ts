@@ -12,7 +12,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: '*',
-        allow: ['/welcome', '/explore', '/login'],
+        allow: ['/', '/explore', '/login'],
         disallow: [
           '/admin', '/settings', '/searches', '/onboarding', '/api/',
           // Affiliate redirector. Crawlers following these fire real outbound
