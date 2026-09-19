@@ -7,6 +7,17 @@ import { AdminSidebar } from './_components/AdminSidebar';
 import { AdminBreadcrumb } from './_components/AdminBreadcrumb';
 import { AdminFarePilotWidget } from '@/components/AdminFarePilotWidget';
 
+import type { Metadata } from 'next';
+
+/** The console inherited the client dashboard's title, so both tabs read
+ *  "Executive Dashboard" — indistinguishable with the two open side by side.
+ *  noindex as well: this is a founder-only surface and should never be listed,
+ *  whatever robots.txt happens to say. */
+export const metadata: Metadata = {
+  title: 'Command centre — FlyCheap Admin',
+  robots: { index: false, follow: false },
+};
+
 export const dynamic = 'force-dynamic';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -205,13 +216,23 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           font-size: 9.5px; letter-spacing: .2em; text-transform: uppercase;
           line-height: 1.4;
         }
+        /* .ad-panel is what the command centre actually uses; .card / .kpi are
+           used by the other admin pages. Both get the same glass, or the console
+           looks like two different products depending which page you are on. */
         .admin-shell .ad-panel {
-          background: linear-gradient(180deg, var(--ad-panel) 0%, var(--ad-panel-2) 100%);
+          background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
+          -webkit-backdrop-filter: blur(14px) saturate(160%);
+          backdrop-filter: blur(14px) saturate(160%);
           border: 1px solid var(--ad-line);
           border-radius: 14px;
           padding: 16px 18px;
           position: relative;
-          box-shadow: 0 18px 38px -28px rgba(0,0,0,.85);
+          box-shadow: 0 1px 0 rgba(255,255,255,.12) inset, 0 18px 38px -28px rgba(0,0,0,.85);
+        }
+        @supports not (backdrop-filter: blur(1px)) {
+          .admin-shell .ad-panel {
+            background: linear-gradient(180deg, var(--ad-panel) 0%, var(--ad-panel-2) 100%);
+          }
         }
         .admin-shell .ad-panel-gold {
           border-color: rgba(232,163,61,.34);
