@@ -11,6 +11,13 @@ export async function GET() {
         <stop offset="55%" stop-color="#131C2E"/>
         <stop offset="100%" stop-color="#0B1220"/>
       </linearGradient>
+      <!-- The logo tile is lifted off the panel greys, matching Logo.tsx, so
+           the mark keeps its tile instead of dissolving into the card. -->
+      <linearGradient id="tile" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0%" stop-color="#24314D"/>
+        <stop offset="55%" stop-color="#16203A"/>
+        <stop offset="100%" stop-color="#0B1220"/>
+      </linearGradient>
       <radialGradient id="dawnGlow" cx="80%" cy="20%" r="50%">
         <stop offset="0%" stop-color="rgba(111,179,201,.22)"/>
         <stop offset="100%" stop-color="rgba(111,179,201,0)"/>
@@ -33,7 +40,7 @@ export async function GET() {
     </g>
     <!-- Logo box -->
     <g transform="translate(80 80)">
-      <rect width="80" height="80" rx="18" fill="url(#bg)"/>
+      <rect width="80" height="80" rx="18" fill="url(#tile)"/>
       <rect width="80" height="80" rx="18" fill="none" stroke="rgba(255,255,255,.12)"/>
       <g transform="scale(1.25)">
         <polyline points="12,20 26,30 38,40 52,50" fill="none" stroke="url(#planeGrad)" stroke-width="2.6" stroke-linecap="round" stroke-dasharray="1 5"/>
