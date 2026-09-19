@@ -13,7 +13,7 @@ export default function CreditsPage() {
   const credits = placeCredits();
 
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="ivory" data-fc-accent="gold">
+    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
       <header className="fc-l-topbar">
         <Link href="/" className="fc-l-brand">
           <div className="fc-l-brand-mark">

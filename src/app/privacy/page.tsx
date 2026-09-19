@@ -160,7 +160,7 @@ export default function PrivacyPage() {
         by email before the change takes effect.
       </p>
 
-      <p className="mt-12 text-sm text-neutral-500">
+      <p className="mt-12 text-sm text-[var(--nc-on-dark-faint)]">
         Operated by the FlyCheap team. Questions:{' '}
         <a className="underline" href="mailto:privacy@flycheap.live">privacy@flycheap.live</a>.
       </p>
