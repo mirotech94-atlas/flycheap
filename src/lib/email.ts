@@ -228,8 +228,19 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
       <p style="margin:0 0 8px">
         <a href="${bookUrl}" style="display:inline-block;background:#b8912f;color:#061a35;padding:13px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Book this fare →</a>
       </p>
-      <div style="font-size:12px;color:#8a93a6;margin:0 0 14px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
-      <div style="font-size:13px;color:#33405a;margin:0 0 20px">Where to stay in ${stayCity}: <a href="${staysHotelUrl}" style="color:#0a2e57;font-weight:600">hotels</a> · <a href="${staysAirbnbUrl}" style="color:#0a2e57;font-weight:600">vacation homes on Airbnb</a> — same dates, ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'}.</div>
+      <div style="font-size:12px;color:#8a93a6;margin:0 0 16px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
+
+      <!-- Where to stay. Given a card of its own rather than the inline text
+           link it used to be: this lands at the moment the traveller has just
+           decided to commit to these dates, which is the only moment a stay
+           search is genuinely useful to them. The fare above stays the single
+           primary action (gold); this is deliberately the secondary weight. -->
+      <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-bottom:4px;${mono}">Where to stay · ${esc(stayCity)}</div>
+        <div style="font-size:13px;color:#475569;margin-bottom:12px">${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''} · ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'} — dates already filled in.</div>
+        <a href="${staysHotelUrl}" style="display:inline-block;background:#0a2e57;color:#fff;padding:10px 20px;border-radius:9px;text-decoration:none;font-weight:700;font-size:14px">Find hotels in ${esc(stayCity)} →</a>
+        <a href="${staysAirbnbUrl}" style="display:inline-block;margin-left:14px;color:#0a2e57;font-weight:600;font-size:13px;text-decoration:underline">Vacation homes</a>
+      </div>
       ${insuranceUrl ? `<div style="font-size:13px;color:#33405a;margin:-12px 0 20px">Booking a non-refundable fare? <a href="${insuranceUrl}" style="color:#0a2e57;font-weight:600">Compare trip insurance</a> — covers cancellation and medical abroad.</div>` : ''}
 
     </div>`;
