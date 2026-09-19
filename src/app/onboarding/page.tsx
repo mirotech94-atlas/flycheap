@@ -138,7 +138,14 @@ export default function OnboardingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="bg-canvas py-24 border-y border-slate-200/60 dark:border-slate-800/60">
+      {/* `bg-canvas` is a fixed light hex (#f6f8fb) with no dark variant -- the
+          border beside it HAS one, so the dark variant was simply forgotten.
+          The result was a white band across the cabin page whose heading, which
+          does carry `dark:text-white`, rendered white-on-white at 1.06:1. The
+          config already defines canvas.dark, but that equals the page ground and
+          would erase the band, so this takes the cabin deck: still a distinct
+          band, and white ink on it clears AA at 15:1. */}
+      <section id="pricing" className="bg-canvas dark:bg-[var(--nc-deck)] py-24 border-y border-slate-200/60 dark:border-slate-800/60">
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto motion-slide-up">
             <div className="eyebrow text-brand-700">Pricing</div>

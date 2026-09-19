@@ -3948,6 +3948,38 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
 html[data-fc-theme="coal"] .text-brand-700,
 html[data-fc-theme="coal"] .text-brand-600 { color: var(--nc-teal) !important; }
 
+/* The same injection also writes the brand hex straight into three BACKGROUND
+   roles — `.bg-brand`, `.btn-primary`, `.kpi-brand` and the `.bg-brand-gradient`
+   ramp — all with !important. On the cabin ground that painted the retired
+   Bloomberg navy #0a3a6b onto /routes, /onboarding, /settings and every
+   ticket form, which is why those pages still read navy after the rollout.
+
+   These have to out-specify rather than out-order, exactly as the text rules
+   above do. They are split by ROLE, because one hex cannot serve all three:
+
+   - .btn-primary is a PRIMARY ACTION, so it takes --nc-amber. That is the one
+     non-fare use the amber rule allows, and it matches the hand-written CTAs
+     (bg-[#E8A33D] text-[#0B1220]) that the rest of the portal already uses.
+   - .bg-brand / .kpi-brand / .bg-brand-gradient are DECORATION and panel fill.
+     Amber is forbidden there, so they take the cabin deck ramp — the same
+     treatment .admin-shell .kpi-brand already got in the admin layout. */
+html[data-fc-theme="coal"] .btn-primary {
+  background: var(--nc-amber) !important;
+  border-color: var(--nc-amber-d);
+  color: var(--nc-dark);
+}
+html[data-fc-theme="coal"] .btn-primary:hover {
+  background: #F2B961 !important;
+}
+html[data-fc-theme="coal"] .bg-brand,
+html[data-fc-theme="coal"] .kpi-brand {
+  background: linear-gradient(135deg, var(--nc-deck-2) 0%, #2F6F91 100%) !important;
+  border-color: transparent;
+}
+html[data-fc-theme="coal"] .bg-brand-gradient {
+  background: linear-gradient(135deg, var(--nc-deck) 0%, #1E4A63 55%, #2F6F91 100%) !important;
+}
+
 /* Status badges kept their light-theme inks over their own tinted washes. */
 .fc-shell[data-fc-theme="cabin"] .fc-badge-ok {
   background: rgba(123, 196, 154, .14);

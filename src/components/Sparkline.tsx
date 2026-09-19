@@ -59,7 +59,7 @@ export function Sparkline({
                 stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
         )}
         <path d={path} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        {showMinMax && <circle cx={lowPt.x} cy={lowPt.y} r="2.2" fill="#d4af37" stroke="white" strokeWidth="1" />}
+        {showMinMax && <circle cx={lowPt.x} cy={lowPt.y} r="2.2" fill="#E8A33D" stroke="white" strokeWidth="1" />}
         <circle cx={last.x} cy={last.y} r="2" fill={stroke} />
       </svg>
       <span className={`text-[10px] tabular font-semibold ${trendUp ? 'text-red-600' : 'text-emerald-600'}`}>

@@ -65,7 +65,7 @@ export default function GuidesIndexPage() {
                   <span className="text-[9px] font-bold uppercase tracking-wider bg-white/15 text-white px-2 py-0.5 rounded-full">
                     {g.readMinutes} min read
                   </span>
-                  <span className="text-[9px] font-bold uppercase tracking-wider bg-[#d4af37]/90 text-[#0a3a6b] px-2 py-0.5 rounded-full">
+                  <span className="text-[9px] font-bold uppercase tracking-wider bg-[#E8A33D]/90 text-[#0B1220] px-2 py-0.5 rounded-full">
                     {theme.tag}
                   </span>
                 </div>

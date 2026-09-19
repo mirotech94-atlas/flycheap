@@ -15,12 +15,12 @@ export async function AdminChip() {
       style={{
         borderColor: 'rgba(212,175,55,0.45)',
         background: 'rgba(212,175,55,0.10)',
-        color: '#f0d674',
+        color: '#F2C67A',
       }}
     >
       <span
         className="inline-flex items-center justify-center w-5 h-5 rounded-sm text-[10px] font-bold"
-        style={{ background: '#d4af37', color: '#0a3a6b' }}
+        style={{ background: '#E8A33D', color: '#0B1220' }}
       >
         A
       </span>

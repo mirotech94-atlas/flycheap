@@ -153,7 +153,7 @@ export function BestDealsCard({
               const hot = r.per_adult_usd <= hotCutoff && i < 2;
               // Confidence: 80%+ for very cheap below median, scale down by rank
               const conf = Math.max(50, 92 - i * 3);
-              const confColor = conf > 80 ? '#1f8a5b' : conf > 70 ? '#d4af37' : '#c1426b';
+              const confColor = conf > 80 ? '#1f8a5b' : conf > 70 ? '#E8A33D' : '#c1426b';
               const dest = r.destination || 'CAI';
               return (
                 <tr key={i} className={sweet ? 'fc-row-sweetspot' : ''}>

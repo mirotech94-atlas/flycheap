@@ -7,11 +7,11 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
     tag: 'Dashboard',
     title: 'Executive KPI strip',
     body: 'Cheapest fare right now, vs your target, deals under target, and tracked routes — at a glance.',
-    accent: '#0a3a6b',
+    accent: '#0B1220',
     svg: (
       <svg viewBox="0 0 480 280" className="w-full h-full">
         <defs>
-          <linearGradient id="kpi1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1f5fa5"/><stop offset="100%" stopColor="#0a3a6b"/></linearGradient>
+          <linearGradient id="kpi1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#1f5fa5"/><stop offset="100%" stopColor="#0B1220"/></linearGradient>
         </defs>
         <rect width="480" height="280" rx="14" fill="#f4f6fb" />
         {/* 4 KPI tiles */}
@@ -26,7 +26,7 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
         {/* Bar chart row */}
         <rect x="20" y="135" width="440" height="125" rx="10" fill="white" stroke="#e5e9f1" />
         <text x="32" y="155" fontSize="9" fill="#5b6678" fontWeight="700">PRICE TREND · 30D</text>
-        <polyline fill="none" stroke="#0a3a6b" strokeWidth="2" points="40,235 80,225 120,210 160,215 200,200 240,195 280,180 320,175 360,170 400,168 440,165" />
+        <polyline fill="none" stroke="#0B1220" strokeWidth="2" points="40,235 80,225 120,210 160,215 200,200 240,195 280,180 320,175 360,170 400,168 440,165" />
         <polyline fill="rgba(10,58,107,.12)" stroke="none" points="40,235 80,225 120,210 160,215 200,200 240,195 280,180 320,175 360,170 400,168 440,165 440,250 40,250" />
         <line x1="40" x2="440" y1="195" y2="195" stroke="#10b981" strokeDasharray="3 3" strokeWidth="1" opacity=".6" />
         <text x="445" y="198" fontSize="8" fill="#10b981" fontWeight="600">TGT</text>
@@ -48,7 +48,7 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
         </g>
         {/* Origin */}
         <circle cx="80" cy="120" r="9" fill="rgba(212,175,55,.2)" />
-        <circle cx="80" cy="120" r="5" fill="#d4af37" stroke="white" strokeWidth="1.5" />
+        <circle cx="80" cy="120" r="5" fill="#E8A33D" stroke="white" strokeWidth="1.5" />
         {/* Dots */}
         {[
           [180, 110, '#10b981', 'LON'], [240, 130, '#22c55e', 'PAR'], [300, 150, '#84cc16', 'DXB'],
@@ -62,7 +62,7 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
           </g>
         ))}
         {/* Arc */}
-        <path d="M 80,120 Q 200,40 380,170" stroke="#0a3a6b" strokeWidth="1" fill="none" opacity=".18" />
+        <path d="M 80,120 Q 200,40 380,170" stroke="#0B1220" strokeWidth="1" fill="none" opacity=".18" />
       </svg>
     ),
   },
@@ -111,7 +111,7 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
         <rect width="480" height="280" rx="14" fill="#f8fafc" />
         {/* Inbox card */}
         <rect x="40" y="30" width="400" height="220" rx="12" fill="white" stroke="#e5e9f1" />
-        <rect x="40" y="30" width="400" height="40" rx="12" fill="#0a3a6b" />
+        <rect x="40" y="30" width="400" height="40" rx="12" fill="#0B1220" />
         <text x="60" y="55" fontSize="11" fill="white" fontWeight="700">📬 Inbox</text>
         {/* Email rows */}
         {[

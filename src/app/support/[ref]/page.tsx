@@ -14,7 +14,7 @@ function statusClasses(s: TicketStatus): string {
     case 'resolved':    return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/20';
     case 'waiting':     return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20';
     case 'in_progress': return 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/20';
-    default:            return 'text-[#8a6d1a] bg-[#faf3dc] border-[#e6d9a8] dark:text-[#f0d674] dark:bg-[#d4af37]/10 dark:border-[#d4af37]/25';
+    default:            return 'text-[#8a6d1a] bg-[#faf3dc] border-[#e6d9a8] dark:text-[#F2C67A] dark:bg-[#E8A33D]/10 dark:border-[#E8A33D]/25';
   }
 }
 function fmtWhen(ts: string): string {
@@ -57,12 +57,12 @@ export default async function ClientTicketThread({ params }: { params: Promise<{
               key={m.id}
               className={`rounded-xl border p-4 ${
                 fromUs
-                  ? 'border-[#d4af37]/30 bg-[#faf7ef] dark:bg-[#d4af37]/[0.07] dark:border-[#d4af37]/25'
+                  ? 'border-[#E8A33D]/30 bg-[#faf7ef] dark:bg-[#E8A33D]/[0.07] dark:border-[#E8A33D]/25'
                   : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02] ml-6'
               }`}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className={`text-[11px] font-semibold ${fromUs ? 'text-[#8a6d1a] dark:text-[#f0d674]' : 'text-slate-500'}`}>
+                <span className={`text-[11px] font-semibold ${fromUs ? 'text-[#8a6d1a] dark:text-[#F2C67A]' : 'text-slate-500'}`}>
                   {fromUs ? 'FlyCheap Support' : 'You'}
                 </span>
                 <span className="text-[11px] text-slate-400">{fmtWhen(m.created_at)}</span>
@@ -86,7 +86,7 @@ export default async function ClientTicketThread({ params }: { params: Promise<{
           <textarea
             name="body" required rows={4}
             placeholder="Type your reply…"
-            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#d4af37]/40 resize-y"
+            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 resize-y"
           />
           <div className="flex justify-end">
             <button type="submit" className="btn btn-primary">{resolved ? 'Reopen with a reply' : 'Send reply'}</button>

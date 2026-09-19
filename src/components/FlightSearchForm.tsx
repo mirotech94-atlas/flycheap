@@ -209,7 +209,7 @@ export function FlightSearchForm({
         {(['round-trip', 'one-way'] as TripType[]).map(t => (
           <button key={t} type="button" onClick={() => setTripType(t)}
             className={`text-xs px-3 py-1 rounded-full font-semibold transition ${
-              tripType === t ? 'bg-[#d4af37] text-[#0a3a6b]' : 'text-white/65 hover:text-white hover:bg-white/10'
+              tripType === t ? 'bg-[#E8A33D] text-[#0B1220]' : 'text-white/65 hover:text-white hover:bg-white/10'
             }`}
           >
             {t === 'round-trip' ? 'Round-trip' : 'One-way'}
@@ -336,7 +336,7 @@ export function FlightSearchForm({
 
         {/* Submit */}
         <button type="submit" disabled={submitting}
-          className="shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#d4af37] text-[#0a3a6b] hover:bg-[#f0cc50] disabled:opacity-60 transition shadow-sm"
+          className="shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] disabled:opacity-60 transition shadow-sm"
         >
           {submitting ? 'Loading…' : isAnywhere ? 'Find deals' : 'Search flights'}
         </button>

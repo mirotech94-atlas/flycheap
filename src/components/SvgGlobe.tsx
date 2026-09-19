@@ -72,7 +72,7 @@ function project(lat: number, lon: number, rotLon: number, cx: number, cy: numbe
 export function SvgGlobe({
   arcs,
   hubCodes = ['CAI', 'JFK', 'EWR'],
-  accent = '#d4af37',
+  accent = '#E8A33D',
 }: {
   arcs: GlobeArc[];
   hubCodes?: string[];

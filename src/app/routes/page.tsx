@@ -133,7 +133,7 @@ export default function RoutesIndexPage() {
                           </div>
                         </div>
                         <div className="relative text-right shrink-0">
-                          <div className="text-[#d4af37] font-black text-base tabular">from {fmtUSD(r.min_usd)}</div>
+                          <div className="text-[#E8A33D] font-black text-base tabular">from {fmtUSD(r.min_usd)}</div>
                           <div className="text-white/50 text-[9px] uppercase tracking-wide">{r.deals} cached</div>
                         </div>
                         <div className="relative text-white/30 group-hover:text-white/70 text-sm transition">›</div>

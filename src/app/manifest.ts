@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: 'Cheap flights, monitored for you. Track 1,000+ airlines worldwide.',
     start_url: '/',
     display: 'standalone',
-    background_color: '#0a3a6b',
-    theme_color: '#0a3a6b',
+    background_color: '#0B1220',
+    theme_color: '#0B1220',
     orientation: 'portrait-primary',
     icons: [
       { src: '/icon.svg', type: 'image/svg+xml', sizes: 'any', purpose: 'any' },

@@ -6,9 +6,9 @@
     </linearGradient>
   </defs>
   <circle cx="50" cy="50" r="50" fill="url(#fcNavy)"/>
-  <circle cx="50" cy="50" r="47" fill="none" stroke="#d4af37" stroke-opacity=".85" stroke-width="3"/>
+  <circle cx="50" cy="50" r="47" fill="none" stroke="#E8A33D" stroke-opacity=".85" stroke-width="3"/>
   <g transform="translate(50 49) scale(.76) translate(-53 -57)">
-    <path d="M82 30 L24 56 L46 65 Z" fill="#d4af37"/>
+    <path d="M82 30 L24 56 L46 65 Z" fill="#E8A33D"/>
     <path d="M82 30 L46 65 L40 84 Z" fill="#e6c75a"/>
   </g>
 </svg>

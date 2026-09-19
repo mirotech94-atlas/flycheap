@@ -81,10 +81,10 @@ export function ExecutiveTopBar({
           <a
             href={`https://${PUBLIC_ADMIN_HOST}/`}
             className="user-chip"
-            style={{ textDecoration: 'none', color: 'inherit', borderColor: '#d4af37', background: 'rgba(212,175,55,0.08)' }}
+            style={{ textDecoration: 'none', color: 'inherit', borderColor: '#E8A33D', background: 'rgba(212,175,55,0.08)' }}
             title="Open the admin portal"
           >
-            <div className="avatar" style={{ background: '#d4af37', color: '#0a3a6b' }}>A</div>
+            <div className="avatar" style={{ background: '#E8A33D', color: '#0B1220' }}>A</div>
             Admin
           </a>
         )}

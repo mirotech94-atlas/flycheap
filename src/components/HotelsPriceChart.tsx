@@ -83,7 +83,7 @@ export function HotelsPriceChart({
                 </div>
                 <div
                   className={`w-full rounded-t ${
-                    isCheapest ? 'bg-emerald-500' : 'bg-[#0a3a6b]/70 dark:bg-[#d4af37]/50'
+                    isCheapest ? 'bg-emerald-500' : 'bg-[#0B1220]/70 dark:bg-[#E8A33D]/50'
                   } transition-all`}
                   style={{ height: `${Math.max(4, pct)}%` }}
                   title={r.minPrice

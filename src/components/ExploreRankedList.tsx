@@ -38,8 +38,8 @@ function monthLabel(ym: string): string {
 const chip = (active: boolean) =>
   `px-3 py-1.5 rounded-full text-xs font-medium transition border ${
     active
-      ? 'bg-[#0a3a6b] text-white border-[#0a3a6b]'
-      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#d4af37]'
+      ? 'bg-[#0B1220] text-white border-[#0B1220]'
+      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#E8A33D]'
   }`;
 
 export function ExploreRankedList({
@@ -118,7 +118,7 @@ export function ExploreRankedList({
               role="tab"
               aria-selected={view === v}
               onClick={() => setView(v)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${view === v ? 'bg-[#d4af37] text-[#0a3a6b]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${view === v ? 'bg-[#E8A33D] text-[#0B1220]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
             >
               {v === 'list' ? '☰ List' : '◎ Map'}
             </button>
