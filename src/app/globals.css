@@ -17,9 +17,10 @@
   --text:         #0b1220;
   --text-muted:   #5b6678;
   --text-faint:   #8a93a6;
-  --brand:        #0a3a6b;
+  --brand:        #1A4459;
   --brand-soft:   #eef4fb;
-  --gold:         #d4af37;
+  /* `--gold` deleted: zero references, and it held the retired Bloomberg gold
+     ready for the next person who reached for "the gold one". */
   --shadow-card:  0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.08);
 }
 html.dark {
@@ -146,7 +147,7 @@ html.dark .kpi-accent .kpi-value { color: #34d399; }
 .kpi-warn .kpi-value { color: #b45309; }
 html.dark .kpi-warn .kpi-value { color: #fbbf24; }
 .kpi-brand {
-  background: linear-gradient(135deg, #0a3a6b 0%, #134885 100%);
+  background: linear-gradient(135deg, #1a4459 0%, #235870 100%);
   border-color: transparent;
   color: white;
 }
@@ -208,15 +209,17 @@ html.dark .badge-gold  { background:rgba(124,92,16,.3); color:#fde68a; border-co
 .btn:hover { box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 4px 10px -4px rgba(15,23,42,.10); transform: translateY(-1px); }
 .btn:active { transform: translateY(0); }
 .btn-primary {
-  background: linear-gradient(180deg, #134885 0%, #0a3a6b 100%);
-  border-color: #0a3a6b;
-  color: white;
+  background: linear-gradient(180deg, #F2B961 0%, #E8A33D 100%);
+  border-color: var(--nc-amber-d, #B87B22);
+  color: var(--nc-dark, #0B1220);
 }
-.btn-primary:hover { background: linear-gradient(180deg, #1f5fa5 0%, #134885 100%); }
+.btn-primary:hover { background: linear-gradient(180deg, #F7CE8C 0%, #F2B961 100%); }
+/* Primary CTAs: "Get early access", "Start free trial", "Add your first route".
+   Measured rendering the retired #d4af37 -- this rule was never shadowed. */
 .btn-gold {
-  background: linear-gradient(180deg, #d4af37 0%, #b8902a 100%);
-  border-color: #a17e1f;
-  color: #2a1f04;
+  background: linear-gradient(180deg, #F2B961 0%, #E8A33D 100%);
+  border-color: var(--nc-amber-d, #B87B22);
+  color: var(--nc-dark, #0B1220);
 }
 .btn-ghost   { background: transparent; border-color: transparent; color: var(--text); }
 .btn-ghost:hover { background: var(--bg-subtle); }
@@ -270,7 +273,7 @@ html.dark .app-header {
   color: rgba(255,255,255,.78);
 }
 .nav-link:hover { color: white; background: rgba(255,255,255,.08); }
-.nav-link.active { color: white; background: rgba(255,255,255,.12); box-shadow: inset 0 -2px 0 #d4af37; }
+.nav-link.active { color: white; background: rgba(255,255,255,.12); box-shadow: inset 0 -2px 0 var(--nc-teal, #6FB3C9); }
 
 /* ============================================================
    Misc utilities
@@ -466,8 +469,8 @@ html.dark .flight-conversation-panel {
   width: 8px;
   height: 8px;
   border-radius: 999px;
-  background: #d4af37;
-  box-shadow: 0 0 0 4px rgba(212,175,55,0.16), 0 0 14px rgba(212,175,55,0.7);
+  background: var(--nc-teal, #6FB3C9);
+  box-shadow: 0 0 0 4px rgba(111,179,201,0.16), 0 0 14px rgba(111,179,201,0.7);
 }
 .flight-conversation-panel__body {
   min-width: 0;
@@ -579,8 +582,8 @@ html.dark .flight-conversation-panel__stat {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 16px 8px 16px;
   font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: #d4af37;
-  border-bottom: 1px solid rgba(212,175,55,0.15);
+  color: var(--nc-teal, #6FB3C9);
+  border-bottom: 1px solid rgba(111,179,201,0.15);
 }
 .globe-hud__title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .globe-hud__dot {
@@ -593,8 +596,8 @@ html.dark .flight-conversation-panel__stat {
 .globe-hud__rec { color: #ef4444; font-weight: 700; animation: hud-blink 0.9s steps(2) infinite; }
 .globe-hud__tx  { color: #3fd6c8; font-weight: 700; }
 .globe-hud__btn {
-  background: transparent; border: 1px solid rgba(212,175,55,0.4);
-  color: #d4af37; width: 22px; height: 22px;
+  background: transparent; border: 1px solid rgba(111,179,201,0.4);
+  color: var(--nc-teal, #6FB3C9); width: 22px; height: 22px;
   border-radius: 4px; font-size: 12px; line-height: 1; cursor: pointer;
   display: grid; place-items: center;
 }
@@ -643,7 +646,7 @@ html.dark .flight-conversation-panel__stat {
   border-top: 1px solid rgba(63,214,200,0.10);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.globe-hud__status-text::before { content: '▸ '; color: #d4af37; }
+.globe-hud__status-text::before { content: '▸ '; color: var(--nc-teal, #6FB3C9); }
 
 /* When the bot is speaking, give the whole panel a subtle pulse */
 .globe-hud--speaking {
@@ -661,10 +664,10 @@ html.dark .flight-conversation-panel__stat {
 .fc-shell,
 .fc-landing {
   --fc-ink:         #0a1426;
-  --fc-navy:        #0a3a6b;
+  --fc-navy:        #1A4459;
   --fc-navy-2:      #0d2540;
   --fc-navy-3:      #061a35;
-  --fc-gold:        #d4af37;
+  --fc-gold:        #E8A33D;
   --fc-gold-soft:   #f0d674;
   --fc-emerald:     #1f8a5b;
   --fc-crimson:     #c1426b;
@@ -688,7 +691,6 @@ html.dark .flight-conversation-panel__stat {
 .fc-shell[data-fc-accent="emerald"] { --fc-gold: #1f8a5b; --fc-gold-soft: #34a874; }
 .fc-shell[data-fc-accent="copper"]  { --fc-gold: #c97444; --fc-gold-soft: #e0916a; }
 .fc-shell[data-fc-accent="violet"]  { --fc-gold: #8964d7; --fc-gold-soft: #a586e8; }
-.fc-shell[data-fc-theme="paper"] { background: var(--fc-paper); }
 .fc-shell[data-fc-theme="coal"] { background: #14181f; color: #e8ecf4; }
 .fc-shell[data-fc-theme="coal"] .fc-card,
 .fc-shell[data-fc-theme="coal"] .fc-kpi { background: #1a1f2a; border-color: rgba(255,255,255,.06); color: #e8ecf4; }
@@ -1554,7 +1556,7 @@ html.dark .flight-conversation-panel__stat {
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.24);
 }
 .fc-tweak-trigger:hover { background: rgba(10, 20, 38, 0.96); border-color: rgba(212, 175, 55, 0.55); }
-.fc-tweak-trigger[aria-expanded="true"] { border-color: var(--fc-gold, #d4af37); }
+.fc-tweak-trigger[aria-expanded="true"] { border-color: var(--fc-gold, #E8A33D); }
 .fc-tweak-swatch {
   width: 14px; height: 14px;
   border-radius: 50%;
@@ -1609,7 +1611,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-tweak-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 .fc-tweak-item.active { background: rgba(212, 175, 55, 0.16); color: #fff; font-weight: 600; }
-.fc-tweak-check { margin-left: auto; color: var(--fc-gold, #d4af37); font-weight: 700; }
+.fc-tweak-check { margin-left: auto; color: var(--fc-gold, #E8A33D); font-weight: 700; }
 
 
 /* Footer */
@@ -2063,9 +2065,7 @@ main:has(> .fc-landing) {
   background: var(--fc-cream);
   min-height: 100vh;
 }
-.fc-shell[data-fc-theme="paper"]  { background: var(--fc-paper); }
 .fc-shell[data-fc-theme="coal"]   { background: #14181f; color: #e8ecf4; }
-.fc-shell[data-fc-theme="ivory"]  { background: var(--fc-cream); }
 .fc-landing {
   background: var(--fc-cream);
   min-height: 100vh;
@@ -2186,7 +2186,7 @@ html[data-fc-theme="coal"] .fc-chip {
 }
 html[data-fc-theme="coal"] .fc-chip.active,
 html[data-fc-theme="coal"] .fc-chip-gold.active {
-  background: var(--fc-gold, #d4af37) !important;
+  background: var(--fc-gold, #E8A33D) !important;
   color: #0a0e16 !important;
 }
 
@@ -2200,10 +2200,7 @@ html[data-fc-theme="coal"] .kpi {
 html[data-fc-theme="coal"] .kpi-label,
 html[data-fc-theme="coal"] .kpi-sub { color: rgba(255, 255, 255, 0.55) !important; }
 html[data-fc-theme="coal"] .kpi-value { color: #f5f1e8 !important; }
-html[data-fc-theme="coal"] .kpi-brand {
-  background: linear-gradient(135deg, #0a3a6b, #1f5fa5) !important;
-}
-html[data-fc-theme="coal"] .eyebrow { color: var(--fc-gold, #d4af37) !important; }
+html[data-fc-theme="coal"] .eyebrow { color: var(--fc-gold, #E8A33D) !important; }
 
 /* Bulk override of common Tailwind light backgrounds on non-FC routes */
 html[data-fc-theme="coal"] .bg-white,
@@ -2237,14 +2234,11 @@ html[data-fc-theme="coal"] .fc-dna-reco {
   color: #f0d674 !important;
   border: 1px solid rgba(212, 175, 55, 0.18);
 }
-html[data-fc-theme="coal"] .fc-dna-reco-strong { color: var(--fc-gold, #d4af37) !important; }
+html[data-fc-theme="coal"] .fc-dna-reco-strong { color: var(--fc-gold, #E8A33D) !important; }
 
 /* ===========================================================================
    PAPER THEME — neutral light gray surfaces (subtle alternate to Ivory).
    =========================================================================== */
-html[data-fc-theme="paper"] body { background: #eef0f3; }
-html[data-fc-theme="paper"] .fc-shell,
-html[data-fc-theme="paper"] .fc-landing { background: #eef0f3 !important; }
 
 /* Coal-theme: flatten the inner light gradient on the Route DNA flightcard. */
 html[data-fc-theme="coal"] .fc-dna-flightcard {
@@ -2266,7 +2260,7 @@ html[data-fc-theme="coal"] .fc-cal-cell.l1 { background: rgba(212,175,55,0.08) !
 html[data-fc-theme="coal"] .fc-cal-cell.l2 { background: rgba(212,175,55,0.18) !important; color: rgba(255,255,255,0.75) !important; }
 html[data-fc-theme="coal"] .fc-cal-cell.l3 { background: rgba(212,175,55,0.32) !important; color: #fff !important; }
 html[data-fc-theme="coal"] .fc-cal-cell.l4 { background: rgba(212,175,55,0.55) !important; color: #0a0e16 !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l5 { background: var(--fc-gold, #d4af37) !important; color: #0a0e16 !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l5 { background: var(--fc-gold, #E8A33D) !important; color: #0a0e16 !important; }
 html[data-fc-theme="coal"] .fc-cal-dow { color: rgba(255,255,255,0.45) !important; }
 html[data-fc-theme="coal"] .fc-cal-legend { color: rgba(255,255,255,0.55) !important; }
 html[data-fc-theme="coal"] .fc-cal-legend .sw.l0 { background: rgba(255,255,255,0.06) !important; }
@@ -2283,7 +2277,7 @@ html[data-fc-theme="coal"] .fc-carbon-row {
 }
 html[data-fc-theme="coal"] .fc-carbon-icon {
   background: rgba(212, 175, 55, 0.12) !important;
-  color: var(--fc-gold, #d4af37) !important;
+  color: var(--fc-gold, #E8A33D) !important;
 }
 html[data-fc-theme="coal"] .fc-carbon-row .val { color: #f0d674 !important; }
 html[data-fc-theme="coal"] .fc-carbon-cta {
@@ -2291,7 +2285,7 @@ html[data-fc-theme="coal"] .fc-carbon-cta {
   border: 1px solid rgba(212, 175, 55, 0.22);
   color: #f0d674 !important;
 }
-html[data-fc-theme="coal"] .fc-carbon-cta strong { color: var(--fc-gold, #d4af37) !important; }
+html[data-fc-theme="coal"] .fc-carbon-cta strong { color: var(--fc-gold, #E8A33D) !important; }
 
 /* Mistake-fare radar rows are now anchors when bookHref is set; ensure the
    <a> still lays out as a row, has no underline, and uses pointer cursor. */
@@ -3477,8 +3471,8 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 /* Founding period banner (dashboard) */
 .fc-founding-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: rgba(212,175,55,.08); border: 1px solid rgba(212,175,55,.3); color: #e8ecf4; font-size: 13.5px; line-height: 1.5; }
 .fc-founding-banner.due { background: rgba(212,175,55,.14); border-color: rgba(212,175,55,.5); }
-.fc-founding-banner a { color: var(--fc-gold, #d4af37); text-decoration: underline; }
-.fc-founding-tag { font-family: var(--fc-font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--fc-gold, #d4af37); white-space: nowrap; }
+.fc-founding-banner a { color: var(--fc-gold, #E8A33D); text-decoration: underline; }
+.fc-founding-tag { font-family: var(--fc-font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--fc-gold, #E8A33D); white-space: nowrap; }
 
 /* ============================================================
    Night cabin — FlyCheap travel design language.
