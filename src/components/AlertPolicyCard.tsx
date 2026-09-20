@@ -19,9 +19,13 @@ import { useToast } from '@/components/Toaster';
  * browser reports it and this card says what it detected.
  */
 
+type QuietSource = 'user' | 'off' | 'default' | 'unknown-timezone';
+
 type Policy = {
   quiet_hours_start: string;
   quiet_hours_end: string;
+  /** Why the window above is what it is — straight from the server. */
+  quiet_hours_source: QuietSource;
   daily_alert_cap: number | null;
   instant_alerts: boolean;
   wake_for_mistake_fares: boolean;
@@ -47,37 +51,57 @@ export function AlertPolicyCard() {
 
   useEffect(() => {
     // getTimezoneOffset is minutes BEHIND UTC, i.e. the opposite sign from the
-    // offset everyone writes. New York reports 240; the offset is −240.
+    // offset everyone writes. New York reports 240; the offset is -240.
     const detected = -new Date().getTimezoneOffset();
     try { setTzName(Intl.DateTimeFormat().resolvedOptions().timeZone); } catch { /* not fatal */ }
 
-    fetch('/api/settings').then(r => r.json()).then(j => {
-      setP({
-        quiet_hours_start: j.quiet_hours_start ?? '',
-        quiet_hours_end: j.quiet_hours_end ?? '',
-        daily_alert_cap: j.daily_alert_cap ?? null,
-        instant_alerts: j.instant_alerts !== false,
-        wake_for_mistake_fares: Boolean(j.wake_for_mistake_fares),
-        // Trust the browser over a stored value: people move, and a stale
-        // offset is what makes quiet hours fire at the wrong time.
-        tz_offset_min: detected,
-      });
-      if (j.tz_offset_min !== detected) {
-        // Persist quietly. Nothing about this needs the user's attention, and
-        // it is the difference between quiet hours working and not.
-        fetch('/api/settings', {
+    // CAPTURE FIRST, THEN READ — the order matters.
+    //
+    // Storing the timezone is what makes the default quiet-hours window apply,
+    // so reading first and writing after would render the state as it was a
+    // moment ago: the card would say "Off — alerts can arrive at any hour"
+    // about an account that its own write had just made silent overnight. That
+    // is the same UI-says-one-thing-engine-does-another shape as the Clear bug,
+    // and it lasted about a hundred milliseconds, which is long enough to be
+    // the thing the user read.
+    (async () => {
+      try {
+        await fetch('/api/settings', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ tz_offset_min: detected }),
-        }).catch(() => { /* a failed capture just means no default window */ });
+        });
+      } catch {
+        // A failed capture just means no default window — not fatal, and the
+        // read below will report that honestly.
       }
-    }).catch(() => setP(null));
+
+      const j = await fetch('/api/settings').then(r => r.json()).catch(() => null);
+      if (!j) { setP(null); return; }
+
+      const src: QuietSource = j.quiet_hours_source ?? 'unknown-timezone';
+      setP({
+        // The EFFECTIVE window, not the stored one, so the card cannot claim
+        // quiet hours are off while the engine is holding alerts.
+        quiet_hours_start: j.quiet_hours_effective_start ?? j.quiet_hours_start ?? '',
+        quiet_hours_end: j.quiet_hours_effective_end ?? j.quiet_hours_end ?? '',
+        quiet_hours_source: src,
+        daily_alert_cap: j.daily_alert_cap ?? null,
+        instant_alerts: j.instant_alerts !== false,
+        wake_for_mistake_fares: Boolean(j.wake_for_mistake_fares),
+        tz_offset_min: detected,
+      });
+    })();
   }, []);
 
   if (!p) return null;
 
   const set = <K extends keyof Policy>(k: K, v: Policy[K]) =>
     setP(prev => (prev ? { ...prev, [k]: v } : prev));
+
+  // Editing the window makes it the user's own, whatever it was before.
+  const setWindow = (k: 'quiet_hours_start' | 'quiet_hours_end', v: string) =>
+    setP(prev => (prev ? { ...prev, [k]: v, quiet_hours_source: 'user' } : prev));
 
   const quietHoursOn = Boolean(p.quiet_hours_start && p.quiet_hours_end);
 
@@ -88,6 +112,9 @@ export function AlertPolicyCard() {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        // Saving pins whatever is on screen. If that was the default, it stops
+        // being implicit — so the stored value and the displayed value can
+        // never drift apart again.
         quiet_hours_start: p.quiet_hours_start,
         quiet_hours_end: p.quiet_hours_end,
         daily_alert_cap: p.daily_alert_cap ?? DEFAULT_CAP,
@@ -125,7 +152,7 @@ export function AlertPolicyCard() {
           <input
             type="time"
             value={p.quiet_hours_start}
-            onChange={e => set('quiet_hours_start', e.target.value)}
+            onChange={e => setWindow('quiet_hours_start', e.target.value)}
             className="font-mono text-xs"
             aria-label="Quiet hours start"
           />
@@ -133,7 +160,7 @@ export function AlertPolicyCard() {
           <input
             type="time"
             value={p.quiet_hours_end}
-            onChange={e => set('quiet_hours_end', e.target.value)}
+            onChange={e => setWindow('quiet_hours_end', e.target.value)}
             className="font-mono text-xs"
             aria-label="Quiet hours end"
           />
@@ -141,17 +168,27 @@ export function AlertPolicyCard() {
             <button
               type="button"
               className="btn btn-sm"
-              onClick={() => { set('quiet_hours_start', ''); set('quiet_hours_end', ''); }}
+              onClick={() => setP(prev => prev ? {
+                ...prev, quiet_hours_start: '', quiet_hours_end: '', quiet_hours_source: 'off',
+              } : prev)}
             >
               Clear
             </button>
           )}
         </div>
         <p className="text-[10px] text-slate-500 mt-1">
-          {quietHoursOn
-            ? <>Nothing but a mistake fare reaches you between these times, and only if you opt in below.</>
-            : <>Not set — alerts can arrive at any hour. A window that crosses midnight is fine.</>}
-          {' '}Your times, read as <strong>{offsetLabel(p.tz_offset_min)}</strong>
+          {quietHoursOn ? (
+            <>
+              {p.quiet_hours_source === 'default'
+                ? <><strong>These are the default quiet hours, and they are in force now.</strong>{' '}
+                    Change them, or press Clear to turn them off.{' '}</>
+                : <>Nothing but a mistake fare reaches you between these times, and only if you
+                    opt in below.{' '}</>}
+            </>
+          ) : (
+            <>Off — alerts can arrive at any hour. A window that crosses midnight is fine.{' '}</>
+          )}
+          Your times, read as <strong>{offsetLabel(p.tz_offset_min)}</strong>
           {tzName ? ` (${tzName})` : ''}, detected from this browser.
         </p>
       </div>

@@ -29,6 +29,40 @@ import type { AlertKind } from './alertKind';
  * So: an explicitly configured window is always honoured. The DEFAULT window is
  * applied only when the user's timezone is actually known.
  */
+export type QuietHoursSource =
+  /** The user set a window. */
+  | 'user'
+  /** The user explicitly turned quiet hours off. */
+  | 'off'
+  /** Never asked, but we know their timezone, so the default applies. */
+  | 'default'
+  /** Never asked and we cannot place them in time, so none applies. */
+  | 'unknown-timezone';
+
+/**
+ * The window in force AND why — so a settings screen can show the truth.
+ *
+ * This exists because the card could not previously tell the difference
+ * between "no quiet hours" and "the default quiet hours". Capturing the
+ * timezone on page load is what switches the default on, so a card that
+ * rendered only the STORED value said "Not set — alerts can arrive at any
+ * hour" about an account that was, from that moment, silent overnight.
+ */
+export function effectiveQuietHours(userId: number): {
+  window: { startHour: number; endHour: number } | null;
+  source: QuietHoursSource;
+} {
+  const start = queries.getUserSetting(userId, 'quiet_hours_start');
+  const end = queries.getUserSetting(userId, 'quiet_hours_end');
+  const decided = start !== undefined || end !== undefined;
+  const w = quietHoursFor(userId);
+
+  if (decided) return { window: w, source: w ? 'user' : 'off' };
+  return w
+    ? { window: w, source: 'default' }
+    : { window: null, source: 'unknown-timezone' };
+}
+
 function quietHoursFor(userId: number): { startHour: number; endHour: number } | null {
   const start = queries.getUserSetting(userId, 'quiet_hours_start');
   const end = queries.getUserSetting(userId, 'quiet_hours_end');

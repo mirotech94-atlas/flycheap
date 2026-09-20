@@ -75,6 +75,68 @@ describe('quiet hours: absent, empty and set are three different answers', () =>
   });
 });
 
+describe('what the settings card is told is in force', () => {
+  /**
+   * The card cannot render the truth unless the server tells it the EFFECTIVE
+   * window and why. Capturing the timezone on page load is what switches the
+   * default on, so a card drawing only the stored value would say "Off —
+   * alerts can arrive at any hour" about an account that is, from that moment,
+   * silent overnight. Same shape as the Clear bug: UI says one thing, engine
+   * does another.
+   */
+  it('says the default is in force once the timezone is known', () => {
+    db.queries.setUserSetting(1, 'tz_offset_min', '-240');
+    const e = gate.effectiveQuietHours(1);
+    expect(e.source).toBe('default');
+    expect(e.window).toEqual({ startHour: 22, endHour: 8 });
+    // ...and the engine agrees, which is the whole point.
+    expect(decide('threshold', 7).send).toBe(false);
+  });
+
+  it('says none applies when the timezone is unknown', () => {
+    const e = gate.effectiveQuietHours(1);
+    expect(e.source).toBe('unknown-timezone');
+    expect(e.window).toBeNull();
+    expect(decide('threshold', 7).send).toBe(true);
+  });
+
+  it('distinguishes OFF from never-asked', () => {
+    db.queries.setUserSetting(1, 'tz_offset_min', '-240');
+    db.queries.setUserSetting(1, 'quiet_hours_start', '');
+    db.queries.setUserSetting(1, 'quiet_hours_end', '');
+    const e = gate.effectiveQuietHours(1);
+    expect(e.source).toBe('off');
+    expect(e.window).toBeNull();
+  });
+
+  it('reports a window the user set as theirs', () => {
+    db.queries.setUserSetting(1, 'tz_offset_min', '-240');
+    db.queries.setUserSetting(1, 'quiet_hours_start', '01:00');
+    db.queries.setUserSetting(1, 'quiet_hours_end', '05:00');
+    const e = gate.effectiveQuietHours(1);
+    expect(e.source).toBe('user');
+    expect(e.window).toEqual({ startHour: 1, endHour: 5 });
+  });
+
+  it('never reports a window the engine would not apply', () => {
+    // The invariant that makes the card trustworthy: what it is told is in
+    // force is exactly what gates the send.
+    for (const setup of [
+      () => {},
+      () => db.queries.setUserSetting(1, 'tz_offset_min', '-240'),
+      () => { db.queries.setUserSetting(1, 'tz_offset_min', '-240'); db.queries.setUserSetting(1, 'quiet_hours_start', ''); db.queries.setUserSetting(1, 'quiet_hours_end', ''); },
+      () => { db.queries.setUserSetting(1, 'tz_offset_min', '-240'); db.queries.setUserSetting(1, 'quiet_hours_start', '22:00'); db.queries.setUserSetting(1, 'quiet_hours_end', '08:00'); },
+    ]) {
+      db.getDb().prepare('DELETE FROM user_settings WHERE user_id = 1').run();
+      setup();
+      const e = gate.effectiveQuietHours(1);
+      // 03:00 local is inside 22:00-08:00 and inside nothing else here.
+      const held = decide('threshold', 7).send === false;
+      expect(held).toBe(e.window !== null);
+    }
+  });
+});
+
 describe('the mistake-fare exception', () => {
   beforeEach(() => {
     db.queries.setUserSetting(1, 'tz_offset_min', '-240');
