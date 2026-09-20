@@ -37,3 +37,26 @@
   gap: 0.6rem;
   margin-top: 1.5rem;
 }
+
+/* The post-trip form. One text field and one checkbox; nothing here is a
+   primary action except the "Yes, I travelled" button, which keeps amber. */
+.nc-confirm-card .nc-field { display: block; margin: 1.25rem 0 0.5rem; }
+.nc-confirm-card .nc-field-label {
+  display: block; font-size: 12px; letter-spacing: .04em; text-transform: uppercase;
+  color: var(--nc-on-dark-mute); margin-bottom: 0.35rem;
+}
+.nc-confirm-card .nc-input {
+  width: 100%; max-width: 16rem; font-size: 16px; padding: 0.55rem 0.7rem;
+  font-family: var(--nc-mono);
+  background: var(--nc-deck-2); color: var(--nc-on-dark);
+  border: 1px solid var(--nc-rule-2); border-radius: 9px;
+}
+.nc-confirm-card .nc-input:focus-visible { outline: 2px solid var(--nc-teal); outline-offset: 2px; }
+.nc-confirm-card .nc-field-hint {
+  display: block; font-size: 12.5px; line-height: 1.5; color: var(--nc-on-dark-faint); margin-top: 0.35rem;
+}
+.nc-confirm-card .nc-check {
+  display: flex; gap: 0.6rem; align-items: flex-start; margin: 1rem 0 0;
+  font-size: 14px; color: var(--nc-on-dark);
+}
+.nc-confirm-card .nc-check input { margin-top: 0.3rem; accent-color: var(--nc-teal); }
