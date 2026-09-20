@@ -71,7 +71,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                     }`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={`text-[11px] font-mono uppercase tracking-wider ${fromUs ? 'text-[#F2C67A]' : 'text-white/50'}`}>
+                      <span className={`text-[11px] font-mono uppercase tracking-wider ${fromUs ? 'text-[#6FB3C9]' : 'text-white/50'}`}>
                         {fromUs ? 'FlyCheap' : ticket.name}
                       </span>
                       <span className="text-[11px] text-white/35">{fmtWhen(m.created_at)}</span>

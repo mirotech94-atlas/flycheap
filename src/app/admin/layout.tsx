@@ -89,8 +89,16 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           --ad-panel-2:  #131C2E;
           --ad-line:     rgba(255,255,255,.09);
           --ad-line-soft:rgba(255,255,255,.055);
+          /* Same two-accent split as the client app. In here the equivalent
+             of a fare is a MONEY figure, so --ad-gold is reserved for revenue
+             and the one primary action; every other accent takes --ad-accent.
+             The console had spent gold on eyebrows, code chips, focus rings and
+             row hovers, which is the same "accent on decoration" the client
+             side just finished unwinding. */
           --ad-gold:     #E8A33D;
           --ad-gold-soft:#F2C67A;
+          --ad-accent:      #6FB3C9;
+          --ad-accent-soft: #9ACBDB;
           --ad-text:     #E9EDF5;
           --ad-muted:    rgba(255,255,255,.56);
           --ad-faint:    rgba(255,255,255,.4);
@@ -100,7 +108,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         /* Atmospheric main surface — subtle grid + radial brand glows */
         .admin-shell .admin-main {
           background:
-            radial-gradient(820px 480px at 90% -10%, rgba(232,163,61,.10), transparent 60%),
+            radial-gradient(820px 480px at 90% -10%, rgba(111,179,201,.10), transparent 60%),
             radial-gradient(720px 480px at -6% 112%, rgba(111,179,201,.07), transparent 55%),
             #0B1220 !important;
           position: relative;
@@ -129,7 +137,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         /* Eyebrow → gold mono smallcaps */
         .admin-shell .eyebrow {
           font-family: var(--fc-font-mono, 'JetBrains Mono', monospace) !important;
-          color: var(--ad-gold) !important;
+          color: var(--ad-accent) !important;
           font-size: 10px !important; letter-spacing: .2em; text-transform: uppercase; font-weight: 600;
         }
 
@@ -155,9 +163,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           }
         }
         .admin-shell .card-elevated {
-          border-color: rgba(232,163,61,.22) !important;
+          border-color: rgba(111,179,201,.22) !important;
           background:
-            linear-gradient(180deg, rgba(232,163,61,.05), transparent 40%),
+            linear-gradient(180deg, rgba(111,179,201,.05), transparent 40%),
             linear-gradient(180deg, var(--ad-panel), var(--ad-panel-2)) !important;
         }
         .admin-shell .card:hover { border-color: rgba(255,255,255,.14) !important; }
@@ -185,11 +193,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }
         .admin-shell table tbody td { color: rgba(255,255,255,.82); border-color: var(--ad-line-soft) !important; }
         .admin-shell table tbody tr { transition: background .12s; }
-        .admin-shell table tbody tr:hover td { background: rgba(232,163,61,.05); }
+        .admin-shell table tbody tr:hover td { background: rgba(111,179,201,.05); }
 
         /* Inline code → gold chips */
         .admin-shell code {
-          background: rgba(232,163,61,.1); color: var(--ad-gold-soft);
+          background: rgba(111,179,201,.1); color: var(--ad-accent-soft);
           padding: 1px 5px; border-radius: 4px; font-size: .85em;
           font-family: var(--fc-font-mono, 'JetBrains Mono', monospace);
         }
@@ -250,7 +258,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         }
         .admin-shell .ad-kpi-link { transition: border-color .16s, transform .16s; text-decoration: none; }
         .admin-shell .ad-kpi-link:hover {
-          border-color: rgba(232,163,61,.45); transform: translateY(-2px);
+          border-color: rgba(111,179,201,.45); transform: translateY(-2px);
         }
         .admin-shell .ad-chip {
           font-family: var(--fc-font-mono, ui-monospace, monospace);
@@ -286,7 +294,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           padding: 8px 10px; border-top: 1px solid var(--ad-line-soft);
           color: rgba(255,255,255,.8); vertical-align: middle;
         }
-        .admin-shell .ad-table tbody tr:hover td { background: rgba(232,163,61,.045); }
+        .admin-shell .ad-table tbody tr:hover td { background: rgba(111,173,61,.045); }
         .admin-shell .ad-input {
           width: 190px; max-width: 46vw;
           background: rgba(0,0,0,.28); border: 1px solid var(--ad-line);
@@ -296,8 +304,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           outline: none; transition: border-color .14s, box-shadow .14s;
         }
         .admin-shell .ad-input:focus {
-          border-color: rgba(232,163,61,.55);
-          box-shadow: 0 0 0 3px rgba(232,163,61,.14);
+          border-color: rgba(111,179,201,.55);
+          box-shadow: 0 0 0 3px rgba(111,179,201,.14);
         }
         .admin-shell .ad-btn:disabled { opacity: .4; cursor: not-allowed; }
         /* Live environment pill in the top bar */

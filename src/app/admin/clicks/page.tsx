@@ -48,7 +48,7 @@ export default async function ClickStreamPage() {
         <Kpi label="Clicks · 30d" value={fmtInt(stats.clicks_30d)} spark={daily.slice(-30).map(d => d.clicks)} />
         <Kpi label="Clicks · 7d" value={fmtInt(last7)} foot={`${(last7 / 7).toFixed(1)} per day average`} />
         <Kpi
-          label="Top surface" value={topSurface ? fmtInt(topSurface.clicks) : '—'} tone="gold"
+          label="Top surface" value={topSurface ? fmtInt(topSurface.clicks) : '—'}
           foot={topSurface ? (SURFACE_LABELS[topSurface.surface] ?? topSurface.surface) : 'No clicks logged yet'}
         />
         <Kpi
@@ -74,7 +74,7 @@ export default async function ClickStreamPage() {
           {byProvider.length === 0
             ? <Empty>No clicks logged yet.</Empty>
             : byProvider.map(r => (
-              <BarRow key={r.provider} label={r.provider} value={r.clicks} max={maxProvider} tone="gold" />
+              <BarRow key={r.provider} label={r.provider} value={r.clicks} max={maxProvider} />
             ))}
         </Panel>
       </div>

@@ -215,7 +215,7 @@ export default async function CommandCenter() {
           href="/admin/users"
         />
         <Kpi
-          label="Founding trials" value={fmtInt(b.founding)} tone="gold"
+          label="Founding trials" value={fmtInt(b.founding)}
           foot={b.foundingEnding > 0 ? `${b.foundingEnding} ending within 14 days` : 'Three months free, then an upgrade nudge'}
           href="/admin/users"
         />
@@ -267,7 +267,7 @@ export default async function CommandCenter() {
           <BarRow label="Free" value={b.m.users.free} max={b.m.users.total || 1} />
           <BarRow label="Pro · $9/mo" value={b.m.users.pro} max={b.m.users.total || 1} tone="good"
             right={`${b.m.users.pro} · ${b.billedPro} billed`} />
-          <BarRow label="Enterprise · $39/mo" value={b.m.users.enterprise} max={b.m.users.total || 1} tone="gold"
+          <BarRow label="Enterprise · $39/mo" value={b.m.users.enterprise} max={b.m.users.total || 1}
             right={`${b.m.users.enterprise} · ${b.billedEnt} billed`} />
           <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-baseline justify-between">
             <span className="text-[11.5px] text-white/45">Committed monthly revenue</span>

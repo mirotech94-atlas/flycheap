@@ -25,7 +25,7 @@ export default async function SignupsPage() {
   return (
     <div className="space-y-8">
       <div>
-        <div className="text-[11px] uppercase tracking-[0.18em] text-[#E8A33D] mb-1">Admin · signups</div>
+        <div className="text-[11px] uppercase tracking-[0.18em] text-[#6FB3C9] mb-1">Admin · signups</div>
         <h1 className="text-3xl font-bold tracking-tight">Signups</h1>
         <p className="text-sm text-white/55 mt-1">Acquisition + tier funnel for the FlyCheap user base.</p>
       </div>
@@ -97,7 +97,7 @@ export default async function SignupsPage() {
                 <td className="px-4 py-2">{u.email}</td>
                 <td className="px-4 py-2 text-xs">
                   <span className={`px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px] ${
-                    u.tier === 'enterprise' ? 'bg-[#E8A33D]/20 text-[#F2C67A]' :
+                    u.tier === 'enterprise' ? 'bg-[#6FB3C9]/20 text-[#9ACBDB]' :
                     u.tier === 'pro'        ? 'bg-emerald-500/20 text-emerald-300' :
                     'bg-white/10 text-white/60'
                   }`}>{u.tier}</span>

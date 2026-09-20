@@ -1,9 +1,43 @@
 // OpenGraph card image for social shares. Pure SVG → PNG-equivalent at the
 // browser/render layer. 1200×630 is the standard social-share aspect ratio.
+//
+// The stats row is DERIVED, per the copy rule: every customer-facing number
+// comes from the database, never from a hand-typed claim. It used to read
+// "1,000+ AIRLINES · 24/7 POLLING · $0 FREE TIER" — three assertions the card
+// had no way to stand behind, on the single most-shared asset we publish.
+//
+// Static generation still runs server code, so "it's a static SVG" was never a
+// reason it could not derive. It revalidates hourly so the card tracks reality
+// between deploys rather than freezing at build time.
+
+import { getPublicMetrics, fmtCompact } from '@/lib/public-metrics';
 
 export const dynamic = 'force-static';
+export const revalidate = 3600;
 
 export async function GET() {
+  const m = getPublicMetrics();
+
+  // With no data yet — a fresh box, or the read failed — showing "0 SNAPSHOTS"
+  // on a share card is worse than showing nothing, so those columns are simply
+  // dropped rather than filled with a claim.
+  const stats: Array<[string, string]> = [];
+  if (m.snapshots > 0)    stats.push([fmtCompact(m.snapshots), 'FARE SNAPSHOTS']);
+  if (m.routePairs > 0)   stats.push([String(m.routePairs), 'ROUTES WATCHED']);
+  if (m.alertsSent > 0)   stats.push([String(m.alertsSent), 'ALERTS SENT']);
+
+  // Columns are laid out from measured widths rather than the fixed offsets the
+  // hand-written row used — those were what made "1,000+" collide with its own
+  // label. ~17px per digit at 28px/800, ~8.4px per letter at 14px + 2 tracking.
+  let x = 0;
+  const statSvg = stats.map(([value, label]) => {
+    const vw = value.length * 17;
+    const lw = label.length * 9.8;
+    const block = `<text x="${x}" font-family="system-ui,Helvetica" font-size="28" font-weight="800" fill="#E8A33D">${value}</text>` +
+                  `<text x="${x + vw + 10}" font-family="system-ui,Helvetica" font-size="14" fill="rgba(255,255,255,.7)" letter-spacing="2">${label}</text>`;
+    x += vw + lw + 64;
+    return block;
+  }).join('\n      ');
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
     <defs>
       <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
@@ -67,16 +101,9 @@ export async function GET() {
     <text x="80" y="470" font-family="system-ui,Helvetica" font-size="22" font-weight="500" fill="rgba(255,255,255,.75)">
       Track 1,000+ airlines · email when fares drop · explore worldwide
     </text>
-    <!-- Stats row -->
+    <!-- Stats row — derived, see the note at the top of this file -->
     <g transform="translate(80 530)">
-      <text font-family="system-ui,Helvetica" font-size="28" font-weight="800" fill="#E8A33D">1,000+</text>
-      <text x="180" font-family="system-ui,Helvetica" font-size="14" fill="rgba(255,255,255,.7)" letter-spacing="2">AIRLINES</text>
-
-      <text x="280" font-family="system-ui,Helvetica" font-size="28" font-weight="800" fill="#E8A33D">24/7</text>
-      <text x="350" font-family="system-ui,Helvetica" font-size="14" fill="rgba(255,255,255,.7)" letter-spacing="2">POLLING</text>
-
-      <text x="510" font-family="system-ui,Helvetica" font-size="28" font-weight="800" fill="#E8A33D">$0</text>
-      <text x="555" font-family="system-ui,Helvetica" font-size="14" fill="rgba(255,255,255,.7)" letter-spacing="2">FREE TIER</text>
+      ${statSvg}
     </g>
     <!-- URL pill -->
     <g transform="translate(940 540)">
