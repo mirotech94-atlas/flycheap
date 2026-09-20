@@ -111,14 +111,12 @@ export function decideAlert(input: AlertPolicyInput): AlertDecision {
     }
   }
 
-  return {
-    send: true,
-    // A batchable alert is still sent now; it is simply allowed to be coalesced
-    // with anything else pending rather than demanding its own message.
-    channels: urgency === 'batchable' ? channels.filter(c => c === 'email') .concat(channels.filter(c => c !== 'email')) : channels,
-    urgency,
-    reason: `${input.kind} is ${urgency}`,
-  };
+  // A batchable alert is still sent now and on the same channels; "batchable"
+  // means the sender may coalesce it with anything else pending rather than
+  // demanding its own message. That is the caller's decision, and `urgency`
+  // is how it is told — reordering channels here would have implied a
+  // preference this function has no basis to express.
+  return { send: true, channels, urgency, reason: `${input.kind} is ${urgency}` };
 }
 
 /**
