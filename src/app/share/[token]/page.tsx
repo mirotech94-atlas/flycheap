@@ -3,6 +3,7 @@ import { loadDashboard } from '@/lib/dashboard-data';
 import { queries } from '@/lib/db';
 import { getCachedBestDeals } from '@/lib/bestDeals';
 import { fmtUSD, fmtDate, fmtRelative } from '@/lib/utils';
+import { verifiedAgeLabel } from '@/lib/fareAge';
 import { KpiStrip } from '@/components/KpiStrip';
 import { FareCalendar } from '@/components/FareCalendar';
 import { Sparkline } from '@/components/Sparkline';
@@ -23,6 +24,13 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
   const usdToEgp = parseFloat(queries.getSetting('usd_to_egp') ?? '49.5');
 
   const { deals: allDeals, refreshed_at } = getCachedBestDeals(50);
+
+  // Prefer the verification timestamp when the fare has one; fall back to when
+  // it was polled. Both are real; neither is invented.
+  const ageLabel = (f: { verified_at?: string | null; polled_at?: string | null }) =>
+    verifiedAgeLabel(f.verified_at ?? null)
+    ?? verifiedAgeLabel(f.polled_at ?? null)?.replace('Verified', 'Priced')
+    ?? null;
   const affordable = allDeals.filter(d => d.per_adult_usd <= maxDisplay);
   const top = affordable.slice(0, 30);
 
@@ -50,7 +58,14 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
         <div className="card card-feature overflow-x-auto">
           <div className="card-head">
             <div>
-              <div className="eyebrow text-emerald-700">Best deals — cheapest first</div>
+              <div className="eyebrow text-emerald-700">
+                Best deals — cheapest first
+                {refreshed_at && (
+                  <span className="ml-2 font-normal normal-case tracking-normal opacity-70">
+                    · {verifiedAgeLabel(refreshed_at)?.replace('Verified', 'Priced') ?? ''}
+                  </span>
+                )}
+              </div>
               <h2 className="!mb-0">Top {top.length} EgyptAir nonstops ≤ {fmtUSD(maxDisplay)}/adult</h2>
             </div>
             <span className="badge badge-info">Refreshed {refreshed_at ? fmtRelative(refreshed_at + 'Z') : '—'}</span>
@@ -109,7 +124,17 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
                   <td className="font-semibold">{search.origin} → {search.destination}</td>
                   <td>{fmtDate(search.depart_date)}</td>
                   <td>{fmtDate(search.return_date)}</td>
-                  <td className="text-right font-semibold">{fare ? fmtUSD(fare.price_per_adult_usd) : '—'}</td>
+                  <td className="text-right font-semibold">
+                    {fare ? fmtUSD(fare.price_per_adult_usd) : '—'}
+                    {/* The age of the number, shown rather than implied. A share
+                        board is seen by people who never set the alert and have
+                        no idea how fresh this is — a bare price they later find
+                        to be hours old is exactly the betrayal the fare-truth
+                        rule exists to prevent. */}
+                    {fare && ageLabel(fare) && (
+                      <div className="text-[11px] font-normal text-white/45 mt-0.5">{ageLabel(fare)}</div>
+                    )}
+                  </td>
                   <td><Sparkline data={history} threshold={threshold} /></td>
                   <td>
                     {fare && (

@@ -5,6 +5,7 @@ import { pollAll } from './poller';
 import { refreshBestDeals, getCachedBestDeals } from './bestDeals';
 import { bookingLink } from './affiliate';
 import { APP_URL } from './hosts';
+import { verifiedAgeLabel } from './fareAge';
 
 export const CHAT_SYSTEM_PROMPT = `You are FarePilot, the FlyCheap assistant. You help users find and BOOK cheap flights on any route worldwide, and manage their tracked searches and alerts.
 
@@ -27,7 +28,13 @@ Your responsibilities:
 - Send the daily digest to email addresses on request.
 - Be concise and direct. Use markdown tables when listing data. Currency is USD, prices per-adult round-trip.
 - If a user asks to send a report to "me", omit the to: param so the configured ALERT_EMAIL is used.
-- Never invent prices. If data isn't cached for a route/date, say so.`;
+- Never invent prices. If data isn't cached for a route/date, say so.
+- ALWAYS say how old a price is when you quote one. Every fare you get back
+  carries a human-readable \`age\` field ("Verified 3 minutes ago", "Priced 2
+  hours ago") — repeat it alongside the number. A bare price the user later
+  discovers was forty minutes stale is the one mistake this product does not
+  recover from, and you are the surface where it is easiest to make. If a fare
+  has no age, say the price is cached and you cannot tell how fresh it is.`;
 
 /**
  * Tools with SIDE EFFECTS — DB writes, outbound email, a live poll. A failover
@@ -171,6 +178,13 @@ export async function runTool(name: string, input: Record<string, unknown>): Pro
             return_flight: f?.return_flight_no ?? null,
             below_threshold: f ? f.price_per_adult_usd < threshold : null,
             last_polled: f?.polled_at ?? null,
+            // Pre-rendered so the model repeats a phrase we control rather than
+            // doing date arithmetic on a timestamp, which it does badly.
+            age: f
+              ? (verifiedAgeLabel((f as { verified_at?: string | null }).verified_at ?? null)
+                 ?? verifiedAgeLabel(f.polled_at)?.replace('Verified', 'Priced')
+                 ?? null)
+              : null,
           };
         });
         const recentAlertCount = queries.recentAlerts(50).length;
