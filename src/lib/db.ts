@@ -643,6 +643,82 @@ function init(db: Database.Database) {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_time     ON affiliate_clicks(occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_provider ON affiliate_clicks(provider, occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_route    ON affiliate_clicks(route_id, occurred_at)`);
+  // ── The Watch object ────────────────────────────────────────────────────
+  //
+  // "Everything in the portal is a view over this one object. Get it right and
+  //  the group solver, trip budgets and B2B boards all fall out of it. Get it
+  //  wrong and each becomes a separate subsystem."
+  //
+  // `searches` IS that object — extended in place rather than replaced. A group
+  // watch is the same row with an origin array, not a separate feature, and 19
+  // files already read this table; a rename would be churn with a large blast
+  // radius and no behavioural gain. Every column below is additive with a
+  // back-compatible default, so existing rows keep meaning what they meant.
+  const watchCols = db.prepare(`PRAGMA table_info(searches)`).all() as Array<{ name: string }>;
+  const addWatchCol = (name: string, ddl: string) => {
+    if (!watchCols.some(c => c.name === name)) db.exec(`ALTER TABLE searches ADD COLUMN ${ddl}`);
+  };
+
+  // route | trip | budget | group. Everything that exists today is a route watch.
+  addWatchCol('kind', `kind TEXT NOT NULL DEFAULT 'route'`);
+  // Which group (client / cohort / family) this belongs to. NULL = personal.
+  addWatchCol('group_id', `group_id INTEGER`);
+  addWatchCol('created_by', `created_by INTEGER`);
+
+  // Destination array, mirroring the existing multi-origin `origins` column.
+  // A budget watch leaves it blank: "$700, 10 nights, March, from JFK" has no
+  // destination at all — the engine finds where that buys a trip.
+  addWatchCol('destinations', `destinations TEXT`);
+
+  // Date WINDOWS rather than fixed days. depart_date/return_date stay as the
+  // canonical single dates so every existing reader is untouched; the window
+  // columns are what the flexible kinds scan.
+  addWatchCol('depart_window_start', `depart_window_start TEXT`);
+  addWatchCol('depart_window_end',   `depart_window_end TEXT`);
+  addWatchCol('return_window_start', `return_window_start TEXT`);
+  addWatchCol('return_window_end',   `return_window_end TEXT`);
+  // "7 to 14 nights, any dates in March"
+  addWatchCol('trip_length_min', `trip_length_min INTEGER`);
+  addWatchCol('trip_length_max', `trip_length_max INTEGER`);
+  // Flex is where most of the savings live, and also the main reason the
+  // allocator's canonical query key matters: every extra day multiplies the
+  // query space.
+  addWatchCol('flex_days', `flex_days INTEGER NOT NULL DEFAULT 0`);
+
+  addWatchCol('children', `children INTEGER NOT NULL DEFAULT 0`);
+  addWatchCol('cabin', `cabin TEXT`);
+
+  // THE important one. target_per_adult_usd stays for back-compat, but the
+  // basis is now explicit and defaults to the party total for new watches:
+  // "a family of five does not care that the per-adult fare hit $412; they care
+  // what the booking costs."
+  addWatchCol('target_amount', `target_amount REAL`);
+  addWatchCol('target_basis',  `target_basis TEXT`);
+  addWatchCol('currency', `currency TEXT NOT NULL DEFAULT 'USD'`);
+
+  // Trip watches: flight + accommodation as ONE number.
+  addWatchCol('include_hotel', `include_hotel INTEGER NOT NULL DEFAULT 0`);
+  addWatchCol('hotel_nights',  `hotel_nights INTEGER`);
+
+  // active | paused | expired | booked. `active` (0/1) stays the column the
+  // poller reads; status carries the richer lifecycle — notably that a booked
+  // watch does NOT die, it flips to post-booking monitoring for the rebooking
+  // window.
+  addWatchCol('status', `status TEXT NOT NULL DEFAULT 'active'`);
+  addWatchCol('expires_at', `expires_at TEXT`);
+  addWatchCol('travelled_answer', `travelled_answer TEXT`);
+  addWatchCol('booked_at', `booked_at TEXT`);
+  addWatchCol('booked_amount_usd', `booked_amount_usd REAL`);
+  // Set by the poll allocator, persisted so the board can explain itself.
+  addWatchCol('priority_score', `priority_score REAL`);
+  addWatchCol('poll_band', `poll_band TEXT`);
+  // A home route never expires and is the headline retention lever.
+  addWatchCol('is_home_route', `is_home_route INTEGER NOT NULL DEFAULT 0`);
+
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_group ON searches(group_id, status)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_status ON searches(status, expires_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_kind ON searches(kind, active)`);
+
   // ── Email delivery telemetry ────────────────────────────────────────────
   //
   // The funnel's first two steps — delivered and opened — are the ESP's to tell
