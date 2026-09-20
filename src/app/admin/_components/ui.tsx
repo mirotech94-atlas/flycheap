@@ -27,7 +27,7 @@ const TONE_DOT: Record<Tone, string> = {
 /** Small uppercase mono label used above every value. */
 export function Eyebrow({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: Tone }) {
   return (
-    <div className={`ad-eyebrow ${tone === 'gold' ? 'text-[#E8A33D]' : 'text-white/45'}`}>
+    <div className={`ad-eyebrow ${tone === 'gold' ? 'text-[#6FB3C9]' : 'text-white/45'}`}>
       {children}
     </div>
   );

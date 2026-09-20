@@ -29,7 +29,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams:
       />
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Kpi label="Needs attention" value={openish} foot="open, in progress or waiting" tone="gold" href="/admin/tickets?status=open" />
+        <Kpi label="Needs attention" value={openish} foot="open, in progress or waiting" tone="warn" href="/admin/tickets?status=open" />
         <Kpi label="Open" value={counts.open} foot="no reply yet" />
         <Kpi label="Waiting" value={counts.waiting} foot="on the customer" tone="warn" />
         <Kpi label="Resolved" value={counts.resolved} foot="closed out" tone="good" />
@@ -82,7 +82,7 @@ export default async function AdminTicketsPage({ searchParams }: { searchParams:
                   <td className="whitespace-nowrap">
                     <Status tone={meta.tone}>{meta.label}</Status>
                     {waitingOnUs && t.status !== 'resolved' && (
-                      <div className="text-[10.5px] font-mono uppercase tracking-wider text-[#F2C67A] mt-1">Your move</div>
+                      <div className="text-[10.5px] font-mono uppercase tracking-wider text-[#6FB3C9] mt-1">Your move</div>
                     )}
                   </td>
                   <td className="text-[12px] text-white/55 whitespace-nowrap">{ago(t.last_reply_at || t.updated_at)}</td>

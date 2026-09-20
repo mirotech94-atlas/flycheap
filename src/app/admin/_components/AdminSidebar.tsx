@@ -103,7 +103,7 @@ export function AdminSidebar({ email }: { email: string }) {
               >
                 FlyCheap
               </div>
-              <div className="text-[9px] tracking-[0.24em] uppercase text-[#E8A33D] font-mono">
+              <div className="text-[9px] tracking-[0.24em] uppercase text-[#6FB3C9] font-mono">
                 Command Center
               </div>
             </div>
@@ -113,7 +113,7 @@ export function AdminSidebar({ email }: { email: string }) {
         {/* Operator */}
         <div className="px-5 py-3 border-b border-white/[0.06]">
           <div className="text-[11px] text-white/55 truncate" title={email}>{email}</div>
-          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-[#E8A33D]/15 text-[#F2C67A] border border-[#E8A33D]/30 font-mono">
+          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-[#6FB3C9]/15 text-[#9ACBDB] border border-[#6FB3C9]/30 font-mono">
             <span className="w-1.5 h-1.5 rounded-full bg-[#7BC49A] shadow-[0_0_6px_#7BC49A]" />
             Admin · Live
           </div>
@@ -145,7 +145,7 @@ export function AdminSidebar({ email }: { email: string }) {
                     {active && (
                       <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#E8A33D] shadow-[0_0_8px_rgba(232,163,61,0.6)]" />
                     )}
-                    <span className={active ? 'text-[#E8A33D]' : 'text-white/45'}>
+                    <span className={active ? 'text-[#6FB3C9]' : 'text-white/45'}>
                       <Icon kind={item.icon} />
                     </span>
                     <span>{item.label}</span>

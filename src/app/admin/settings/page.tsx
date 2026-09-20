@@ -64,7 +64,7 @@ export default async function AdminSettingsPage() {
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <Kpi label="Providers enabled" value={String(values.enabled_providers.split(',').filter(Boolean).length)}
           foot={values.enabled_providers} />
-        <Kpi label="Poll cadence" value={values.poll_interval_minutes} unit="min" tone="gold"
+        <Kpi label="Poll cadence" value={values.poll_interval_minutes} unit="min"
           foot="Base interval; Pro tiers poll faster" />
         <Kpi label="Provider calls · month" value={fmtInt(callsThisMonth)} foot="Counted against provider quotas" />
         <Kpi label="Last alert sent" value={lastAlert ? ago(lastAlert) : '—'} foot="Across every tracked route" />

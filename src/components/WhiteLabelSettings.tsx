@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PUBLIC_CLIENT_HOST } from '@/lib/hosts';
+import { contrastSafe, contrastRatio } from '@/lib/brandContrast';
 
 type Branding = {
   brand_color: string | null;
@@ -13,7 +14,7 @@ type Branding = {
 };
 
 const PRESETS = [
-  { name: 'Navy (default)', color: '#0a3a6b' },
+  { name: 'House blue (default)', color: '#1A4459' },
   { name: 'Emerald',         color: '#047857' },
   { name: 'Royal',           color: '#3730a3' },
   { name: 'Sunset',          color: '#dc2626' },
@@ -25,7 +26,9 @@ const PRESETS = [
 
 export function WhiteLabelSettings() {
   const [me, setMe] = useState<Branding | null>(null);
-  const [color, setColor] = useState('#0a3a6b');
+  // Default matches the app's own white-label fallback (the house blue), not
+  // the retired navy this used to seed.
+  const [color, setColor] = useState('#1A4459');
   const [logo, setLogo] = useState('');
   const [sender, setSender] = useState('');
   const [busy, setBusy] = useState(false);
@@ -38,7 +41,7 @@ export function WhiteLabelSettings() {
     fetch('/api/me').then(r => r.ok ? r.json() : null).then(j => {
       if (j?.user) {
         setMe(j.user);
-        setColor(j.user.brand_color  || '#0a3a6b');
+        setColor(j.user.brand_color  || '#1A4459');
         setLogo(j.user.logo_url       || '');
         setSender(j.user.sender_email || '');
         setDomain(j.user.custom_domain || '');
@@ -75,6 +78,12 @@ export function WhiteLabelSettings() {
   }
 
   const isFree = me.tier === 'free';
+
+  // What the app will actually draw as ink on the dark chrome. Mirrors exactly
+  // what layout.tsx injects, so the preview cannot drift from the real thing.
+  const NC_DARK = '#0B1220';
+  const derivedInk = contrastSafe(color, NC_DARK);
+  const ratio = contrastRatio(color, NC_DARK) ?? 0;
 
   return (
     <div className={`card ${isFree ? 'opacity-90' : ''}`}>
@@ -149,6 +158,22 @@ export function WhiteLabelSettings() {
             <div className="px-4 py-3 bg-[var(--nc-stock)] flex items-center gap-2">
               <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white" style={{ background: color }}>Primary CTA</button>
               <span className="text-xs font-semibold" style={{ color }}>Brand text</span>
+            </div>
+
+            {/* The SAME colour on the dark chrome, which is where a dark brand
+                used to vanish at 1.55:1. The app no longer prints the raw hex
+                as ink there -- it derives a variant that keeps the hue and
+                clears AA -- so this row shows the tenant BOTH: what they picked,
+                and what the app will actually draw. Without it the derivation is
+                invisible and looks like the product ignoring their choice. */}
+            <div className="px-4 py-3 bg-[var(--nc-dark)] flex items-center gap-2 border-t border-white/10">
+              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white" style={{ background: color }}>Primary CTA</button>
+              <span className="text-xs font-semibold" style={{ color: derivedInk }}>Brand text</span>
+              {derivedInk.toLowerCase() !== color.toLowerCase() && (
+                <span className="ml-auto text-[10px] font-mono text-[var(--nc-on-dark-faint)]" title={`Your ${color} is ${ratio.toFixed(2)}:1 on the dark chrome — below the 4.5:1 needed to read. Lightened to ${derivedInk}, same hue.`}>
+                  lightened to {derivedInk} for contrast
+                </span>
+              )}
             </div>
           </div>
         </div>
