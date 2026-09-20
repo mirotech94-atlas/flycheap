@@ -83,6 +83,8 @@ export const SURFACE_CODE: Record<AffiliateSurface, string> = {
   'agent-social':                   'ag',
   'agent-email':                    'ae',
   'email-chain':                    'ec',
+  'board-card':                     'bc',
+  'board-watch':                    'bw',
 };
 
 /** What is being sold. This is the axis the trip chain monetizes along. */

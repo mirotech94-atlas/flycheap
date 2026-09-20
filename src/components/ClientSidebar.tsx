@@ -13,9 +13,17 @@ import { PUBLIC_ADMIN_HOST, PUBLIC_MARKETING_HOST } from '@/lib/hosts';
 type Item = { href: string; label: string; icon: string };
 type Group = { id: string; label: string; icon: string; items: Item[] };
 
-function buildNav(nav: AppNavDict): { top: Item; groups: Group[]; guest: Item[] } {
+function buildNav(nav: AppNavDict): { top: Item[]; groups: Group[]; guest: Item[] } {
   return {
-    top: { href: '/', label: nav.dashboard, icon: '◇' },
+    // The board is the primary destination: it answers "should I book yet?".
+    // The old dashboard keeps its place directly under it — it is the charts,
+    // and some people want the charts — but it is no longer what a session
+    // opens on. Literal label because a new i18n key would have to land in
+    // every dictionary at once; /support sets the same precedent.
+    top: [
+      { href: '/board', label: 'Your board',  icon: '◆' },
+      { href: '/',      label: nav.dashboard, icon: '◇' },
+    ],
     groups: [
       {
         id: 'flights',
@@ -210,12 +218,15 @@ export function ClientSidebar({
           </nav>
         ) : (
         <nav className="flex-1 overflow-y-auto py-3 px-2 text-sm">
-          {/* Dashboard (top, always visible, no group) */}
-          <NavItem
-            item={TOP}
-            active={isItemActive(pathname, TOP.href)}
-            onClick={() => setMobileOpen(false)}
-          />
+          {/* Board + dashboard (top, always visible, no group) */}
+          {TOP.map(item => (
+            <NavItem
+              key={item.href}
+              item={item}
+              active={isItemActive(pathname, item.href)}
+              onClick={() => setMobileOpen(false)}
+            />
+          ))}
 
           {GROUPS.map(g => {
             const groupActive = isGroupActive(pathname, g);
