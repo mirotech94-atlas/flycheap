@@ -30,12 +30,19 @@ export default async function SettingsPage() {
   const usagePct = Math.min(100, Math.round((activeRoutes / tierLimit.maxRoutes) * 100));
   const tierColor = { free: 'badge-muted', pro: 'badge-info', enterprise: 'badge-gold' }[user.tier] || 'badge-muted';
 
+  // Per-account, falling back to the global default the account inherits.
+  //
+  // This page used to read the GLOBAL rows while the poller read the per-user
+  // ones — so it displayed a number that was not the one in force, and saving
+  // it changed that number for every other account instead of this one.
+  const mine = (key: string, fallback: string) =>
+    queries.getUserSetting(user.id, key) ?? queries.getSetting(key) ?? fallback;
+
   const initial = {
-    alert_threshold_per_adult_usd: parseFloat(queries.getSetting('alert_threshold_per_adult_usd') ?? '900'),
-    alert_email: queries.getSetting('alert_email') ?? '',
-    poll_interval_minutes: parseInt(queries.getSetting('poll_interval_minutes') ?? '30', 10),
-    max_display_per_adult_usd: parseFloat(queries.getSetting('max_display_per_adult_usd') ?? '1200'),
-    price_drop_pct: parseFloat(queries.getSetting('price_drop_pct') ?? '10'),
+    alert_threshold_per_adult_usd: parseFloat(mine('alert_threshold_per_adult_usd', '900')),
+    alert_email: mine('alert_email', user.email),
+    max_display_per_adult_usd: parseFloat(mine('max_display_per_adult_usd', '1200')),
+    price_drop_pct: parseFloat(mine('price_drop_pct', '10')),
   };
   const used = queries.apiCallsThisMonth().count;
   const remaining = Math.max(0, QUOTA - used);

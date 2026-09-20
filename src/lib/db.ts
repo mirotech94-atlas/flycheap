@@ -2762,6 +2762,15 @@ export const queries = {
       per_adult_usd: number; party_total_usd: number; outbound_date: string; return_date: string;
       outbound_flight_no: string | null; return_flight_no: string | null; provider: string } | undefined,
 
+  /**
+   * One search row by id, for ownership checks.
+   *
+   * The API handlers that pause, snooze and DELETE a route had no way to ask
+   * "is this theirs?" and so did not ask. A route id is a small integer.
+   */
+  getSearchById: (id: number) =>
+    getDb().prepare('SELECT * FROM searches WHERE id = ?').get(id) as SearchRow | undefined,
+
   setSearchActive: (id: number, active: 0 | 1) =>
     getDb().prepare('UPDATE searches SET active = ? WHERE id = ?').run(active, id),
 

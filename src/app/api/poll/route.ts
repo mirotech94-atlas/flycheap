@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { pollAll, pollSearch } from '@/lib/poller';
+import { requireUser } from '@/lib/apiGuard';
 
 type PollState = {
   running: boolean;
@@ -27,10 +28,20 @@ function state(): PollState {
 }
 
 export async function GET() {
+  // GUARD: middleware.ts does not run on api/ routes, so this handler is
+  // the only thing protecting it. Triggers provider polling, which costs money per call.
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+
   return NextResponse.json({ poll: state() });
 }
 
 export async function POST(req: Request) {
+  // GUARD: middleware.ts does not run on api/ routes, so this handler is
+  // the only thing protecting it. Triggers provider polling, which costs money per call.
+  const auth = await requireUser();
+  if (!auth.ok) return auth.response;
+
   const url = new URL(req.url);
   const id = url.searchParams.get('search_id');
   if (id) {

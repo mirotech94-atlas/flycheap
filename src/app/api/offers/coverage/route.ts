@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { queries } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,6 +38,15 @@ export async function POST(req: Request) {
   const startMonth = String((body as { startMonth?: unknown }).startMonth ?? new Date().toISOString().slice(0, 7)); // YYYY-MM
   const monthsAhead = Math.max(1, Math.min(12, Number((body as { monthsAhead?: unknown }).monthsAhead ?? 6)));
   const airline = String((body as { airline?: unknown }).airline ?? 'MS').trim().toUpperCase() || null;
+
+  // GUARD: middleware.ts does not run on api/ routes. This endpoint is reached
+  // from the PUBLIC offers explorer so it cannot require a session, but every
+  // call spends metered Travelpayouts requests — so it is rate limited per IP
+  // rather than left open to be used as someone else's quota.
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown';
+  if (!queries.rateLimitCheck('offers-coverage', ip, 20, 60)) {
+    return NextResponse.json({ ok: false, error: 'Too many requests.' }, { status: 429 });
+  }
 
   const token = process.env.TRAVELPAYOUTS_TOKEN;
   if (!token) return NextResponse.json({ ok: false, error: 'TRAVELPAYOUTS_TOKEN not set' }, { status: 500 });

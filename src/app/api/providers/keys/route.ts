@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
+import { requireOwner } from '@/lib/apiGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -53,6 +54,13 @@ async function writeEnv(updates: Record<string, string>): Promise<void> {
 
 // GET → which keys are present (returns booleans only, never values)
 export async function GET() {
+  // GUARD: middleware.ts does not run on api/ routes, so this handler is the
+  // only thing protecting it. It reads and WRITES provider credentials into
+  // .env.local: unauthenticated, an anonymous PUT could set TRAVELPAYOUTS_TOKEN
+  // or enable a metered provider, and that is someone else's bill.
+  const auth = await requireOwner();
+  if (!auth.ok) return auth.response;
+
   const env = await readEnv();
   const status: Record<string, boolean> = {};
   for (const k of ALLOWED_KEYS) status[k] = !!(env[k] || process.env[k]);
@@ -61,6 +69,13 @@ export async function GET() {
 
 // PUT → set one or more keys. Returns updated booleans.
 export async function PUT(req: Request) {
+  // GUARD: middleware.ts does not run on api/ routes, so this handler is the
+  // only thing protecting it. It reads and WRITES provider credentials into
+  // .env.local: unauthenticated, an anonymous PUT could set TRAVELPAYOUTS_TOKEN
+  // or enable a metered provider, and that is someone else's bill.
+  const auth = await requireOwner();
+  if (!auth.ok) return auth.response;
+
   const body = await req.json().catch(() => ({} as Record<string, unknown>));
   const updates: Record<string, string> = {};
   for (const [k, v] of Object.entries(body)) {
