@@ -48,10 +48,25 @@ export type AlertDecision =
   | { send: true; channels: Channel[]; urgency: AlertUrgency; reason: string }
   | { send: false; defer: 'digest' | 'quiet-hours' | null; reason: string };
 
-/** Is the clock inside quiet hours? Handles windows that wrap midnight. */
+/** The spec's default window, for callers that can place the user in time. */
+export const DEFAULT_QUIET_HOURS = {
+  startHour: DEFAULT_QUIET_START_HOUR,
+  endHour: DEFAULT_QUIET_END_HOUR,
+};
+
+/**
+ * Is the clock inside quiet hours? Handles windows that wrap midnight.
+ *
+ * NO WINDOW MEANS NO QUIET HOURS — this deliberately does not fall back to the
+ * default window. Defaulting here silently suppressed every alert for every user
+ * who had never configured quiet hours, and because most users have no stored
+ * timezone the "local" hour was really UTC, so a US user would have gone silent
+ * from 6pm. The caller decides whether it knows enough to apply a default; see
+ * alertGate.
+ */
 export function inQuietHours(localHour: number, q?: { startHour: number; endHour: number } | null): boolean {
-  const start = q?.startHour ?? DEFAULT_QUIET_START_HOUR;
-  const end = q?.endHour ?? DEFAULT_QUIET_END_HOUR;
+  if (!q) return false;
+  const { startHour: start, endHour: end } = q;
   if (start === end) return false;
   // 22 → 8 wraps midnight; 1 → 6 does not.
   return start > end ? (localHour >= start || localHour < end) : (localHour >= start && localHour < end);

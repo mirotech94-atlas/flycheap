@@ -1,6 +1,6 @@
 import 'server-only';
 import { queries, limitsForUser, type SearchRow } from './db';
-import { decideAlert, type AlertDecision, type Channel } from './alertPolicy';
+import { decideAlert, DEFAULT_QUIET_HOURS, type AlertDecision, type Channel } from './alertPolicy';
 import type { AlertKind } from './alertKind';
 
 /**
@@ -17,18 +17,38 @@ import type { AlertKind } from './alertKind';
  * cap the spec asks for did not exist on any channel.
  */
 
-/** Reuses the settings the push path already stores; no new keys invented. */
+/**
+ * The quiet-hours window to apply, or null for none.
+ *
+ * The spec says quiet hours are on by default — but a default is only safe when
+ * we can actually place the user in time. Most accounts have no stored timezone
+ * offset, and applying a 22:00-08:00 window against UTC would have silenced a US
+ * user's alerts from 6pm onward. That is the alert-silence failure this codebase
+ * has already been bitten by three times.
+ *
+ * So: an explicitly configured window is always honoured. The DEFAULT window is
+ * applied only when the user's timezone is actually known.
+ */
 function quietHoursFor(userId: number): { startHour: number; endHour: number } | null {
   const start = queries.getUserSetting(userId, 'quiet_hours_start');
   const end = queries.getUserSetting(userId, 'quiet_hours_end');
-  if (!start || !end) return null;
   const hour = (s: string) => {
     const m = /^(\d{1,2}):(\d{2})$/.exec(s);
     return m ? parseInt(m[1], 10) : null;
   };
-  const s = hour(start);
-  const e = hour(end);
-  return s == null || e == null ? null : { startHour: s, endHour: e };
+  if (start && end) {
+    const s = hour(start);
+    const e = hour(end);
+    if (s != null && e != null) return { startHour: s, endHour: e };
+  }
+  // Not configured. Only default it on if we know what time it is for them.
+  return knowsTimezone(userId) ? DEFAULT_QUIET_HOURS : null;
+}
+
+/** Do we actually know this user's offset from UTC? */
+export function knowsTimezone(userId: number): boolean {
+  const raw = queries.getUserSetting(userId, 'tz_offset_min');
+  return raw != null && raw !== '' && Number.isFinite(parseInt(raw, 10));
 }
 
 /**
