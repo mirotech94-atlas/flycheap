@@ -250,3 +250,38 @@ describe('same-origin check on mutations', () => {
     expect(offenders).toEqual([]);
   });
 });
+
+describe('the alert policy is reachable from the web', () => {
+  /**
+   * lib/alertPolicy.ts decides quiet hours, the daily cap, digest-by-default
+   * and the mistake-fare opt-in on every send — and shipped with no UI. Quiet
+   * hours and the timezone were settable only from the mobile API; the other
+   * three from nowhere. A policy nobody can configure is a policy that only
+   * ever runs on its defaults.
+   */
+  const settings = readFileSync(join(API, 'settings/route.ts'), 'utf8');
+
+  for (const key of [
+    'quiet_hours_start', 'quiet_hours_end', 'daily_alert_cap',
+    'instant_alerts', 'wake_for_mistake_fares', 'tz_offset_min',
+  ]) {
+    it(`accepts and returns ${key}`, () => {
+      expect(settings).toContain(`'${key}'`);   // in the persisted key list
+      expect(settings).toContain(`${key}:`);    // in the schema and the GET body
+    });
+  }
+
+  it('lets quiet hours be CLEARED, not just set', () => {
+    // An empty string has to validate, because alertGate treats "no window" as
+    // "no quiet hours" — and a user who cannot turn them off is stuck with them.
+    expect(settings).toMatch(/quiet_hours_start: z\.string\(\)\.regex\(\/\^\(\\d\{1,2\}:\\d\{2\}\)\?\$\//);
+  });
+
+  it('keeps the policy keys per-user, never global', () => {
+    // There is no sensible global default for "when is this person asleep".
+    const globalBlock = settings.slice(settings.indexOf('const GLOBAL_KEYS'), settings.indexOf('] as const', settings.indexOf('const GLOBAL_KEYS')));
+    for (const key of ['quiet_hours_start', 'daily_alert_cap', 'tz_offset_min']) {
+      expect(globalBlock).not.toContain(key);
+    }
+  });
+});

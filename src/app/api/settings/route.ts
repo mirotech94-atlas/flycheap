@@ -40,6 +40,19 @@ const USER_KEYS = [
   'alert_slack_target',
   'alert_slack_webhook',
   'alert_ig_user_id',
+  // Alert POLICY. Shipped in lib/alertPolicy.ts with no way for a web user to
+  // reach any of it — quiet hours and the timezone were settable only from the
+  // mobile API, and the cap, the digest default and the mistake-fare opt-in
+  // from nowhere at all.
+  'quiet_hours_start',
+  'quiet_hours_end',
+  'daily_alert_cap',
+  'instant_alerts',
+  'wake_for_mistake_fares',
+  // Captured from the browser, not typed. alertGate only applies the DEFAULT
+  // quiet-hours window when this is known — without it "local time" is UTC, and
+  // a US user would be silenced from 6pm.
+  'tz_offset_min',
 ] as const;
 
 /**
@@ -64,6 +77,11 @@ const SECRET_KEYS = ['alert_slack_webhook', 'alert_slack_target', 'alert_ig_user
 
 type UserKey = (typeof USER_KEYS)[number];
 
+const numOrNull = (v: string | undefined): number | null => {
+  const n = v == null ? NaN : parseInt(v, 10);
+  return Number.isFinite(n) ? n : null;
+};
+
 /** Per-user value, falling back to the global default the account inherits. */
 function effective(userId: number, key: string, fallback: string): string {
   return queries.getUserSetting(userId, key) ?? queries.getSetting(key) ?? fallback;
@@ -81,6 +99,16 @@ export async function GET() {
     price_drop_pct: parseFloat(effective(uid, 'price_drop_pct', '10')),
     alert_channels: effective(uid, 'alert_channels', 'email'),
     alert_telegram_chat_id: effective(uid, 'alert_telegram_chat_id', ''),
+
+    // Alert policy. These are per-user only — there is no sensible global
+    // default for "when is this person asleep".
+    quiet_hours_start: queries.getUserSetting(uid, 'quiet_hours_start') ?? '',
+    quiet_hours_end: queries.getUserSetting(uid, 'quiet_hours_end') ?? '',
+    daily_alert_cap: numOrNull(queries.getUserSetting(uid, 'daily_alert_cap')),
+    // Absent means instant, so no existing account's behaviour changes.
+    instant_alerts: queries.getUserSetting(uid, 'instant_alerts') !== 'false',
+    wake_for_mistake_fares: queries.getUserSetting(uid, 'wake_for_mistake_fares') === 'true',
+    tz_offset_min: numOrNull(queries.getUserSetting(uid, 'tz_offset_min')),
   };
 
   // Presence, never the value.
@@ -107,6 +135,13 @@ const PutSchema = z.object({
   alert_slack_target: z.string().max(200).optional(),
   alert_slack_webhook: z.string().max(500).optional(),
   alert_ig_user_id: z.string().max(100).optional(),
+  // '' clears the window; alertGate treats absent as "no quiet hours".
+  quiet_hours_start: z.string().regex(/^(\d{1,2}:\d{2})?$/).optional(),
+  quiet_hours_end: z.string().regex(/^(\d{1,2}:\d{2})?$/).optional(),
+  daily_alert_cap: z.number().int().min(1).max(50).optional(),
+  instant_alerts: z.enum(['true', 'false']).optional(),
+  wake_for_mistake_fares: z.enum(['true', 'false']).optional(),
+  tz_offset_min: z.number().int().min(-840).max(840).optional(),
   // Owner-only. Silently ignored for everyone else rather than rejected, so a
   // stale client cannot be told which keys are privileged.
   poll_interval_minutes: z.number().int().min(5).max(1440).optional(),
