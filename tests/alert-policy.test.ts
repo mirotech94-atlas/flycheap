@@ -40,11 +40,26 @@ describe('urgency comes from the alert type', () => {
 });
 
 describe('quiet hours', () => {
+  const NIGHT = { startHour: 22, endHour: 8 };
+
+  it('applies NO quiet hours when it is given no window', () => {
+    // The regression this protects against: inQuietHours used to fall back to
+    // the 22:00-08:00 default when given nothing. Since almost no account has
+    // quiet hours configured — and most have no stored timezone, so "local"
+    // really meant UTC — that silently held every alert overnight, and for a US
+    // user from 6pm. Silent alert suppression is the failure this codebase has
+    // already been bitten by three times.
+    for (const h of [0, 3, 6, 14, 23]) {
+      expect(inQuietHours(h, null)).toBe(false);
+      expect(inQuietHours(h)).toBe(false);
+    }
+  });
+
   it('handles a window that wraps midnight', () => {
-    expect(inQuietHours(23)).toBe(true);
-    expect(inQuietHours(3)).toBe(true);
-    expect(inQuietHours(14)).toBe(false);
-    expect(inQuietHours(8)).toBe(false);   // end is exclusive
+    expect(inQuietHours(23, NIGHT)).toBe(true);
+    expect(inQuietHours(3, NIGHT)).toBe(true);
+    expect(inQuietHours(14, NIGHT)).toBe(false);
+    expect(inQuietHours(8, NIGHT)).toBe(false);   // end is exclusive
   });
 
   it('handles a window that does not wrap', () => {
@@ -54,7 +69,7 @@ describe('quiet hours', () => {
   });
 
   it('holds an ordinary alert during quiet hours', () => {
-    const d = decideAlert(base({ localHour: 3 }));
+    const d = decideAlert(base({ localHour: 3, quietHours: NIGHT }));
     expect(d.send).toBe(false);
     expect(d.send === false && d.defer).toBe('quiet-hours');
   });
@@ -62,11 +77,11 @@ describe('quiet hours', () => {
   it('wakes someone for a mistake fare ONLY if they opted in', () => {
     // "A glitch fare at 3am is exactly the case where waking someone is
     // correct, but only if they agreed to it."
-    const optedOut = decideAlert(base({ kind: 'mistake-fare', localHour: 3 }));
+    const optedOut = decideAlert(base({ kind: 'mistake-fare', localHour: 3, quietHours: NIGHT }));
     expect(optedOut.send).toBe(false);
 
     const optedIn = decideAlert(base({
-      kind: 'mistake-fare', localHour: 3, wakeMeForMistakeFares: true,
+      kind: 'mistake-fare', localHour: 3, quietHours: NIGHT, wakeMeForMistakeFares: true,
     }));
     expect(optedIn.send).toBe(true);
   });
@@ -74,7 +89,7 @@ describe('quiet hours', () => {
   it('never breaks quiet hours for anything but a mistake fare', () => {
     for (const kind of ['threshold', 'post-booking-drop', 'anomaly'] as const) {
       expect(mayBreakQuietHours(kind, true)).toBe(false);
-      expect(decideAlert(base({ kind, localHour: 3, wakeMeForMistakeFares: true })).send).toBe(false);
+      expect(decideAlert(base({ kind, localHour: 3, quietHours: NIGHT, wakeMeForMistakeFares: true })).send).toBe(false);
     }
   });
 
