@@ -7,7 +7,10 @@ import type { AppNavDict } from '@/lib/i18n/app.en';
 import { NavIcon } from '@/components/NavIcons';
 
 const TABS: Array<{ href: string; match: (p: string) => boolean; key: keyof AppNavDict }> = [
-  { href: '/', match: (p: string) => p === '/', key: 'home' },
+  // The thumb tab goes to the board, not the chart wall: "the user's most
+  // pressing decision should be the first thing under their thumb". The old
+  // dashboard is still lit as home so it never reads as un-navigated.
+  { href: '/board', match: (p: string) => p === '/' || p.startsWith('/board'), key: 'home' },
   { href: '/searches', match: (p: string) => p.startsWith('/searches') || p.startsWith('/explore') || p.startsWith('/routes'), key: 'flights' },
   { href: '/hotels', match: (p: string) => p.startsWith('/hotels'), key: 'hotels' },
   { href: '/offers', match: (p: string) => p.startsWith('/offers') || p.startsWith('/compare'), key: 'offers' },

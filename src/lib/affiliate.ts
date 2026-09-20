@@ -70,6 +70,11 @@ export const AFFILIATE_SURFACES = [
   // 'email-alert', because the whole point of the reporting is to tell the
   // alert channel and the commercial channel apart.
   'email-chain',
+  // The board — the decision screen. Kept apart from the old dashboard
+  // surfaces because the whole question the board exists to answer is
+  // whether a verdict-led card converts better than a table of fares.
+  'board-card',
+  'board-watch',
 ] as const;
 export type AffiliateSurface = (typeof AFFILIATE_SURFACES)[number];
 
