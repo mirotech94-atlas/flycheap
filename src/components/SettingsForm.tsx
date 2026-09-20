@@ -9,7 +9,6 @@ export function SettingsForm({
   initial: {
     alert_threshold_per_adult_usd: number;
     alert_email: string;
-    poll_interval_minutes: number;
     max_display_per_adult_usd: number;
     price_drop_pct: number;
   };
@@ -18,7 +17,6 @@ export function SettingsForm({
   const [pending, start] = useTransition();
   const [threshold, setThreshold] = useState(initial.alert_threshold_per_adult_usd);
   const [email, setEmail] = useState(initial.alert_email);
-  const [interval, setInterval] = useState(initial.poll_interval_minutes);
   const [maxDisplay, setMaxDisplay] = useState(initial.max_display_per_adult_usd);
   const [dropPct, setDropPct] = useState(initial.price_drop_pct);
   const [msg, setMsg] = useState<string | null>(null);
@@ -33,7 +31,6 @@ export function SettingsForm({
       body: JSON.stringify({
         alert_threshold_per_adult_usd: Number(threshold),
         alert_email: email,
-        poll_interval_minutes: Number(interval),
         max_display_per_adult_usd: Number(maxDisplay),
         price_drop_pct: Number(dropPct),
       }),
@@ -95,15 +92,10 @@ export function SettingsForm({
             className="w-full"
           />
         </div>
-        <div>
-          <label>Poll interval (minutes)</label>
-          <input
-            type="number" min="5" max="1440" step="5"
-            value={interval}
-            onChange={(e) => setInterval(Number(e.target.value))}
-            className="w-full"
-          />
-        </div>
+        {/* The poll-interval field is gone: cadence is decided by the poll
+            allocator from how much a route matters, not by a number a user
+            types, and the underlying setting is the scheduler tick — a
+            service-wide, owner-only knob. See lib/pollBudget.ts. */}
         <div>
           <label>Price-drop sensitivity (%)</label>
           <input

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { sendRetrospectiveDigest, type RetrospectiveWindow } from '@/lib/digest';
+import { requireOwner } from '@/lib/apiGuard';
 
 export const dynamic = 'force-dynamic';
 
@@ -10,6 +11,11 @@ function isWindow(s: string | undefined | null): s is RetrospectiveWindow {
 }
 
 export async function POST(req: Request) {
+  // GUARD: middleware.ts does not run on api/ routes, so this handler is
+  // the only thing protecting it. Sends email to real subscribers.
+  const auth = await requireOwner();
+  if (!auth.ok) return auth.response;
+
   const url = new URL(req.url);
   const body = await req.json().catch(() => ({}));
   const win = body?.window ?? url.searchParams.get('window');

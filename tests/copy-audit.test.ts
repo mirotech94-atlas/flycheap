@@ -20,10 +20,21 @@ import { join } from 'node:path';
 
 const SRC = join(process.cwd(), 'src');
 
-/** Internal surfaces. Admins may see the real internal numbers. */
+/**
+ * Internal surfaces. Admins may see the real internal numbers.
+ *
+ * `/lib/` is internal EXCEPT the i18n dictionaries, which are pure customer
+ * copy — and which is where the tenth, eleventh and twelfth false claims were
+ * hiding after the pages themselves had been cleaned. A string is not internal
+ * because of the folder it is stored in.
+ */
 const NOT_CUSTOMER_FACING = [
-  '/admin/', '/api/', '/lib/', 'instrumentation', 'sitemap', 'robots', 'manifest',
+  '/admin/', '/api/', 'instrumentation', 'sitemap', 'robots', 'manifest',
 ];
+
+/** Dictionaries this audit covers. See NON_ENGLISH_BACKLOG for the rest. */
+const isEnglishDictionary = (rel: string) => /\/lib\/i18n\/[a-z-]+\.en\.ts$/.test(rel);
+const isInternalLib = (rel: string) => rel.includes('/lib/') && !isEnglishDictionary(rel);
 
 function customerFacingFiles(dir = SRC, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -32,6 +43,7 @@ function customerFacingFiles(dir = SRC, out: string[] = []): string[] {
     if (!/\.(tsx|ts)$/.test(p)) continue;
     const rel = p.slice(SRC.length).replace(/\\/g, '/');
     if (NOT_CUSTOMER_FACING.some(x => rel.includes(x))) continue;
+    if (isInternalLib(rel)) continue;
     out.push(p);
   }
   return out;
@@ -116,5 +128,42 @@ describe('no customer-facing page advertises a channel we cannot send on', () =>
       }
     }
     expect(offences).toEqual([]);
+  });
+});
+
+/**
+ * The same claims exist in seven other languages.
+ *
+ * They are translations of the English sentences this commit corrected, so they
+ * say the same untrue things — but rewriting marketing copy in Arabic, German,
+ * Spanish, French, Hindi, Italian and Chinese is a job for someone who can read
+ * the result. Machine-translating a correction is how a different wrong claim
+ * gets introduced in a language nobody here can audit.
+ *
+ * So this test does not fail. It PRINTS the backlog, so it stays visible on
+ * every run instead of living in a ticket nobody opens, and it fails only if
+ * the backlog GROWS — a new locale must not import the old claims.
+ */
+describe('the non-English dictionaries still carry the old claims', () => {
+  const LOCALES = ['ar', 'de', 'es', 'fr', 'hi', 'it', 'zh'];
+  const CLAIM = /(\d+\s*-?\s*minute\s+polling|poll(?:s|ed|ing)?\s+every\s+\d|Slack\s+alerts?|WhatsApp)/gi;
+
+  it('is a known backlog, and is not getting bigger', () => {
+    const counts: Record<string, number> = {};
+    for (const loc of LOCALES) {
+      for (const base of ['app', 'early-access']) {
+        const f = join(SRC, 'lib', 'i18n', `${base}.${loc}.ts`);
+        let text = '';
+        try { text = readFileSync(f, 'utf8'); } catch { continue; }
+        counts[`${base}.${loc}`] = (prose(text).match(CLAIM) ?? []).length;
+      }
+    }
+    const total = Object.values(counts).reduce((a, b) => a + b, 0);
+    // eslint-disable-next-line no-console
+    console.log('[copy-audit] non-English claims still to translate:', counts, 'total', total);
+
+    // The count at the time the English copy was corrected. A new locale that
+    // copies the old sentences pushes this up and fails here.
+    expect(total).toBeLessThanOrEqual(76);
   });
 });
