@@ -429,6 +429,9 @@ export async function notifyAll(opts: {
    *  user, because a bare number that turns out to be forty minutes old is a
    *  betrayal and this string is the whole difference. */
   verifiedAt?: string | null;
+  /** Channels the alert policy authorised. When present it REPLACES the
+   *  account default — that is what makes a per-watch override an override. */
+  channelsOverride?: string[] | null;
 }): Promise<NotifyResult[]> {
   const uid = opts.ownerUserId;
 
@@ -468,7 +471,11 @@ export async function notifyAll(opts: {
     (uid ? queries.getUserSetting(uid, 'alert_channels') : undefined)
     ?? queries.getSetting('alert_channels')
     ?? 'email';
-  let channels = userChannels.split(',').map(s => s.trim()).filter(Boolean);
+  let channels = opts.channelsOverride?.length
+    ? [...opts.channelsOverride]
+    : userChannels.split(',').map(s => s.trim()).filter(Boolean);
+  // The tier filter still applies on top: a per-watch override may narrow the
+  // channels or reorder them, but it cannot grant one the plan does not include.
   if (tier === 'free') channels = channels.filter(c => c === 'email');
 
   const body = shortMessage(opts);
