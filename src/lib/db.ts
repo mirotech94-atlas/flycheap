@@ -643,6 +643,109 @@ function init(db: Database.Database) {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_time     ON affiliate_clicks(occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_provider ON affiliate_clicks(provider, occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_route    ON affiliate_clicks(route_id, occurred_at)`);
+  // ── Organizations, groups and members ───────────────────────────────────
+  //
+  // "Do not build a separate B2B app. An agency or a university office is an
+  //  Organization with several groups; a family is an Organization with one.
+  //  Same screens, with org-level features appearing only when the account has
+  //  them."
+  //
+  // The cost of a second frontend is not the build, it is that every feature
+  // then has to be built twice and one of them rots.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS organizations (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      slug TEXT NOT NULL UNIQUE,
+      tier TEXT NOT NULL DEFAULT 'team',        -- team | enterprise
+      -- Branding. "The line between Team and Enterprise is whose name is on it."
+      brand_logo_url TEXT,
+      brand_color TEXT,
+      from_name TEXT,
+      support_email TEXT,
+      sending_domain TEXT,
+      sending_domain_verified_at TEXT,
+      board_domain TEXT,
+      board_domain_verified_at TEXT,
+      -- "The monetization chain is OFF BY DEFAULT for organization accounts."
+      -- An agency does not want our hotel emails going to their clients: those
+      -- are their clients and hotel commission is their revenue. Opt in, or
+      -- point the links at the agency's own marker and keep the commission.
+      monetization_enabled INTEGER NOT NULL DEFAULT 0,
+      affiliate_marker TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      archived_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS org_members (
+      org_id INTEGER NOT NULL,
+      user_id INTEGER NOT NULL,
+      role TEXT NOT NULL DEFAULT 'agent',       -- owner | admin | agent | viewer
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      PRIMARY KEY (org_id, user_id)
+    );
+    CREATE INDEX IF NOT EXISTS idx_org_members_user ON org_members(user_id);
+
+    -- A group is a client, a cohort, a department, a wedding — or a family.
+    CREATE TABLE IF NOT EXISTS groups (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id INTEGER NOT NULL,
+      name TEXT NOT NULL,
+      contact_email TEXT,
+      notes TEXT,
+      created_by INTEGER,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      archived_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_groups_org ON groups(org_id, archived_at);
+  `);
+
+  // ── Boards ──────────────────────────────────────────────────────────────
+  //
+  // "The family share link is listed as a retention feature. It is actually the
+  //  growth loop, and it is the same mechanism that the B2B client board runs
+  //  on. One implementation, two markets."
+  //
+  // Sharing today is a single global token in `settings`: one board for the
+  // whole install, no per-group scoping, no revocation, no expiry and no
+  // privacy controls. That is replaced by this.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS board_share (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      group_id INTEGER NOT NULL,
+      -- STORE THE HASH, NEVER THE TOKEN. A leaked database must not hand over
+      -- working board URLs for every family's travel plans.
+      token_hash TEXT NOT NULL UNIQUE,
+      created_by INTEGER,
+      label TEXT,
+      -- "Boards default to no-expiry OFF" — a default expiry, with permanent as
+      -- a deliberate choice.
+      expires_at TEXT,
+      revoked_at TEXT,
+      view_count INTEGER NOT NULL DEFAULT 0,
+      last_viewed_at TEXT,
+      -- "Let someone share the schedule without the budget. A family organiser
+      --  may not want everyone to see what they are willing to pay."
+      show_prices INTEGER NOT NULL DEFAULT 1,
+      show_targets INTEGER NOT NULL DEFAULT 0,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_board_share_group ON board_share(group_id, revoked_at);
+
+    -- Board views, so "board views per share, and new accounts per board view"
+    -- — the viral coefficient — is measurable rather than asserted.
+    CREATE TABLE IF NOT EXISTS board_views (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      share_id INTEGER NOT NULL,
+      viewed_at TEXT NOT NULL DEFAULT (datetime('now')),
+      ip TEXT,
+      user_agent TEXT,
+      -- Set when a viewer of this board went on to create an account.
+      converted_user_id INTEGER
+    );
+    CREATE INDEX IF NOT EXISTS idx_board_views_share ON board_views(share_id, viewed_at);
+  `);
+
   // ── The Watch object ────────────────────────────────────────────────────
   //
   // "Everything in the portal is a view over this one object. Get it right and
