@@ -8,6 +8,10 @@ import { routeKey } from './providerCost';
 import { classifyAlert, type AlertKind } from './alertKind';
 import { verifyFare, type VerifyResult } from './fareTruth';
 import { gateAlert } from './alertGate';
+import {
+  detectVerdictChange, detectTrendWarning, detectPostBookingDrop,
+  detectWindowClosing, windowClosingMessage,
+} from './alertDetectors';
 import { recordVerdictCall } from './verdictScoring';
 import { computeVerdict } from './verdict';
 import { allocate, allocatorMode, dueForPoll } from './pollBudget';
@@ -191,6 +195,8 @@ async function sendAlert(opts: {
   nearby?: { depart: string; return: string };
   offersInHand?: FlightOffer[];
   polledBy?: string | null;
+  /** One line describing this alert, used if it is held for the digest. */
+  headline?: string;
 }): Promise<boolean> {
   // ── Channel discipline ──────────────────────────────────────────────────
   // Checked BEFORE the alert row is reserved and before a provider call is
@@ -204,6 +210,25 @@ async function sendAlert(opts: {
   if (!gate.send) {
     // Not a delivery failure: nobody was meant to be told yet. It must not be
     // counted as one, or the delivery alarm fires on working behaviour.
+    //
+    // And it must not simply vanish. A digest-only type — a trend warning — is
+    // held by definition, so without recording it here "deferred" would be a
+    // euphemism for "dropped" and the alert would be computed and then lost.
+    if (gate.defer === 'digest' || gate.defer === 'quiet-hours') {
+      try {
+        queries.deferAlert({
+          search_id: opts.search.id,
+          user_id: opts.ownerUserId,
+          kind: opts.kind,
+          reason: gate.reason,
+          headline: opts.headline
+            ?? `${opts.search.origin} → ${opts.search.destination} · ${opts.kind.replace('-', ' ')}`,
+          price_per_adult_usd: opts.fare.price_per_adult_usd,
+        });
+      } catch (e) {
+        console.error('[poll] deferAlert failed:', (e as Error).message);
+      }
+    }
     console.log(
       `[poll] HELD ${opts.kind} for search ${opts.search.id} ` +
       `(${opts.search.origin}\u2192${opts.search.destination}): ${gate.reason}`,
@@ -412,10 +437,14 @@ async function finishPoll(
   // search per day in SQL, because this measures a judgement, not a sample rate:
   // a frequently-polled route must not dominate the published accuracy figure by
   // volume alone.
+  const history = queries.fareHistoryDaily(search.id, 30)
+    .map(r => ({ polled_at: r.day, price_per_adult_usd: r.per_adult_usd }));
+  // The last verdict BEFORE this poll — read first, because recordVerdictCall
+  // below is about to write today's and we need the previous one to spot a flip.
+  const previousVerdict = queries.lastVerdictFor(search.id) as 'buy' | 'wait' | 'hold' | null;
+  const v = computeVerdict(history, summary.price_per_adult_usd, threshold);
+
   try {
-    const history = queries.fareHistoryDaily(search.id, 30)
-      .map(r => ({ polled_at: r.day, price_per_adult_usd: r.per_adult_usd }));
-    const v = computeVerdict(history, summary.price_per_adult_usd, threshold);
     if (v) {
       recordVerdictCall({
         searchId: search.id,
@@ -527,6 +556,93 @@ async function finishPoll(
     }
   }
 
+  // ── The four types the portal spec adds ─────────────────────────────────
+  // Each is an independent question about this watch, so they are evaluated
+  // even when something above already fired — except that only one message per
+  // poll is sent, which the `alerted` guard enforces. The frequency cap in the
+  // gate is the real protection; this just avoids two messages in one cycle.
+  const daysOut = daysUntilDeparture(search.depart_date);
+  const watchStatus = (search as { status?: string | null }).status ?? 'active';
+  const bookedAmount = (search as { booked_amount_usd?: number | null }).booked_amount_usd ?? null;
+
+  // (3) Post-booking drop — the one people tell their friends about. Evaluated
+  //     FIRST among the new types, and deliberately not gated on `alerted`:
+  //     money the traveller can still recover outranks a threshold notice.
+  if (watchStatus === 'booked' && bookedAmount != null) {
+    const drop = detectPostBookingDrop({
+      bookedAmountUsd: bookedAmount,
+      currentAmountUsd: summary.price_per_adult_usd,
+      departed: daysOut != null && daysOut < 0,
+    });
+    if (drop.fires) {
+      const sent = await sendAlert({
+        kind: 'post-booking-drop', search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        offersInHand, polledBy: cheapest.provider,
+        headline: `${search.origin} → ${search.destination} has dropped $${Math.round(drop.savingUsd)} `
+          + `since you booked — it may be worth asking about a rebooking.`,
+      });
+      if (sent) { alerted = true; alertKind = 'post-booking-drop'; }
+    }
+  }
+
+  // (4) Verdict change — wait flipped to buy.
+  if (!alerted && v && detectVerdictChange({ previous: previousVerdict, current: v.verdict })) {
+    const sent = await sendAlert({
+      kind: 'verdict-change', search, fare: fareRow, snapshotId,
+      thresholdPerAdult: threshold, ownerUserId: ownerId,
+      offersInHand, polledBy: cheapest.provider,
+      headline: `${search.origin} → ${search.destination}: we've changed our call from wait to buy.`,
+    });
+    if (sent) { alerted = true; alertKind = 'verdict-change'; }
+  }
+
+  // (5) Window closing — once, seven days out, and only when waiting has
+  //     stopped being the better advice.
+  if (!alerted && v && watchStatus !== 'booked') {
+    const fires = detectWindowClosing({
+      daysToDeparture: daysOut,
+      booked: false,
+      slopePerDay: v.slopePerDay,
+      alreadySent: queries.hasEverAlerted(search.id, 'window-closing'),
+    });
+    if (fires) {
+      const sent = await sendAlert({
+        kind: 'window-closing', search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        offersInHand, polledBy: cheapest.provider,
+        headline: windowClosingMessage({
+          route: `${search.origin} → ${search.destination}`,
+          daysToDeparture: daysOut ?? 0,
+          currentPrice: summary.price_per_adult_usd,
+          median: v.median,
+        }),
+      });
+      if (sent) { alerted = true; alertKind = 'window-closing'; }
+    }
+  }
+
+  // (6) Trend warning — digest only, always. The gate will hold it, which is
+  //     the point: it is worth knowing at breakfast and never worth an
+  //     interruption. It reaches the reader through deferred_alerts.
+  if (!alerted && v && watchStatus !== 'booked') {
+    if (detectTrendWarning({
+      slopePerDay: v.slopePerDay,
+      currentPrice: summary.price_per_adult_usd,
+      median: v.median,
+      threshold,
+    })) {
+      await sendAlert({
+        kind: 'trend-warning', search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        offersInHand, polledBy: cheapest.provider,
+        headline: `${search.origin} → ${search.destination} is rising (about `
+          + `$${Math.round(v.slopePerDay)}/day) and we don't expect it to come back soon.`,
+      });
+      // Never sets `alerted`: a held alert did not alert anyone.
+    }
+  }
+
   return {
     search_id: search.id,
     origin: search.origin,
@@ -544,6 +660,13 @@ async function finishPoll(
  * owner's TIER_LIMITS.pollIntervalMin has elapsed since its last snapshot.
  * Manual "Poll now" (pollSearch) bypasses this.
  */
+/** Days until departure; negative once it has passed. */
+function daysUntilDeparture(departDate: string | null | undefined): number | null {
+  if (!departDate) return null;
+  const t = Date.parse(`${String(departDate).slice(0, 10)}T00:00:00Z`);
+  return Number.isNaN(t) ? null : Math.round((t - Date.now()) / 86_400_000);
+}
+
 /** Last poll time for every search, in one query rather than N. */
 function lastPolledMap(ids: number[]): Map<number, string | null> {
   const out = new Map<number, string | null>();
