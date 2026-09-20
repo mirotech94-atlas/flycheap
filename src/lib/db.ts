@@ -746,6 +746,32 @@ function init(db: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_board_views_share ON board_views(share_id, viewed_at);
   `);
 
+  // ── Deferred alerts ─────────────────────────────────────────────────────
+  //
+  // When the alert policy holds something for the digest, that alert has to go
+  // SOMEWHERE. Without this table "deferred" is a euphemism for "dropped": a
+  // trend warning is digest-only by definition, so under the policy alone it
+  // would be computed, held, and then never seen by anyone.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS deferred_alerts (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      search_id INTEGER NOT NULL,
+      user_id INTEGER,
+      kind TEXT NOT NULL,
+      reason TEXT,
+      headline TEXT NOT NULL,
+      price_per_adult_usd REAL,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      delivered_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_deferred_pending ON deferred_alerts(user_id, delivered_at, created_at);
+    -- One pending row per (watch, kind): a trend warning that is still true on
+    -- the next poll is the same warning, not a second one. Without this the
+    -- digest would list the same line every five minutes for a day.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_deferred_dedupe
+      ON deferred_alerts(search_id, kind) WHERE delivered_at IS NULL;
+  `);
+
   // ── The Watch object ────────────────────────────────────────────────────
   //
   // "Everything in the portal is a view over this one object. Get it right and
@@ -2280,6 +2306,51 @@ export const queries = {
           AND a.kind <> 'mistake-fare'
           AND a.sent_at >= datetime('now', '-1 day')`
     ).get(userId) as { n: number }).n,
+
+  // ── Deferred alerts ─────────────────────────────────────────────────────
+
+  /** Hold an alert for the digest. INSERT OR IGNORE: still-true is not new. */
+  deferAlert: (row: {
+    search_id: number; user_id: number | null; kind: string;
+    reason: string | null; headline: string; price_per_adult_usd: number | null;
+  }) => getDb().prepare(
+    `INSERT OR IGNORE INTO deferred_alerts
+       (search_id, user_id, kind, reason, headline, price_per_adult_usd)
+     VALUES (@search_id, @user_id, @kind, @reason, @headline, @price_per_adult_usd)`
+  ).run(row),
+
+  /** Everything still waiting to go out in this user's next digest. */
+  pendingDeferredAlerts: (userId: number) =>
+    getDb().prepare(
+      `SELECT * FROM deferred_alerts
+        WHERE user_id = ? AND delivered_at IS NULL
+        ORDER BY created_at`
+    ).all(userId) as Array<{
+      id: number; search_id: number; kind: string; reason: string | null;
+      headline: string; price_per_adult_usd: number | null; created_at: string;
+    }>,
+
+  /** Mark them delivered once the digest carrying them has actually sent. */
+  markDeferredDelivered: (ids: number[]) => {
+    if (ids.length === 0) return;
+    getDb().prepare(
+      `UPDATE deferred_alerts SET delivered_at = datetime('now')
+        WHERE id IN (${ids.map(() => '?').join(',')})`
+    ).run(...ids);
+  },
+
+  /** Has this watch already had a given alert kind, ever? For once-only types. */
+  hasEverAlerted: (searchId: number, kind: string) =>
+    ((getDb().prepare(
+      `SELECT COUNT(*) AS n FROM alerts_sent WHERE search_id = ? AND kind = ? AND status = 'sent'`
+    ).get(searchId, kind) as { n: number }).n) > 0,
+
+  /** The last verdict we recorded for a watch, for detecting a flip. */
+  lastVerdictFor: (searchId: number) =>
+    (getDb().prepare(
+      `SELECT verdict FROM verdict_calls WHERE search_id = ?
+        ORDER BY called_at DESC LIMIT 1`
+    ).get(searchId) as { verdict: string } | undefined)?.verdict ?? null,
 
   /** When an alert fired — used to derive minutes-since-alert at click time. */
   alertSentAt: (alertId: number) =>

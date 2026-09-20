@@ -33,7 +33,15 @@ function buildRows(): DigestRow[] {
     });
 }
 
-export function buildDigestHtml(opts?: { headline?: string }): { html: string; subject: string; summary: string } {
+/** Minimal escape for text we put into the digest's HTML. */
+function escapeHtml(v: string): string {
+  return v.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
+}
+
+export function buildDigestHtml(
+  opts?: { headline?: string; ownerUserId?: number },
+): { html: string; subject: string; summary: string; deferredIds: number[] } {
+  const ownerUserId = opts?.ownerUserId ?? 1;
   const rows = buildRows();
   const threshold = parseFloat(queries.getSetting('alert_threshold_per_adult_usd') ?? '900');
   const apiCallsThisMonth = queries.apiCallsThisMonth().count;
@@ -98,6 +106,19 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
     return 'No fare data yet';
   })();
 
+  // Alerts the policy held for the digest — trend warnings, verdict changes that
+  // were not close to departure, anything caught by quiet hours or the daily
+  // cap. Without this they would have been computed and then silently dropped,
+  // which is what "deferred" would otherwise have meant.
+  const deferred = (() => {
+    try { return queries.pendingDeferredAlerts(ownerUserId); }
+    catch { return []; }
+  })();
+  const deferredIds = deferred.map(d => d.id);
+  const deferredRows = deferred
+    .map(d => `<li>${escapeHtml(d.headline)}</li>`)
+    .join('');
+
   const summary = `${rows.length} active search${rows.length === 1 ? '' : 'es'}. ${headline}. Threshold: ${fmtUSD(threshold)}/adult.`;
 
   const subject = `✈️  FlyCheap digest — ${headline}`;
@@ -145,6 +166,10 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
       </div>
 
       <div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
+
+        ${deferredRows ? `
+        <h2 style="font-size:15px;color:#0a2e57;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Since your last digest</h2>
+        <ul style="margin:0 0 24px;padding-left:18px;font-size:14px;line-height:1.7;color:#0f172a">${deferredRows}</ul>` : ''}
 
         ${bestDealsCache.deals.length > 0 ? `
         <h2 style="font-size:15px;color:#15803d;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">🎯 Best deals across next 12 months</h2>
@@ -237,7 +262,7 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
     </div>
   `;
 
-  return { html, subject, summary };
+  return { html, subject, summary, deferredIds };
 }
 
 // ===========================================================================
@@ -499,13 +524,18 @@ export async function sendDigest(toEmail?: string, headline?: string): Promise<{
   const to = toEmail || queries.getSetting('alert_email') || process.env.ALERT_EMAIL;
   if (!to) return { ok: false, error: 'No recipient email available' };
 
-  const { html, subject } = buildDigestHtml({ headline });
+  const { html, subject, deferredIds } = buildDigestHtml({ headline });
   const resend = new Resend(apiKey);
   const from = process.env.RESEND_FROM || 'onboarding@resend.dev';
 
   try {
     const result = await resend.emails.send({ from, to, subject, html });
     if (result.error) return { ok: false, error: result.error.message };
+    // Only NOW are the held alerts actually delivered. Marking them before the
+    // send would lose them if it failed — and a held alert that is lost is worse
+    // than one never computed, because the poller believes it was handled.
+    try { queries.markDeferredDelivered(deferredIds); }
+    catch (e) { console.error('[digest] markDeferredDelivered failed:', (e as Error).message); }
     return { ok: true, id: result.data?.id ?? '', sentTo: to };
   } catch (e) {
     return { ok: false, error: (e as Error).message };
