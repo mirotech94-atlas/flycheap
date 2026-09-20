@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { queries } from '@/lib/db';
 import { earlyAccessCount, getEarlyAccessById, joinEarlyAccess, listEarlyAccess, sendAccessRequestNotification, sendEarlyAccessEmail } from '@/lib/early-access';
+import { parseFirstWatch } from '@/lib/firstWatch';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,7 +14,7 @@ function clientIp(req: NextRequest): string {
 
 /** POST { email, homeAirport?, ref? } → position + referral link. Idempotent per email. */
 export async function POST(req: NextRequest) {
-  let body: { email?: string; name?: string; phone?: string; homeAirport?: string; ref?: string; acceptedTerms?: boolean; website?: string } = {};
+  let body: { email?: string; name?: string; phone?: string; homeAirport?: string; ref?: string; acceptedTerms?: boolean; website?: string; origin?: string; destination?: string } = {};
   try { body = await req.json(); } catch { /* fallthrough */ }
   // Honeypot: real users never fill "website".
   if (body.website) return NextResponse.json({ ok: true, position: 0 });
@@ -36,7 +37,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: 'Too many sign-ups from this network — try again in an hour.' }, { status: 429 });
   }
 
-  const r = joinEarlyAccess({ email, name, phone, homeAirport: body.homeAirport, ref: body.ref, ip });
+  // The route they came for. Optional and lenient: a malformed pair is dropped,
+  // never a reason to refuse the signup.
+  const firstWatch = parseFirstWatch({ origin: body.origin, destination: body.destination });
+  const r = joinEarlyAccess({ email, name, phone, homeAirport: body.homeAirport, ref: body.ref, ip, firstWatch });
   if (!r.existing) {
     await sendEarlyAccessEmail(email, r);
     const row = getEarlyAccessById(r.id);

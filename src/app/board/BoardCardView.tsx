@@ -81,7 +81,9 @@ export function BoardCardView({ card }: { card: BoardCard }) {
     <article className="nc-card" data-state={card.state}>
       <h2 className="nc-card-route">{card.routeLabel}</h2>
       <div className="nc-card-dates">
-        {depart ? <>{depart}{back ? ` – ${back}` : ''}</> : 'Dates not set'}
+        {card.watch.anyDates
+          ? 'Any dates — we find the cheapest window'
+          : depart ? <>{depart}{back ? ` – ${back}` : ''}</> : 'Dates not set'}
         {' · '}
         {card.watch.pax.adults + card.watch.pax.children + card.watch.pax.infants} traveller
         {card.watch.pax.adults + card.watch.pax.children + card.watch.pax.infants === 1 ? '' : 's'}
