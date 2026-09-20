@@ -51,7 +51,7 @@ export const en = {
   sovereign: {
     eyebrow: 'Yours by design', h2a: 'Your routes. Your targets.', h2b: 'Your data.',
     sub: 'No ads, no data brokers, no tracking pixels. The only outbound calls we make are to the fare providers the deals come from.',
-    stats: [['0', 'booking fees — ever'], ['4', 'live data providers polled in parallel'], ['5 min', 'checked most often when it matters']],
+    stats: [['0', 'booking fees — ever'], ['4', 'live data providers polled in parallel'], ['24/7', 'checked continuously, most often when it matters']],
   },
   coverage: { eyebrow: 'Coverage', h2a: 'Built for the fares', h2b: 'that don’t last', chips: [['Mistake fares', '3σ below the 30-day mean. Pulled within hours; caught within minutes.'], ['Threshold drops', 'Your number, per adult. The moment a fare crosses it.'], ['Anomalies', 'Ten percent or more under the 7-day median, even above your target.'], ['Flexible dates', '±3-day windows and month-wide scans find the pairing you’d have missed.'], ['Any route', 'Any IATA pair on Earth, low-cost carriers included.']] },
   why: {

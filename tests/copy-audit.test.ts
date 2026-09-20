@@ -32,9 +32,9 @@ const NOT_CUSTOMER_FACING = [
   '/admin/', '/api/', 'instrumentation', 'sitemap', 'robots', 'manifest',
 ];
 
-/** Dictionaries this audit covers. See NON_ENGLISH_BACKLOG for the rest. */
-const isEnglishDictionary = (rel: string) => /\/lib\/i18n\/[a-z-]+\.en\.ts$/.test(rel);
-const isInternalLib = (rel: string) => rel.includes('/lib/') && !isEnglishDictionary(rel);
+/** EVERY locale dictionary is customer copy, not just English. */
+const isDictionary = (rel: string) => /\/lib\/i18n\/[a-z-]+\.[a-z]{2}\.ts$/.test(rel);
+const isInternalLib = (rel: string) => rel.includes('/lib/') && !isDictionary(rel);
 
 function customerFacingFiles(dir = SRC, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {
@@ -132,38 +132,52 @@ describe('no customer-facing page advertises a channel we cannot send on', () =>
 });
 
 /**
- * The same claims exist in seven other languages.
+ * The same claims existed in seven other languages.
  *
- * They are translations of the English sentences this commit corrected, so they
- * say the same untrue things — but rewriting marketing copy in Arabic, German,
- * Spanish, French, Hindi, Italian and Chinese is a job for someone who can read
- * the result. Machine-translating a correction is how a different wrong claim
- * gets introduced in a language nobody here can audit.
+ * They were translations of the English sentences, so they said the same untrue
+ * things: "5-minute polling" on a plan that polls every 30, "Slack alerts" for
+ * a channel that is not in any tier's list, WhatsApp as an available channel
+ * when its sender is unset, and "the Free plan covers one route" when Free is
+ * five.
  *
- * So this test does not fail. It PRINTS the backlog, so it stays visible on
- * every run instead of living in a ticket nobody opens, and it fails only if
- * the backlog GROWS — a new locale must not import the old claims.
+ * They are corrected, and the audit above now walks every locale rather than
+ * only *.en.ts — a string is not internal because of the language it is in.
+ * What remains is a TONE review by a native speaker, not a factual one: the
+ * numbers and channel names are now the same in every language, and this test
+ * is what keeps them that way.
  */
-describe('the non-English dictionaries still carry the old claims', () => {
+describe('every locale, not just English', () => {
   const LOCALES = ['ar', 'de', 'es', 'fr', 'hi', 'it', 'zh'];
-  const CLAIM = /(\d+\s*-?\s*minute\s+polling|poll(?:s|ed|ing)?\s+every\s+\d|Slack\s+alerts?|WhatsApp)/gi;
+  const CLAIM = /(\d+\s*-?\s*minute\s+polling|poll(?:s|ed|ing)?\s+every\s+\d|Slack\s+alerts?)/gi;
 
-  it('is a known backlog, and is not getting bigger', () => {
-    const counts: Record<string, number> = {};
+  it('carries no cadence promise in any language', () => {
+    const offences: string[] = [];
     for (const loc of LOCALES) {
       for (const base of ['app', 'early-access']) {
         const f = join(SRC, 'lib', 'i18n', `${base}.${loc}.ts`);
         let text = '';
-        try { text = readFileSync(f, 'utf8'); } catch { continue; }
-        counts[`${base}.${loc}`] = (prose(text).match(CLAIM) ?? []).length;
+        try { text = prose(readFileSync(f, 'utf8')); } catch { continue; }
+        for (const m of text.matchAll(CLAIM)) offences.push(`${base}.${loc} → "${m[0]}"`);
       }
     }
-    const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    // eslint-disable-next-line no-console
-    console.log('[copy-audit] non-English claims still to translate:', counts, 'total', total);
+    expect(offences).toEqual([]);
+  });
 
-    // The count at the time the English copy was corrected. A new locale that
-    // copies the old sentences pushes this up and fails here.
-    expect(total).toBeLessThanOrEqual(76);
+  it('does not offer WhatsApp as an alert channel in any language', () => {
+    // 'WhatsApp' on its own is the SHARE button (share this page on WhatsApp),
+    // which is real. The claim is WhatsApp listed alongside the other ALERT
+    // channels — always next to SMS or Telegram.
+    const offences: string[] = [];
+    for (const loc of LOCALES) {
+      for (const base of ['app', 'early-access']) {
+        const f = join(SRC, 'lib', 'i18n', `${base}.${loc}.ts`);
+        let text = '';
+        try { text = prose(readFileSync(f, 'utf8')); } catch { continue; }
+        for (const re of [/WhatsApp[^'"]{0,20}(Telegram|SMS)/gi, /(Telegram|SMS)[^'"]{0,20}WhatsApp/gi]) {
+          for (const m of text.matchAll(re)) offences.push(`${base}.${loc} → "${m[0].trim()}"`);
+        }
+      }
+    }
+    expect(offences).toEqual([]);
   });
 });
