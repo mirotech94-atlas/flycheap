@@ -483,6 +483,16 @@ async function finishPoll(
   // target with no hotel figure). Not an alert, and not a silent "no" either —
   // it simply does not fire, and the dead-fare/verification path is unaffected.
   const underThreshold = targetEval.under === true;
+
+  // The savings report's denominator, captured on the first poll that ever
+  // priced this watch — which in practice IS "the fare at the time the trip was
+  // requested". captureBaseline is a no-op once set, so it can never drift: the
+  // agency has to defend this number to their client, not us to them.
+  try {
+    queries.captureBaseline(search.id, targetEval.actualAmount, targetEval.basis);
+  } catch (e) {
+    console.error('[poll] captureBaseline failed:', (e as Error).message);
+  }
   if (underThreshold) {
     const lastAlert = queries.lastAlertForSearch(search.id, ALERT_FLOOR_DAYS);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {

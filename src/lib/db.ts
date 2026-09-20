@@ -847,6 +847,16 @@ function init(db: Database.Database) {
   // speculative Tokyo budget watch gets digest." NULL = use the account default.
   addWatchCol('alert_channels', `alert_channels TEXT`);
 
+  // The savings report's DENOMINATOR, captured once when the watch is created.
+  //
+  // "Baseline is the fare at the time the trip was requested. State it on the
+  //  report, never change it silently." A baseline that drifts is how a savings
+  //  report becomes a number nobody can defend in a renewal meeting — and the
+  //  agency has to defend it to their client, not to us.
+  addWatchCol('baseline_amount_usd', `baseline_amount_usd REAL`);
+  addWatchCol('baseline_captured_at', `baseline_captured_at TEXT`);
+  addWatchCol('baseline_basis', `baseline_basis TEXT`);
+
   db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_group ON searches(group_id, status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_status ON searches(status, expires_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_kind ON searches(kind, active)`);
@@ -2306,6 +2316,67 @@ export const queries = {
           AND a.kind <> 'mistake-fare'
           AND a.sent_at >= datetime('now', '-1 day')`
     ).get(userId) as { n: number }).n,
+
+  // ── The org work queue ──────────────────────────────────────────────────
+
+  /** Capture the baseline once, and only once. */
+  captureBaseline: (searchId: number, amountUsd: number, basis: string) =>
+    getDb().prepare(
+      `UPDATE searches
+          SET baseline_amount_usd = ?, baseline_basis = ?, baseline_captured_at = datetime('now')
+        WHERE id = ? AND baseline_amount_usd IS NULL`
+    ).run(amountUsd, basis, searchId),
+
+  /**
+   * Record what was actually paid.
+   *
+   * "Mark-booked is the one the whole B2B product depends on. Without it the
+   *  savings report has no numerator."
+   *
+   * The watch does NOT die on booking — it flips to post-booking monitoring for
+   * the rebooking window, which is where the post-booking-drop alert lives.
+   */
+  markWatchBooked: (searchId: number, amountUsd: number) =>
+    getDb().prepare(
+      `UPDATE searches
+          SET status = 'booked', booked_at = datetime('now'), booked_amount_usd = ?
+        WHERE id = ?`
+    ).run(amountUsd, searchId),
+
+  /** Undo, for the inevitable mis-click. */
+  unmarkWatchBooked: (searchId: number) =>
+    getDb().prepare(
+      `UPDATE searches SET status = 'active', booked_at = NULL, booked_amount_usd = NULL WHERE id = ?`
+    ).run(searchId),
+
+  /** Every watch in an org, with the group it belongs to. */
+  watchesForOrg: (orgId: number) =>
+    getDb().prepare(
+      `SELECT s.*, g.name AS group_name, g.contact_email AS group_contact
+         FROM searches s
+         JOIN groups g ON g.id = s.group_id
+        WHERE g.org_id = ? AND g.archived_at IS NULL
+        ORDER BY s.depart_date`
+    ).all(orgId) as Array<Record<string, unknown>>,
+
+  /** Groups with nothing happening, for the fourth queue category. */
+  groupsWithNoActivity: (orgId: number, days = 30) =>
+    getDb().prepare(
+      `SELECT g.* FROM groups g
+        WHERE g.org_id = ? AND g.archived_at IS NULL
+          AND NOT EXISTS (
+            SELECT 1 FROM searches s
+             WHERE s.group_id = g.id
+               AND (s.created_at >= datetime('now', ?) OR s.booked_at >= datetime('now', ?))
+          )
+          AND NOT EXISTS (
+            SELECT 1 FROM alerts_sent a JOIN searches s2 ON s2.id = a.search_id
+             WHERE s2.group_id = g.id AND a.status = 'sent' AND a.sent_at >= datetime('now', ?)
+          )
+        ORDER BY g.name`
+    ).all(orgId, `-${days} days`, `-${days} days`, `-${days} days`) as Array<{
+      id: number; org_id: number; name: string; contact_email: string | null;
+    }>,
 
   // ── Deferred alerts ─────────────────────────────────────────────────────
 
