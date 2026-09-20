@@ -73,7 +73,7 @@ function sparklineSvg(history: Array<{ day: string; price: number }>, current: n
   const tY = threshold >= lo && threshold <= hi ? y(threshold) : null;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;max-width:100%;height:auto" role="img" aria-label="30-day price history">
     <path d="${area}" fill="#b8912f" fill-opacity="0.22"/>
-    ${tY != null ? `<line x1="${pad}" x2="${W - pad}" y1="${tY.toFixed(1)}" y2="${tY.toFixed(1)}" stroke="#8a93a6" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
+    ${tY != null ? `<line x1="${pad}" x2="${W - pad}" y1="${tY.toFixed(1)}" y2="${tY.toFixed(1)}" stroke="#697181" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
     <path d="${line}" fill="none" stroke="#0a2e57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
     <circle cx="${x(minIdx).toFixed(1)}" cy="${y(pts[minIdx]).toFixed(1)}" r="3.5" fill="#b8912f" stroke="#fff" stroke-width="1.5"/>
     <circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(pts[pts.length - 1]).toFixed(1)}" r="3.5" fill="#0a2e57" stroke="#fff" stroke-width="1.5"/>
@@ -159,7 +159,11 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     ? `${SITE}/go?brand=ekta&surface=email-alert&route_id=${encodeURIComponent(routeIdForAttach)}`
     : null;
 
-  const accent = isMistake ? '#b8912f' : isDrop ? '#b91c1c' : '#0e6240';
+  // Mistake amber is darkened for TEXT use: #b8912f was 2.95:1 on white, below AA
+  // even for the 13px pill. Hue preserved, lightness moved until it clears 4.5
+  // (same derivation as the white-label tenant ink). The button fill keeps the
+  // lighter #b8912f, which is legible against its own dark ink at 5.91.
+  const accent = isMistake ? '#8a6b1e' : isDrop ? '#b91c1c' : '#0e6240';
   const accentBg = isMistake ? '#fdf6e3' : isDrop ? '#fef2f2' : '#f0fdf4';
   const mono = "font-family:'JetBrains Mono',SFMono-Regular,Menlo,Consolas,monospace";
   const preheader = `${route} ${datesLine} · ${headlinePrice}`;
@@ -181,9 +185,9 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     </div>
     <div style="padding:0 24px 8px">
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-left:4px solid ${accent};border-radius:12px;padding:16px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;${mono}">${normal ? 'Normal price → now' : 'Now · per adult'}</div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;${mono}">${normal ? 'Normal price → now' : 'Now · per adult'}</div>
         <div style="margin-top:6px;line-height:1.1">
-          ${normal ? `<span style="font-size:20px;color:#8a93a6;text-decoration:line-through;${mono}">${fmtUSD(normal)}</span> <span style="color:#8a93a6;font-size:18px">→</span> ` : ''}
+          ${normal ? `<span style="font-size:20px;color:#697181;text-decoration:line-through;${mono}">${fmtUSD(normal)}</span> <span style="color:#697181;font-size:18px">→</span> ` : ''}
           <span style="font-size:36px;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</span>
           ${pctBelowNormal != null && pctBelowNormal > 0 ? `<span style="display:inline-block;margin-left:8px;background:${accentBg};color:${accent};font-weight:700;font-size:13px;padding:3px 8px;border-radius:999px;${mono}">−${pctBelowNormal.toFixed(0)}%</span>` : ''}
         </div>
@@ -196,11 +200,11 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
 
       ${hist30 ? `
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-bottom:8px;${mono}">Last 30 days · daily low per adult</div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:8px;${mono}">Last 30 days · daily low per adult</div>
         ${spark}
         <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;${mono}">
           <span style="color:#0e6240;font-weight:700">▼ ${fmtUSD(hist30.low)} low</span>
-          <span style="color:#8a93a6">${hist30.days} polled days</span>
+          <span style="color:#697181">${hist30.days} polled days</span>
           <span style="color:#9a3d1f;font-weight:700">▲ ${fmtUSD(hist30.high)} high</span>
         </div>
       </div>` : ''}
@@ -212,12 +216,12 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
       </div>` : ''}
 
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-bottom:6px;${mono}">Dates that work</div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:6px;${mono}">Dates that work</div>
         <table style="width:100%;border-collapse:collapse;font-size:14px">
           <tr><td style="padding:4px 0;font-weight:700;color:#0a1426">${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}${nights ? ` · ${nights} nights` : ''}${fare.outbound_flight_no ? ` · ${esc(fare.outbound_flight_no)}${fare.return_flight_no ? ` / ${esc(fare.return_flight_no)}` : ''}` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</td></tr>
           ${flexRows}
         </table>
-        ${ctx.flexDates.length ? `<div style="font-size:11px;color:#8a93a6;margin-top:6px">Nearby dates from our cache priced within 5% of this fare (±3 days).</div>` : ''}
+        ${ctx.flexDates.length ? `<div style="font-size:11px;color:#697181;margin-top:6px">Nearby dates from our cache priced within 5% of this fare (±3 days).</div>` : ''}
       </div>
 
       ${isMistake ? `
@@ -228,7 +232,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
       <p style="margin:0 0 8px">
         <a href="${bookUrl}" style="display:inline-block;background:#b8912f;color:#061a35;padding:13px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Book this fare →</a>
       </p>
-      <div style="font-size:12px;color:#8a93a6;margin:0 0 16px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
+      <div style="font-size:12px;color:#697181;margin:0 0 16px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
 
       <!-- Where to stay. Given a card of its own rather than the inline text
            link it used to be: this lands at the moment the traveller has just
@@ -236,7 +240,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
            search is genuinely useful to them. The fare above stays the single
            primary action (gold); this is deliberately the secondary weight. -->
       <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;margin-bottom:4px;${mono}">Where to stay · ${esc(stayCity)}</div>
+        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:4px;${mono}">Where to stay · ${esc(stayCity)}</div>
         <div style="font-size:13px;color:#475569;margin-bottom:12px">${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''} · ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'} — dates already filled in.</div>
         <a href="${staysHotelUrl}" style="display:inline-block;background:#0a2e57;color:#fff;padding:10px 20px;border-radius:9px;text-decoration:none;font-weight:700;font-size:14px">Find hotels in ${esc(stayCity)} →</a>
         <a href="${staysAirbnbUrl}" style="display:inline-block;margin-left:14px;color:#0a2e57;font-weight:600;font-size:13px;text-decoration:underline">Vacation homes</a>
