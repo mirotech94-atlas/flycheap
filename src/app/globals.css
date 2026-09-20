@@ -4236,3 +4236,69 @@ html[data-fc-theme="coal"] .bg-brand-gradient {
 /* Admin's card/kpi surfaces are declared !important inside the inline <style>
    in admin/layout.tsx, so the glass for them lives there too rather than losing
    a specificity fight from here. Only the sticky bar is styled from this file. */
+
+/* ============================================================
+   Org portal — the work queue and client detail.
+
+   Amber is the reading light and stays on the rows that want an
+   action taken today; everything quieter uses the rule colour, so
+   an agent's eye lands on what to do rather than on the list.
+   ============================================================ */
+.nc-queue { list-style: none; margin: 0; padding: 0; }
+.nc-queue-row {
+  display: flex; flex-wrap: wrap; gap: 0.75rem 1rem;
+  align-items: flex-start; justify-content: space-between;
+  padding: 0.85rem 0 0.95rem;
+  border-top: 1px solid var(--nc-rule);
+  border-left: 3px solid transparent;
+  padding-left: 0.85rem;
+}
+.nc-queue-row:first-child { border-top: none; }
+.nc-q-act   { border-left-color: var(--nc-amber); }
+.nc-q-soon  { border-left-color: var(--nc-teal); }
+.nc-q-quiet { border-left-color: var(--nc-rule-2); }
+.nc-queue-main { min-width: 16rem; flex: 1; }
+.nc-queue-tag {
+  display: inline-block; font-family: var(--nc-mono);
+  font-size: 10.5px; letter-spacing: .1em; text-transform: uppercase;
+  color: var(--nc-on-dark-faint); margin-right: 0.6rem;
+}
+.nc-queue-route { font-weight: 650; color: var(--nc-on-dark); }
+.nc-queue-group { font-weight: 400; color: var(--nc-on-dark-mute); }
+.nc-queue-detail { margin: 0.3rem 0 0; font-size: 13.5px; line-height: 1.55; color: var(--nc-on-dark-mute); }
+.nc-queue-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center; }
+.nc-btn-sm { font-size: 12px; padding: 0.4rem 0.7rem; }
+
+.nc-table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+.nc-table th {
+  text-align: left; font-family: var(--nc-mono); font-size: 10.5px;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--nc-on-dark-faint);
+  padding: 0 0.6rem 0.5rem 0; font-weight: 500;
+}
+.nc-table td { padding: 0.55rem 0.6rem 0.55rem 0; border-top: 1px solid var(--nc-rule); vertical-align: middle; }
+.nc-mono { font-family: var(--nc-mono); }
+.nc-muted { color: var(--nc-on-dark-mute); }
+.nc-neg { color: var(--nc-signal); }
+.nc-link { color: var(--nc-teal); font-weight: 600; }
+.nc-row-actions { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+.nc-inline-form { display: inline-flex; gap: 0.3rem; align-items: center; }
+.nc-input-sm {
+  width: 5.5rem; font-size: 12px; padding: 0.35rem 0.5rem;
+  background: var(--nc-deck-2); color: var(--nc-on-dark);
+  border: 1px solid var(--nc-rule-2); border-radius: 7px;
+}
+.nc-pill-good, .nc-pill-quiet {
+  font-size: 11.5px; padding: 0.15rem 0.5rem; border-radius: 999px;
+  border: 1px solid var(--nc-rule-2);
+}
+.nc-pill-good { color: var(--nc-mint); border-color: color-mix(in srgb, var(--nc-mint) 45%, transparent); }
+.nc-pill-quiet { color: var(--nc-on-dark-mute); }
+.nc-savings-total { display: flex; align-items: baseline; gap: 0.7rem; margin-bottom: 0.9rem; }
+.nc-savings-label {
+  font-family: var(--nc-mono); font-size: 10.5px; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--nc-on-dark-faint);
+}
+/* The savings figure is a fare-adjacent number, so it earns amber. */
+.nc-savings-amount { font-size: 1.6rem; font-weight: 700; color: var(--nc-amber); }
+.nc-savings-amount.nc-neg { color: var(--nc-signal); }
+.nc-note { margin: 0.9rem 0 0; font-size: 12.5px; line-height: 1.6; color: var(--nc-on-dark-mute); }
