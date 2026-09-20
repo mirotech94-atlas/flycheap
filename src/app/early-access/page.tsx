@@ -55,7 +55,7 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
   const count = earlyAccessCount();
   const pool = getFeedPool(40);
   const nextPath = ref ? `/early-access?ref=${encodeURIComponent(ref)}` : '/early-access';
-  const formLabels = { placeholder: t.cta.placeholder, airport: t.cta.airport, button: t.cta.button, busy: t.cta.busy, fine: t.cta.fine, invited: t.cta.invited, err: t.cta.err, netErr: t.cta.netErr, doneA: t.cta.doneA, doneExisting: t.cta.doneExisting, doneOf: t.cta.doneOf, share: t.cta.share, joined: t.cta.joined, copy: t.cta.copy, copied: t.cta.copied, shareX: t.cta.shareX, shareWa: t.cta.shareWa, shareMail: t.cta.shareMail, shareText: t.cta.shareText, notYou: t.cta.notYou };
+  const formLabels = { placeholder: t.cta.placeholder, airport: t.cta.airport, button: t.cta.button, busy: t.cta.busy, fine: t.cta.fine, invited: t.cta.invited, err: t.cta.err, netErr: t.cta.netErr, doneA: t.cta.doneA, doneExisting: t.cta.doneExisting, doneOf: t.cta.doneOf, share: t.cta.share, joined: t.cta.joined, copy: t.cta.copy, copied: t.cta.copied, shareX: t.cta.shareX, shareWa: t.cta.shareWa, shareMail: t.cta.shareMail, shareText: t.cta.shareText, notYou: t.cta.notYou, fromAirport: t.cta.fromAirport, toAirport: t.cta.toAirport, watchReady: t.cta.watchReady };
 
   return (
     <div className="dc" dir={L.dir} lang={locale} data-locale={locale}>

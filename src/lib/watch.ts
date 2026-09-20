@@ -69,6 +69,8 @@ export type WatchRow = {
   is_home_route?: number | null;
   priority_score?: number | null;
   poll_band?: string | null;
+  /** 'any' = watch the route, we find the cheapest window. Dates are placeholders. */
+  date_mode?: 'exact' | 'any' | null;
 };
 
 export type Watch = {
@@ -90,6 +92,13 @@ export type Watch = {
   isHomeRoute: boolean;
   expiresAt: string | null;
   band: string | null;
+  /**
+   * True when the stored dates are PLACEHOLDERS the poller ignores. A card
+   * that prints them as real dates tells a brand-new user they are flying on
+   * a day nobody chose — which is exactly what the first seeded watch would
+   * have done.
+   */
+  anyDates: boolean;
 };
 
 const csv = (v: string | null | undefined): string[] =>
@@ -140,6 +149,7 @@ export function toWatch(row: WatchRow): Watch {
     includeHotel: !!row.include_hotel,
     hotelNights: row.hotel_nights ?? null,
     isHomeRoute: !!row.is_home_route,
+    anyDates: row.date_mode === 'any',
     expiresAt: row.expires_at ?? null,
     band: row.poll_band ?? null,
   };

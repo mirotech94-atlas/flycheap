@@ -7,6 +7,7 @@ export type FormLabels = {
   placeholder: string; airport: string; button: string; busy: string; fine: string; invited: string; err: string; netErr: string;
   doneA: string; doneExisting: string; doneOf: string; share: string; joined: string; copy: string; copied: string;
   shareX: string; shareWa: string; shareMail: string; shareText: string; notYou: string;
+  fromAirport: string; toAirport: string; watchReady: string;
 };
 const fill = (s: string, v: Record<string, string | number>) => s.replace(/\{(\w+)\}/g, (_, k) => String(v[k] ?? `{${k}}`));
 
@@ -14,6 +15,10 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  // The watch comes first. The route is the thing they came for; the email is
+  // what we need to reach them about it.
+  const [origin, setOrigin] = useState('');
+  const [destination, setDestination] = useState('');
   const [ref, setRef] = useState(initialRef);
   const [agreed, setAgreed] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -36,7 +41,7 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
     if (!agreed) { setErr('Please accept the Terms & Conditions to continue.'); return; }
     setErr(null); setBusy(true);
     try {
-      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, ref, acceptedTerms: true, website: '' }) });
+      const r = await fetch('/api/early-access', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, phone, ref, origin, destination, acceptedTerms: true, website: '' }) });
       const j = await r.json();
       if (!j.ok) { setErr(j.error || t.err); return; }
       setRes(j);
@@ -69,6 +74,10 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
   return (
     <form className="dc-form" onSubmit={submit}>
       <div className="dc-form-row">
+        <input type="text" placeholder={t.fromAirport} value={origin} onChange={e => setOrigin(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))} aria-label={t.fromAirport} maxLength={3} autoCapitalize="characters" spellCheck={false} />
+        <input type="text" placeholder={t.toAirport} value={destination} onChange={e => setDestination(e.target.value.toUpperCase().replace(/[^A-Z]/g, '').slice(0, 3))} aria-label={t.toAirport} maxLength={3} autoCapitalize="characters" spellCheck={false} />
+      </div>
+      <div className="dc-form-row">
         <input type="text" required autoComplete="name" placeholder="Full name" value={name} onChange={e => setName(e.target.value)} aria-label="Full name" />
       </div>
       <div className="dc-form-row">
@@ -83,7 +92,7 @@ export function EarlyAccessForm({ initialRef = '', labels: t }: { initialRef?: s
         <input type="checkbox" checked={agreed} onChange={e => setAgreed(e.target.checked)} style={{ marginTop: 3, flexShrink: 0 }} aria-label="Accept terms and conditions" />
         <span>I agree to FlyCheap&rsquo;s <a href="/terms" target="_blank" rel="noopener" className="dc-accent">Terms &amp; Conditions</a>, <a href="/trial-terms" target="_blank" rel="noopener" className="dc-accent">Trial Terms</a> and <a href="/privacy" target="_blank" rel="noopener" className="dc-accent">Privacy Policy</a>. The 3-month trial unlocks every feature, free, with no card.</span>
       </label>
-      <div className="dc-form-fine">{t.fine}{ref && <span className="dc-accent"> · {t.invited}</span>}</div>
+      <div className="dc-form-fine">{t.fine}{origin && destination ? ` ${t.watchReady}` : ''}{ref && <span className="dc-accent"> · {t.invited}</span>}</div>
       {err && <div className="dc-form-err" role="alert">{err}</div>}
     </form>
   );

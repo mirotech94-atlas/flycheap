@@ -63,7 +63,7 @@ export const en = {
   cta: {
     h2a: 'Don’t refresh the fare.', h2b: 'Track it.',
     sub: 'Request a founding-member seat. Early members get a 3-month free trial of the entire product — every Pro and Enterprise feature, no card. Love it? Reach out by email or phone and we’ll continue together.',
-    placeholder: 'you@email.com', airport: 'Home airport (JFK)', button: 'Request access', busy: 'Saving…',
+    fromAirport: 'From (JFK)', toAirport: 'To (CAI)', watchReady: 'Your first watch will be waiting when you log in.', placeholder: 'you@email.com', airport: 'Home airport (JFK)', button: 'Request access', busy: 'Saving…',
     chips: ["No credit card", "3-month free trial", "Upgrade only if you want", "Cancel anytime"],
     consent: 'By requesting access you agree to receive one email when your seat opens and the alerts you set up. No marketing lists, no third parties — unsubscribe anytime.',
     fine: 'One email when your seat opens. Nothing else.', invited: 'Invited by a friend ✓', err: 'Something went wrong — try again.', netErr: 'Network error — please try again.',

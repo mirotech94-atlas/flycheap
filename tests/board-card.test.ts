@@ -358,3 +358,17 @@ describe('drawing the target on a per-adult chart', () => {
     expect(targetPerAdultEquivalent(c.watch)).toBeNull();
   });
 });
+
+describe('an any-dates watch', () => {
+  it('is flagged so the card never prints its placeholder dates as real ones', () => {
+    // The first seeded watch is any-dates with 30/37-day placeholder dates the
+    // poller ignores. Rendering "Oct 20 – Oct 27" to a brand-new user says they
+    // are flying on a day nobody chose.
+    const any = card({ row: row({ date_mode: 'any' }) });
+    expect(any.watch.anyDates).toBe(true);
+    const exact = card({ row: row({ date_mode: 'exact' }) });
+    expect(exact.watch.anyDates).toBe(false);
+    const legacy = card({ row: row({}) });   // pre-existing rows have no date_mode
+    expect(legacy.watch.anyDates).toBe(false);
+  });
+});

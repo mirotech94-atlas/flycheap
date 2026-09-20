@@ -5,6 +5,7 @@ import { getDb, queries } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
 import { inviteEmail, waitlistPositionEmail } from './emailTemplates';
+import { parseFirstWatch, placeholderDates, type FirstWatch } from './firstWatch';
 
 const APP = process.env.APP_URL || APP_URL;
 /** Each friend who joins through your link moves you up this many spots. */
@@ -14,6 +15,8 @@ export type EarlyAccessRow = {
   id: number; email: string; name: string | null; phone: string | null; home_airport: string | null; ref_code: string;
   referred_by: string | null; position: number; ip: string | null; created_at: string;
   approve_token: string | null; approved_at: string | null; declined_at: string | null;
+  /** The route they came for, captured on the form. Seeded as a watch on approval. */
+  first_origin: string | null; first_destination: string | null;
 };
 /** Where new access requests are announced (Approve / Decline links). */
 export const NOTIFY_TO: string[] = (process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.live')
@@ -41,6 +44,9 @@ function ensure() {
   if (!cols.includes('declined_at')) getDb().exec('ALTER TABLE early_access ADD COLUMN declined_at TEXT');
   if (!cols.includes('name')) getDb().exec('ALTER TABLE early_access ADD COLUMN name TEXT');
   if (!cols.includes('phone')) getDb().exec('ALTER TABLE early_access ADD COLUMN phone TEXT');
+  // First run: the watch exists before the email does. See lib/firstWatch.ts.
+  if (!cols.includes('first_origin')) getDb().exec('ALTER TABLE early_access ADD COLUMN first_origin TEXT');
+  if (!cols.includes('first_destination')) getDb().exec('ALTER TABLE early_access ADD COLUMN first_destination TEXT');
   ensured = true;
 }
 
@@ -63,7 +69,12 @@ export type JoinResult = {
   refCode: string; referrals: number; shareUrl: string; total: number;
 };
 
-export function joinEarlyAccess(input: { email: string; name?: string | null; phone?: string | null; homeAirport?: string | null; ref?: string | null; ip?: string | null }): JoinResult {
+export function joinEarlyAccess(input: {
+  email: string; name?: string | null; phone?: string | null; homeAirport?: string | null;
+  ref?: string | null; ip?: string | null;
+  /** The route they came for. Optional: the form must never refuse a signup over it. */
+  firstWatch?: FirstWatch | null;
+}): JoinResult {
   ensure();
   const db = getDb();
   const email = input.email.trim().toLowerCase();
@@ -81,13 +92,19 @@ export function joinEarlyAccess(input: { email: string; name?: string | null; ph
     const position = earlyAccessCount() + 1;
     let code = newRefCode();
     while (db.prepare('SELECT 1 FROM early_access WHERE ref_code = ?').get(code)) code = newRefCode();
-    db.prepare(`INSERT INTO early_access (email, name, phone, home_airport, ref_code, referred_by, position, ip, approve_token) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`)
-      .run(email, name, phone, home, code, ref, position, input.ip ?? null, crypto.randomBytes(18).toString('base64url'));
+    const fw = input.firstWatch ?? null;
+    db.prepare(`INSERT INTO early_access (email, name, phone, home_airport, ref_code, referred_by, position, ip, approve_token, first_origin, first_destination) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(email, name, phone, home ?? fw?.origin ?? null, code, ref, position, input.ip ?? null, crypto.randomBytes(18).toString('base64url'), fw?.origin ?? null, fw?.destination ?? null);
     row = db.prepare('SELECT * FROM early_access WHERE email = ?').get(email) as EarlyAccessRow;
   } else {
     if (home && !row.home_airport) db.prepare('UPDATE early_access SET home_airport = ? WHERE id = ?').run(home, row.id);
     if (name && !row.name) db.prepare('UPDATE early_access SET name = ? WHERE id = ?').run(name, row.id);
     if (phone && !row.phone) db.prepare('UPDATE early_access SET phone = ? WHERE id = ?').run(phone, row.id);
+    // A returning requester who now names a route gets it kept, never overwritten.
+    const fw = input.firstWatch;
+    if (fw && !row.first_origin) {
+      db.prepare('UPDATE early_access SET first_origin = ?, first_destination = ? WHERE id = ?').run(fw.origin, fw.destination, row.id);
+    }
   }
   const referrals = referralsFor(row.ref_code);
   return {
@@ -185,7 +202,35 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
 export async function approveAndProvision(row: EarlyAccessRow): Promise<void> {
   const user = queries.upsertUserByEmail(row.email, row.name ?? undefined); // creates with founding_free trial
   queries.setProfileIfEmpty(user.id, row.name ?? null, row.phone ?? null);
+  seedFirstWatch(user.id, row);
   await sendInviteEmail(row);
+}
+
+/**
+ * Materialise the route they asked for as a real watch, so their first login
+ * lands on a board with something on it rather than an empty dashboard and a
+ * wizard. Idempotent: an account that already has this route (a re-approval,
+ * or a user who added it themselves) gets nothing added.
+ *
+ * `date_mode: 'any'` — they gave a route, not dates, and the trial resolves to
+ * Enterprise limits so any-dates is allowed. The poller ignores the placeholder
+ * dates for any-dates routes, same as the API path.
+ */
+export function seedFirstWatch(userId: number, row: Pick<EarlyAccessRow, 'first_origin' | 'first_destination'>): number | null {
+  const fw = parseFirstWatch({ origin: row.first_origin, destination: row.first_destination });
+  if (!fw) return null;
+  const dup = getDb().prepare(
+    `SELECT id FROM searches WHERE user_id = ? AND origin = ? AND destination = ? LIMIT 1`,
+  ).get(userId, fw.origin, fw.destination) as { id: number } | undefined;
+  if (dup) return dup.id;
+  const { depart, ret } = placeholderDates();
+  const r = queries.insertSearch({
+    origin: fw.origin, destination: fw.destination,
+    depart_date: depart, return_date: ret,
+    adults: 1, infants: 0,
+    date_mode: 'any', user_id: userId,
+  });
+  return Number(r.lastInsertRowid);
 }
 
 /** Sent to the requester when the owner approves: a single button that logs them
