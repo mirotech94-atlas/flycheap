@@ -4,6 +4,7 @@ import { PieCard } from '@/components/charts';
 import { SettingsForm } from '@/components/SettingsForm';
 import { SmsOptIn } from '@/components/SmsOptIn';
 import { AlertChannelsCard } from '@/components/AlertChannelsCard';
+import { AlertPolicyCard } from '@/components/AlertPolicyCard';
 import { PollNowButton } from '@/components/PollNowButton';
 import { ProviderSettings } from '@/components/ProviderSettings';
 import { providerStatuses } from '@/lib/providers';
@@ -115,6 +116,8 @@ export default async function SettingsPage() {
       </div>
 
       <SettingsForm initial={initial} />
+
+      <AlertPolicyCard />
 
       <AlertChannelsCard />
 

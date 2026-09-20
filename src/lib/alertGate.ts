@@ -36,12 +36,29 @@ function quietHoursFor(userId: number): { startHour: number; endHour: number } |
     const m = /^(\d{1,2}):(\d{2})$/.exec(s);
     return m ? parseInt(m[1], 10) : null;
   };
-  if (start && end) {
+
+  // ABSENT and EMPTY are different answers, and conflating them broke Clear.
+  //
+  // Absent means the user has never been asked. Empty means they opened the
+  // settings card and turned quiet hours OFF. Treating empty as "not
+  // configured" sent it back through the default below, so pressing Clear
+  // silently left the 22:00-08:00 window in force — alerts held overnight by a
+  // setting the user had just switched off, with the UI showing "Not set".
+  //
+  // This only became reachable when the settings card started capturing the
+  // timezone: before that no web account had one, so the default never applied
+  // to anybody.
+  const decided = start !== undefined || end !== undefined;
+  if (decided) {
+    if (!start || !end) return null;          // explicitly off
     const s = hour(start);
     const e = hour(end);
     if (s != null && e != null) return { startHour: s, endHour: e };
+    return null;                               // malformed: off, never defaulted
   }
-  // Not configured. Only default it on if we know what time it is for them.
+
+  // Never asked. Only default it on if we know what time it is for them —
+  // applying a 22:00-08:00 window against UTC would silence a US user from 6pm.
   return knowsTimezone(userId) ? DEFAULT_QUIET_HOURS : null;
 }
 
