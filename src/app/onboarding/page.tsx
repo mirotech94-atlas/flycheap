@@ -166,14 +166,14 @@ export default function OnboardingPage() {
               {
                 name: 'Pro', price: '$9', tag: '/mo', cta: 'Get Pro',
                 ctaHref: '/checkout?plan=pro',
-                features: ['Unlimited tracked routes', 'Weekly anomaly digest', 'SMS / WhatsApp / Telegram alerts', 'Buy/wait predictions', 'Priority polling (5-min)'],
+                features: ['100 tracked routes', 'Weekly anomaly digest', 'SMS and Telegram alerts', 'Buy/wait predictions', 'Flexible "any dates" tracking'],
                 accent: 'border-brand-500 ring-2 ring-brand-500/20 scale-105',
                 badge: 'Most popular',
               },
               {
                 name: 'Enterprise', price: 'Custom', tag: 'priced per seat', cta: 'Contact sales',
-                ctaHref: 'mailto:sales@fareintel.com',
-                features: ['White-label branding', 'Custom domain', 'REST API (/api/v1)', 'Slack channel alerts', 'SSO + audit logs'],
+                ctaHref: '/contact',
+                features: ['Unlimited tracked routes', 'White-label branding', 'Custom domain', 'REST API (/api/v1)', 'Audit log'],
                 accent: 'border-slate-200 dark:border-slate-700',
               },
             ].map(t => (
@@ -217,7 +217,7 @@ export default function OnboardingPage() {
         <div className="mt-10 space-y-3">
           {[
             { q: 'Where does the pricing data come from?', a: 'We aggregate from Travelpayouts (the Aviasales metasearch network covering 1,000+ airlines), Duffel, and Google Flights via SerpAPI and SearchAPI. Every fare snapshot is tagged with its source.' },
-            { q: 'How fresh is the data?', a: 'Tracked routes poll every 5–30 minutes (configurable). The 12-month best-deals scan refreshes every 12 hours. The Explore page hits live caches on each request.' },
+            { q: 'How fresh is the data?', a: 'We check your tracked routes continuously, and check the ones that matter most — close to departure, close to your target, or moving fast — most often. Every price we show you carries the time it was last verified. The Explore page hits live caches on each request.' },
             { q: 'Can I track airlines other than EgyptAir?', a: 'Yes — toggle off the "EgyptAir only" filter on the Offers page and search any airline. The default is set per route in Settings.' },
             { q: 'Do I need credit-card-level data to book?', a: 'No — we never touch payments. Booking links route you to Aviasales / Kayak / Google Flights / the airline directly, where you complete the purchase.' },
             { q: 'Is the family share link secure?', a: 'Yes. It uses a cryptographically random token unique to your account. You can rotate or revoke it instantly from Settings — anyone holding the old URL loses access.' },

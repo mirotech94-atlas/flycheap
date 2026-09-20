@@ -23,7 +23,7 @@ const CHAPTERS: Chapter[] = [
   { t: 64,  label: 'Best deals & booking',     desc: 'The 12-month deals table and cross-shopping every OTA.' },
   { t: 95,  label: 'Fare calendar & buy/wait', desc: 'Day-by-day price heatmap and the recommendation engine.' },
   { t: 125, label: 'Explore the world',        desc: 'Cheapest fares to every destination on the interactive map.' },
-  { t: 146, label: 'Alerts, Slack & Telegram', desc: 'Thresholds, anomaly triggers, and self-serve chat alerts.' },
+  { t: 146, label: 'Alerts, email & Telegram', desc: 'Thresholds, anomaly triggers, and self-serve chat alerts.' },
   { t: 183, label: 'The AI concierge',         desc: 'Ask questions in plain English, get answers from your data.' },
   { t: 213, label: 'Early access & pricing',   desc: 'Free, Pro and Enterprise — and how to request an account.' },
 ];

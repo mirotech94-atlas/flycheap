@@ -38,6 +38,10 @@
   "exclude": [
     "node_modules",
     "mobile",
-    "src.before-resync-bak"
+    "src.before-resync-bak",
+    // Dead pre-rename snapshot. Next never routes it (the app dir is src/app),
+    // it ships nothing, and typechecking it only reports drift against the
+    // live tree it was copied from — which is what a snapshot is for.
+    "src.before-rename-2026-09-09"
   ]
 }

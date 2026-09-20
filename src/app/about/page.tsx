@@ -43,7 +43,7 @@ export default function AboutPage() {
             <h2><span className="num">01</span>How it works</h2>
             <ol>
               <li><strong>Pick a route + dates.</strong> Add JFK→CAI on July 7, or anything else — any 3-letter IATA pair works.</li>
-              <li><strong>We poll every 5 minutes.</strong> A scheduler fans the search out to Travelpayouts (Aviasales), Duffel, and Google Flights via SerpAPI and SearchAPI in parallel. Cheapest result wins.</li>
+              <li><strong>A scheduler runs continuously.</strong> Each time it wakes it fans the routes that are due out to Travelpayouts (Aviasales), Duffel, and Google Flights via SerpAPI and SearchAPI in parallel. Cheapest result wins. How often a given route is due depends on how much it matters — close to departure, close to your target, or moving fast means more often.</li>
               <li><strong>Three alert kinds, instant.</strong> Threshold-cross (below your target), price-drop (≥ N% below the 7-day median), and the mistake-fare detector (≥ 3σ below the 30-day mean — the genuine glitches that get pulled within 90 minutes).</li>
               <li><strong>You decide when to book.</strong> We never charge cards. Every deal links straight to the airline / OTA.</li>
             </ol>
