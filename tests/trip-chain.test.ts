@@ -347,3 +347,155 @@ describe('a failed send is retried, not lost', () => {
     expect(chain.dueSends().some(d => d.id === row.id)).toBe(false);
   });
 });
+
+describe('the post-trip loop — "did you travel, what did you pay?"', () => {
+  /**
+   * The answer is the numerator of every savings figure in the product, and
+   * the moment someone lands is the strongest home-route prompt there is. So
+   * the question is asked once, of people who booked, the day after they get
+   * home — and never as a pretext for an offer.
+   */
+  const db = () => dbmod.getDb();
+
+  function bookedTrip(searchId: number | null = null) {
+    seq += 1;
+    const trip = chain.openTripFromClick({
+      clickToken: `tok-${seq}-${Date.now()}`,
+      userId: 1, searchId,
+      origin: 'JFK', destination: 'BCN',
+      departDate: futureDate(60), returnDate: futureDate(74),
+      farePerAdultUsd: 484, adults: 2,
+    });
+    if (!trip) throw new Error('expected a trip');
+    const answered = chain.answerTrip(chain.mintConfirmToken(trip.id), 'booked');
+    if (!answered) throw new Error('expected a booked trip');
+    return answered;
+  }
+
+  function seedSearch(over: Record<string, unknown> = {}): number {
+    const r = db().prepare(
+      `INSERT INTO searches (origin, destination, depart_date, return_date, adults, infants, active, user_id)
+       VALUES ('JFK', 'BCN', ?, ?, 2, 0, 1, 1)`,
+    ).run(futureDate(60), futureDate(74));
+    const id = Number(r.lastInsertRowid);
+    for (const [k, v] of Object.entries(over)) {
+      db().prepare(`UPDATE searches SET ${k} = ? WHERE id = ?`).run(v, id);
+    }
+    return id;
+  }
+
+  const stages = (tripId: string) =>
+    db().prepare('SELECT stage, scheduled_for FROM chain_sends WHERE trip_id = ?').all(tripId) as
+      Array<{ stage: string; scheduled_for: string }>;
+
+  it('is queued the day after they get home, on a booked trip', () => {
+    const trip = bookedTrip();
+    const pt = stages(trip.id).find(s => s.stage === 'post-trip');
+    expect(pt).toBeDefined();
+    // return_date + 1 day, at 09:00 UTC
+    expect(pt!.scheduled_for.slice(0, 10)).toBe(futureDate(75));
+  });
+
+  it('is never queued for someone who is still deciding', () => {
+    const trip = newClickTrip();
+    chain.answerTrip(chain.mintConfirmToken(trip.id), 'deciding');
+    expect(stages(trip.id).map(s => s.stage)).not.toContain('post-trip');
+    // ...and would be refused even if something queued it.
+    const t = chain.getTrip(trip.id)!;
+    expect(chain.maySend(t, 'post-trip').send).toBe(false);
+  });
+
+  it('is not monetized: ignores the commercial opt-out and the daily cap', () => {
+    const trip = bookedTrip();
+    dbmod.queries.setUserSetting(1, 'commercial_email_opt_out', '1');
+    // Fill the cap with a monetized send today. scheduleChain already queued
+    // the 'stay' stage for this booked trip, so mark THAT row sent rather than
+    // inserting a second one into the unique (trip, stage) index.
+    db().prepare(
+      `UPDATE chain_sends SET status = 'sent', sent_at = datetime('now')
+        WHERE trip_id = ? AND stage = 'stay'`,
+    ).run(trip.id);
+    expect(chain.maySend(trip, 'post-trip').send).toBe(true);
+    expect(chain.maySend(trip, 'transfer').send).toBe(false);
+  });
+
+  it('records what was paid on the trip AND on the watch, and flips the watch to booked', () => {
+    const searchId = seedSearch();
+    const trip = bookedTrip(searchId);
+    const token = chain.mintConfirmToken(trip.id);
+
+    const after = chain.answerPostTrip(token, { travelled: true, paidUsd: 1840 });
+    expect(after?.travelled_answer).toBe('yes');
+    expect(after?.paid_amount_usd).toBe(1840);
+    expect(after?.status).toBe('booked');   // untouched
+
+    const w = dbmod.queries.getSearchById(searchId)!;
+    expect(w.travelled_answer).toBe('yes');
+    expect(w.booked_amount_usd).toBe(1840);   // the savings numerator
+    expect(w.status).toBe('booked');          // post-booking monitoring, where a rebooking drop is caught
+  });
+
+  it('leaves the watch alone when the trip did not happen', () => {
+    const searchId = seedSearch();
+    const trip = bookedTrip(searchId);
+    chain.answerPostTrip(chain.mintConfirmToken(trip.id), { travelled: false, paidUsd: 900 });
+
+    const w = dbmod.queries.getSearchById(searchId)!;
+    expect(w.travelled_answer).toBe('no');
+    // A paid amount on a trip that did not happen would be a phantom saving.
+    expect(w.booked_amount_usd ?? null).toBeNull();
+    expect(w.status ?? 'active').toBe('active');
+  });
+
+  it('turns the route into a home route when asked, and clears its expiry', () => {
+    const searchId = seedSearch({ expires_at: '2027-01-01 00:00:00' });
+    const trip = bookedTrip(searchId);
+    chain.answerPostTrip(chain.mintConfirmToken(trip.id), { travelled: true, makeHomeRoute: true });
+
+    const w = dbmod.queries.getSearchById(searchId)!;
+    expect(w.is_home_route).toBe(1);
+    // "Permanent" and a stored retirement date cannot both be true.
+    expect(w.expires_at ?? null).toBeNull();
+  });
+
+  it('does not make a home route out of a trip that did not happen', () => {
+    const searchId = seedSearch();
+    const trip = bookedTrip(searchId);
+    chain.answerPostTrip(chain.mintConfirmToken(trip.id), { travelled: false, makeHomeRoute: true });
+    expect(dbmod.queries.getSearchById(searchId)!.is_home_route ?? 0).toBe(0);
+  });
+
+  it('answers once — the token is single-use and a second answer is refused', () => {
+    const searchId = seedSearch();
+    const trip = bookedTrip(searchId);
+    const token = chain.mintConfirmToken(trip.id);
+    expect(chain.answerPostTrip(token, { travelled: true, paidUsd: 1000 })).not.toBeNull();
+    expect(chain.answerPostTrip(token, { travelled: true, paidUsd: 5 })).toBeNull();
+    expect(dbmod.queries.getSearchById(searchId)!.booked_amount_usd).toBe(1000);
+    // ...and the question itself is not asked again.
+    expect(chain.maySend(chain.getTrip(trip.id)!, 'post-trip').send).toBe(false);
+  });
+
+  it('survives a trip with no watch behind it — the answer lands on the trip', () => {
+    const trip = bookedTrip(null);
+    const after = chain.answerPostTrip(chain.mintConfirmToken(trip.id), { travelled: true, paidUsd: 700 });
+    expect(after?.paid_amount_usd).toBe(700);
+  });
+
+  it('prompts for a home route only when there is a watch and it is not one already', () => {
+    expect(chain.postTripNextStep({ travelled: true, hasWatch: true, isHomeRoute: false })).toBe('offer-home-route');
+    expect(chain.postTripNextStep({ travelled: true, hasWatch: true, isHomeRoute: true })).toBe('keep-watching');
+    expect(chain.postTripNextStep({ travelled: true, hasWatch: false, isHomeRoute: false })).toBe('nothing');
+    expect(chain.postTripNextStep({ travelled: false, hasWatch: true, isHomeRoute: false })).toBe('nothing');
+  });
+
+  it('carries no offer, no partner link and no commission', async () => {
+    const { renderStage } = await import('@/lib/tripChainEmail');
+    const trip = bookedTrip();
+    const r = renderStage(trip, 'post-trip', chain.mintConfirmToken(trip.id))!;
+    expect(r.html).not.toMatch(/\/go\?/);
+    expect(r.html).not.toMatch(/commission/i);
+    expect(r.html).toContain('/trip/after?t=');
+    expect(r.text).toMatch(/not a promotion/i);
+  });
+});

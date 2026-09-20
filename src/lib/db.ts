@@ -965,6 +965,43 @@ function init(db: Database.Database) {
     );
   `);
 
+  const tripCols = db.prepare(`PRAGMA table_info(trips)`).all() as Array<{ name: string }>;
+  if (!tripCols.some(c => c.name === 'travelled_answer')) {
+    // The post-trip loop: "did you travel, what did you pay?" Recorded on the
+    // TRIP, not only on the watch, because a trip opened from an explore click
+    // has no search_id and the answer would otherwise have nowhere to go.
+    db.exec(`ALTER TABLE trips ADD COLUMN travelled_answer TEXT`);   // 'yes' | 'no'
+    db.exec(`ALTER TABLE trips ADD COLUMN paid_amount_usd REAL`);
+    db.exec(`ALTER TABLE trips ADD COLUMN answered_at TEXT`);
+  }
+
+  // ── Monthly savings reports: review, then send ─────────────────────────
+  //
+  // One row per (group, period). A report is QUEUED by the scheduler, APPROVED
+  // by a human who has read it, and only then SENT. Nothing goes to a client
+  // that an agent has not looked at — a savings figure the agency cannot defend
+  // is worse than no report, and they are the ones who have to defend it.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS report_sends (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      org_id INTEGER NOT NULL,
+      group_id INTEGER NOT NULL,
+      period_start TEXT NOT NULL,
+      period_end TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'queued',   -- queued|approved|sent|skipped|failed
+      to_email TEXT,
+      summary_json TEXT NOT NULL,
+      approved_by INTEGER,
+      approved_at TEXT,
+      sent_at TEXT,
+      message_id TEXT,
+      skip_reason TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_report_group_period ON report_sends(group_id, period_start);
+    CREATE INDEX IF NOT EXISTS idx_report_status ON report_sends(status, org_id);
+  `);
+
   const chainCols = db.prepare(`PRAGMA table_info(chain_sends)`).all() as Array<{ name: string }>;
   if (!chainCols.some(c => c.name === 'attempts')) {
     // A transient send failure must not be permanent. Without a retry the
@@ -1231,6 +1268,21 @@ export type SearchRow = {
   status?: string | null;
   expires_at?: string | null;
   poll_band?: string | null;
+  booked_at?: string | null;
+  booked_amount_usd?: number | null;     // what was actually paid — the savings numerator
+  baseline_amount_usd?: number | null;   // the fare when the trip was requested — the denominator
+  baseline_basis?: string | null;
+  travelled_answer?: string | null;      // 'yes' | 'no' from the post-trip loop
+};
+
+export type ReportSendRow = {
+  id: number; org_id: number; group_id: number;
+  period_start: string; period_end: string;
+  status: 'queued' | 'approved' | 'sent' | 'skipped' | 'failed';
+  to_email: string | null; summary_json: string;
+  approved_by: number | null; approved_at: string | null;
+  sent_at: string | null; message_id: string | null; skip_reason: string | null;
+  created_at: string;
 };
 
 export type FareRow = {
@@ -2353,6 +2405,86 @@ export const queries = {
           SET status = 'booked', booked_at = datetime('now'), booked_amount_usd = ?
         WHERE id = ?`
     ).run(amountUsd, searchId),
+
+  /**
+   * The post-trip answer, on the watch. 'no' means plans changed: the watch is
+   * left alone, and the savings report will list it as unscored rather than
+   * counting a trip that never happened.
+   */
+  recordTravelled: (searchId: number, answer: 'yes' | 'no') =>
+    getDb().prepare(`UPDATE searches SET travelled_answer = ? WHERE id = ?`).run(answer, searchId),
+
+  // ── Monthly savings reports ──────────────────────────────────────────────
+
+  /** Queue one report. Idempotent per (group, period) via the unique index. */
+  queueReportSend: (r: {
+    org_id: number; group_id: number; period_start: string; period_end: string;
+    to_email: string | null; summary_json: string;
+  }) =>
+    getDb().prepare(
+      `INSERT OR IGNORE INTO report_sends (org_id, group_id, period_start, period_end, to_email, summary_json)
+       VALUES (@org_id, @group_id, @period_start, @period_end, @to_email, @summary_json)`,
+    ).run(r),
+
+  reportSendsForOrg: (orgId: number, status?: string) =>
+    getDb().prepare(
+      `SELECT r.*, g.name AS group_name
+         FROM report_sends r JOIN groups g ON g.id = r.group_id
+        WHERE r.org_id = ? ${status ? 'AND r.status = ?' : ''}
+        ORDER BY r.period_start DESC, g.name`,
+    ).all(...(status ? [orgId, status] : [orgId])) as Array<ReportSendRow & { group_name: string }>,
+
+  reportSendCounts: (orgId: number) => {
+    const rows = getDb().prepare(
+      `SELECT status, COUNT(*) AS n FROM report_sends WHERE org_id = ? GROUP BY status`,
+    ).all(orgId) as Array<{ status: string; n: number }>;
+    const out: Record<string, number> = { queued: 0, approved: 0, sent: 0, skipped: 0, failed: 0 };
+    for (const r of rows) out[r.status] = r.n;
+    return out;
+  },
+
+  /**
+   * Approve several at once — the bulk action the spec asks for.
+   *
+   * The org id is in the WHERE, not trusted from the form: a list of ids is
+   * user input, and without it an admin of one agency could approve another
+   * agency's reports into their clients' inboxes. Only QUEUED rows move, so an
+   * id that was already sent or skipped is ignored rather than re-sent.
+   */
+  approveReportSends: (ids: number[], orgId: number, userId: number): number => {
+    if (ids.length === 0) return 0;
+    const marks = ids.map(() => '?').join(',');
+    return getDb().prepare(
+      `UPDATE report_sends
+          SET status = 'approved', approved_by = ?, approved_at = datetime('now')
+        WHERE id IN (${marks}) AND org_id = ? AND status = 'queued'`,
+    ).run(userId, ...ids, orgId).changes;
+  },
+
+  skipReportSend: (id: number, orgId: number, reason: string) =>
+    getDb().prepare(
+      `UPDATE report_sends SET status = 'skipped', skip_reason = ?
+        WHERE id = ? AND org_id = ? AND status IN ('queued', 'approved')`,
+    ).run(reason, id, orgId),
+
+  approvedReportSends: (limit = 100) =>
+    getDb().prepare(
+      `SELECT r.*, g.name AS group_name, g.contact_email
+         FROM report_sends r JOIN groups g ON g.id = r.group_id
+        WHERE r.status = 'approved' ORDER BY r.approved_at ASC LIMIT ?`,
+    ).all(limit) as Array<ReportSendRow & { group_name: string; contact_email: string | null }>,
+
+  markReportSend: (id: number, status: 'sent' | 'skipped' | 'failed', extra?: { messageId?: string; reason?: string }) =>
+    getDb().prepare(
+      `UPDATE report_sends
+          SET status = ?, message_id = COALESCE(?, message_id), skip_reason = ?,
+              sent_at = CASE WHEN ? = 'sent' THEN datetime('now') ELSE sent_at END
+        WHERE id = ?`,
+    ).run(status, extra?.messageId ?? null, extra?.reason ?? null, status, id),
+
+  allOrgs: () =>
+    getDb().prepare(`SELECT id, name, tier, from_name FROM organizations WHERE archived_at IS NULL`).all() as
+      Array<{ id: number; name: string; tier: string; from_name: string | null }>,
 
   /** Undo, for the inevitable mis-click. */
   unmarkWatchBooked: (searchId: number) =>

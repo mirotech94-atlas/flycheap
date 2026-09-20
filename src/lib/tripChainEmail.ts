@@ -8,9 +8,9 @@ import {
   type PartnerProduct, type PartnerId,
 } from './partnerLink';
 import {
-  CHAIN, NUDGE, type ChainStage, type Trip,
+  CHAIN, NUDGE, POST_TRIP, type ChainStage, type Trip,
   maySend, markSend, dueSends, getTrip,
-  mintConfirmToken, confirmUrl, commercialUnsubscribeUrl,
+  mintConfirmToken, confirmUrl, postTripUrl, commercialUnsubscribeUrl,
 } from './tripChain';
 import { hotellookLink, hotelCityForDestination, tpBrandConfigured } from './affiliate';
 
@@ -243,6 +243,37 @@ function renderNudge(trip: Trip): Rendered {
 }
 
 /**
+ * The post-trip question. Like the confirmation: one question, nothing to sell.
+ *
+ * It asks two things at once because they are one moment — you have just got
+ * home, did the trip happen and what did it cost — and a second email a week
+ * later to ask the second half would not be opened.
+ */
+function renderPostTrip(trip: Trip, token: string): Rendered {
+  const url = postTripUrl(token, SITE);
+  const route = `${trip.origin} → ${trip.destination}`;
+  const subject = `Welcome back — how was ${trip.destination}?`;
+
+  const body = `
+    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:0 0 10px">${esc(subject)}</h1>
+    <p style="font-size:15px;line-height:1.6;color:${INK};margin:0 0 6px">
+      ${esc(route)}${trip.depart_date ? ` · ${esc(fmtDate(trip.depart_date))}` : ''}${trip.return_date ? ` to ${esc(fmtDate(trip.return_date))}` : ''}
+    </p>
+    <p style="font-size:15px;line-height:1.6;color:${MUTE};margin:0 0 18px">
+      Two quick things, and then we leave you alone: did the trip happen, and what did you
+      actually pay for the flights? It is the only way we can tell you what you have saved
+      this year — and whether our advice on this route has been any good.
+    </p>
+    <p style="margin:0">
+      <a href="${url}" style="display:inline-block;background:#d4af37;color:#061a35;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Answer in ten seconds</a>
+    </p>`;
+
+  const footer = `<p style="font-size:12px;color:${MUTE};margin:0">Part of your fare alerts, not a promotion. We ask once per trip.</p>`;
+  const text = [subject, '', route, '', `Answer here: ${url}`, '', 'Part of your fare alerts, not a promotion. We ask once per trip.'].join('\n');
+  return { subject, html: shell({ preheader: `Did the ${trip.destination} trip happen, and what did you pay?`, body, footer }), text };
+}
+
+/**
  * Render a stage.
  *
  * `confirmToken` is passed IN rather than minted here: a render that minted one
@@ -251,6 +282,7 @@ function renderNudge(trip: Trip): Rendered {
  */
 export function renderStage(trip: Trip, stage: ChainStage, confirmToken?: string): Rendered | null {
   if (stage === 'confirm') return renderConfirm(trip, confirmToken ?? mintConfirmToken(trip.id));
+  if (stage === 'post-trip') return renderPostTrip(trip, confirmToken ?? mintConfirmToken(trip.id));
   if (stage === 'nudge') return renderNudge(trip);
   if (!STAGE_COPY[stage]) return null;
   return renderCommercial(trip, stage);
@@ -293,7 +325,10 @@ export async function runChainSends(limit = 100): Promise<ChainRun> {
     if (!to) { markSend(item.id, 'skipped', { skipReason: 'no address' }); run.skipped++; continue; }
 
     // Minted once per attempt, immediately before the send that carries it.
-    const confirmToken = item.stage === 'confirm' ? mintConfirmToken(trip.id) : undefined;
+    // The post-trip question carries a token for the same reason the
+    // confirmation does: its answer is a POST behind a single-use link.
+    const needsToken = item.stage === 'confirm' || item.stage === 'post-trip';
+    const confirmToken = needsToken ? mintConfirmToken(trip.id) : undefined;
     const rendered = renderStage(trip, item.stage, confirmToken);
     if (!rendered) { markSend(item.id, 'skipped', { skipReason: `no template for ${item.stage}` }); run.skipped++; continue; }
 
@@ -306,7 +341,11 @@ export async function runChainSends(limit = 100): Promise<ChainRun> {
 
     try {
       const res = await resend.emails.send({
-        from: alertsFrom(item.stage === 'confirm' || item.stage === 'nudge' ? 'FlyCheap Alerts' : 'FlyCheap Trips'),
+        from: alertsFrom(
+          item.stage === 'confirm' || item.stage === 'nudge' || item.stage === 'post-trip'
+            ? 'FlyCheap Alerts'
+            : 'FlyCheap Trips',
+        ),
         to,
         replyTo: ADDR.support,
         subject: rendered.subject,
@@ -326,4 +365,4 @@ export async function runChainSends(limit = 100): Promise<ChainRun> {
 }
 
 /** Exported for the admin page and for tests. */
-export { CHAIN, NUDGE };
+export { CHAIN, NUDGE, POST_TRIP };

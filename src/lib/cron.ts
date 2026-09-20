@@ -7,6 +7,8 @@ import { refreshBestDeals } from './bestDeals';
 
 let task: cron.ScheduledTask | null = null;
 let digestTask: cron.ScheduledTask | null = null;
+let reportQueueTask: cron.ScheduledTask | null = null;
+let reportSendTask: cron.ScheduledTask | null = null;
 let verdictScoreTask: ReturnType<typeof cron.schedule> | null = null;
 let chainTask: ReturnType<typeof cron.schedule> | null = null;
 let bestDealsTask: cron.ScheduledTask | null = null;
@@ -110,6 +112,37 @@ export function startCron() {
     }
   });
   console.log('[cron] trip chain scheduled — every 10 minutes');
+
+  // Monthly savings reports: BUILD on the first of the month, SEND only what a
+  // human has approved. Two separate ticks on purpose — the queue fills once,
+  // and the send loop runs often enough that an approval goes out in the same
+  // sitting rather than the next morning.
+  if (reportQueueTask) reportQueueTask.stop();
+  reportQueueTask = cron.schedule('0 7 1 * *', async () => {
+    const t = new Date().toISOString();
+    try {
+      const { queueAllMonthlyReports } = await import('./reportQueue');
+      const r = queueAllMonthlyReports();
+      console.log(`[reports ${t}] queued ${r.queued} report(s) across ${r.orgs} org(s) for review`);
+    } catch (e) {
+      console.error(`[reports ${t}] queue threw`, e);
+      queries.logError({ source: 'cron:reports-queue', message: (e as Error).message, stack: (e as Error).stack });
+    }
+  }, { timezone: 'America/New_York' });
+
+  if (reportSendTask) reportSendTask.stop();
+  reportSendTask = cron.schedule('*/15 * * * *', async () => {
+    const t = new Date().toISOString();
+    try {
+      const { sendApprovedReports } = await import('./reportQueue');
+      const r = await sendApprovedReports();
+      if (r.due > 0) console.log(`[reports ${t}] ${r.sent} sent, ${r.skipped} skipped, ${r.failed} failed of ${r.due} approved`);
+    } catch (e) {
+      console.error(`[reports ${t}] send threw`, e);
+      queries.logError({ source: 'cron:reports-send', message: (e as Error).message, stack: (e as Error).stack });
+    }
+  });
+  console.log('[cron] monthly reports scheduled — build 1st 07:00 ET, send every 15 minutes once approved');
 
   // Best-deals refresh: every 12 hours. Keep this off the boot path so a tiny
   // VPS can always start HTTP/SSH cleanly after deploys or reboots.

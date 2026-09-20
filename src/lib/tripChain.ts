@@ -38,6 +38,7 @@ export type ChainStage =
   | 'esim'           // +7 days       — data while away
   | 'tours'          // −14 days from departure
   | 'compensation'   // +3 days after return
+  | 'post-trip'      // +1 day after return — "did you travel, what did you pay?"
   | 'nudge';         // still-deciding branch — retention, NOT monetization
 
 export type StageSpec = {
@@ -70,6 +71,26 @@ export const CHAIN: StageSpec[] = [
   { stage: 'tours',        offsetMinutesFromBooking: null, daysFromDeparture: -14, monetized: true, label: 'Things to do, tables to book' },
   { stage: 'compensation', offsetMinutesFromBooking: null, daysFromReturn: 3,      monetized: true, label: 'Was the flight late?' },
 ];
+
+/**
+ * The post-trip loop. Not a sale — a question, asked once, the day after they
+ * get home: did you travel, and what did you pay?
+ *
+ * The answer is the numerator of every savings figure in the product. Without
+ * it a consumer's "you saved $X this year" has nothing behind it, and the org
+ * report has to chase agents for it by hand. It also closes the retention loop:
+ * a route someone has just flown is the strongest candidate for a home route,
+ * and the moment they land is the moment to ask.
+ *
+ * Non-monetized on purpose. It goes out as FlyCheap Alerts, never counts
+ * against the commercial cap, and ignores the commercial opt-out — the same
+ * footing as the confirmation. Putting an offer in it would make the question
+ * look like a pretext and cost us the answer.
+ */
+export const POST_TRIP: StageSpec = {
+  stage: 'post-trip', offsetMinutesFromBooking: null, daysFromReturn: 1, monetized: false,
+  label: 'Did you travel, and what did you pay?',
+};
 
 /** The still-deciding branch. Retention, and it must look nothing like the booked one. */
 export const NUDGE: StageSpec = {
@@ -106,6 +127,9 @@ export type Trip = {
   origin: string; destination: string; depart_date: string | null; return_date: string | null;
   adults: number; fare_per_adult_usd: number | null; status: TripStatus;
   confirmed_at: string | null; created_at: string;
+  travelled_answer?: 'yes' | 'no' | null;
+  paid_amount_usd?: number | null;
+  answered_at?: string | null;
 };
 
 /**
@@ -212,9 +236,81 @@ export function answerTrip(token: string, answer: 'booked' | 'deciding'): Trip |
   return getTrip(trip.id);
 }
 
-/** Queue every chain stage for a confirmed-booked trip. */
+export type PostTripAnswer = {
+  travelled: boolean;
+  /** What they actually paid, on whatever basis they think in. Optional. */
+  paidUsd?: number | null;
+  /** "I fly this route every year — keep watching it." */
+  makeHomeRoute?: boolean;
+};
+
+/**
+ * Record the post-trip answer.
+ *
+ * Writes the answer on the TRIP always, and on the linked WATCH when there is
+ * one — that is what the savings report and the post-booking-drop detector
+ * read. The trip's status is untouched: it was booked, and it stays booked.
+ *
+ * MUST be called from a POST, for the same reason as answerTrip: mail security
+ * scanners fetch every link, and a GET that recorded "yes I travelled, I paid
+ * $0" would poison the savings report for every corporate recipient.
+ */
+export function answerPostTrip(token: string, a: PostTripAnswer): Trip | null {
+  const trip = tripForConfirmToken(token);
+  if (!trip) return null;
+
+  const paid = a.travelled && typeof a.paidUsd === 'number' && a.paidUsd > 0 ? a.paidUsd : null;
+
+  const tx = db().transaction(() => {
+    db().prepare(`UPDATE trip_confirm_tokens SET used_at = datetime('now') WHERE token = ?`).run(token);
+    db().prepare(
+      `UPDATE trips SET travelled_answer = ?, paid_amount_usd = ?, answered_at = datetime('now') WHERE id = ?`,
+    ).run(a.travelled ? 'yes' : 'no', paid, trip.id);
+
+    if (trip.search_id) {
+      queries.recordTravelled(trip.search_id, a.travelled ? 'yes' : 'no');
+      // A paid amount is the savings numerator. markWatchBooked also flips the
+      // watch into post-booking monitoring, which is where a rebooking drop
+      // would be caught — the one alert people tell their friends about.
+      if (paid != null) queries.markWatchBooked(trip.search_id, paid);
+      // A route they did not fly is not a home route, whatever the box said.
+      // Guarded here, not only in the form handler: the library is the
+      // contract, and the next caller will not remember.
+      if (a.travelled && a.makeHomeRoute) {
+        db().prepare(
+          `UPDATE searches SET is_home_route = 1, expires_at = NULL WHERE id = ?`,
+        ).run(trip.search_id);
+      }
+    }
+  });
+  tx();
+  return getTrip(trip.id);
+}
+
+/**
+ * What to say after the answer — the retention prompt.
+ *
+ * Pure, so the page and the tests agree. A route just flown is the strongest
+ * home-route candidate there is; a home route already set needs no prompt,
+ * only reassurance that we keep watching.
+ */
+export function postTripNextStep(input: {
+  travelled: boolean;
+  hasWatch: boolean;
+  isHomeRoute: boolean;
+}): 'offer-home-route' | 'keep-watching' | 'nothing' {
+  if (!input.travelled || !input.hasWatch) return 'nothing';
+  return input.isHomeRoute ? 'keep-watching' : 'offer-home-route';
+}
+
+/** The post-trip URL. Lands on a page; the answer itself is a POST. */
+export function postTripUrl(token: string, baseUrl = APP_URL): string {
+  return `${baseUrl.replace(/\/$/, '')}/trip/after?t=${encodeURIComponent(token)}`;
+}
+
+/** Queue every chain stage for a confirmed-booked trip, plus the post-trip question. */
 export function scheduleChain(trip: Trip): void {
-  for (const spec of CHAIN) {
+  for (const spec of [...CHAIN, POST_TRIP]) {
     let when: string | null = null;
     if (spec.offsetMinutesFromBooking != null) {
       when = addMinutes(spec.offsetMinutesFromBooking);
@@ -270,7 +366,7 @@ export type SendDecision = { send: true } | { send: false; reason: string };
  * between queueing and sending.
  */
 export function maySend(trip: Trip, stage: ChainStage): SendDecision {
-  const spec = stage === 'nudge' ? NUDGE : CHAIN.find(c => c.stage === stage);
+  const spec = stage === 'nudge' ? NUDGE : stage === 'post-trip' ? POST_TRIP : CHAIN.find(c => c.stage === stage);
   const monetized = spec?.monetized ?? false;
 
   if (!trip.user_id) return { send: false, reason: 'no user on trip' };
@@ -284,6 +380,14 @@ export function maySend(trip: Trip, stage: ChainStage): SendDecision {
   }
   if (stage === 'nudge' && trip.status !== 'deciding') {
     return { send: false, reason: 'nudge only applies to the still-deciding branch' };
+  }
+  // We only ask "what did you pay" of people who told us they booked. Asking a
+  // still-deciding user is asking about a trip they said they did not take.
+  if (stage === 'post-trip' && trip.status !== 'booked') {
+    return { send: false, reason: 'post-trip question only applies to a booked trip' };
+  }
+  if (stage === 'post-trip' && trip.travelled_answer) {
+    return { send: false, reason: 'already answered' };
   }
 
   if (monetized) {

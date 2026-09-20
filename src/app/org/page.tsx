@@ -66,7 +66,12 @@ export default async function OrgHome() {
       <FcPageHead
         title="Today"
         lede={`${org.name} · ${groupCount} group${groupCount === 1 ? '' : 's'}, ${watchCount} watch${watchCount === 1 ? '' : 'es'}`}
-        action={<Link href="/org/groups" className="nc-btn-quiet">Groups</Link>}
+        action={
+          <div className="flex items-center gap-2">
+            <Link href="/org/reports" className="nc-btn-quiet">Reports</Link>
+            <Link href="/org/groups" className="nc-btn-quiet">Groups</Link>
+          </div>
+        }
       />
 
       {items.length === 0 ? (
