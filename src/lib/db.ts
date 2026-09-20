@@ -2267,6 +2267,26 @@ export const queries = {
    * so failures are counted from the dead-letter side: attempts logged by the
    * poller minus rows that survived as 'sent'.
    */
+  /**
+   * Sent mail vs. delivery events over a window — the input to the silence
+   * probe. Sent = alerts_sent rows plus chain sends, since both go through the
+   * same ESP and either alone can be quiet for a day.
+   */
+  deliverySilenceStats: (hours = 24) => {
+    const db = getDb();
+    const w = `-${Math.floor(hours)} hours`;
+    const alerts = (db.prepare(
+      `SELECT COUNT(*) AS n FROM alerts_sent WHERE status = 'sent' AND sent_at >= datetime('now', ?)`,
+    ).get(w) as { n: number }).n;
+    const chain = (db.prepare(
+      `SELECT COUNT(*) AS n FROM chain_sends WHERE status = 'sent' AND sent_at >= datetime('now', ?)`,
+    ).get(w) as { n: number }).n;
+    const events = (db.prepare(
+      `SELECT COUNT(*) AS n FROM email_events WHERE received_at >= datetime('now', ?)`,
+    ).get(w) as { n: number }).n;
+    return { sentInWindow: alerts + chain, eventsInWindow: events, windowHours: Math.floor(hours) };
+  },
+
   alertDeliveryStats: (hours = 6) => {
     const db = getDb();
     const sent = (db.prepare(
