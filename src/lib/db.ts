@@ -1220,6 +1220,17 @@ export type SearchRow = {
   user_id: number;
   target_per_adult_usd?: number | null;  // per-route alert target; null/absent → user/global default
   date_mode?: 'exact' | 'any';           // 'any' = watch the route, let us find the cheapest window
+  /**
+   * Columns added by the Watch migrations (addWatchCol above). They were
+   * missing from this type, so every reader had to cast — which is how
+   * alertGate ended up reading alert_channels through an inline cast and the
+   * board could not read it at all. Optional because older rows predate them.
+   */
+  is_home_route?: number | null;         // 1 = flown every year; never expires
+  alert_channels?: string | null;        // per-watch override; null = account default
+  status?: string | null;
+  expires_at?: string | null;
+  poll_band?: string | null;
 };
 
 export type FareRow = {
