@@ -16,7 +16,7 @@
   --border-soft:  #eef2f7;
   --text:         #0b1220;
   --text-muted:   #5b6678;
-  --text-faint:   #8a93a6;
+  --text-faint:   #697181;   /* was #8a93a6 — 3.09:1 on --bg-elevated, below AA */
   --brand:        #1A4459;
   --brand-soft:   #eef4fb;
   /* `--gold` deleted: zero references, and it held the retired Bloomberg gold
@@ -32,7 +32,8 @@ html.dark {
   --border-soft:  #182238;
   --text:         #e8ecf4;
   --text-muted:   #94a3b8;
-  --text-faint:   #6b7894;
+  --text-faint:   #7E8AA0;   /* was #6b7894 — 4.03:1 on --bg-elevated. Same value as
+                                --nc-on-dark-faint, which was raised for this exact reason. */
   --brand-soft:   rgba(26,68,89,.18);
   --shadow-card:  0 1px 2px rgba(0,0,0,.4), 0 12px 30px -16px rgba(0,0,0,.6);
 }
@@ -683,7 +684,7 @@ html.dark .flight-conversation-panel__stat {
   --fc-line:        rgba(10,20,38,.10);
   --fc-line-strong: rgba(10,20,38,.18);
   --fc-muted:       #5b6678;
-  --fc-faint:       #8a93a6;
+  --fc-faint:       #697181;   /* was #8a93a6 — 3.09:1 on a white .fc-card */
   --fc-font-display: var(--font-fc-display, 'Fraunces', 'Times New Roman', serif);
   --fc-font-sans:    var(--font-fc-sans, 'Manrope', ui-sans-serif, system-ui, sans-serif);
   --fc-font-mono:    var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
@@ -2211,6 +2212,33 @@ html[data-fc-theme="coal"] .kpi-label,
 html[data-fc-theme="coal"] .kpi-sub { color: rgba(255, 255, 255, 0.55) !important; }
 html[data-fc-theme="coal"] .kpi-value { color: #f5f1e8 !important; }
 html[data-fc-theme="coal"] .eyebrow { color: var(--fc-accent, #6FB3C9) !important; }
+
+/* ------------------------------------------------------------------
+   Coal re-tunes its surfaces but never re-tuned the TEXT tokens, so the
+   muted ramp kept light-theme values on a dark card:
+
+     --fc-muted #5b6678 on .fc-card (#14181f)  ->  3.06:1   FAIL
+     --fc-faint #8a93a6 on .fc-card (#14181f)  ->  5.77:1   pass
+
+   That gap is why FcBestDealsTable hardcoded #8a93a6 inline — a local
+   workaround for a systemic hole, which then failed the other way
+   (3.09:1) on the white default card.
+
+   Coal borrows the same night-cabin ramp the cabin theme already uses,
+   rather than a second set of greys: #98A4BA is 7.08:1 and #7E8AA0 is
+   5.11:1 on coal's card, so one ramp serves both dark themes.
+
+   Scoped to the element that DECLARES coal, matching the cabin block's
+   shape. An `html[data-fc-theme="coal"] .fc-shell` selector would have
+   been more specific than `.fc-shell[data-fc-theme="cabin"]` and would
+   have overridden cabin's (correct) tokens on the dashboard, whose shell
+   is cabin inside a coal <html>.
+   ------------------------------------------------------------------ */
+.fc-shell[data-fc-theme="coal"],
+.fc-landing[data-fc-theme="coal"] {
+  --fc-muted: var(--nc-on-dark-mute);
+  --fc-faint: var(--nc-on-dark-faint);
+}
 
 /* Bulk override of common Tailwind light backgrounds on non-FC routes */
 html[data-fc-theme="coal"] .bg-white,

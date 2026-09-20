@@ -969,9 +969,37 @@ export const queries = {
   deleteUserCascade: (id: number) => {
     const db = getDb();
     const tx = db.transaction(() => {
-      // FK ON DELETE CASCADE handles searches, sessions, user_settings; alerts_sent
-      // references searches and follows. Audit log keeps the row but nulls user_id.
-      db.prepare(`UPDATE audit_log SET user_id = NULL WHERE user_id = ?`).run(id);
+      // Do NOT rely on ON DELETE CASCADE here. SQLite enforces foreign keys
+      // only when `PRAGMA foreign_keys = ON`, and it is OFF on this connection
+      // (verified against production 2026-09-20: `PRAGMA foreign_keys` -> 0).
+      // The declared cascades were therefore silently inert, leaving 13 live
+      // session rows and 12 push tokens belonging to users that no longer
+      // existed. Each of those is an active harm, not just clutter:
+      //   sessions      — an auth row for a deleted account
+      //   device_tokens — push notifications still addressed to that person
+      //   searches      — the poller keeps pricing a ghost account's routes
+      // So every dependant is deleted explicitly, inside one transaction.
+      for (const table of [
+        'sessions', 'user_settings', 'device_tokens', 'push_devices',
+        'chat_sessions', 'user_route_intel', 'pending_enrollments', 'custom_domains',
+      ]) {
+        // Tables arrive over time; a missing one must not abort the delete.
+        try { db.prepare(`DELETE FROM ${table} WHERE user_id = ?`).run(id); }
+        catch { /* table not present in this schema version */ }
+      }
+      // alerts_sent references searches, so it goes with them.
+      db.prepare(
+        `DELETE FROM alerts_sent WHERE search_id IN (SELECT id FROM searches WHERE user_id = ?)`
+      ).run(id);
+      db.prepare(`DELETE FROM searches WHERE user_id = ?`).run(id);
+
+      // Analytics and audit rows are kept but de-identified: the aggregate
+      // history stays truthful while the person stops being identifiable.
+      for (const table of ['audit_log', 'user_events', 'affiliate_clicks', 'error_log']) {
+        try { db.prepare(`UPDATE ${table} SET user_id = NULL WHERE user_id = ?`).run(id); }
+        catch { /* table not present in this schema version */ }
+      }
+
       db.prepare(`DELETE FROM users WHERE id = ?`).run(id);
     });
     tx();
