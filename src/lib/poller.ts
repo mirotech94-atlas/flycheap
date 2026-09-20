@@ -3,7 +3,7 @@ import { TIER_LIMITS, limitsForUser, getDb, queries, type SearchRow, type FareRo
 import { searchFlights, pickCheapest, summarizeOffer, type FlightOffer } from './flightProvider';
 import { notifyAll, runSubscriptionAlerts } from './notifier';
 import { detectPriceDrop, median7dForSearch } from './priceDrops';
-import { effectiveTarget } from './targets';
+import { effectiveTarget, effectiveTargetOnBasis } from './targets';
 import { routeKey } from './providerCost';
 import { classifyAlert, type AlertKind } from './alertKind';
 import { verifyFare, type VerifyResult } from './fareTruth';
@@ -419,7 +419,18 @@ async function finishPoll(
   // only ever quotes a shifted departure, so no price could ever alert. A
   // labelled alert beats no alert — the notifier now prints the fare's own
   // dates and says plainly that they are not the tracked ones.
-  const underThreshold = summary.price_per_adult_usd < threshold;
+  // Evaluate against the watch's OWN basis. A family watching a party total
+  // cares what the booking costs, not what one seat costs; a watch with no
+  // explicit basis still resolves to per-adult, so nothing pre-existing
+  // re-bases itself and starts alerting at a different moment.
+  const targetEval = effectiveTargetOnBasis(search, userThreshold, {
+    perAdultUsd: summary.price_per_adult_usd,
+    partyTotalUsd: summary.total_price_usd,
+  });
+  // `under: null` means the question could not be answered honestly (a trip
+  // target with no hotel figure). Not an alert, and not a silent "no" either —
+  // it simply does not fire, and the dead-fare/verification path is unaffected.
+  const underThreshold = targetEval.under === true;
   if (underThreshold) {
     const lastAlert = queries.lastAlertForSearch(search.id, ALERT_FLOOR_DAYS);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {
