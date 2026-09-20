@@ -2359,6 +2359,12 @@ export const queries = {
         ORDER BY s.depart_date`
     ).all(orgId) as Array<Record<string, unknown>>,
 
+  /** Every watch belonging to one group. */
+  watchesForGroup: (groupId: number) =>
+    getDb().prepare(
+      `SELECT * FROM searches WHERE group_id = ? ORDER BY depart_date`
+    ).all(groupId) as Array<Record<string, unknown>>,
+
   /** Groups with nothing happening, for the fourth queue category. */
   groupsWithNoActivity: (orgId: number, days = 30) =>
     getDb().prepare(
