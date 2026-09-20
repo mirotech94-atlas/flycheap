@@ -1,4 +1,4 @@
-flycheap.18dn.com, admin.flycheap.18dn.com, my.flycheap.live, admin.flycheap.live, flycheap.live {
+my.flycheap.live, admin.flycheap.live, flycheap.live {
     # Serve auto-posted video clips as public static files so Ayrshare can
     # fetch them when posting to TikTok / Instagram / LinkedIn. Files are
     # written here by post_video.py before each Ayrshare call.
@@ -42,9 +42,20 @@ www.flycheap.live {
     redir https://flycheap.live{uri} permanent
 }
 
-# Plain-HTTP fallback by IP (will redirect to https://flycheap.18dn.com)
+# ── Retired 2026-09-17: flycheap.18dn.com is no longer served, only redirected.
+# Kept (rather than deleted) so old magic links, bookmarks and search results
+# still land somewhere correct. Safe to remove once nothing references it.
+flycheap.18dn.com {
+    redir https://flycheap.live{uri} permanent
+}
+
+admin.flycheap.18dn.com {
+    redir https://admin.flycheap.live{uri} permanent
+}
+
+# Plain-HTTP fallback by IP (redirects to the live apex)
 :80 {
     @ip host 162.220.53.111
-    redir @ip https://flycheap.18dn.com{uri} permanent
+    redir @ip https://flycheap.live{uri} permanent
     reverse_proxy 127.0.0.1:3000
 }

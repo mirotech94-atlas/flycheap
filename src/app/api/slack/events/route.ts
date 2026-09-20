@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 // using Claude, so clients get help even when the operator is offline.
 //
 // Slack app config required (see deploy notes):
-//   - Event Subscriptions → Request URL: https://flycheap.18dn.com/api/slack/events
+//   - Event Subscriptions → Request URL: https://my.flycheap.live/api/slack/events
 //   - Subscribe to bot event: message.channels
 //   - Bot scopes: chat:write, channels:history  → reinstall app
 //   - SLACK_SIGNING_SECRET in .env.local

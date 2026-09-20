@@ -11,7 +11,7 @@ export const dynamic = 'force-dynamic';
  *     on_demand
  *   }
  *   tls {
- *     ask https://flycheap.18dn.com/api/caddy/ask
+ *     ask https://my.flycheap.live/api/caddy/ask
  *   }
  *
  * Caddy hits this with `?domain=user.example.com`. Return 200 if the host is

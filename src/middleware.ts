@@ -12,7 +12,7 @@ const SESSION_COOKIE = 'fareintel_session';
 // auth-sensitive APIs do their own check inside the route handler.
 const PROTECTED_PREFIXES = ['/searches', '/settings', '/onboarding'];
 
-// Admin subdomain host. Requests to https://admin.flycheap.18dn.com/<path>
+// Admin subdomain host. Requests to https://admin.flycheap.live/<path>
 // are rewritten internally to /admin/<path> so the admin portal can live on
 // its own subdomain while sharing the same Next app. The /admin layout still
 // runs its own isAdmin() check, so this rewrite is safe.
@@ -74,7 +74,7 @@ export function middleware(req: NextRequest) {
     return NextResponse.redirect(`https://${MARKETING_HOST}${welcomeTarget}${url.search}`, 308);
   }
 
-  // Subdomain rewrite: admin.flycheap.18dn.com/* -> /admin/*
+  // Subdomain rewrite: admin.flycheap.live/* -> /admin/*
   if (ADMIN_HOSTS.has(host) && !pathname.startsWith('/admin') && !pathname.startsWith('/login') && !pathname.startsWith('/api')) {
     // Only rewrite paths that are ACTUALLY admin routes. Anything else is a
     // client page (/hotels, /explore, /settings…) that a user reached while

@@ -55,7 +55,7 @@ systemctl is-active egyptair
 # Prove the ENVIRONMENT loaded, not merely that the process started. A missing
 # .env.local still yields an "active" unit serving 200s with no affiliate
 # markers, no Stripe and no email.
-probe=$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Host: flycheap.18dn.com' \
+probe=$(curl -s -o /dev/null -w '%{redirect_url}' -H 'Host: my.flycheap.live' \
   'http://127.0.0.1:3000/go?to=https%3A%2F%2Fwww.aviasales.com%2Fsearch%2FJFK0311CAI17112&provider=aviasales')
 case "$probe" in
   *marker=*) echo "env OK — $probe" ;;

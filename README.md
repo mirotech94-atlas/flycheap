@@ -34,7 +34,7 @@ Hostnames are env-driven (`src/lib/hosts.ts`); the middleware routes by host:
 | `my.flycheap.live` | Client portal — the app itself |
 | `admin.flycheap.live` | Owner admin portal |
 
-The legacy host `flycheap.18dn.com` still serves during the cutover.
+The legacy host `flycheap.18dn.com` is retired: Caddy answers it with a permanent redirect to the `.live` equivalent, so old magic links and bookmarks still land. It is not served.
 
 ## The AI layer
 

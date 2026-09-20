@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic';
 // (Google's /url?q=, CJ's tkqlhce/anrdoezrs/etc., Awin's awclick.php, Travel-
 // payouts' tpk.lu short-link domain). Allowing those domains turns /go into
 // a phishing-friendly chain: attacker crafts /go?to=https://google.com/url?q=evil
-// and the user lands on evil.example with flycheap.18dn.com in the displayed
+// and the user lands on evil.example with my.flycheap.live in the displayed
 // URL. We allow them ONLY as the BAKED-IN destination of links we generate
 // (e.g., tpk.lu links from our own affiliate.ts), never as user input.
 //
@@ -509,7 +509,7 @@ export async function GET(req: Request) {
     }
   }
 
-  // Referrer policy: send only the ORIGIN (https://flycheap.18dn.com) as the
+  // Referrer policy: send only the ORIGIN (https://my.flycheap.live) as the
   // Referer header — no path, no query — so the cf_click token and affiliate
   // params can never leak to third-party trackers on the partner's landing
   // page. But the partner DOES see our domain, which is required by some
