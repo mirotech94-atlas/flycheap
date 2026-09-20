@@ -322,6 +322,9 @@ export type FunnelStage = { stage: string; n: number; ofPreviousPct: number | nu
 
 export type FunnelMetrics = {
   overall: FunnelStage[];
+  /** False until the ESP webhook has delivered at least one event. The funnel
+   *  then omits delivered/opened rather than showing them as zero. */
+  deliveryInstrumented: boolean;
   byAlertKind: Array<{ kind: string; sent: number; clicked: number; ctrPct: number; commissionUsd: number }>;
   /** Clicks by emitting surface. This is the spec's "channel" cut — in this
    *  codebase the surface IS the channel (email-alert, telegram, share-page…). */
@@ -358,8 +361,27 @@ export function funnelMetrics(days = 30): FunnelMetrics {
     `SELECT COUNT(*) AS n FROM commission_events WHERE received_at >= datetime('now', ?)`, window,
   ).n;
 
+  // delivered / opened come from the ESP webhook. They are only meaningful once
+  // it is configured, so they are reported as null-not-zero when no delivery
+  // event has ever arrived — an un-configured webhook must not read as "nothing
+  // was ever delivered".
+  const anyDeliveryEvents = one<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM email_events`,
+  ).n > 0;
+  const delivered = one<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM alerts_sent
+      WHERE status = 'sent' AND delivered_at IS NOT NULL AND sent_at >= datetime('now', ?)`, window,
+  ).n;
+  const opened = one<{ n: number }>(
+    `SELECT COUNT(*) AS n FROM alerts_sent
+      WHERE status = 'sent' AND opened_at IS NOT NULL AND sent_at >= datetime('now', ?)`, window,
+  ).n;
+
   const raw: Array<{ stage: string; n: number }> = [
     { stage: 'alert sent', n: sent },
+    ...(anyDeliveryEvents
+      ? [{ stage: 'delivered', n: delivered }, { stage: 'opened', n: opened }]
+      : []),
     { stage: 'clicked', n: clicked },
     { stage: 'hotel clicked', n: hotelClicked },
     { stage: 'ancillary clicked', n: ancillaryClicked },
@@ -427,5 +449,5 @@ export function funnelMetrics(days = 30): FunnelMetrics {
       GROUP BY cohort ORDER BY cohort DESC LIMIT 12`,
   );
 
-  return { overall, byAlertKind, byChannel, byProduct, cohorts };
+  return { overall, deliveryInstrumented: anyDeliveryEvents, byAlertKind, byChannel, byProduct, cohorts };
 }

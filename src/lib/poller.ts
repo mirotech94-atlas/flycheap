@@ -294,6 +294,14 @@ async function sendAlert(opts: {
 
   if (results.some(r => r.ok)) {
     queries.markAlertSent(alertId);
+    // The ESP's id for the email, so its delivered/opened webhooks can be
+    // joined back to this alert. Without it those events arrive about a
+    // message nobody can identify.
+    const emailId = results.find(r => r.channel === 'email' && r.ok)?.id;
+    if (emailId) {
+      try { queries.setAlertMessageId(alertId, emailId); }
+      catch (e) { console.error('[poll] setAlertMessageId failed:', (e as Error).message); }
+    }
     return true;
   }
   // Recorded before the rollback, because the rollback removes the only other

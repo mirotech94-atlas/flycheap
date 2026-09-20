@@ -643,6 +643,50 @@ function init(db: Database.Database) {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_time     ON affiliate_clicks(occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_provider ON affiliate_clicks(provider, occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_route    ON affiliate_clicks(route_id, occurred_at)`);
+  // ── Email delivery telemetry ────────────────────────────────────────────
+  //
+  // The funnel's first two steps — delivered and opened — are the ESP's to tell
+  // us; nothing in our own database can know them. Until the webhook existed the
+  // dashboard showed them as explicitly not-instrumented rather than as zeros,
+  // which was honest but not useful.
+  const alertDeliveryCols = db.prepare(`PRAGMA table_info(alerts_sent)`).all() as Array<{ name: string }>;
+  if (!alertDeliveryCols.some(c => c.name === 'message_id')) {
+    // The ESP's id for the send. This is the join key for every webhook event,
+    // and without it a delivery event cannot be tied back to an alert.
+    db.exec(`ALTER TABLE alerts_sent ADD COLUMN message_id TEXT`);
+    db.exec(`CREATE INDEX IF NOT EXISTS idx_alerts_sent_message ON alerts_sent(message_id)`);
+  }
+  if (!alertDeliveryCols.some(c => c.name === 'delivered_at')) {
+    db.exec(`ALTER TABLE alerts_sent ADD COLUMN delivered_at TEXT`);
+  }
+  if (!alertDeliveryCols.some(c => c.name === 'opened_at')) {
+    db.exec(`ALTER TABLE alerts_sent ADD COLUMN opened_at TEXT`);
+  }
+  if (!alertDeliveryCols.some(c => c.name === 'bounced_at')) {
+    db.exec(`ALTER TABLE alerts_sent ADD COLUMN bounced_at TEXT`);
+  }
+
+  // Raw webhook log. Kept separate from the alert row because events arrive out
+  // of order, can repeat, and can reference a message we never recorded (a
+  // chain send, a digest). Keeping the raw stream means a mis-parse is
+  // recoverable rather than lost.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS email_events (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      event_id TEXT NOT NULL,
+      event_type TEXT NOT NULL,
+      message_id TEXT,
+      recipient TEXT,
+      occurred_at TEXT NOT NULL,
+      received_at TEXT NOT NULL DEFAULT (datetime('now')),
+      raw_json TEXT
+    );
+    -- The ESP retries; the same event must not be counted twice.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_email_events_dedupe ON email_events(event_id);
+    CREATE INDEX IF NOT EXISTS idx_email_events_message ON email_events(message_id, event_type);
+    CREATE INDEX IF NOT EXISTS idx_email_events_time ON email_events(occurred_at);
+  `);
+
   // ── The monetization chain ──────────────────────────────────────────────
   //
   // One alert, one intent spike, six chances to earn. The design principle is
@@ -1828,6 +1872,46 @@ export const queries = {
     const db = getDb();
     db.prepare('UPDATE affiliate_clicks SET alert_id = NULL WHERE alert_id = ?').run(alertId);
     return db.prepare('DELETE FROM alerts_sent WHERE id = ?').run(alertId);
+  },
+
+  // ── Email delivery telemetry ────────────────────────────────────────────
+
+  /** Record the ESP's id for an alert send, so its webhooks can be joined back. */
+  setAlertMessageId: (alertId: number, messageId: string) =>
+    getDb().prepare('UPDATE alerts_sent SET message_id = ? WHERE id = ?').run(messageId, alertId),
+
+  /**
+   * Store a webhook event and apply it to the alert it belongs to.
+   *
+   * INSERT OR IGNORE on event_id because ESPs retry: the same delivery event can
+   * arrive several times and must not be counted twice. Applying the timestamp
+   * with COALESCE keeps the FIRST occurrence, since events can arrive out of
+   * order and "when was it delivered" should not drift later on a retry.
+   */
+  recordEmailEvent: (e: {
+    event_id: string; event_type: string; message_id: string | null;
+    recipient: string | null; occurred_at: string; raw_json: string;
+  }) => {
+    const db = getDb();
+    const res = db.prepare(
+      `INSERT OR IGNORE INTO email_events
+         (event_id, event_type, message_id, recipient, occurred_at, raw_json)
+       VALUES (@event_id, @event_type, @message_id, @recipient, @occurred_at, @raw_json)`
+    ).run(e);
+    // Already seen — do not re-apply.
+    if (res.changes === 0) return { applied: false, duplicate: true };
+    if (!e.message_id) return { applied: false, duplicate: false };
+
+    const col = e.event_type === 'email.delivered' ? 'delivered_at'
+              : e.event_type === 'email.opened'    ? 'opened_at'
+              : e.event_type === 'email.bounced' || e.event_type === 'email.complained' ? 'bounced_at'
+              : null;
+    if (!col) return { applied: false, duplicate: false };
+
+    const upd = db.prepare(
+      `UPDATE alerts_sent SET ${col} = COALESCE(${col}, ?) WHERE message_id = ?`
+    ).run(e.occurred_at, e.message_id);
+    return { applied: upd.changes > 0, duplicate: false };
   },
 
   // ── Operational alarm inputs ────────────────────────────────────────────
