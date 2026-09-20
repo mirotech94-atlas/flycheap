@@ -7,6 +7,10 @@ import { targetPerAdultEquivalent } from '@/lib/boardCard';
 import { bookHref, RangeBar } from '../BoardCardView';
 import { PriceChart } from './PriceChart';
 import { FcPageHead, FcPanel } from '@/components/fc/PageKit';
+import { setHomeRoute, setWatchChannels } from '../actions';
+import { deliverableChannels } from '@/lib/channelHealth';
+import { limitsForUser, queries } from '@/lib/db';
+import { channelSentence } from '@/lib/tierCopy';
 
 /**
  * The watch detail — the "Why?" behind a card.
@@ -52,6 +56,15 @@ export default async function WatchDetailPage({
 
   const a = card.anatomy;
   const v = card.verdict;
+
+  // What this watch could alert on: what the product can send, intersected with
+  // what the account's tier allows. A per-watch override can only NARROW this.
+  const deliverable = deliverableChannels();
+  const tierChannels = new Set<string>([...limitsForUser(user).channels, 'push']);
+  const selectable = deliverable.filter(c => tierChannels.has(c));
+  const row = queries.getSearchById(card.id);
+  const watchChannels = String(row?.alert_channels ?? '')
+    .split(',').map(x => x.trim()).filter(Boolean);
 
   return (
     <div className="space-y-6">
@@ -159,6 +172,70 @@ export default async function WatchDetailPage({
           </p>
         </FcPanel>
       )}
+
+      <FcPanel
+        title="How this watch alerts"
+        note="These settings are for this route only. Everything else comes from your account."
+      >
+        {/* The home-route flag. computeExpiry() and hasExpired() have honoured
+            it since they were written; nothing could set it until now, so the
+            spec's "headline retention lever" was unreachable. */}
+        <form action={setHomeRoute}>
+          <input type="hidden" name="watchId" value={card.id} />
+          <input type="hidden" name="value" value={card.watch.isHomeRoute ? 'off' : 'on'} />
+          <div className="flex items-start justify-between gap-4">
+            <div>
+              <div className="text-[13px] text-[var(--nc-on-dark)]">
+                {card.watch.isHomeRoute
+                  ? 'This is a route you fly every year.'
+                  : 'Is this a route you fly every year?'}
+              </div>
+              <p className="text-[11px] text-[var(--nc-on-dark-faint)] mt-0.5 max-w-prose">
+                {card.watch.isHomeRoute
+                  ? 'It never expires — we keep watching it between trips and tell you when next year’s fares open cheap.'
+                  : 'Home routes never expire. We keep watching between trips instead of retiring the watch once these dates pass.'}
+              </p>
+            </div>
+            <button type="submit" className="nc-act shrink-0">
+              {card.watch.isHomeRoute ? 'Not a home route' : 'Mark as home route'}
+            </button>
+          </div>
+        </form>
+
+        {/* Per-watch channels. alertGate intersects this with the account's
+            configured channels, so it can only narrow — it cannot conjure a
+            channel the user has not set up. */}
+        <form action={setWatchChannels} className="mt-5 pt-4 border-t border-[var(--nc-rule)]">
+          <input type="hidden" name="watchId" value={card.id} />
+          <div className="text-[13px] text-[var(--nc-on-dark)]">Alert me about this route on</div>
+          <p className="text-[11px] text-[var(--nc-on-dark-faint)] mt-0.5 mb-2">
+            Leave everything unticked to use your account default
+            {selectable.length ? <> ({channelSentence(selectable as never)})</> : null}.
+            The route you fly to see family can be louder than a speculative one.
+          </p>
+          {selectable.length === 0 ? (
+            <p className="text-[12px] text-[var(--nc-on-dark-mute)]">
+              No alert channel is configured yet. Set one up in{' '}
+              <Link href="/settings#alerts" className="underline underline-offset-2">Settings</Link>.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-3">
+              {selectable.map(c => (
+                <label key={c} className="flex items-center gap-1.5 text-[12.5px]">
+                  <input
+                    type="checkbox"
+                    name="channels"
+                    value={c}
+                    defaultChecked={watchChannels.includes(c)}
+                  />
+                  <span className="capitalize">{c}</span>
+                </label>
+              ))}
+            </div>
+          )}
+          <button type="submit" className="nc-act mt-3">Save for this route</button>
+        </form>
+      </FcPanel>
 
       <FcPanel title="This watch" note="Change the target or pause it from your watchlist.">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-[13px]">
