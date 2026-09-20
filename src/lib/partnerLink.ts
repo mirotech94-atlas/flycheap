@@ -106,6 +106,10 @@ export const ALERT_TYPES = {
   'anomaly':       'an',
   'ready':         'rd',
   'digest':        'dg',
+  'verdict-change':    'vc',
+  'trend-warning':     'tw',
+  'post-booking-drop': 'pb',
+  'window-closing':    'wc',
   'none':          'xx',
 } as const;
 export type PartnerAlertType = keyof typeof ALERT_TYPES;
