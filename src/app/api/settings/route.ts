@@ -4,6 +4,7 @@ import { queries } from '@/lib/db';
 import { restartCron } from '@/lib/cron';
 import { requireUser } from '@/lib/apiGuard';
 import { isOwner } from '@/lib/auth';
+import { effectiveQuietHours } from '@/lib/alertGate';
 
 /**
  * Account settings.
@@ -104,6 +105,18 @@ export async function GET() {
     // default for "when is this person asleep".
     quiet_hours_start: queries.getUserSetting(uid, 'quiet_hours_start') ?? '',
     quiet_hours_end: queries.getUserSetting(uid, 'quiet_hours_end') ?? '',
+    // What is ACTUALLY in force, and why. A settings card that renders only the
+    // stored value cannot tell "no quiet hours" from "the default quiet hours",
+    // and says the wrong one of those to every account that has never set them.
+    ...(() => {
+      const e = effectiveQuietHours(uid);
+      const pad = (h: number) => `${String(h).padStart(2, '0')}:00`;
+      return {
+        quiet_hours_source: e.source,
+        quiet_hours_effective_start: e.window ? pad(e.window.startHour) : '',
+        quiet_hours_effective_end: e.window ? pad(e.window.endHour) : '',
+      };
+    })(),
     daily_alert_cap: numOrNull(queries.getUserSetting(uid, 'daily_alert_cap')),
     // Absent means instant, so no existing account's behaviour changes.
     instant_alerts: queries.getUserSetting(uid, 'instant_alerts') !== 'false',
