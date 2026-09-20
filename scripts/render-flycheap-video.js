@@ -233,12 +233,12 @@ function sceneClose(t) {
     <g opacity="${a}" transform="translate(0 ${40 - a * 40})">
       ${text('The dashboard got sharper.', 70, 430, 74, colors.cream, 400, { serif: true })}
       ${text('The alerts are about to get faster.', 70, 520, 74, colors.gold, 400, { serif: true })}
-      ${text('Visit flycheap.18dn.com', 70, 650, 38, 'rgba(250,247,239,.78)', 700)}
+      ${text('Visit flycheap.live', 70, 650, 38, 'rgba(250,247,239,.78)', 700)}
       ${card(70, 820, 940, 300)}
       ${text('COMING SOON', 112, 890, 22, colors.gold, 700, { mono: true, spacing: 2 })}
       ${text('Slack + Telegram alerts', 112, 980, 52, colors.cream, 700, { serif: true })}
       ${text('Plus more ways to contact us for support or assistance with anything.', 112, 1040, 29, 'rgba(250,247,239,.7)', 500)}
-      ${pill('flycheap.18dn.com', 260, 1260, 560, colors.gold)}
+      ${pill('flycheap.live', 260, 1260, 560, colors.gold)}
     </g>
   `;
 }

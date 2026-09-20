@@ -7,7 +7,7 @@ import { usePathname } from 'next/navigation';
 // must NOT get the client app sidebar / footer / widgets layered on top.
 // /admin = command-center shell; /welcome = standalone marketing landing.
 function isFullBleed(pathname: string | null, adminHost = false, marketingHost = false): boolean {
-  // On admin.flycheap.18dn.com the middleware REWRITES / -> /admin. A rewrite
+  // On admin.flycheap.live the middleware REWRITES / -> /admin. A rewrite
   // does not change the browser URL, so usePathname() here still reports "/"
   // and every admin page got the client sidebar layered on top of it. The
   // host is the only reliable signal on the client, and it is passed down

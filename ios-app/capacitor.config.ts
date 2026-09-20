@@ -11,7 +11,7 @@ const config: CapacitorConfig = {
   appName: 'FlyCheap',
   webDir: 'www',
   server: {
-    url: 'https://flycheap.18dn.com/',
+    url: 'https://my.flycheap.live/',
     iosScheme: 'https',
   },
   ios: {

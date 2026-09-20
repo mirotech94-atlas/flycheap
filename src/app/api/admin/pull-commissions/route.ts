@@ -5,7 +5,7 @@ import { pullCommissions } from '@/lib/travelpayoutsStats';
 export const dynamic = 'force-dynamic';
 
 // Same-origin enforcement: the cookie is SameSite=Lax which mitigates most
-// cross-site CSRF, but a sibling-subdomain XSS on *.18dn.com could still
+// cross-site CSRF, but a sibling-subdomain XSS on *.flycheap.live could still
 // trigger this admin POST. Reject requests whose Origin/Referer doesn't
 // match our public URL.
 function isSameOrigin(req: NextRequest): boolean {

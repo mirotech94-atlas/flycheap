@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 
 /**
  * Android App Links — served at `/.well-known/assetlinks.json` via a rewrite in
- * next.config.js. Lets the FlyCheap Android app claim `https://flycheap.18dn.com/m/*`.
+ * next.config.js. Lets the FlyCheap Android app claim `https://my.flycheap.live/m/*`.
  *
  * TODO(Tier 2): replace the placeholder fingerprint with the real SHA-256 of the
  * app's signing cert. EAS gives this after the first Android build:

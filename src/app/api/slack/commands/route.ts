@@ -7,7 +7,7 @@ export const runtime = 'nodejs';
 
 /**
  * Slack slash command endpoint. Configured in the Slack app settings as
- *   /flycheap  →  https://flycheap.18dn.com/api/slack/commands
+ *   /flycheap  →  https://my.flycheap.live/api/slack/commands
  *
  * Subcommands (the part after /flycheap):
  *   /flycheap watch ORIGIN DEST PRICE     — subscribe this channel

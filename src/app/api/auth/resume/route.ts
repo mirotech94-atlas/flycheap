@@ -52,7 +52,7 @@ export async function GET(req: Request) {
   // 2) Trusted device? Start a fresh session and slide the device window forward.
   const dev = await checkDeviceToken();
   if (dev) {
-    // The device cookie is scoped to `.18dn.com`, so a client-portal device
+    // The device cookie is scoped to the apex (`.flycheap.live`), so a client-portal device
     // token is also sent to the admin host. Never resume a non-owner into admin.
     if (adminPortal && !isOwner(dev)) {
       // Their device token is legitimate for the CLIENT portal (apex-scoped

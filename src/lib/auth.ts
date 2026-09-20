@@ -43,8 +43,8 @@ export async function getCurrentUser(): Promise<UserRow | null> {
   const user = queries.getUserById(session.user_id);
   if (!user) return null;
   // Cookie-scope upgrade: legacy sessions are scoped to a single subdomain
-  // (e.g. flycheap.18dn.com). Re-issue with Domain=.<apex>.<tld> so the same
-  // session works on every sibling subdomain (flycheap.18dn.com, etc.).
+  // (e.g. my.flycheap.live). Re-issue with Domain=.<apex>.<tld> so the same
+  // session works on every sibling subdomain (my., admin., etc.).
   // This is idempotent — modern sessions already have the apex scope.
   try { await refreshCookieScope(token); } catch { /* read-path is allowed to fail */ }
   // Refresh last_ip / last_action_at for the admin Sessions view. Throttled.
@@ -163,7 +163,7 @@ export async function startSession(userId: number): Promise<string> {
   const isLocal = /^(localhost|127\.0\.0\.1)(:|$)/.test(host);
   const secure = proto === 'https' || (!isLocal && process.env.NODE_ENV !== 'development');
 
-  // If COOKIE_DOMAIN is set in env (e.g. ".18dn.com") share the session across
+  // If COOKIE_DOMAIN is set in env (e.g. ".flycheap.live") share the session across
   // all subdomains. Otherwise infer: when host looks like `<sub>.<domain>.<tld>`
   // and we're not on localhost, derive `.<domain>.<tld>` automatically so users
   // logged in on one subdomain (tracker) stay authed on siblings (flycheap).
@@ -243,7 +243,7 @@ export async function endSession(): Promise<void> {
     }
   }
 
-  // Delete both forms — bare cookie and the apex-domain one (`.18dn.com`).
+  // Delete both forms — bare cookie and the apex-domain one (`.flycheap.live`).
   const host = (await headers()).get('host') ?? '';
   const parts = host.split(':')[0].split('.');
   const apex = parts.length >= 3 ? '.' + parts.slice(-2).join('.') : '';
