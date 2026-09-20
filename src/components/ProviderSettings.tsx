@@ -114,8 +114,17 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled_providers: enabled }),
     });
-    setMsg(res.ok ? 'Saved.' : `Error: ${res.statusText}`);
-    if (res.ok) start(() => router.refresh());
+    if (!res.ok) { setMsg(`Error: ${res.statusText}`); return; }
+    // enabled_providers is service-wide, so the API only accepts it from the
+    // owner and reports anything it refused. Saying "Saved." over a value the
+    // server threw away is the kind of quiet no-op that gets debugged twice.
+    const j = await res.json().catch(() => ({} as { ignored?: string[] }));
+    if (j.ignored?.includes('enabled_providers')) {
+      setMsg('Not saved — provider selection is service-wide and can only be changed by the account owner.');
+      return;
+    }
+    setMsg('Saved.');
+    start(() => router.refresh());
   }
 
   async function test(id: string) {

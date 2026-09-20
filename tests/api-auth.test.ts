@@ -145,3 +145,36 @@ describe('the endpoints that were open in production', () => {
     expect(src).not.toMatch(/queries\.recentAlerts\(500\)/);
   });
 });
+
+describe('the settings contract the UI depends on', () => {
+  /**
+   * Narrowing the schema silently breaks callers: zod STRIPS unknown keys, so
+   * a field the client still posts is dropped without appearing in `ignored`,
+   * and the card reports a successful save of nothing.
+   *
+   * AlertChannelsCard posts the Slack target, the Slack webhook and the
+   * Instagram user id. They must stay writable even though GET stopped
+   * returning their values.
+   */
+  const settings = readFileSync(join(API, 'settings/route.ts'), 'utf8');
+
+  for (const key of ['alert_slack_target', 'alert_slack_webhook', 'alert_ig_user_id']) {
+    it(`still accepts ${key} on PUT`, () => {
+      expect(settings).toContain(`${key}: z.string`);
+      // ...and in the list the PUT loop actually persists.
+      expect(settings).toContain(`'${key}'`);
+    });
+
+    it(`does not return ${key}'s value on GET`, () => {
+      // Only the *_configured boolean.
+      expect(settings).not.toContain(`${key}: effective(`);
+      expect(settings).not.toContain(`${key}: queries.get`);
+    });
+  }
+
+  it('every key the client posts is either stored or reported as ignored', () => {
+    // The PUT loop must have no silent third branch.
+    expect(settings).toMatch(/ignored\.push/);
+    expect(settings).toMatch(/ignored\.length \? \{ ok: true, ignored \}/);
+  });
+});

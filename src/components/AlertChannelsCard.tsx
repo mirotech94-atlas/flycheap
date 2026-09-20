@@ -19,9 +19,28 @@ type Cfg = {
   alert_ig_user_id: string;
 };
 
+/**
+ * Which credential fields already have a value on the server.
+ *
+ * GET /api/settings deliberately does not return the VALUES of the Slack
+ * webhook, the Slack target or the Instagram user id — a webhook URL is a
+ * credential and echoing it to the browser on every settings load is how it
+ * ends up somewhere it should not be. So the inputs start blank, show whether
+ * something is already stored, and a blank field means "leave it alone"
+ * rather than "erase it".
+ */
+type Configured = {
+  alert_slack_target: boolean;
+  alert_slack_webhook: boolean;
+  alert_ig_user_id: boolean;
+};
+
 export function AlertChannelsCard() {
   const toast = useToast();
   const [cfg, setCfg] = useState<Cfg | null>(null);
+  const [configured, setConfigured] = useState<Configured>({
+    alert_slack_target: false, alert_slack_webhook: false, alert_ig_user_id: false,
+  });
   const [saving, setSaving] = useState(false);
   const [testing, setTesting] = useState<string | null>(null);
 
@@ -29,10 +48,16 @@ export function AlertChannelsCard() {
     fetch('/api/settings').then(r => r.json()).then(j => {
       setCfg({
         alert_channels: j.alert_channels ?? 'email',
-        alert_slack_target: j.alert_slack_target ?? '',
-        alert_slack_webhook: j.alert_slack_webhook ?? '',
+        // Credentials are never sent back; these stay blank unless retyped.
+        alert_slack_target: '',
+        alert_slack_webhook: '',
         alert_telegram_chat_id: j.alert_telegram_chat_id ?? '',
-        alert_ig_user_id: j.alert_ig_user_id ?? '',
+        alert_ig_user_id: '',
+      });
+      setConfigured({
+        alert_slack_target: Boolean(j.alert_slack_target_configured),
+        alert_slack_webhook: Boolean(j.alert_slack_webhook_configured),
+        alert_ig_user_id: Boolean(j.alert_ig_user_id_configured),
       });
     });
   }, []);
@@ -57,14 +82,36 @@ export function AlertChannelsCard() {
   async function save() {
     if (!cfg) return;
     setSaving(true);
+    // Send a credential ONLY when the user typed one. Posting the blank field
+    // back would wipe a stored webhook every time anybody saved this card.
+    const body: Record<string, string> = {
+      alert_channels: cfg.alert_channels,
+      alert_telegram_chat_id: cfg.alert_telegram_chat_id,
+    };
+    for (const k of ['alert_slack_target', 'alert_slack_webhook', 'alert_ig_user_id'] as const) {
+      if (cfg[k].trim()) body[k] = cfg[k].trim();
+    }
+
     const res = await fetch('/api/settings', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(cfg),
+      body: JSON.stringify(body),
     });
     setSaving(false);
     if (res.ok) {
-      toast.success('Channels saved', 'Future alerts will fan out to the channels you selected.');
+      const j = await res.json().catch(() => ({} as { ignored?: string[] }));
+      // The server says what it refused. Reporting success for a field it threw
+      // away is worse than reporting the refusal.
+      if (j.ignored?.length) {
+        toast.error('Some settings were not saved', `Not permitted on this account: ${j.ignored.join(', ')}.`);
+      } else {
+        toast.success('Channels saved', 'Future alerts will fan out to the channels you selected.');
+      }
+      setConfigured(prev => ({
+        alert_slack_target: prev.alert_slack_target || Boolean(body.alert_slack_target),
+        alert_slack_webhook: prev.alert_slack_webhook || Boolean(body.alert_slack_webhook),
+        alert_ig_user_id: prev.alert_ig_user_id || Boolean(body.alert_ig_user_id),
+      }));
     } else {
       const j = await res.json().catch(() => ({}));
       toast.error('Save failed', typeof j.error === 'string' ? j.error : 'Try again.');
@@ -141,7 +188,7 @@ export function AlertChannelsCard() {
           <input
             value={cfg.alert_slack_target}
             onChange={e => field('alert_slack_target')(e.target.value)}
-            placeholder="C0123ABC or U0123ABC or @you@example.com"
+            placeholder={configured.alert_slack_target ? "Already set — type to replace" : "C0123ABC or U0123ABC or @you@example.com"}
             className="w-full font-mono text-xs mt-1"
           />
           <p className="text-[10px] text-slate-500 mt-1">
@@ -153,7 +200,7 @@ export function AlertChannelsCard() {
           <input
             value={cfg.alert_slack_webhook}
             onChange={e => field('alert_slack_webhook')(e.target.value)}
-            placeholder="https://hooks.slack.com/services/T…/B…/…"
+            placeholder={configured.alert_slack_webhook ? "Already set — type to replace" : "https://hooks.slack.com/services/T…/B…/…"}
             className="w-full font-mono text-xs mt-1"
           />
         </div>

@@ -35,6 +35,11 @@ const USER_KEYS = [
   'alert_telegram_chat_id',
   'alert_phone',
   'alert_phone_whatsapp',
+  // Write-only from the client's point of view: settable here, never echoed
+  // back by GET. A webhook URL is a credential.
+  'alert_slack_target',
+  'alert_slack_webhook',
+  'alert_ig_user_id',
 ] as const;
 
 /**
@@ -50,7 +55,11 @@ const GLOBAL_KEYS = [
   'usd_to_egp',
 ] as const;
 
-/** Credentials. Never returned; only whether they are set. */
+/**
+ * Credentials. Settable (they are in USER_KEYS) but never READ back — GET
+ * reports only whether each one is set. Echoing a webhook URL to the browser
+ * on every settings page load is how it ends up somewhere it should not be.
+ */
 const SECRET_KEYS = ['alert_slack_webhook', 'alert_slack_target', 'alert_ig_user_id'] as const;
 
 type UserKey = (typeof USER_KEYS)[number];
@@ -95,6 +104,9 @@ const PutSchema = z.object({
   alert_telegram_chat_id: z.string().max(100).optional(),
   alert_phone: z.string().max(40).optional(),
   alert_phone_whatsapp: z.string().max(40).optional(),
+  alert_slack_target: z.string().max(200).optional(),
+  alert_slack_webhook: z.string().max(500).optional(),
+  alert_ig_user_id: z.string().max(100).optional(),
   // Owner-only. Silently ignored for everyone else rather than rejected, so a
   // stale client cannot be told which keys are privileged.
   poll_interval_minutes: z.number().int().min(5).max(1440).optional(),
