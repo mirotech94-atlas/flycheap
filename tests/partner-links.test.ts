@@ -218,6 +218,54 @@ function walk(dir: string, out: string[] = []): string[] {
   return out;
 }
 
+/**
+ * The hostname guard alone was not enough.
+ *
+ * BookButton.tsx hand-rolled its own `/go?...` query. It named no partner
+ * hostname — those came from crossShopLinks — so the containment test above
+ * passed while the product's MAIN conversion surface emitted links with no
+ * sub_id, no product and no position. Every Book-panel click was invisible to
+ * the funnel's segments.
+ *
+ * So: nothing outside the builder may construct a /go URL either.
+ */
+const GO_BUILDERS_ALLOWED = new Set([
+  'lib/partnerLink.ts',  // the builder
+  'lib/affiliate.ts',    // trackedRedirect/bookingLink adapters over it
+  'app/go/route.ts',     // the route itself
+]);
+
+describe('/go construction containment', () => {
+  it('no file outside the builder hand-rolls a /go URL', () => {
+    // Matches `/go?` in a template literal or string, which is how every
+    // hand-rolled version has looked. Comments are stripped first, so a file
+    // may still DESCRIBE the pattern (several explain why they stopped using
+    // it) without failing the guard.
+    const rx = /['"`]\/go\?|`\$\{[^}]*\}\/go\?/;
+    const stripComments = (src: string) =>
+      src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+    const offenders = walk(SRC)
+      .map(f => path.relative(SRC, f))
+      .filter(rel => !GO_BUILDERS_ALLOWED.has(rel))
+      .filter(rel => rx.test(stripComments(fs.readFileSync(path.join(SRC, rel), 'utf8'))));
+
+    expect(offenders, [
+      'These files build a /go URL without going through buildPartnerLink().',
+      'A link built by hand carries no sub_id, no product and no position, so',
+      'its clicks vanish from every segment in the funnel.',
+    ].join('\n')).toEqual([]);
+  });
+
+  it('the Book panel records which option was taken and where it ranked', () => {
+    // The spec's reason for recording this: it is how you learn whether
+    // ordering by expected commission costs you clicks.
+    const src = fs.readFileSync(path.join(SRC, 'components/BookButton.tsx'), 'utf8');
+    expect(src).toContain('optionRank');
+    expect(src).toContain('optionName');
+    expect(src).toContain('buildPartnerLink');
+  });
+});
+
 describe('partner hostname containment', () => {
   it('no new file writes partner URLs outside the audited path', () => {
     const rx = new RegExp(PARTNER_HOSTS.map(h => h.replace(/\./g, '\\.')).join('|'));

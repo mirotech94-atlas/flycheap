@@ -6,6 +6,7 @@ import { fmtDate, fmtRelative, fmtUSD, bookingLink } from '@/lib/utils';
 import { SearchActions } from './SearchActions';
 import { Sparkline } from './Sparkline';
 import { useToast } from './Toaster';
+import { buildPartnerLink, routeIdFor } from '@/lib/partnerLink';
 
 type Search = {
   id: number;
@@ -37,17 +38,17 @@ function trackedBookHref(s: Search, perAdultUsd: number): string {
     departDate: s.depart_date, returnDate: s.return_date,
     adults: s.adults, infants: s.infants,
   });
-  const q = new URLSearchParams({
-    to: dest,
-    origin: s.origin,
-    destination: s.destination,
-    dep: s.depart_date,
-    ret: s.return_date,
-    per: String(Math.round(perAdultUsd)),
-    provider: 'aviasales',
-    surface: 'searches-tracked-table',
+  return buildPartnerLink({
+    partner: 'aviasales', product: 'flight', deeplink: dest,
+    context: {
+      surface: 'searches-tracked-table',
+      routeId: routeIdFor({
+        origin: s.origin, destination: s.destination,
+        departDate: s.depart_date, returnDate: s.return_date,
+      }),
+      priceShownUsd: perAdultUsd,
+    },
   });
-  return `/go?${q.toString()}`;
 }
 
 /**

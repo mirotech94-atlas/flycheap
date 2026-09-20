@@ -34,6 +34,8 @@ import { Em } from '@/lib/i18n/rich';
 import { MARKETING_HOST } from '@/lib/hosts';
 
 import type { Metadata } from 'next';
+import { buildPartnerLink, routeIdFor } from '@/lib/partnerLink';
+import type { AffiliateSurface } from '@/lib/affiliate';
 
 /**
  * Wrap an outbound affiliate URL in our /go redirector so the click is logged
@@ -55,17 +57,19 @@ function trackedBook(opts: {
     departDate: opts.departDate, returnDate: opts.returnDate,
     adults: opts.adults, infants: opts.infants,
   });
-  const q = new URLSearchParams({
-    to: dest,
-    origin: opts.origin,
-    destination: opts.destination,
-    dep: opts.departDate,
-    ret: opts.returnDate,
-    per: String(Math.round(opts.perAdultUsd)),
-    provider: 'aviasales',
-    surface: opts.surface,
+  // Through the one builder: a hand-rolled query carries no sub_id and no
+  // product, so its clicks drop out of every segment in the funnel.
+  return buildPartnerLink({
+    partner: 'aviasales', product: 'flight', deeplink: dest,
+    context: {
+      surface: opts.surface as AffiliateSurface,
+      routeId: routeIdFor({
+        origin: opts.origin, destination: opts.destination,
+        departDate: opts.departDate, returnDate: opts.returnDate,
+      }),
+      priceShownUsd: opts.perAdultUsd,
+    },
   });
-  return `/go?${q.toString()}`;
 }
 
 export const metadata: Metadata = {

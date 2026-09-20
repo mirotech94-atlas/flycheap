@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { hotellookLink, tripcomHotelLink, airbnbLink, vrboLink, trackedRedirect, buildRouteId, tpBrandConfigured, type AffiliateSurface } from '@/lib/affiliate';
 import { cityName } from '@/lib/explore';
+import { buildPartnerLink } from '@/lib/partnerLink';
 
 interface Props {
   origin: string;
@@ -70,7 +71,12 @@ export function HotelUpsell({
   // the only surface that knows both the arrival airport and the arrival date,
   // which is what a transfer quote needs. Hidden entirely until configured.
   const transferHref = tpBrandConfigured('kiwitaxi')
-    ? `/go?brand=kiwitaxi&surface=${encodeURIComponent(surface)}&route_id=${encodeURIComponent(rid)}&destination=${encodeURIComponent(destinationIata)}&dep=${encodeURIComponent(checkIn)}`
+    ? buildPartnerLink({
+        // No deeplink: Travelpayouts click hosts accept a custom_url parameter,
+        // so the destination is resolved server-side in /go and never from here.
+        partner: 'kiwitaxi', product: 'transfer',
+        context: { surface, routeId: rid },
+      })
     : null;
 
   const otherStayHref = mode === 'hotel'

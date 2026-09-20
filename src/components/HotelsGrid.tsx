@@ -5,6 +5,7 @@ import { hotelCityForDestination, buildBookingUrl, buildExpediaUrl } from '@/lib
 import type { Hotel, HotelProviderQuote } from '@/lib/hotelMockData';
 import type { GuestsState } from './HotelsGuestsPicker';
 import { totalGuests } from './HotelsGuestsPicker';
+import { buildPartnerLink, routeIdFor, type PartnerId } from '@/lib/partnerLink';
 
 // Area-based fallback tiles (the original HotelsGrid behaviour). Now rendered
 // as a secondary "Browse by neighborhood" section below the hotel cards so we
@@ -89,8 +90,12 @@ function buildProviderHref(opts: {
     dest.searchParams.set('endDate', checkOut);
     dest.searchParams.set('adults', String(adults));
   }
-  const qs = new URLSearchParams({ to: dest.toString(), provider, surface: 'hotels-grid' });
-  return `/go?${qs.toString()}`;
+  // Hotels are the biggest-paying product in the catalog; untagged hotel clicks
+  // are the most expensive kind to lose track of.
+  return buildPartnerLink({
+    partner: provider as PartnerId, product: 'hotel', deeplink: dest.toString(),
+    context: { surface: 'hotels-grid', routeId: destination || null },
+  });
 }
 
 function buildAreaHref(area: string, destination: string, checkIn: string, checkOut: string, guests: GuestsState): string {
@@ -101,7 +106,10 @@ function buildAreaHref(area: string, destination: string, checkIn: string, check
   u.searchParams.set('checkIn', checkIn);
   u.searchParams.set('checkOut', checkOut);
   u.searchParams.set('adults', String(adults));
-  return `/go?to=${encodeURIComponent(u.toString())}&provider=hotellook&surface=hotels-grid`;
+  return buildPartnerLink({
+    partner: 'hotellook', product: 'hotel', deeplink: u.toString(),
+    context: { surface: 'hotels-grid', routeId: destination || null },
+  });
 }
 
 /**

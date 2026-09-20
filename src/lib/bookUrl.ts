@@ -1,4 +1,6 @@
 import 'server-only';
+import { buildPartnerLink, routeIdFor } from './partnerLink';
+import { aviasalesSearchLink } from './affiliate';
 
 /**
  * Build the canonical `/go` affiliate booking URL for a flight fare.
@@ -18,26 +20,22 @@ export function buildFareBookUrl(opts: {
   searchId?: number | null;
   baseUrl: string;
 }): string {
-  const ddmm = (iso: string) => {
-    const [, m, d] = iso.split('-');
-    return `${d}${m}`;
-  };
-  // Aviasales deeplink format (mirrors src/lib/utils.ts crossShop links).
-  const aviasales =
-    `https://www.aviasales.com/search/` +
-    `${opts.origin}${ddmm(opts.dep)}${opts.destination}${ddmm(opts.ret)}${opts.adults}?currency=usd`;
-
-  const qs = new URLSearchParams({
-    to: aviasales,
-    provider: 'aviasales',
-    surface: 'mobile-app',
-    origin: opts.origin,
-    destination: opts.destination,
-    dep: opts.dep,
-    ret: opts.ret,
+  return buildPartnerLink({
+    partner: 'aviasales',
+    product: 'flight',
+    baseUrl: opts.baseUrl,
+    deeplink: aviasalesSearchLink({
+      origin: opts.origin, destination: opts.destination,
+      departDate: opts.dep, returnDate: opts.ret, adults: opts.adults,
+    }),
+    context: {
+      surface: 'mobile-app',
+      routeId: routeIdFor({
+        origin: opts.origin, destination: opts.destination,
+        departDate: opts.dep, returnDate: opts.ret,
+      }),
+      searchId: opts.searchId ?? null,
+      priceShownUsd: opts.perAdultUsd ?? null,
+    },
   });
-  if (opts.perAdultUsd != null) qs.set('per', String(Math.round(opts.perAdultUsd)));
-  if (opts.searchId != null) qs.set('search_id', String(opts.searchId));
-
-  return `${opts.baseUrl.replace(/\/$/, '')}/go?${qs.toString()}`;
 }
