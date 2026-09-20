@@ -39,7 +39,7 @@ export function getPublicMetrics(): PublicMetrics {
     const snapshots = one<{ n: number }>('SELECT COUNT(*) AS n FROM fare_snapshots').n;
     const activeRoutes = one<{ n: number }>('SELECT COUNT(*) AS n FROM searches WHERE active = 1').n;
     const routePairs = one<{ n: number }>('SELECT COUNT(DISTINCT origin || destination) AS n FROM best_deals_cache').n;
-    const alertsSent = one<{ n: number }>('SELECT COUNT(*) AS n FROM alerts_sent').n;
+    const alertsSent = one<{ n: number }>(`SELECT COUNT(*) AS n FROM alerts_sent WHERE status = 'sent'`).n;
     const lastPoll = one<{ t: string | null }>('SELECT MAX(polled_at) AS t FROM fare_snapshots').t;
     const lastPollAgoMin = lastPoll ? Math.max(0, Math.round((Date.now() - new Date(lastPoll.replace(' ', 'T') + 'Z').getTime()) / 60000)) : null;
 
@@ -97,6 +97,7 @@ export function getPublicMetrics(): PublicMetrics {
     const alertRows = db.prepare(`
       SELECT s.origin, s.destination, a.price_per_adult_usd AS price, a.kind, a.sent_at
       FROM alerts_sent a JOIN searches s ON s.id = a.search_id
+      WHERE a.status = 'sent'
       ORDER BY a.sent_at DESC LIMIT 6
     `).all() as Array<{ origin: string; destination: string; price: number; kind: string; sent_at: string }>;
     const recentAlerts = alertRows.map(a => ({

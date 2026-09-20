@@ -16,6 +16,11 @@
 // Each builder reads its env-side identifier; when called from a client
 // component the value is `undefined` and /go fills it in server-side.
 
+import {
+  buildPartnerLink, routeIdFor,
+  type PartnerProduct, type PartnerAlertType,
+} from './partnerLink';
+
 const TP_MARKER = process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER;
 
 /**
@@ -56,6 +61,15 @@ export const AFFILIATE_SURFACES = [
   'searches-tracked-table',
   'share-page',
   'mobile-app',
+  // Autonomous agent channels. These were emitting /go links with a surface
+  // that was not in this list, so every click they produced was logged as a
+  // typo-warning and never grouped in the funnel.
+  'agent-social',
+  'agent-email',
+  // The trip chain — the post-booking sequence. Its own surface, separate from
+  // 'email-alert', because the whole point of the reporting is to tell the
+  // alert channel and the commercial channel apart.
+  'email-chain',
 ] as const;
 export type AffiliateSurface = (typeof AFFILIATE_SURFACES)[number];
 
@@ -101,6 +115,38 @@ export type AffiliateProvider = (typeof AFFILIATE_PROVIDERS)[number];
 
 export function isValidProvider(p: string | null | undefined): p is AffiliateProvider {
   return typeof p === 'string' && (AFFILIATE_PROVIDERS as readonly string[]).includes(p);
+}
+
+/**
+ * The canonical Aviasales search deeplink shape.
+ *
+ * This URL format was being re-spelled in four places (utils.crossShopLinks,
+ * bookUrl, the social-poster agent, the email-digest agent), which is exactly
+ * how a channel ends up with a stale template nobody notices. One definition,
+ * consumed by buildPartnerLink().
+ *
+ * NOTE: returns a BARE partner URL with no marker. It is only ever safe as the
+ * `deeplink` argument to buildPartnerLink(), which routes it through /go where
+ * the marker is attached server-side.
+ */
+export function aviasalesSearchLink(opts: {
+  origin: string;
+  destination: string;
+  departDate: string;            // YYYY-MM-DD
+  returnDate?: string | null;    // YYYY-MM-DD; omit for one-way
+  adults?: number;
+  airline?: string | null;       // IATA carrier filter, e.g. "MS"
+}): string {
+  const ddmm = (iso: string) => {
+    const m = iso.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    return m ? `${m[3]}${m[2]}` : '';
+  };
+  const adults = opts.adults ?? 1;
+  const leg = `${opts.origin.toUpperCase()}${ddmm(opts.departDate)}${opts.destination.toUpperCase()}` +
+              (opts.returnDate ? ddmm(opts.returnDate) : '');
+  const qs = new URLSearchParams({ currency: 'usd' });
+  if (opts.airline) qs.set('airlines', opts.airline.toUpperCase());
+  return `https://www.aviasales.com/search/${leg}${adults}?${qs.toString()}`;
 }
 
 export interface AffiliateLinkOptions {
@@ -257,23 +303,65 @@ function providerForHost(destUrl: string): string {
  */
 export function trackedRedirect(
   destUrl: string,
-  opts: AffiliateLinkOptions & { baseUrl?: string; provider?: string },
+  opts: AffiliateLinkOptions & {
+    baseUrl?: string; provider?: string;
+    /** What is being sold — drives the product half of sub_id. Inferred from
+     *  the destination host when omitted. */
+    product?: PartnerProduct;
+    alertId?: number | null;
+    alertType?: PartnerAlertType;
+    campaign?: string | null;
+    tripId?: string | null;
+  },
 ): string {
-  const qs = new URLSearchParams({
-    to: destUrl,
-    provider: opts.provider ?? providerForHost(destUrl),
-    surface: opts.surface,
+  // Also a thin adapter over the one builder, for the same reason bookingLink is.
+  return buildPartnerLink({
+    partner: (opts.provider as AffiliateProvider) ?? (providerForHost(destUrl) as AffiliateProvider),
+    product: opts.product ?? productForHost(destUrl),
+    deeplink: destUrl,
+    baseUrl: opts.baseUrl ?? null,
+    context: {
+      surface: opts.surface,
+      routeId: opts.routeId ?? null,
+      optionRank: opts.position ?? null,
+      alertId: opts.alertId ?? null,
+      alertType: opts.alertType,
+      campaign: opts.campaign ?? null,
+      tripId: opts.tripId ?? null,
+    },
   });
-  if (opts.routeId) {
-    qs.set('route_id', opts.routeId);
-    const [origin, destination, dep, ret] = opts.routeId.split('-');
-    if (origin) qs.set('origin', origin);
-    if (destination) qs.set('destination', destination);
-    if (dep && /^\d{8}$/.test(dep)) qs.set('dep', `${dep.slice(0,4)}-${dep.slice(4,6)}-${dep.slice(6,8)}`);
-    if (ret && /^\d{8}$/.test(ret)) qs.set('ret', `${ret.slice(0,4)}-${ret.slice(4,6)}-${ret.slice(6,8)}`);
+}
+
+/**
+ * Best guess at what a destination host is selling, for the product half of
+ * sub_id. Only a fallback — callers that know should pass `product` explicitly,
+ * because this axis is what the whole trip chain reports along and a wrong
+ * guess is invisible until the numbers are already being read.
+ *
+ * Hosts that sell more than one category are discriminated on PATH, not host:
+ * trip.com sells flights and hotels from the same domain, so keying on the host
+ * alone silently filed every Trip.com flight click under hotels.
+ */
+export function productForHost(url: string): PartnerProduct {
+  let host = '';
+  let path = '';
+  try {
+    const u = new URL(url);
+    host = u.hostname.toLowerCase();
+    path = u.pathname.toLowerCase();
+  } catch { return 'flight'; }
+
+  if (/kiwitaxi/.test(host)) return 'transfer';
+  if (/ekta/.test(host)) return 'insurance';
+  // Multi-category hosts: path decides.
+  if (/trip\.com/.test(host)) {
+    if (path.includes('/flight')) return 'flight';
+    if (path.includes('/carhire') || path.includes('/cars')) return 'car';
+    if (path.includes('/things-to-do') || path.includes('/tours')) return 'tour';
+    return 'hotel';
   }
-  const p = `/go?${qs.toString()}`;
-  return opts.baseUrl ? `${opts.baseUrl.replace(/\/$/, '')}${p}` : p;
+  if (/hotellook|booking\.com|expedia|airbnb|vrbo/.test(host)) return 'hotel';
+  return 'flight';
 }
 
 /**
@@ -510,36 +598,63 @@ export function bookingLink(opts: {
   infants: number;
   /** Travelpayouts-supplied offer path (e.g. "/search/JFK2505CAI?t=..."). If present, used verbatim. */
   offerPath?: string | null;
-  /** Optional extra metadata logged to affiliate_clicks. */
-  trackAs?: { searchId?: number; perAdult?: number; provider?: string; surface?: string; routeId?: string };
+  /** Optional extra metadata logged to affiliate_clicks (the click_out row). */
+  trackAs?: {
+    searchId?: number; perAdult?: number; provider?: string;
+    surface?: AffiliateSurface | string; routeId?: string;
+    /** The alerts_sent row this link descends from — closes the alert→click join. */
+    alertId?: number | null;
+    alertType?: PartnerAlertType;
+    /** Buy/wait call shown next to this price, and its confidence. */
+    verdict?: 'buy' | 'wait' | 'hold' | null;
+    confidencePct?: number | null;
+    /** Position in a cross-shop list, and the option's display name. */
+    optionRank?: number | null;
+    optionName?: string | null;
+    campaign?: string | null;
+    tripId?: string | null;
+  };
   /** Absolute origin to prepend (required for email/non-browser contexts). */
   baseUrl?: string;
 }): string {
-  const BASE = 'https://www.aviasales.com';
-  let url: string;
-  if (opts.offerPath && opts.offerPath.startsWith('/')) {
-    url = `${BASE}${opts.offerPath}`;
-  } else {
-    const ddmm = (iso: string) => {
-      const [, m, d] = iso.split('-');
-      return `${d}${m}`;
-    };
-    const dep = ddmm(opts.departDate);
-    const ret = ddmm(opts.returnDate);
-    url = `${BASE}/search/${opts.origin}${dep}${opts.destination}${ret}${opts.origin}${opts.adults}?currency=usd`;
-  }
-  const qs = new URLSearchParams({
-    to: url,
-    origin: opts.origin, destination: opts.destination,
-    dep: opts.departDate, ret: opts.returnDate,
+  // Thin adapter over the ONE builder. Keeping the signature means ~30 existing
+  // call sites keep working and all of them pick up the sub-ID payload at once;
+  // rewriting each call site by hand is precisely how a channel gets missed.
+  // A Travelpayouts-supplied offer path is used as-is. Note that /go parses the
+  // destination with `new URL()` and re-serialises it, which normalises the raw
+  // query encoding (a literal `~` comes out as `%7E`). Decoded parameter values
+  // are unchanged, so a token signed over decoded values is unaffected; a token
+  // signed over the raw query string would not survive. That is pre-existing
+  // /go behaviour on every outbound link, not specific to this branch.
+  const offer = opts.offerPath && opts.offerPath.startsWith('/')
+    ? `https://www.aviasales.com${opts.offerPath}`
+    : null;
+  return buildPartnerLink({
+    partner: (opts.trackAs?.provider as AffiliateProvider) ?? 'aviasales',
+    product: 'flight',
+    baseUrl: opts.baseUrl ?? null,
+    deeplink: offer ?? aviasalesSearchLink({
+      origin: opts.origin, destination: opts.destination,
+      departDate: opts.departDate, returnDate: opts.returnDate,
+      adults: opts.adults,
+    }),
+    context: {
+      surface: (opts.trackAs?.surface as AffiliateSurface) ?? 'dashboard-cheapest-card',
+      routeId: opts.trackAs?.routeId
+        ?? routeIdFor({ origin: opts.origin, destination: opts.destination,
+                        departDate: opts.departDate, returnDate: opts.returnDate }),
+      searchId: opts.trackAs?.searchId ?? null,
+      priceShownUsd: opts.trackAs?.perAdult ?? null,
+      alertId: opts.trackAs?.alertId ?? null,
+      alertType: opts.trackAs?.alertType,
+      verdict: opts.trackAs?.verdict ?? null,
+      confidencePct: opts.trackAs?.confidencePct ?? null,
+      optionRank: opts.trackAs?.optionRank ?? null,
+      optionName: opts.trackAs?.optionName ?? null,
+      campaign: opts.trackAs?.campaign ?? null,
+      tripId: opts.trackAs?.tripId ?? null,
+    },
   });
-  if (opts.trackAs?.searchId !== undefined) qs.set('search_id', String(opts.trackAs.searchId));
-  if (opts.trackAs?.perAdult !== undefined) qs.set('per', String(opts.trackAs.perAdult));
-  if (opts.trackAs?.provider) qs.set('provider', opts.trackAs.provider);
-  if (opts.trackAs?.surface) qs.set('surface', opts.trackAs.surface);
-  if (opts.trackAs?.routeId) qs.set('route_id', opts.trackAs.routeId);
-  const path = `/go?${qs.toString()}`;
-  return opts.baseUrl ? `${opts.baseUrl.replace(/\/$/, '')}${path}` : path;
 }
 
 /**

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import crypto from 'node:crypto';
 import { queries } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
@@ -8,6 +8,7 @@ import {
   cjProviderForHost, cjTemplateFor, cjWrap,
   tpBrandLink, type TpBrand,
 } from '@/lib/affiliate';
+import { decodeSubId } from '@/lib/partnerLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +69,99 @@ const ALLOW_HOSTS_PATH_RESTRICTED: Array<{ host: string; pathRegex: RegExp }> = 
 /** Attach brands reachable via ?brand= instead of ?to=. */
 const BRAND_PARAM: Record<string, TpBrand> = { ekta: 'ekta', kiwitaxi: 'kiwitaxi' };
 
+/**
+ * The attribution payload buildPartnerLink() put on this request.
+ *
+ * Everything here is written to the click_out row (affiliate_clicks) and stays
+ * server-side. Only the opaque token goes to the network, as sub_id3.
+ */
+function readClickContext(url: URL) {
+  const int = (k: string) => {
+    const v = url.searchParams.get(k);
+    if (!v) return null;
+    const n = parseInt(v, 10);
+    return Number.isFinite(n) ? n : null;
+  };
+  const num = (k: string) => {
+    const v = url.searchParams.get(k);
+    if (!v) return null;
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : null;
+  };
+  const verdictRaw = url.searchParams.get('verdict');
+  const alertId = int('alert_id');
+
+  // Minutes since the alert fired. Derived from alerts_sent rather than trusted
+  // from the URL, so it cannot be forged and so it stays correct when a link is
+  // clicked out of an email days later.
+  let minutesSinceAlert: number | null = null;
+  if (alertId != null) {
+    try {
+      const row = queries.alertSentAt(alertId);
+      if (row?.sent_at) {
+        const t = Date.parse(row.sent_at.replace(' ', 'T') + (row.sent_at.endsWith('Z') ? '' : 'Z'));
+        if (!Number.isNaN(t)) minutesSinceAlert = Math.max(0, Math.round((Date.now() - t) / 60000));
+      }
+    } catch { /* attribution detail is never worth failing a redirect over */ }
+  }
+
+  const subId = url.searchParams.get('sub_id');
+  const decoded = decodeSubId(subId);
+
+  return {
+    alert_id: alertId,
+    alert_kind: url.searchParams.get('alert_kind') ?? (decoded?.alertType === 'none' ? null : decoded?.alertType ?? null),
+    product: url.searchParams.get('product') ?? decoded?.product ?? null,
+    sub_id: subId,
+    sub_id2: url.searchParams.get('sub_id2'),
+    price_shown_usd: num('per'),
+    verdict: verdictRaw === 'buy' || verdictRaw === 'wait' || verdictRaw === 'hold' ? verdictRaw : null,
+    confidence_pct: int('confidence'),
+    minutes_since_alert: minutesSinceAlert,
+    option_rank: int('rank'),
+    option_name: url.searchParams.get('option'),
+  };
+}
+
+/**
+ * Push the sub-ID payload onto whichever slots this network exposes.
+ *
+ * sub_id3 is always the click token and nothing else — the identifying detail
+ * lives in our own click_out row. That keeps user identifiers out of third-party
+ * systems and lets us add dimensions later without renegotiating the scheme.
+ */
+function applySubIds(
+  target: URL,
+  host: string,
+  ctx: { sub_id: string | null; sub_id2: string | null },
+  token: string,
+): void {
+  const set = (k: string, v: string | null) => {
+    if (v && !target.searchParams.has(k)) target.searchParams.set(k, v);
+  };
+  if (host.endsWith('trip.com')) {
+    set('trip_sub1', ctx.sub_id);
+    set('trip_sub2', ctx.sub_id2);
+    set('trip_sub3', token);
+    return;
+  }
+  if (host === 'booking.com' || host === 'www.booking.com') {
+    // Booking gives one free-text label; pack the scheme into it.
+    set('label', [ctx.sub_id, ctx.sub_id2, token].filter(Boolean).join('-'));
+    return;
+  }
+  if (host === 'expedia.com' || host === 'www.expedia.com') {
+    set('clickref', [ctx.sub_id, ctx.sub_id2, token].filter(Boolean).join('-'));
+    return;
+  }
+  if (host === 'skyscanner.com' || host === 'www.skyscanner.com') {
+    set('subid', [ctx.sub_id, ctx.sub_id2, token].filter(Boolean).join('-'));
+    return;
+  }
+  // Travelpayouts family carries its sub-ids as dotted suffixes on the marker,
+  // which is attached further down once the marker itself is resolved.
+}
+
 export async function GET(req: Request) {
   const url = new URL(req.url);
 
@@ -105,8 +199,10 @@ export async function GET(req: Request) {
     }
 
     const brandUser = await getCurrentUser();
+    const { sub_id2: _brandSub2, ...brandCtx } = readClickContext(url);
     try {
       queries.insertAffiliateClick({
+        ...brandCtx,
         token: crypto.randomBytes(12).toString('base64url'),
         user_id: brandUser?.id ?? null,
         search_id: null,
@@ -228,8 +324,17 @@ export async function GET(req: Request) {
     console.warn(`[/go] unknown provider "${providerParam}" — recording anyway, but check the callsite`);
   }
 
+  // Attribution payload from buildPartnerLink(): alert id, verdict, price shown,
+  // cross-shop position. This is what makes commission-per-alert-type and
+  // alert->click->book conversion answerable.
+  const clickCtx = readClickContext(url);
+  const { sub_id2: _sub2, ...clickRow } = clickCtx;
+  const originParamEarly = url.searchParams.get('origin');
+  const destParamEarly = url.searchParams.get('destination');
+
   try {
     queries.insertAffiliateClick({
+      ...clickRow,
       token,
       user_id: user?.id ?? null,
       search_id: safeInt(searchIdRaw),
@@ -248,6 +353,61 @@ export async function GET(req: Request) {
   } catch (e) {
     // Don't break the redirect if the DB insert fails — log + continue.
     console.error('[/go] affiliate_clicks insert failed', e);
+  }
+
+  // ── Open the trip ────────────────────────────────────────────────────────
+  // A Book click on a flight is a probable booking. Open a pending trip and
+  // queue the soft confirmation — one email, 20-40 minutes later, asking whether
+  // they got it. That answer is the only ground truth on conversion we will ever
+  // have, and it is the gate on everything commercial: nothing in the chain
+  // fires until the user says booked.
+  if (user?.id && (clickCtx.product ?? 'flight') === 'flight' && originParamEarly && destParamEarly) {
+    try {
+      const { openTripFromClick } = await import('@/lib/tripChain');
+      openTripFromClick({
+        clickToken: token,
+        userId: user.id,
+        searchId: safeInt(searchIdRaw),
+        origin: originParamEarly,
+        destination: destParamEarly,
+        departDate: url.searchParams.get('dep'),
+        returnDate: url.searchParams.get('ret'),
+        farePerAdultUsd: clickCtx.price_shown_usd,
+      });
+    } catch (e) {
+      // Never break a booking click over follow-up bookkeeping.
+      console.error('[/go] openTripFromClick failed', (e as Error).message);
+    }
+  }
+
+  // ── Measure the delta ────────────────────────────────────────────────────
+  // "price shown at alert vs price at landing" is the metric that governs the
+  // product. We cannot see the landing price, but we CAN re-query at click time
+  // and record it against the click.
+  //
+  // Runs in after(), so it never delays the user's redirect — the whole value of
+  // a fare alert is that the click is instant. A failure here is logged and
+  // dropped: the click row simply has no price_at_click, which the trust
+  // dashboard treats as absent evidence rather than a zero delta.
+  const originParam = originParamEarly;
+  const destParam = destParamEarly;
+  const depParam = url.searchParams.get('dep');
+  const retParam = url.searchParams.get('ret');
+  if (clickCtx.price_shown_usd != null && originParam && destParam && depParam && retParam) {
+    after(async () => {
+      try {
+        const { searchFlights } = await import('@/lib/flightProvider');
+        const res = await searchFlights({
+          origin: originParam, destination: destParam,
+          departDate: depParam, returnDate: retParam,
+          adults: 1, infants: 0,
+        }, { searchId: safeInt(searchIdRaw), phase: 'click' });
+        const cheapest = res.ok ? res.offers[0] : null;
+        if (cheapest) queries.setClickPriceAtClick(token, cheapest.per_adult_usd);
+      } catch (e) {
+        console.error('[/go] click-time re-query failed', (e as Error).message);
+      }
+    });
   }
 
   // Append click token so partner-side postbacks can correlate later.
@@ -282,9 +442,17 @@ export async function GET(req: Request) {
     'aviasales.tpk.lu', 'tpk.lu', 'www.tpk.lu',
   ];
   if (tpMarker && tpHosts.includes(host) && !target.searchParams.has('marker')) {
-    const finalMarker = postMarker ? `${tpMarker}.${postMarker}` : tpMarker;
+    // Travelpayouts carries sub-ids as dotted suffixes on the marker. Order is
+    // the scheme's: sub_id (surface/product/alert type), sub_id2 (route), then
+    // sub_id3 (the opaque click token). A social post marker, when one rode
+    // along, sits first so the existing per-post reporting keeps working.
+    const finalMarker = [tpMarker, postMarker, clickCtx.sub_id, clickCtx.sub_id2, token]
+      .filter(Boolean).join('.');
     target.searchParams.set('marker', finalMarker);
   }
+
+  // Per-network sub-id slots (Trip.com, Booking, Expedia, Skyscanner).
+  applySubIds(target, host, clickCtx, token);
 
   // Trip.com — Allianceid is the affiliate identifier; SID is sub-id.
   if (host.endsWith('trip.com')) {
@@ -296,15 +464,8 @@ export async function GET(req: Request) {
     if (sid && !target.searchParams.has('SID')) {
       target.searchParams.set('SID', sid);
     }
-    // Trip.com sub-id slots — populate from our /go query if not already set.
-    const surface = url.searchParams.get('surface');
-    const routeIdParam = url.searchParams.get('route_id');
-    if (surface && !target.searchParams.has('trip_sub1')) {
-      target.searchParams.set('trip_sub1', surface);
-    }
-    if (routeIdParam && !target.searchParams.has('trip_sub3')) {
-      target.searchParams.set('trip_sub3', routeIdParam);
-    }
+    // Trip.com sub-id slots are filled by applySubIds() above, from the
+    // canonical scheme. Nothing to do here beyond the identifiers.
   }
 
   // Booking.com — aid is the affiliate identifier; label is the sub-tracker.
@@ -340,9 +501,10 @@ export async function GET(req: Request) {
       target.searchParams.set('associateid', associateId);
       const surface = url.searchParams.get('surface');
       const routeIdParam = url.searchParams.get('route_id');
-      if (surface || routeIdParam) {
-        const subid = [surface, routeIdParam].filter(Boolean).join('.');
-        target.searchParams.set('subid', subid);
+      // applySubIds() has already written the canonical sub_id scheme into
+      // `subid`. Only fall back to the older surface.route form if it didn't.
+      if (!target.searchParams.has('subid') && (surface || routeIdParam)) {
+        target.searchParams.set('subid', [surface, routeIdParam].filter(Boolean).join('.'));
       }
     }
   }

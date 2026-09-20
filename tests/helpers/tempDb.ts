@@ -3,17 +3,38 @@ import os from 'node:os';
 import path from 'node:path';
 
 /**
- * Boots src/lib/db.ts against a throwaway directory. Must be awaited before
- * any other '@/lib/*' import in the test file, because db.ts reads
- * process.cwd() when it is first imported.
+ * db.ts resolves its path from process.cwd() at import time, so a test that
+ * wants its own database has to chdir BEFORE importing anything that touches
+ * db. vitest runs with pool: 'forks' and isolate: true for exactly this reason —
+ * each test file gets its own process and can move its own cwd safely.
+ *
+ * Call this at the very top of a test file, before any `import '@/lib/...'`
+ * that reaches the database (use a dynamic import after the call).
  */
-export async function bootTempDb() {
+export function useTempDb(opts: { seedFrom?: string } = {}): { dir: string; dbPath: string } {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'flycheap-test-'));
+  fs.mkdirSync(path.join(dir, 'data'), { recursive: true });
+  const dbPath = path.join(dir, 'data', 'fares.db');
+
+  // Seeding from a real database is how the analytics queries get exercised
+  // against a real schema rather than a hand-written approximation of one.
+  if (opts.seedFrom && fs.existsSync(opts.seedFrom)) {
+    fs.copyFileSync(opts.seedFrom, dbPath);
+  }
+
   process.chdir(dir);
-  // Fresh module instance per test file (vitest isolates files; this guards
-  // against a cached global from a previous import in the same worker).
-  delete (globalThis as { __egyptairDb?: unknown }).__egyptairDb;
+  return { dir, dbPath };
+}
+
+/**
+ * Same idea, but returns the initialised db module — the shape
+ * tests/adminAgent.test.ts expects. Starts from an EMPTY database rather than a
+ * copy of the real one, because those tests write users and run shell tools and
+ * must not inherit production-shaped rows.
+ */
+export async function bootTempDb(): Promise<typeof import('@/lib/db')> {
+  useTempDb();
   const db = await import('@/lib/db');
-  db.getDb(); // runs init() → creates all tables and seeds default owner user
+  db.getDb(); // run init() + migrations against the fresh file
   return db;
 }

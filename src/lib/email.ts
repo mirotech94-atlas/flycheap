@@ -2,6 +2,9 @@ import 'server-only';
 import { Resend } from 'resend';
 import { fmtUSD, fmtDate, fmtDateTime } from './utils';
 import { bookingLink, hotellookLink, airbnbLink, trackedRedirect, hotelCityForDestination, tpBrandConfigured } from './affiliate';
+import { buildPartnerLink, type PartnerAlertType } from './partnerLink';
+import { classifyAlert, type AlertKind } from './alertKind';
+import { verifiedAgeLabel } from './fareAge';
 import type { SearchRow, FareRow } from './db';
 import { APP_URL } from './hosts';
 import { emailFrame, emailMasthead, emailFooter, EMAIL_TOKENS, kindAccent } from './emailLayout';
@@ -23,6 +26,18 @@ export type AlertEmailInput = {
   fare: FareRow;
   thresholdPerAdult: number;
   kind?: 'threshold' | 'price-drop';
+  /** The alerts_sent row this email descends from. Every monetized link in the
+   *  message carries it, which is what makes conversion-by-alert-type real. */
+  alertId?: number | null;
+  /** The finer-grained alert taxonomy (mistake-fare, anomaly, ...), decided in
+   *  the poller by classifyAlert() so the tag shown here and the kind stored in
+   *  the database can never disagree. */
+  alertKind?: AlertKind;
+  /** When this price was re-verified against a second provider. Every price in
+   *  the product carries this, visibly — "verified 3 minutes ago" is
+   *  reassuring; a bare number that turns out to be forty minutes old is a
+   *  betrayal. */
+  verifiedAt?: string | null;
   pctDrop?: number;
   median7d?: number | null;
   context?: Partial<AlertEmailContext>;
@@ -107,9 +122,17 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
   // % below normal: reuse the detector's figure when given, else derive from the median.
   const pctBelowNormal = pctDrop != null ? pctDrop : normal ? ((normal - now) / normal) * 100 : null;
   const isDrop = kind === 'price-drop';
-  // Mistake-fare heuristic, same bar as the dashboard radar (< 70% of target)
-  // and the Slack/Telegram bots (≥ 30% under the route's normal).
-  const isMistake = now < thresholdPerAdult * 0.7 || (pctBelowNormal != null && pctBelowNormal >= 30);
+  // Single definition point: the poller already classified this alert and stored
+  // that kind. Re-deriving it here is how the email came to say "mistake fare"
+  // about a row recorded as 'threshold'. Fall back to the shared rule only when
+  // an older caller hasn't passed a kind through yet.
+  const alertKind: AlertKind = input.alertKind ?? classifyAlert({
+    branch: isDrop ? 'price-drop' : 'threshold',
+    pricePerAdult: now,
+    thresholdPerAdult,
+    pctBelowNormal,
+  });
+  const isMistake = alertKind === 'mistake-fare';
   const tag = isMistake ? '✦ MISTAKE FARE' : isDrop ? '📉 PRICE DROP' : '✈️ BELOW TARGET';
   const route = `${search.origin} → ${search.destination}`;
   // When the fare is for shifted dates, every date in this email must be the
@@ -142,13 +165,22 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     departDate: search.depart_date, returnDate: search.return_date,
     adults: search.adults, infants: search.infants,
     baseUrl: SITE,
-    trackAs: { searchId: search.id || undefined, perAdult: Math.round(now), provider: 'aviasales', surface: 'email-alert' },
+    trackAs: {
+      searchId: search.id || undefined, perAdult: Math.round(now),
+      provider: 'aviasales', surface: 'email-alert',
+      alertId: input.alertId ?? null,
+      alertType: alertKind === 'ready' ? 'threshold' : alertKind,
+    },
   });
   const manageUrl = `${SITE}/searches`;
   // Where to stay: hotels (Hotellook, commission) + Airbnb homes (plain deep link), prefilled with the trip dates.
   const stayCity = hotelCityForDestination(search.destination);
-  const staysHotelUrl = `${SITE}${trackedRedirect(hotellookLink({ destination: search.destination, checkIn: search.depart_date, checkOut: search.return_date, adults: search.adults, surface: 'email-alert' }), { surface: 'email-alert', provider: 'hotellook' })}`;
-  const staysAirbnbUrl = `${SITE}${trackedRedirect(airbnbLink({ destinationCity: stayCity, checkIn: search.depart_date, checkOut: search.return_date, adults: search.adults }), { surface: 'email-alert', provider: 'airbnb' })}`;
+  const attachAlert = {
+    alertId: input.alertId ?? null,
+    alertType: (alertKind === 'ready' ? 'threshold' : alertKind) as PartnerAlertType,
+  };
+  const staysHotelUrl = `${SITE}${trackedRedirect(hotellookLink({ destination: search.destination, checkIn: search.depart_date, checkOut: search.return_date, adults: search.adults, surface: 'email-alert' }), { surface: 'email-alert', provider: 'hotellook', product: 'hotel', ...attachAlert })}`;
+  const staysAirbnbUrl = `${SITE}${trackedRedirect(airbnbLink({ destinationCity: stayCity, checkIn: search.depart_date, checkOut: search.return_date, adults: search.adults }), { surface: 'email-alert', provider: 'airbnb', product: 'hotel', ...attachAlert })}`;
 
   // Trip insurance (EKTA via Travelpayouts — 20% of premium). This is the
   // right moment for it: the traveller has just decided to commit to a
@@ -156,10 +188,20 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
   // never dressed up as part of the booking flow.
   const routeIdForAttach = `${search.origin}_${search.destination}_${search.depart_date}`.replace(/[^A-Za-z0-9_]/g, '_');
   const insuranceUrl = tpBrandConfigured('ekta')
-    ? `${SITE}/go?brand=ekta&surface=email-alert&route_id=${encodeURIComponent(routeIdForAttach)}`
+    ? buildPartnerLink({
+        partner: 'ekta', product: 'insurance', baseUrl: SITE,
+        context: { surface: 'email-alert', routeId: routeIdForAttach, ...attachAlert },
+      })
     : null;
 
-  // Mistake amber is darkened for TEXT use: #b8912f was 2.95:1 on white, below AA
+  // Age of the number, shown rather than implied. Falls back to the poll time
+  // when an older caller has not passed a verification timestamp through.
+  const verifiedLine = verifiedAgeLabel(input.verifiedAt ?? null)
+    ?? verifiedAgeLabel(fare.polled_at)?.replace('Verified', 'Priced')
+    ?? null;
+  const verifiedBySuffix = input.verifiedAt ? ' against a second provider' : '';
+
+    // Mistake amber is darkened for TEXT use: #b8912f was 2.95:1 on white, below AA
   // even for the 13px pill. Hue preserved, lightness moved until it clears 4.5
   // (same derivation as the white-label tenant ink). The button fill keeps the
   // lighter #b8912f, which is legible against its own dark ink at 5.91.
@@ -191,6 +233,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
           <span style="font-size:36px;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</span>
           ${pctBelowNormal != null && pctBelowNormal > 0 ? `<span style="display:inline-block;margin-left:8px;background:${accentBg};color:${accent};font-weight:700;font-size:13px;padding:3px 8px;border-radius:999px;${mono}">−${pctBelowNormal.toFixed(0)}%</span>` : ''}
         </div>
+        ${verifiedLine ? `<div style="font-size:12px;color:#0e6240;margin-top:8px;${mono}">✓ ${esc(verifiedLine)}${verifiedBySuffix}</div>` : ''}
         <div style="color:#475569;font-size:13px;margin-top:8px">
           per adult · your target ${fmtUSD(thresholdPerAdult)}${normal ? ` · 7-day median ${fmtUSD(normal)}` : ''}<br>
           <span style="color:#0a1426;font-weight:600">${esc(lastAlertLine)}</span><br>
@@ -226,7 +269,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
 
       ${isMistake ? `
       <div style="background:#fdf6e3;border:1px solid rgba(212,175,55,.5);border-radius:12px;padding:12px 16px;margin:0 0 16px;font-size:14px;color:#7c5c10">
-        <strong>✦ Book fast</strong> — fares like this get pulled within hours. Airlines and OTAs correct mistake fares quickly; if the price is still showing at checkout, lock it in and sort the details later.
+        <strong>✦ This looks like a pricing error.</strong> Fares like this get pulled within hours, and <strong>airlines do sometimes cancel these tickets after they are issued</strong>. Book a refundable option where you can, and don't make non-refundable plans around it until the airline confirms. We'd rather tell you that than let you find out later.
       </div>` : ''}
 
       <p style="margin:0 0 8px">
@@ -269,12 +312,18 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
       : []),
     ...ctx.flexDates.map(f => `  ${fmtDow(f.depart)} -> ${fmtDow(f.return)}  ${fmtUSD(f.price)}`),
     '',
-    isMistake ? 'BOOK FAST — fares like this get pulled within hours.\n' : '',
+    isMistake
+      ? 'THIS LOOKS LIKE A PRICING ERROR. Fares like this get pulled within hours,\n'
+        + 'and airlines do sometimes cancel these tickets after they are issued.\n'
+        + "Book a refundable option where you can, and don't make non-refundable\n"
+        + 'plans around it until the airline confirms.\n'
+      : '',
     `Book: ${bookUrl}`,
     `Stay in ${stayCity} — hotels: ${staysHotelUrl}`,
     `Stay in ${stayCity} — Airbnb: ${staysAirbnbUrl}`,
     insuranceUrl ? `Trip insurance (cancellation + medical abroad): ${insuranceUrl}` : '',
     '',
+    verifiedLine ? `${verifiedLine}${verifiedBySuffix}.` : '',
     `Snapshot ${fmtDateTime(fare.polled_at)}. Fares move — verify at checkout.`,
     `Manage this watch: ${manageUrl}`,
     `Unsubscribe: ${unsubLink}`,

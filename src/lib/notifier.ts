@@ -6,6 +6,7 @@ import { cheapestByMonth } from './explore';
 import { sendExpoPushToUser, inQuietHours } from './expoPush';
 import { median7dForSearch } from './priceDrops';
 import { APP_URL, ADMIN_URL } from './hosts';
+import type { AlertKind } from './alertKind';
 
 export type NotifyKind = 'threshold' | 'price-drop' | 'digest' | 'ready';
 
@@ -373,8 +374,11 @@ export async function runSubscriptionAlerts(): Promise<{ routes: number; posted:
 /**
  * Context for the Going/Kayak-style alert email: the route's "normal" price
  * (7-day median — same number the anomaly detector uses), the previous alert
- * for this search (poller inserts the new alerts_sent row AFTER notify, so
- * lastAlertForSearch is still the prior one here), 30 days of daily-min
+ * for this search (the poller now RESERVES the new alerts_sent row before
+ * notifying, so the invariant is held by status instead of by ordering:
+ * lastAlertForSearch skips 'pending' rows and still returns the prior one
+ * here — without that filter this alert would compare itself to itself),
+ * 30 days of daily-min
  * history for the inline sparkline, and cached ±3-day date pairs that also
  * work. Every lookup is best-effort — a missing table or a stub search
  * (id 0 from "Send test") just yields empty context.
@@ -415,6 +419,16 @@ export async function notifyAll(opts: {
   /** Fare is for dates other than the tracked ones (provider had no cache for
    *  the exact trip). Every channel must surface this rather than hide it. */
   nearby?: { depart: string; return: string };
+  /** The reserved alerts_sent row. Threaded into every outbound link so the
+   *  click can be joined back to the alert that produced it. */
+  alertId?: number | null;
+  /** The real alert taxonomy value (mistake-fare / anomaly / ...), which is
+   *  finer-grained than the `kind` used to pick channels. */
+  alertKind?: AlertKind;
+  /** When this price was re-verified against a second provider. Shown to the
+   *  user, because a bare number that turns out to be forty minutes old is a
+   *  betrayal and this string is the whole difference. */
+  verifiedAt?: string | null;
 }): Promise<NotifyResult[]> {
   const uid = opts.ownerUserId;
 
@@ -467,6 +481,9 @@ export async function notifyAll(opts: {
       fare: opts.fare,
       thresholdPerAdult: opts.thresholdPerAdult,
       kind: (opts.kind === 'digest' || opts.kind === 'ready') ? 'threshold' : opts.kind,
+      alertId: opts.alertId ?? null,
+      alertKind: opts.alertKind,
+      verifiedAt: opts.verifiedAt ?? null,
       pctDrop: opts.pctDrop,
       median7d: opts.median7d,
       nearby: opts.nearby,

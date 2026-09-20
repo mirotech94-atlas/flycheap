@@ -6,6 +6,8 @@ import { startRun, finishRun } from '../shared/storage';
 import { BRAND_VOICE } from '../shared/voice';
 import { sendDigestEmail, type DigestDealCard } from '@/lib/email';
 import { fmtDate } from '@/lib/utils';
+import { buildPartnerLink, routeIdFor } from '@/lib/partnerLink';
+import { aviasalesSearchLink } from '@/lib/affiliate';
 
 // Email digest composer (phase 2). Per-user: match recent verified picks to the
 // user's tracked routes (or their origin airports), ask the model to pick the
@@ -32,8 +34,27 @@ const DigestOutput = z.object({
 
 const BASE = 'https://flycheap.live';
 function bookUrl(p: Pick) {
-  const to = `https://www.aviasales.com/search/${p.origin}${p.outbound_date.slice(5).replace('-', '')}${p.destination}${p.return_date.slice(5).replace('-', '')}1`;
-  return `${BASE}/go?to=${encodeURIComponent(to)}&surface=agent-email`;
+  // Through the one builder — see the note in the social-poster agent. This
+  // digest was also pointing at the pre-cutover host, so its links relied on a
+  // redirect to reach the client app at all.
+  return buildPartnerLink({
+    partner: 'aviasales',
+    product: 'flight',
+    baseUrl: BASE,
+    deeplink: aviasalesSearchLink({
+      origin: p.origin, destination: p.destination,
+      departDate: p.outbound_date, returnDate: p.return_date, adults: 1,
+    }),
+    context: {
+      surface: 'agent-email',
+      routeId: routeIdFor({
+        origin: p.origin, destination: p.destination,
+        departDate: p.outbound_date, returnDate: p.return_date,
+      }),
+      alertType: 'digest',
+      campaign: 'agent-digest',
+    },
+  });
 }
 
 function matchPicksForUser(allPicks: Pick[], routes: Array<{ origin: string; destination: string }>): Pick[] {

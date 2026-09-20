@@ -7,6 +7,8 @@ import { refreshBestDeals } from './bestDeals';
 
 let task: cron.ScheduledTask | null = null;
 let digestTask: cron.ScheduledTask | null = null;
+let verdictScoreTask: ReturnType<typeof cron.schedule> | null = null;
+let chainTask: ReturnType<typeof cron.schedule> | null = null;
 let bestDealsTask: cron.ScheduledTask | null = null;
 let weeklyTask: cron.ScheduledTask | null = null;
 let compactTask: cron.ScheduledTask | null = null;
@@ -58,6 +60,56 @@ export function startCron() {
     { timezone: 'America/New_York' }
   );
   console.log('[cron] digest scheduled — 9:00 AM America/New_York');
+
+  // Verdict scoring: score yesterday's buy/wait calls whose horizon has now
+  // elapsed. Runs daily, off-peak, and is idempotent — a call already scored is
+  // never re-scored, so a missed run simply catches up on the next one.
+  if (verdictScoreTask) verdictScoreTask.stop();
+  verdictScoreTask = cron.schedule(
+    '20 4 * * *',
+    async () => {
+      const t = new Date().toISOString();
+      try {
+        const { scoreDueVerdicts } = await import('./verdictScoring');
+        const seven = scoreDueVerdicts(7);
+        const fourteen = scoreDueVerdicts(14);
+        console.log(
+          `[verdict-score ${t}] 7d: ${seven.scored} scored / ${seven.skipped} without evidence · ` +
+          `14d: ${fourteen.scored} scored / ${fourteen.skipped} without evidence`,
+        );
+      } catch (e) {
+        console.error(`[verdict-score ${t}] threw`, e);
+        queries.logError({ source: 'cron:verdict-score', message: (e as Error).message, stack: (e as Error).stack });
+      }
+    },
+    { timezone: 'America/New_York' }
+  );
+  console.log('[cron] verdict scoring scheduled — 4:20 AM America/New_York');
+
+  // Trip chain: send whatever is due. Every 10 minutes, because the
+  // confirmation is scheduled 20-40 minutes after a Book click and a coarser
+  // tick would stretch that window past the point where the question still
+  // feels connected to the thing they just did.
+  if (chainTask) chainTask.stop();
+  chainTask = cron.schedule('*/10 * * * *', async () => {
+    const t = new Date().toISOString();
+    try {
+      const { runChainSends } = await import('./tripChainEmail');
+      const { expireStaleTrips } = await import('./tripChain');
+      const r = await runChainSends();
+      const expired = expireStaleTrips(7);
+      if (r.due > 0 || expired > 0) {
+        console.log(
+          `[chain ${t}] ${r.sent} sent, ${r.skipped} skipped, ${r.failed} failed of ${r.due} due` +
+          (expired ? ` · ${expired} unconfirmed trips expired` : ''),
+        );
+      }
+    } catch (e) {
+      console.error(`[chain ${t}] threw`, e);
+      queries.logError({ source: 'cron:chain', message: (e as Error).message, stack: (e as Error).stack });
+    }
+  });
+  console.log('[cron] trip chain scheduled — every 10 minutes');
 
   // Best-deals refresh: every 12 hours. Keep this off the boot path so a tiny
   // VPS can always start HTTP/SSH cleanly after deploys or reboots.
