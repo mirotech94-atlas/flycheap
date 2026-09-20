@@ -222,8 +222,7 @@ const IATA_TO_CITY_FOR_HOTEL: Record<string, string> = {
   PEK: 'Beijing', ICN: 'Seoul', MNL: 'Manila',
   SYD: 'Sydney', MEL: 'Melbourne', BNE: 'Brisbane', AKL: 'Auckland',
   GRU: 'Sao Paulo', EZE: 'Buenos Aires', LIM: 'Lima', BOG: 'Bogota',
-  SCL: 'Santiago', MEX: 'Mexico City', CUN: 'Cancun', PUJ: 'Punta Cana',
-  SDQ: 'Santo Domingo', SJU: 'San Juan', NAS: 'Nassau',
+  SCL: 'Santiago', MEX: 'Mexico City', SDQ: 'Santo Domingo', SJU: 'San Juan',
 };
 
 /** Resolve a destination input (IATA code or already a city name) to a clean
