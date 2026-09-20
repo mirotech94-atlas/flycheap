@@ -21,6 +21,7 @@ import 'server-only';
 
 // ---- Palette (formal refinement of the navy+gold brand) --------------------
 const NAVY = '#0a2e57';       // masthead + primary
+const NAVY_LIGHT = '#154a86';  // the lighter stop for navy gradients (8.9:1 on white)
 const INK = '#12233d';        // body text
 const GOLD = '#b8912f';       // formal gold — rules, one accent
 const PAPER = '#f6f2e9';      // warm ivory ground
@@ -33,7 +34,7 @@ const SERIF = "Georgia, 'Times New Roman', 'Iowan Old Style', serif";
 const SANS = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif";
 const MONO = "'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
 
-export const EMAIL_TOKENS = { NAVY, INK, GOLD, PAPER, CARD, SLATE, LINE, LINE_CARD, SERIF, SANS, MONO };
+export const EMAIL_TOKENS = { NAVY, NAVY_LIGHT, INK, GOLD, PAPER, CARD, SLATE, LINE, LINE_CARD, SERIF, SANS, MONO };
 
 export type EmailKind = 'welcome' | 'security' | 'support' | 'alert' | 'billing' | 'notice';
 

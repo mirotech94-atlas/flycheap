@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Fraunces, Manrope, Archivo } from 'next/font/google';
 import './globals.css';
 import { GlobeProvider } from '@/lib/globeStore';
+import { contrastSafe, hexToRgbTriple } from '@/lib/brandContrast';
 import { headers } from 'next/headers';
 import { ClientChrome, AdminAwareMain, HideOnEmbed } from '@/components/ClientChrome';
 import { ClientSidebar } from '@/components/ClientSidebar';
@@ -58,12 +59,8 @@ export const viewport = {
 
 // Color helpers — used to build the brand gradient at request time so each
 // tenant's chosen color flows through the layout without runtime JS.
-function hexToRgb(hex: string): string {
-  const m = hex.replace('#', '').match(/^([\da-f]{6})$/i);
-  if (!m) return '10,58,107';
-  const n = parseInt(m[1], 16);
-  return `${(n >> 16) & 255},${(n >> 8) & 255},${n & 255}`;
-}
+// The ground every tenant ink is measured against (--nc-dark).
+const NC_DARK = '#0B1220';
 function shadeColor(hex: string, percent: number): string {
   const m = hex.replace('#', '').match(/^([\da-f]{6})$/i);
   if (!m) return hex;
@@ -117,7 +114,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // means `bg-brand/10` and the injected `.border-brand-500` stop matching.
   // Both moved off the retired Bloomberg navy together.
   const brand = user?.brand_color || '#1A4459';
-  const brandStyle = `:root{--brand:${brand};--brand-rgb:${hexToRgb(brand)};} .bg-brand-gradient{background:linear-gradient(135deg,${brand} 0%, ${shadeColor(brand, 12)} 55%, ${shadeColor(brand, 28)} 100%)!important;} .bg-brand,.btn-primary,.kpi-brand{background:${brand}!important;} .text-brand-700,.text-brand-600{color:${brand}!important;} .border-brand-500,.ring-brand-500{border-color:${brand};}`;
+  // Tenant ink, made legible WITHOUT being thrown away. The raw hex used to go
+  // straight into the text roles, where a dark brand (including this default)
+  // measured 1.55:1 on the cabin ground; the stopgap was a blanket override
+  // that painted them all teal, i.e. it fixed legibility by discarding the
+  // tenant's branding. contrastSafe keeps their HUE and moves only lightness
+  // until it clears AA, and returns the colour untouched when it already does.
+  //
+  // Only the TEXT roles are derived. A brand-coloured background already picks
+  // its own ink to contrast, so deriving it would change the design rather than
+  // rescue it -- the cabin overrides in globals.css handle those.
+  const brandInk = contrastSafe(brand, NC_DARK);
+  const brandStyle = `:root{--brand:${brand};--brand-rgb:${hexToRgbTriple(brand)};--brand-ink:${brandInk};} .bg-brand-gradient{background:linear-gradient(135deg,${brand} 0%, ${shadeColor(brand, 12)} 55%, ${shadeColor(brand, 28)} 100%)!important;} .bg-brand,.btn-primary,.kpi-brand{background:${brand}!important;} .text-brand-700,.text-brand-600,.text-brand{color:${brandInk}!important;} .border-brand-500,.ring-brand-500{border-color:${brand};}`;
 
   // UI locale: fc_lang cookie → Accept-Language → en. Drives <html lang dir>,
   // an extra Google font for Arabic / Chinese / Devanagari, and the nav

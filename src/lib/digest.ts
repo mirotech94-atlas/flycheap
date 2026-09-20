@@ -52,7 +52,7 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
       labels: originLabels,
       datasets: [{
         data: originLabels.map(o => Math.round(byOrigin[o])),
-        backgroundColor: ['#0a3a6b', '#d4af37', '#0f766e', '#9333ea'],
+        backgroundColor: ['#0a2e57', '#b8912f', '#0f766e', '#9333ea'],
       }],
     },
     options: { plugins: { title: { display: true, text: 'Party total by origin (USD)' } } },
@@ -138,7 +138,7 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc">
-      <div style="background:#0a3a6b;color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
+      <div style="background:#0a2e57;color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
         <div style="font-size:13px;opacity:0.8">${today}</div>
         <h1 style="margin:6px 0 0;font-size:22px">EgyptAir Cheap Flights — Daily Digest</h1>
         <div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div>
@@ -175,7 +175,7 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
                 <td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(d.per_adult_usd)}</b></td>
                 <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtUSD(d.party_total_usd)}</td>
                 <td style="padding:8px;border-bottom:1px solid #f1f5f9">${badge}</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9"><a href="${bookUrl}" style="background:#0a3a6b;color:#fff;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600">Book →</a></td>
+                <td style="padding:8px;border-bottom:1px solid #f1f5f9"><a href="${bookUrl}" style="background:#0a2e57;color:#fff;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600">Book →</a></td>
               </tr>`;
             }).join('')}
           </tbody>
@@ -226,7 +226,7 @@ export function buildDigestHtml(opts?: { headline?: string }): { html: string; s
         </div>
 
         <p style="margin-top:24px;text-align:center">
-          <a href="${APP_URL}" style="display:inline-block;background:#0a3a6b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open full dashboard</a>
+          <a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open full dashboard</a>
         </p>
 
         <p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">
@@ -315,7 +315,7 @@ export function buildAnomalyDigestHtml(): { html: string; subject: string; summa
 
   const html = `
     <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc">
-      <div style="background:linear-gradient(135deg,#0a3a6b,#134885);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
+      <div style="background:linear-gradient(135deg,#0a2e57,#154a86);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
         <div style="font-size:13px;opacity:0.8">${today}</div>
         <h1 style="margin:6px 0 0;font-size:22px">Weekly fare-movement summary</h1>
         <div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div>
@@ -349,7 +349,7 @@ export function buildAnomalyDigestHtml(): { html: string; subject: string; summa
         </table>
 
         <p style="margin-top:24px;text-align:center">
-          <a href="${APP_URL}" style="display:inline-block;background:#0a3a6b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a>
+          <a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a>
         </p>
         <p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">
           Weekly summary · sent Sundays 8pm ET. Comparing today's cheapest vs the snapshot from ~7 days ago for each tracked search.
@@ -468,7 +468,7 @@ export function buildRetrospectiveHtml(win: RetrospectiveWindow): { html: string
     ? alertsInWindow.slice(0, 20).map(a => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:12px">${fmtDateTime(a.sent_at)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${a.origin}</b> → ${a.destination}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(a.depart_date)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(a.price_per_adult_usd)}</b></td></tr>`).join('')
     : `<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">No alerts fired in window.</td></tr>`;
 
-  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc"><div style="background:linear-gradient(135deg,#0a3a6b,#1e40af);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0"><div style="font-size:13px;opacity:0.8">${today}</div><h1 style="margin:6px 0 0;font-size:22px">EgyptAir retrospective — ${label}</h1><div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div></div><div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none"><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px"><div style="flex:1;min-width:140px;background:#f1f5f9;padding:14px;border-radius:8px"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Routes tracked</div><div style="font-size:22px;font-weight:700;color:#0a3a6b">${stats.length}</div></div><div style="flex:1;min-width:140px;background:#f0fdf4;padding:14px;border-radius:8px"><div style="font-size:11px;color:#15803d;text-transform:uppercase;letter-spacing:0.5px">Best per-adult</div><div style="font-size:22px;font-weight:700;color:#15803d">${overallMin !== null ? fmtUSD(overallMin) : '—'}</div></div><div style="flex:1;min-width:140px;background:#fef3c7;padding:14px;border-radius:8px"><div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:0.5px">Alerts fired</div><div style="font-size:22px;font-weight:700;color:#92400e">${alertsInWindow.length}</div></div></div><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Per-route summary</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Min</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Avg</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Max</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Window trend</th></tr></thead><tbody>${routeRows}</tbody></table><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Alerts fired in window</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Sent</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Depart</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Per adult</th></tr></thead><tbody>${alertRows}</tbody></table><p style="margin-top:24px;text-align:center"><a href="${APP_URL}" style="display:inline-block;background:#0a3a6b;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a></p><p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">${label} retrospective. Threshold: ${fmtUSD(threshold)}/adult. Stats computed across every snapshot polled in the window.</p></div></div>`;
+  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc"><div style="background:linear-gradient(135deg,#0a2e57,#154a86);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0"><div style="font-size:13px;opacity:0.8">${today}</div><h1 style="margin:6px 0 0;font-size:22px">EgyptAir retrospective — ${label}</h1><div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div></div><div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none"><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px"><div style="flex:1;min-width:140px;background:#f1f5f9;padding:14px;border-radius:8px"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Routes tracked</div><div style="font-size:22px;font-weight:700;color:#0a2e57">${stats.length}</div></div><div style="flex:1;min-width:140px;background:#f0fdf4;padding:14px;border-radius:8px"><div style="font-size:11px;color:#15803d;text-transform:uppercase;letter-spacing:0.5px">Best per-adult</div><div style="font-size:22px;font-weight:700;color:#15803d">${overallMin !== null ? fmtUSD(overallMin) : '—'}</div></div><div style="flex:1;min-width:140px;background:#fef3c7;padding:14px;border-radius:8px"><div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:0.5px">Alerts fired</div><div style="font-size:22px;font-weight:700;color:#92400e">${alertsInWindow.length}</div></div></div><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Per-route summary</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Min</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Avg</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Max</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Window trend</th></tr></thead><tbody>${routeRows}</tbody></table><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Alerts fired in window</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Sent</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Depart</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Per adult</th></tr></thead><tbody>${alertRows}</tbody></table><p style="margin-top:24px;text-align:center"><a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a></p><p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">${label} retrospective. Threshold: ${fmtUSD(threshold)}/adult. Stats computed across every snapshot polled in the window.</p></div></div>`;
   return { html, subject, summary };
 }
 

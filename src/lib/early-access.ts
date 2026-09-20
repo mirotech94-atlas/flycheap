@@ -155,8 +155,8 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
   const total = earlyAccessCount();
   const html = `
   <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:560px;margin:auto;padding:28px;color:#0f172a">
-    <div style="display:inline-block;background:linear-gradient(135deg,#0a3a6b,#1f5fa5);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:14px">FlyCheap · Access request #${row.position}</div>
-    <h1 style="font-size:24px;margin:0 0 14px;color:#0a3a6b">${row.name ? row.name + ' · ' : ''}${row.email}</h1>
+    <div style="display:inline-block;background:linear-gradient(135deg,#0a2e57,#154a86);color:white;font-weight:700;font-size:11px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:999px;margin-bottom:14px">FlyCheap · Access request #${row.position}</div>
+    <h1 style="font-size:24px;margin:0 0 14px;color:#0a2e57">${row.name ? row.name + ' · ' : ''}${row.email}</h1>
     <table style="font-size:14px;color:#334155;border-collapse:collapse">
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Name</td><td>${row.name ?? '—'}</td></tr>
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Phone</td><td>${row.phone ?? '—'}</td></tr>
@@ -168,7 +168,7 @@ export async function sendAccessRequestNotification(row: EarlyAccessRow, referra
       <tr><td style="padding:3px 14px 3px 0;color:#64748b">Requested</td><td>${row.created_at} UTC</td></tr>
     </table>
     <div style="margin-top:24px;display:flex;gap:10px">
-      <a href="${base}&action=approve" style="display:inline-block;background:#0a3a6b;color:white;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Approve &amp; send invite →</a>
+      <a href="${base}&action=approve" style="display:inline-block;background:#0a2e57;color:white;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px">Approve &amp; send invite →</a>
       <a href="${base}&action=decline" style="display:inline-block;background:#f1f5f9;color:#334155;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:14px;margin-left:10px">Decline</a>
     </div>
     <p style="margin-top:22px;color:#94a3b8;font-size:12px">Approving emails ${row.email} a sign-up link. Full list: <a href="${APP}/api/early-access?format=csv" style="color:#94a3b8">CSV export</a> (admin login required).</p>

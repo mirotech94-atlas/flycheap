@@ -39,15 +39,15 @@ export async function notifyOperatorNewTicket(t: {
       const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
       const html = `
         <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:600px;margin:auto;padding:24px;color:#0f172a">
-          <h2 style="color:#0a3a6b;margin:0 0 4px">New ticket ${esc(t.ref)}</h2>
+          <h2 style="color:#0a2e57;margin:0 0 4px">New ticket ${esc(t.ref)}</h2>
           <p style="margin:0 0 12px;color:#475569">${esc(t.subject)}</p>
           <table style="width:100%;border-collapse:collapse;margin:0 0 12px;font-size:14px">
             <tr><td style="padding:5px 0;color:#64748b;width:110px">From</td><td style="padding:5px 0"><strong>${esc(t.name)}</strong> &lt;${esc(t.email)}&gt;</td></tr>
             ${t.who ? `<tr><td style="padding:5px 0;color:#64748b">Account</td><td style="padding:5px 0">${esc(t.who)}</td></tr>` : ''}
             ${t.ip ? `<tr><td style="padding:5px 0;color:#64748b">IP</td><td style="padding:5px 0;font-family:monospace">${esc(t.ip)}</td></tr>` : ''}
           </table>
-          <div style="background:#f8fafc;border-left:3px solid #0a3a6b;padding:14px;border-radius:6px;white-space:pre-wrap">${esc(t.body)}</div>
-          <p style="margin:16px 0 0"><a href="${adminThreadUrl(t.ref)}" style="color:#0a3a6b;font-weight:600">Open ${esc(t.ref)} in the admin queue →</a></p>
+          <div style="background:#f8fafc;border-left:3px solid #0a2e57;padding:14px;border-radius:6px;white-space:pre-wrap">${esc(t.body)}</div>
+          <p style="margin:16px 0 0"><a href="${adminThreadUrl(t.ref)}" style="color:#0a2e57;font-weight:600">Open ${esc(t.ref)} in the admin queue →</a></p>
         </div>`;
       await new Resend(apiKey).emails.send({
         from: supportFrom('FlyCheap Support'), to, replyTo: t.email,
