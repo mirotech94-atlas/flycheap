@@ -9,7 +9,7 @@ export async function POST(req: Request) {
   // only thing protecting it. This deletes fare snapshots, and the price
   // history IS the product — every verdict, every 30-day range and every
   // savings figure is computed from it. It dropped them on an anonymous POST.
-  const auth = await requireOwner();
+  const auth = await requireOwner(req);
   if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(req.url);

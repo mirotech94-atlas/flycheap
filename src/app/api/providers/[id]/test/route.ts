@@ -5,10 +5,10 @@ import { requireOwner } from '@/lib/apiGuard';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
   // GUARD: middleware.ts does not run on api/ routes, so this handler is
   // the only thing protecting it. Probes a provider with real, billable API calls.
-  const auth = await requireOwner();
+  const auth = await requireOwner(req);
   if (!auth.ok) return auth.response;
 
   const { id } = await ctx.params;

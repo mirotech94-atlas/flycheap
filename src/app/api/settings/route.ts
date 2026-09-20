@@ -115,7 +115,7 @@ const PutSchema = z.object({
 });
 
 export async function PUT(req: Request) {
-  const auth = await requireUser();
+  const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
 
   const body = await req.json().catch(() => ({}));

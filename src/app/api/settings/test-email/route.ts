@@ -4,10 +4,10 @@ import { requireUser } from '@/lib/apiGuard';
 
 export const dynamic = 'force-dynamic';
 
-export async function POST() {
+export async function POST(req: Request) {
   // GUARD: middleware.ts does not run on api/ routes, so this handler is
   // the only thing protecting it. Sends an email on demand.
-  const auth = await requireUser();
+  const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
 
   const r = await sendTestNotification('email');

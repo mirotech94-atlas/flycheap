@@ -73,7 +73,7 @@ export async function PUT(req: Request) {
   // only thing protecting it. It reads and WRITES provider credentials into
   // .env.local: unauthenticated, an anonymous PUT could set TRAVELPAYOUTS_TOKEN
   // or enable a metered provider, and that is someone else's bill.
-  const auth = await requireOwner();
+  const auth = await requireOwner(req);
   if (!auth.ok) return auth.response;
 
   const body = await req.json().catch(() => ({} as Record<string, unknown>));
