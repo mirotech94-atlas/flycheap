@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { verifyWebhook, planFromPaypalPlanId, getSubscription } from '@/lib/paypal';
-import { queries } from '@/lib/db';
+import { getDb, queries } from '@/lib/db';
 import { notifyBillingToSlack } from '@/lib/notifier';
 
 export const dynamic = 'force-dynamic';
 
 // PayPal webhook endpoint. Configure in your PayPal app:
-//   https://flycheap.18dn.com/api/billing/paypal/webhook
+//   https://flycheap.live/api/billing/paypal/webhook
 // Subscribe to events: BILLING.SUBSCRIPTION.ACTIVATED, .CANCELLED, .SUSPENDED,
 // .PAYMENT.FAILED, PAYMENT.SALE.COMPLETED. Then put the webhook ID into
 // PAYPAL_WEBHOOK_ID env.
@@ -18,6 +18,20 @@ type PaypalEvent = {
 };
 
 const PAID_STATUSES = new Set(['ACTIVE', 'APPROVED']);
+
+/**
+ * Resolve the account behind a PayPal subscription when the event carries no
+ * custom_id. Subscriptions opened through our own flow set custom_id to the
+ * user id, but PayPal drops it on some resource shapes — and a cancellation we
+ * cannot attribute would silently leave the account on a paid tier.
+ */
+function findUserIdByPaypalSub(subId: string | undefined): number | null {
+  if (!subId) return null;
+  const row = getDb()
+    .prepare('SELECT id FROM users WHERE paypal_subscription_id = ? LIMIT 1')
+    .get(subId) as { id: number } | undefined;
+  return row?.id ?? null;
+}
 
 export async function POST(req: NextRequest) {
   const raw = await req.text();
@@ -39,7 +53,7 @@ export async function POST(req: NextRequest) {
   const customId: string | undefined =
     event.resource?.custom_id ??
     event.resource?.subscriber?.custom_id;
-  const userId = Number(customId) || NaN;
+  const userId = Number(customId) || findUserIdByPaypalSub(subId) || NaN;
 
   switch (event.event_type) {
     case 'BILLING.SUBSCRIPTION.ACTIVATED':
