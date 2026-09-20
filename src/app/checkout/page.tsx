@@ -12,13 +12,13 @@ const PLANS = {
   pro: {
     name: 'Pro', price: 9,
     pitch: 'For the frequent traveler — speed and reach.',
-    features: ['Up to 100 tracked routes', 'Priority 5-minute polling', 'SMS / WhatsApp / Telegram alerts', 'Buy/wait predictions + confidence', 'Mistake-fare radar'],
+    features: ['Up to 100 tracked routes', 'Checked most often when it matters', 'SMS and Telegram alerts', 'Buy/wait predictions + confidence', 'Mistake-fare radar'],
     href: '/api/billing/checkout?plan=pro',
   },
   enterprise: {
     name: 'Enterprise', price: 39,
     pitch: 'For agencies, family offices, and travel desks.',
-    features: ['Unlimited routes · 1-minute polling', 'White-label branding + custom domain', 'REST API (/api/v1)', 'Slack channel alerts', 'Audit log'],
+    features: ['Unlimited routes', 'White-label branding + custom domain', 'REST API (/api/v1)', 'Everything in Pro', 'Audit log'],
     href: '/api/billing/checkout?plan=enterprise',
   },
 } as const;

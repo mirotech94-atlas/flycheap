@@ -48,16 +48,16 @@ export default function RoutesIndexPage() {
           <div className="eyebrow !text-white/70 mb-1">All routes</div>
           <h1 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight">
             Track any route,{' '}
-            <span className="text-[var(--nc-teal)]">real pricing every 30 minutes</span>
+            <span className="text-[var(--nc-teal)]">real pricing, continuously refreshed</span>
           </h1>
           <p className="text-white/75 mt-2 max-w-xl text-sm md:text-base">
-            We poll Travelpayouts for every route below, every hour. Click a route for cached cheapest
+            We poll Travelpayouts for every route below and cache the result. Click a route for cached cheapest
             dates and a one-click booking shortcut.
           </p>
           <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/60">
             <span>{routes.length} routes tracked</span>
             <span className="hidden sm:inline text-white/30">·</span>
-            <span>Refreshed every hour</span>
+            <span>Continuously refreshed</span>
             <span className="hidden sm:inline text-white/30">·</span>
             <span>
               <Link href="/searches" className="underline underline-offset-2 hover:text-white transition">Add a route →</Link>
@@ -70,7 +70,7 @@ export default function RoutesIndexPage() {
         /* ─── Empty state ─── */
         <section className="grid sm:grid-cols-3 gap-4">
           {[
-            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start polling immediately — every 30 minutes (5 on Pro) — and keep going indefinitely.', href: '/searches', cta: 'Add route →', grad: { from: '#0a3a6b', to: '#1a6ba0' } },
+            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start checking it immediately and keep going indefinitely — most often when it is close to departure or close to your target.', href: '/searches', cta: 'Add route →', grad: { from: '#0a3a6b', to: '#1a6ba0' } },
             { title: 'Explore cheap deals', desc: 'Browse current deals from your home city with live price filters.', href: '/explore', cta: 'Browse deals →', grad: { from: '#0a5a3a', to: '#1a8b60' } },
             { title: 'Search live fares', desc: 'Run a live multi-provider search across Aviasales, Google Flights, and more.', href: '/offers', cta: 'Search now →', grad: { from: '#5a3a0a', to: '#8b5a1a' } },
           ].map(c => (
@@ -150,7 +150,7 @@ export default function RoutesIndexPage() {
       <p className="text-xs text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
         Don&apos;t see your route?{' '}
         <Link href="/searches" className="text-brand-700 underline">Add a tracker on the Searches page</Link>
-        {' '}and we&apos;ll start polling it every 30 minutes.
+        {' '}and we&apos;ll start checking it straight away.
       </p>
     </div>
   );

@@ -140,7 +140,7 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
             <div className="motion-fade-in">
               <div className="eyebrow">Step 3 of 3</div>
               <h3 className="font-display font-bold text-lg mt-1 mb-1">Ready to track</h3>
-              <p className="text-sm text-slate-500 mb-4">We&apos;ll create the route and start polling every 30 minutes. You can adjust dates from the Searches page anytime.</p>
+              <p className="text-sm text-slate-500 mb-4">We&apos;ll create the route and start checking it straight away. You can adjust dates from the Searches page anytime.</p>
               <ul className="space-y-2 text-sm bg-slate-50 dark:bg-slate-800/40 rounded-lg p-4 border border-slate-200/60 dark:border-slate-700">
                 <li><span className="text-slate-500">Route:</span> <strong>{route.label}</strong></li>
                 <li><span className="text-slate-500">Target:</span> <strong>${target} per adult</strong></li>

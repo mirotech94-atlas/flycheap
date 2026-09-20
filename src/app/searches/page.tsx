@@ -9,12 +9,9 @@ import { loadDashboard } from '@/lib/dashboard-data';
 import { getCurrentUser } from '@/lib/auth';
 import { FcPageHead, FcStat, FcStatRow, FcPanel, FcEmpty, FcMoney } from '@/components/fc/PageKit';
 import { DepartureBoard, type BoardRow } from '@/components/fc/DepartureBoard';
+import { POLLING_PROMISE } from '@/lib/tierCopy';
 
 export const dynamic = 'force-dynamic';
-
-function hoursLabel(min: number): string {
-  return min >= 120 ? `${Math.round(min / 60)} hours` : `${min} minutes`;
-}
 
 export default async function SearchesPage() {
   const user = await getCurrentUser();
@@ -68,7 +65,7 @@ export default async function SearchesPage() {
     <div className="space-y-6">
       <FcPageHead
         title="Your watchlist"
-        lede={`We check each route every ${hoursLabel(limits.pollIntervalMin)} and email you the moment a fare drops to your target. Set a target per route, or leave it and we use your default.`}
+        lede={`${POLLING_PROMISE} We email you the moment a fare drops to your target. Set a target per route, or leave it and we use your default.`}
         action={
           <div className="flex items-center gap-2 shrink-0">
             <RefreshDealsButton />
@@ -80,8 +77,8 @@ export default async function SearchesPage() {
       <FcStatRow>
         <FcStat label="Routes tracked" value={active}
           note={remaining > 0 ? `${remaining} more on your plan` : 'Plan limit reached'} />
-        <FcStat label="Checked every" value={limits.pollIntervalMin >= 120 ? `${Math.round(limits.pollIntervalMin / 60)}h` : `${limits.pollIntervalMin}m`}
-          note={limits.pollIntervalMin > 60 ? 'Pro checks every 30 minutes' : 'Priority cadence'} />
+        <FcStat label="How we check" value="Continuously"
+          note="Most often when a route is close to departure or close to your target" />
         <FcStat label="Cheapest right now" value={<FcMoney usd={cheapest} />} accent
           note={cheapest != null ? 'Per adult, across your routes' : 'No fare recorded yet'} />
         <FcStat label="At or under target" value={atOrUnderTarget}

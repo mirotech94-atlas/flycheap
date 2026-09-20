@@ -28,7 +28,10 @@ export async function GET() {
       price: PRICES[id],
       trialDays: TRIAL_DAYS[id] ?? 0,
       maxRoutes: t.maxRoutes,
-      pollIntervalMin: t.pollIntervalMin,
+      // pollIntervalMin is deliberately NOT published. It is an internal floor
+      // for the poll allocator, not a plan feature, and an API client that
+      // renders it would be publishing the same promise the pricing page just
+      // stopped making. See lib/tierCopy.ts.
       historyDays: t.historyDays,
       anyDates: t.anyDates,
       priceDropAlerts: t.priceDropAlerts,

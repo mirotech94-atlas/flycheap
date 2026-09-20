@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import type { PlanFeature } from '@/lib/tierCopy';
 
 type Plan = 'pro' | 'enterprise';
 type Period = 'month' | 'year';
@@ -16,36 +17,35 @@ const PRICES: Record<Plan, Record<Period, number>> = {
   enterprise: { month: 39, year: 299 }, // $299/yr · $169 off vs monthly · ~36% off
 };
 
-const FEATURES: Record<Plan, string[]> = {
-  pro: [
-    '100 tracked routes',
-    '30-minute polling — 8× faster than Free',
-    'Flexible "any dates" tracking — we find the cheapest window',
-    'Full price history — Free sees 7 days, Pro sees every day we have',
-    'Price-drop alerts when a fare is unusually cheap, not just under target',
-    'Household sharing',
-    'All alert channels (Slack, Telegram, WhatsApp, Instagram, SMS, email)',
-    'Per-user AI Route Intelligence',
-    'Mistake-Fare Radar + all digest cadences',
-  ],
-  enterprise: [
-    'Unlimited tracked routes',
-    'Priority polling queue',
-    'Everything in Pro',
-    'API access',
-    'Custom domain + white-label branding',
-    'Premium support',
-  ],
-};
+/**
+ * Plan bullets are DERIVED, not typed — see lib/tierCopy.ts.
+ *
+ * What used to live here was a hand-written list, and it had drifted into three
+ * false claims in a single line: it sold Pro as "All alert channels (Slack,
+ * Telegram, WhatsApp, Instagram, SMS, email)" when Slack is the internal ops
+ * channel and in no tier's list, Instagram has no sender or code at all, and
+ * WhatsApp's sender is unset so every WhatsApp alert returns "not configured".
+ * It also sold "30-minute polling — 8× faster than Free", which is the exact
+ * promise that blocks the poll allocator from getting full authority.
+ *
+ * The server passes in what each tier gives AND what the product can actually
+ * deliver, so neither mistake can be made here again.
+ */
+export type PlanBullets = Record<'free' | 'pro' | 'enterprise', PlanFeature[]>;
 
-export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; currentTier: string }) {
+
+export function PricingClient({ signedIn, currentTier, bullets }: {
+  signedIn: boolean;
+  currentTier: string;
+  bullets: PlanBullets;
+}) {
   const [period, setPeriod] = useState<Period>('month');
   const [cancelling, setCancelling] = useState(false);
 
   async function downgrade() {
     if (cancelling) return;
     const confirmed = window.confirm(
-      'Downgrade to Free? Your paid subscription will be cancelled immediately, your active routes above the free 5-route cap will be paused, and paid-only alert channels (Slack, Telegram, etc.) will stop. You can re-subscribe any time.'
+      'Downgrade to Free? Your paid subscription will be cancelled immediately, your active routes above the free route cap will be paused, and paid-only alert channels (SMS, Telegram) will stop. You can re-subscribe any time.'
     );
     if (!confirmed) return;
     setCancelling(true);
@@ -112,12 +112,7 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
           <h3 className="font-display font-bold text-2xl mt-1">$0</h3>
           <p className="text-xs text-slate-500">forever — email alerts only</p>
           <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
-            <li>✓ 5 tracked routes</li>
-            <li>✓ Fare checked every 4 hours</li>
-            <li>✓ Email alerts</li>
-            <li>✓ Mistake-Fare Radar</li>
-            <li className="text-slate-400">— no Slack / Telegram / WhatsApp / IG / SMS</li>
-            <li className="text-slate-400">— no AI Route Intelligence</li>
+            {bullets.free.map(f => <Bullet key={f.text} f={f} />)}
           </ul>
           {!signedIn ? (
             <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
@@ -141,7 +136,7 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
               <h3 className="font-display font-bold text-2xl mt-1">{lbl.headline}</h3>
               <p className="text-xs text-slate-500">{lbl.sub}</p>
               <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
-                {FEATURES[plan].map(f => <li key={f}>✓ {f}</li>)}
+                {bullets[plan].map(f => <Bullet key={f.text} f={f} />)}
               </ul>
               {!signedIn ? (
                 <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
@@ -173,7 +168,7 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
               <p className="text-xs text-slate-500">{lbl.sub}</p>
               <p className="text-[11px] text-slate-500 font-medium mt-1">Billed immediately · no trial</p>
               <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
-                {FEATURES[plan].map(f => <li key={f}>✓ {f}</li>)}
+                {bullets[plan].map(f => <Bullet key={f.text} f={f} />)}
               </ul>
               {!signedIn ? (
                 <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
@@ -211,4 +206,11 @@ export function PricingClient({ signedIn, currentTier }: { signedIn: boolean; cu
       </div>
     </div>
   );
+}
+
+/** A bullet that states what a plan does NOT include rather than omitting it. */
+function Bullet({ f }: { f: PlanFeature }) {
+  return f.included
+    ? <li>✓ {f.text}</li>
+    : <li className="text-slate-400">— {f.text}</li>;
 }

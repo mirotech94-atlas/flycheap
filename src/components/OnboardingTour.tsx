@@ -30,7 +30,7 @@ const STEPS: Step[] = [
   {
     selector: '[href="/"]',
     title: 'Dashboard',
-    body: 'Your home base — the cheapest fare across all your tracked routes right now, a live deals table, the mistake-fare radar, and route intelligence. Refreshed every 5 minutes.',
+    body: 'Your home base — the cheapest fare across all your tracked routes right now, a live deals table, the mistake-fare radar, and route intelligence. Continuously refreshed.',
     placement: 'bottom',
   },
   {
@@ -48,7 +48,7 @@ const STEPS: Step[] = [
   {
     selector: '[href="/searches"]',
     title: 'Watchlist — add routes',
-    body: 'The heart of it: add any route (any 3-letter pair — JFK→LHR, LAX→NRT) and a target price. We poll every 5–30 minutes and alert you when it drops below your target.',
+    body: 'The heart of it: add any route (any 3-letter pair — JFK→LHR, LAX→NRT) and a target price. We check it continuously and alert you when it drops below your target.',
     placement: 'bottom',
   },
   {
@@ -60,7 +60,7 @@ const STEPS: Step[] = [
   {
     selector: '[href="/settings"]',
     title: 'Settings',
-    body: 'Set your default target price, alert channels (email, SMS, WhatsApp), and party size. Pro unlocks unlimited routes + 5-minute polling.',
+    body: 'Set your default target price, alert channels, quiet hours and party size. Pro unlocks 100 routes, flexible dates and full price history.',
     placement: 'bottom',
   },
   {

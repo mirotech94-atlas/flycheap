@@ -6,7 +6,7 @@ import { useToast } from './Toaster';
 import { AirportSelect } from './AirportSelect';
 
 // Free-form quick search on the dashboard. Two modes:
-//   - "Track" creates a tracked search (polls every 5 min, history, alerts).
+//   - "Track" creates a tracked search (recurring checks, history, alerts).
 //   - "Live search" jumps to /offers with the inputs prefilled.
 export function QuickRouteSearch() {
   const router = useRouter();
@@ -80,7 +80,7 @@ export function QuickRouteSearch() {
       <div className="eyebrow">Search any route · worldwide</div>
       <h2 className="!mb-2">Track a fare or check live prices</h2>
       <p className="text-xs text-slate-500 mb-4">
-        Any 3-letter airport code, any airline, any party size. <strong>Track</strong> adds it to your watchlist (polled every 30 min, 5 on Pro — alerts the moment it drops below your target). <strong>Live search</strong> jumps to /offers and queries the providers right now.
+        Any 3-letter airport code, any airline, any party size. <strong>Track</strong> adds it to your watchlist and we start checking it straight away, alerting you the moment it drops below your target. <strong>Live search</strong> jumps to /offers and queries the providers right now.
       </p>
 
       <div className="flex items-center gap-1 mb-3 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit">

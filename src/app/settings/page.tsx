@@ -81,7 +81,7 @@ export default async function SettingsPage() {
             )}
             {user.subscription_status === 'upgrade_due' && (
               <p className="text-xs text-amber-600 mt-1">
-                Your 3-month founding trial is complete. You keep the Free plan — upgrade to Pro or Enterprise for 100 routes, 5-minute polling and every alert channel.
+                Your 3-month founding trial is complete. You keep the Free plan — upgrade to Pro or Enterprise for more routes, flexible dates, full price history and more alert channels.
               </p>
             )}
           </div>
