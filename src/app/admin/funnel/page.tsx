@@ -95,10 +95,22 @@ export default async function FunnelPage() {
           />
         ))}
         <p className="text-[11.5px] text-white/40 mt-3">
-          Two stages the spec lists are not yet instrumented and are deliberately absent rather than
-          shown as zero: <strong>delivered/opened</strong> needs the ESP&rsquo;s webhook, and{' '}
-          <strong>booking confirmed</strong> needs the &ldquo;did you get the fare?&rdquo; reply. A
-          funnel with a silently missing step reads as a conversion cliff.
+          {m.deliveryInstrumented ? (
+            <>
+              <strong>delivered</strong> and <strong>opened</strong> come from the ESP webhook.
+              Open tracking undercounts by design — clients that block the tracking pixel never
+              report one — so read it as a floor, not a rate.
+            </>
+          ) : (
+            <>
+              <strong>delivered/opened</strong> are absent rather than zero: no ESP webhook event has
+              arrived yet. Point Resend at <code>/api/webhooks/resend</code> and set{' '}
+              <code>RESEND_WEBHOOK_SECRET</code>; the stages appear on the first event.
+            </>
+          )}{' '}
+          <strong>booking confirmed</strong> is recorded on the trip but not yet joined into this
+          view. A funnel with a silently missing step reads as a conversion cliff, so nothing here is
+          shown as a zero it has not measured.
         </p>
       </Panel>
 
