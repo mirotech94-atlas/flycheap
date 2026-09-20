@@ -13,7 +13,7 @@ function isWindow(s: string | undefined | null): s is RetrospectiveWindow {
 export async function POST(req: Request) {
   // GUARD: middleware.ts does not run on api/ routes, so this handler is
   // the only thing protecting it. Sends email to real subscribers.
-  const auth = await requireOwner();
+  const auth = await requireOwner(req);
   if (!auth.ok) return auth.response;
 
   const url = new URL(req.url);

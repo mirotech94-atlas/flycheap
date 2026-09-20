@@ -39,7 +39,7 @@ export async function GET() {
 export async function POST(req: Request) {
   // GUARD: middleware.ts does not run on api/ routes, so this handler is
   // the only thing protecting it. Triggers provider polling, which costs money per call.
-  const auth = await requireUser();
+  const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
 
   const url = new URL(req.url);

@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync, readdirSync, statSync } from 'node:fs';
 import { join } from 'node:path';
+import { originMatches } from '@/lib/apiGuard';
 
 /**
  * Every API route is guarded, or is on the list of ones that must not be.
@@ -110,7 +111,7 @@ describe('the endpoints that were open in production', () => {
 
   it('settings requires a session on both verbs', () => {
     const src = guarded('settings/route.ts');
-    expect((src.match(/requireUser\(\)/g) ?? []).length).toBeGreaterThanOrEqual(2);
+    expect((src.match(/requireUser\(/g) ?? []).length).toBeGreaterThanOrEqual(2);
   });
 
   it('settings never returns a credential, only whether one is set', () => {
@@ -126,8 +127,8 @@ describe('the endpoints that were open in production', () => {
   });
 
   it('provider credentials and destructive maintenance are owner-only', () => {
-    expect(guarded('providers/keys/route.ts')).toMatch(/requireOwner\(\)/);
-    expect(guarded('db/compact/route.ts')).toMatch(/requireOwner\(\)/);
+    expect(guarded('providers/keys/route.ts')).toMatch(/requireOwner\(/);
+    expect(guarded('db/compact/route.ts')).toMatch(/requireOwner\(/);
   });
 
   it('a route can only be changed by the account that owns it', () => {
@@ -139,7 +140,7 @@ describe('the endpoints that were open in production', () => {
 
   it('the alert export is scoped to the caller', () => {
     const src = guarded('alerts/export/route.ts');
-    expect(src).toMatch(/requireUser\(\)/);
+    expect(src).toMatch(/requireUser\(/);
     expect(src).toMatch(/user_id = \?/);
     // queries.recentAlerts() is global; exporting it handed over every account.
     expect(src).not.toMatch(/queries\.recentAlerts\(500\)/);
@@ -176,5 +177,76 @@ describe('the settings contract the UI depends on', () => {
     // The PUT loop must have no silent third branch.
     expect(settings).toMatch(/ignored\.push/);
     expect(settings).toMatch(/ignored\.length \? \{ ok: true, ignored \}/);
+  });
+});
+
+describe('same-origin check on mutations', () => {
+  /**
+   * Defence in depth behind `sameSite: 'lax'`, which already stops a cross-site
+   * POST/PUT/PATCH/DELETE from carrying the session at all. This catches the
+   * case where that cookie policy is ever loosened, and it is the missing half
+   * of the design an earlier session sketched in the (now orphaned)
+   * tests/api-security.test.ts.
+   */
+  const req = (method: string, origin?: string, host = 'my.flycheap.live') =>
+    ({ method, host, origin: origin ?? null, referer: null });
+
+  it('accepts a request from our own page', () => {
+    expect(originMatches(req('POST', 'https://my.flycheap.live'))).toBe(true);
+  });
+
+  it('refuses a mutation from another site', () => {
+    expect(originMatches(req('POST', 'https://evil.example'))).toBe(false);
+    expect(originMatches(req('DELETE', 'https://evil.example'))).toBe(false);
+  });
+
+  it('refuses a sibling host, not just a foreign one', () => {
+    // admin. and my. are different origins even though we own both.
+    expect(originMatches(req('POST', 'https://admin.flycheap.live'))).toBe(false);
+  });
+
+  it('never blocks a safe verb', () => {
+    // A GET reached by following a link carries someone else's Referer. Doing
+    // the origin check on GET would 403 every inbound link.
+    expect(originMatches({ method: 'GET', host: 'my.flycheap.live', origin: null, referer: 'https://news.example/x' })).toBe(true);
+    expect(originMatches({ method: 'HEAD', host: 'my.flycheap.live', origin: 'https://evil.example', referer: null })).toBe(true);
+  });
+
+  it('allows an absent Origin, deliberately', () => {
+    // A browser ALWAYS sends Origin on a cross-origin or form POST, so the
+    // absent case is not reachable by the CSRF vector — it is curl and scripts.
+    // Rejecting it buys no security and breaks every admin one-liner.
+    expect(originMatches(req('POST'))).toBe(true);
+  });
+
+  it('falls back to Referer when Origin is absent', () => {
+    expect(originMatches({ method: 'POST', host: 'my.flycheap.live', origin: null, referer: 'https://evil.example/page' })).toBe(false);
+    expect(originMatches({ method: 'POST', host: 'my.flycheap.live', origin: null, referer: 'https://my.flycheap.live/settings' })).toBe(true);
+  });
+
+  it('treats an unparseable Origin as a mismatch', () => {
+    expect(originMatches(req('POST', 'not a url'))).toBe(false);
+  });
+
+  it('refuses when the host is unknown', () => {
+    expect(originMatches({ method: 'POST', host: null, origin: 'https://my.flycheap.live', referer: null })).toBe(false);
+  });
+
+  it('every mutating handler passes its request to the guard', () => {
+    // The check is opt-in per handler, so forgetting it is silent. This is what
+    // makes forgetting loud instead.
+    const offenders: string[] = [];
+    for (const file of routeFiles()) {
+      const src = readFileSync(file, 'utf8');
+      if (!/require(User|Owner)/.test(src)) continue;
+      const handlers = [...src.matchAll(/export async function (POST|PUT|PATCH|DELETE)\s*\([^)]*\)\s*\{/g)];
+      for (const h of handlers) {
+        const next = src.indexOf('export async function', h.index! + h[0].length);
+        const body = src.slice(h.index! + h[0].length, next === -1 ? undefined : next);
+        const guard = /require(?:User|Owner)\(\s*([^)]*)\s*\)/.exec(body);
+        if (guard && !guard[1].trim()) offenders.push(`${rel(file)} ${h[1]}`);
+      }
+    }
+    expect(offenders).toEqual([]);
   });
 });

@@ -30,7 +30,7 @@ const PatchSchema = z.object({
 });
 
 export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser();
+  const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
 
   const { id } = await ctx.params;
@@ -58,8 +58,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   return NextResponse.json({ ok: true });
 }
 
-export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string }> }) {
-  const auth = await requireUser();
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const auth = await requireUser(req);
   if (!auth.ok) return auth.response;
   const { id: ownedId } = await ctx.params;
   if (!ownedBy(parseInt(ownedId, 10), auth.user)) {
