@@ -25,6 +25,7 @@ export function median7dForSearch(searchId: number): number | null {
      WHERE search_id = ?
        AND polled_at >= datetime('now', '-7 days')
        AND polled_at <  datetime('now', '-1 hour')
+       AND COALESCE(verify_outcome, 'ok') <> 'dead'
      ORDER BY price_per_adult_usd`
   ).all(searchId) as Array<{ price_per_adult_usd: number }>;
   if (rows.length < 3) return null;

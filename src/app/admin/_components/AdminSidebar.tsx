@@ -13,6 +13,15 @@ const NAV: NavGroup[] = [
   { group: 'Overview', items: [
     { href: '/admin', label: 'Command centre', icon: 'overview', hint: 'Daily founder briefing' },
   ] },
+  // The three questions the admin portal has to answer, in the order they
+  // matter: is the engine honest, what does it cost against what it earns, and
+  // does the funnel work. Trust comes first because everything else is
+  // worthless if it fails.
+  { group: 'Analytics', items: [
+    { href: '/admin/trust',     label: 'Fare truth', icon: 'trust',   hint: 'Alert-to-click delta, dead fares, verdict accuracy' },
+    { href: '/admin/economics', label: 'Economics',  icon: 'economics', hint: 'Poll cost against commission earned' },
+    { href: '/admin/funnel',    label: 'Funnel',     icon: 'funnel',  hint: 'Alert to click to booking to chain' },
+  ] },
   { group: 'Commercial', items: [
     { href: '/admin/revenue', label: 'Revenue',      icon: 'revenue', hint: 'Earnings, balance and forecast' },
     { href: '/admin/clicks',  label: 'Click stream',  icon: 'clicks',  hint: 'Traffic sources and attribution' },
@@ -35,7 +44,8 @@ const NAV: NavGroup[] = [
 
 type IconKey =
   | 'overview' | 'revenue' | 'affiliate' | 'signups' | 'users' | 'clicks' | 'integrations'
-  | 'queue' | 'health' | 'errors' | 'settings' | 'logout' | 'back' | 'tickets';
+  | 'queue' | 'health' | 'errors' | 'settings' | 'logout' | 'back' | 'tickets'
+  | 'trust' | 'economics' | 'funnel';
 
 function Icon({ kind }: { kind: IconKey }) {
   const p = {
@@ -45,6 +55,12 @@ function Icon({ kind }: { kind: IconKey }) {
   };
   switch (kind) {
     case 'overview':     return <svg {...p}><rect x="3" y="3" width="7.5" height="7.5" rx="1.5" /><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5" /><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5" /><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5" /></svg>;
+    // A shield: the fare-truth page is the one that says whether we can be trusted.
+    case 'trust':        return <svg {...p}><path d="M12 3l7 3v5.5c0 4.3-2.9 8-7 9.5-4.1-1.5-7-5.2-7-9.5V6l7-3z" /><path d="M9 12l2 2 4-4" /></svg>;
+    // A scale: cost on one side, revenue on the other.
+    case 'economics':    return <svg {...p}><path d="M12 4v16" /><path d="M5 8h14" /><path d="M5 8l-2.5 5a3 3 0 005 0L5 8z" /><path d="M19 8l-2.5 5a3 3 0 005 0L19 8z" /></svg>;
+    // A narrowing funnel.
+    case 'funnel':       return <svg {...p}><path d="M3 4h18l-7 8v7l-4 2v-9L3 4z" /></svg>;
     case 'affiliate':    return <svg {...p}><path d="M12 3v18" /><path d="M16.5 7.5a3.5 3.5 0 00-3.5-3H10a3 3 0 000 6h4a3 3 0 010 6h-3.2a3.5 3.5 0 01-3.4-3" /></svg>;
     case 'errors':       return <svg {...p}><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" /></svg>;
     case 'revenue':      return <svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16v-4M12 16V8M16 16v-6M20 16v-9" /></svg>;

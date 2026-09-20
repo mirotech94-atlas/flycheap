@@ -4,6 +4,8 @@ import { queries } from '@/lib/db';
 import { MODELS, completeJSON, hasApiKey, isDryRun, pingModel } from '../shared/client';
 import { startRun, finishRun } from '../shared/storage';
 import { BRAND_VOICE, voiceFlags } from '../shared/voice';
+import { buildPartnerLink, routeIdFor } from '@/lib/partnerLink';
+import { aviasalesSearchLink } from '@/lib/affiliate';
 
 // Social poster (phase 2). Turns verified curated picks into channel-specific
 // posts and queues them with status='queued'. Nothing is posted here — the
@@ -18,9 +20,27 @@ const PostSchema = z.object({ body: z.string().min(5).max(900) });
 const BASE = 'https://flycheap.live';
 
 function bookUrl(pick: { origin: string; destination: string; outbound_date: string; return_date: string }, channel: Channel) {
-  // Aviasales search deep-link (the surface our /go redirect attributes).
-  const to = `https://www.aviasales.com/search/${pick.origin}${pick.outbound_date.slice(5).replace('-', '')}${pick.destination}${pick.return_date.slice(5).replace('-', '')}1`;
-  return `${BASE}/go?to=${encodeURIComponent(to)}&surface=agent-social&channel=${channel}`;
+  // Through the one builder, so this channel's clicks carry the sub-ID payload
+  // and land in the funnel like every other surface. Previously this wrote its
+  // own /go query with an unrecognised surface, which meant every social click
+  // was untyped: no product, no route, no campaign.
+  return buildPartnerLink({
+    partner: 'aviasales',
+    product: 'flight',
+    baseUrl: BASE,
+    deeplink: aviasalesSearchLink({
+      origin: pick.origin, destination: pick.destination,
+      departDate: pick.outbound_date, returnDate: pick.return_date, adults: 1,
+    }),
+    context: {
+      surface: 'agent-social',
+      routeId: routeIdFor({
+        origin: pick.origin, destination: pick.destination,
+        departDate: pick.outbound_date, returnDate: pick.return_date,
+      }),
+      campaign: `social-${channel}`,
+    },
+  });
 }
 
 function channelRules(channel: Channel): string {

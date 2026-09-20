@@ -1,5 +1,6 @@
 import 'server-only';
 import Database from 'better-sqlite3';
+import type { AlertKind } from './alertKind';
 import path from 'node:path';
 import fs from 'node:fs';
 
@@ -612,6 +613,18 @@ function init(db: Database.Database) {
   if (!alertCols.some(c => c.name === 'kind')) {
     db.exec(`ALTER TABLE alerts_sent ADD COLUMN kind TEXT NOT NULL DEFAULT 'threshold'`);
   }
+  if (!alertCols.some(c => c.name === 'status')) {
+    // 'pending' while the row is reserved and the channels are being tried,
+    // 'sent' once at least one landed. The row has to exist before the send so
+    // outbound links can carry its id (the alert->click join), but a row that
+    // is merely reserved is not an alert: every reader that asks "what was the
+    // last alert for this route" must skip it, or the email ends up comparing
+    // itself to itself and the threshold floor moves on a send that failed.
+    //
+    // Default 'sent' so every pre-existing row stays correct.
+    db.exec(`ALTER TABLE alerts_sent ADD COLUMN status TEXT NOT NULL DEFAULT 'sent'`);
+  }
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_alerts_sent_search_status ON alerts_sent(search_id, status, sent_at)`);
   const searchCols = db.prepare(`PRAGMA table_info(searches)`).all() as Array<{ name: string }>;
   if (!searchCols.some(c => c.name === 'sort_order')) {
     db.exec(`ALTER TABLE searches ADD COLUMN sort_order INTEGER NOT NULL DEFAULT 0`);
@@ -630,6 +643,232 @@ function init(db: Database.Database) {
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_time     ON affiliate_clicks(occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_provider ON affiliate_clicks(provider, occurred_at)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_route    ON affiliate_clicks(route_id, occurred_at)`);
+  // ── The monetization chain ──────────────────────────────────────────────
+  //
+  // One alert, one intent spike, six chances to earn. The design principle is
+  // "never interrupt the booking, always follow it": nothing here fires until
+  // the user has CONFIRMED they booked. Guessing wrong and sending hotel offers
+  // to someone who did not book is how a trusted alert becomes spam.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS trips (
+      id TEXT PRIMARY KEY,
+      user_id INTEGER,
+      click_token TEXT,
+      search_id INTEGER,
+      origin TEXT NOT NULL,
+      destination TEXT NOT NULL,
+      depart_date TEXT,
+      return_date TEXT,
+      adults INTEGER NOT NULL DEFAULT 1,
+      fare_per_adult_usd REAL,
+      -- 'pending'  asked, no answer yet
+      -- 'booked'   confirmed by the user - the ONLY state that opens the chain
+      -- 'deciding' confirmed not-booked - retention nudges, never offers
+      -- 'expired'  never answered
+      status TEXT NOT NULL DEFAULT 'pending',
+      confirmed_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_trips_user ON trips(user_id, created_at);
+    CREATE INDEX IF NOT EXISTS idx_trips_status ON trips(status, created_at);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_trips_click ON trips(click_token)
+      WHERE click_token IS NOT NULL;
+
+    -- One row per scheduled send. Scheduling up front rather than computing at
+    -- send time makes the chain inspectable: you can see what is queued for a
+    -- user before it goes out.
+    CREATE TABLE IF NOT EXISTS chain_sends (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      trip_id TEXT NOT NULL,
+      stage TEXT NOT NULL,
+      scheduled_for TEXT NOT NULL,
+      status TEXT NOT NULL DEFAULT 'queued',   -- queued|sent|skipped|failed|cancelled
+      skip_reason TEXT,
+      sent_at TEXT,
+      message_id TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_chain_due ON chain_sends(status, scheduled_for);
+    -- A stage fires at most once per trip, whatever the scheduler does.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_chain_trip_stage ON chain_sends(trip_id, stage);
+
+    -- Token for the booked / still-deciding answer. Separate from the trip id so
+    -- a link can be revoked without losing the trip.
+    CREATE TABLE IF NOT EXISTS trip_confirm_tokens (
+      token TEXT PRIMARY KEY,
+      trip_id TEXT NOT NULL,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+  `);
+
+  const chainCols = db.prepare(`PRAGMA table_info(chain_sends)`).all() as Array<{ name: string }>;
+  if (!chainCols.some(c => c.name === 'attempts')) {
+    // A transient send failure must not be permanent. Without a retry the
+    // 'confirm' stage is the expensive case: the question never arrives, the
+    // user never answers, the trip expires unconfirmed after 7 days, and the
+    // entire six-stage chain for that booking silently never happens — while
+    // the funnel just shows an unconfirmed trip.
+    db.exec(`ALTER TABLE chain_sends ADD COLUMN attempts INTEGER NOT NULL DEFAULT 0`);
+  }
+
+  // ── Fare truth ──────────────────────────────────────────────────────────
+  //
+  // "The category killer for a fare-alert product is a user clicking a $484
+  // alert and landing on $689. It happens once and they never trust an alert
+  // again." Every number the product shows therefore carries the moment it was
+  // verified and what verified it, and alerts that cannot be verified are
+  // suppressed rather than sent.
+  const fareTruthCols = db.prepare(`PRAGMA table_info(fare_snapshots)`).all() as Array<{ name: string }>;
+  if (!fareTruthCols.some(c => c.name === 'verified_at')) {
+    db.exec(`ALTER TABLE fare_snapshots ADD COLUMN verified_at TEXT`);
+  }
+  if (!fareTruthCols.some(c => c.name === 'verified_price_usd')) {
+    db.exec(`ALTER TABLE fare_snapshots ADD COLUMN verified_price_usd REAL`);
+  }
+  if (!fareTruthCols.some(c => c.name === 'verified_by')) {
+    // Comma-separated provider ids that agreed on the verified price.
+    db.exec(`ALTER TABLE fare_snapshots ADD COLUMN verified_by TEXT`);
+  }
+  if (!fareTruthCols.some(c => c.name === 'verify_outcome')) {
+    // 'agreed' | 'within-tolerance' | 'dead' | 'unverified' | 'single-provider'
+    db.exec(`ALTER TABLE fare_snapshots ADD COLUMN verify_outcome TEXT`);
+  }
+
+  // Alerts that were SUPPRESSED because the fare could not be verified. This
+  // table is the point of the exercise: a suppressed alert costs one possible
+  // booking, a dead-fare alert costs a user. Keeping the suppressions visible
+  // is what stops anyone quietly turning the check off because it is
+  // "suppressing exciting alerts".
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS dead_fares (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      search_id INTEGER NOT NULL,
+      fare_snapshot_id INTEGER,
+      alert_kind TEXT NOT NULL,
+      polled_price_usd REAL NOT NULL,
+      verified_price_usd REAL,
+      delta_pct REAL,
+      polled_by TEXT,
+      verified_by TEXT,
+      reason TEXT NOT NULL,
+      occurred_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_dead_fares_time ON dead_fares(occurred_at);
+    CREATE INDEX IF NOT EXISTS idx_dead_fares_search ON dead_fares(search_id, occurred_at);
+  `);
+
+  // Two providers quoting materially different prices for the same query, per
+  // pair, so provider disagreement can be tracked rather than averaged away.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS provider_disagreements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      route_key TEXT NOT NULL,
+      search_id INTEGER,
+      provider_a TEXT NOT NULL,
+      provider_b TEXT NOT NULL,
+      price_a REAL NOT NULL,
+      price_b REAL NOT NULL,
+      delta_pct REAL NOT NULL,
+      occurred_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_disagree_pair ON provider_disagreements(provider_a, provider_b, occurred_at);
+    CREATE INDEX IF NOT EXISTS idx_disagree_time ON provider_disagreements(occurred_at);
+  `);
+
+  // Verdict scoring: score our own buy/wait calls continuously. For every fare
+  // called `buy`, whether it went lower within 7 and 14 days; for every `wait`,
+  // whether waiting paid. Publishing a real hit rate is what turns the
+  // confidence percentage from a claim into a measured quantity.
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS verdict_calls (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      search_id INTEGER NOT NULL,
+      route_key TEXT NOT NULL,
+      origin TEXT NOT NULL,
+      destination TEXT NOT NULL,
+      verdict TEXT NOT NULL,              -- buy | wait | hold
+      confidence_pct INTEGER NOT NULL,
+      price_at_call_usd REAL NOT NULL,
+      called_at TEXT NOT NULL DEFAULT (datetime('now')),
+      -- Filled in by the scorer once the horizon has elapsed. NULL = not due yet.
+      min_price_7d_usd REAL,
+      min_price_14d_usd REAL,
+      correct_7d INTEGER,                 -- 1 | 0 | NULL (not yet scored)
+      correct_14d INTEGER,
+      scored_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_verdict_calls_route ON verdict_calls(route_key, called_at);
+    CREATE INDEX IF NOT EXISTS idx_verdict_calls_scoring ON verdict_calls(called_at, correct_7d);
+    -- One call per search per day: the poller runs every few minutes and we are
+    -- scoring a judgement, not a sample rate.
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_verdict_calls_daily
+      ON verdict_calls(search_id, date(called_at));
+  `);
+
+  // ── Monetization-chain instrumentation (spec: "the three numbers") ──────
+  //
+  // Nothing in the monetization spec is measurable without these three joins:
+  //   provider cost per tracked route  → api_calls.provider + cost_usd
+  //   commission per converted alert   → affiliate_clicks.alert_id
+  //   alert → click → book conversion  → affiliate_clicks.alert_id + alert_kind
+  //
+  // api_calls previously recorded one aggregate row per poll with no provider
+  // attached, so "which provider costs what" could not be answered at all.
+  // cost_usd is resolved and frozen AT WRITE TIME from the provider_costs
+  // setting, so re-pricing a provider never rewrites history.
+  const apiCallCols = db.prepare(`PRAGMA table_info(api_calls)`).all() as Array<{ name: string }>;
+  if (!apiCallCols.some(c => c.name === 'provider')) {
+    db.exec(`ALTER TABLE api_calls ADD COLUMN provider TEXT`);
+  }
+  if (!apiCallCols.some(c => c.name === 'cost_usd')) {
+    db.exec(`ALTER TABLE api_calls ADD COLUMN cost_usd REAL NOT NULL DEFAULT 0`);
+  }
+  if (!apiCallCols.some(c => c.name === 'phase')) {
+    // 'sweep'    — routine allocator poll
+    // 'verify'   — the pre-send second-provider re-query (fare truth)
+    // 'ondemand' — a user pressed Poll now / searched
+    // 'click'    — re-query at click time to measure the alert-to-click delta
+    db.exec(`ALTER TABLE api_calls ADD COLUMN phase TEXT NOT NULL DEFAULT 'sweep'`);
+  }
+  if (!apiCallCols.some(c => c.name === 'band')) {
+    db.exec(`ALTER TABLE api_calls ADD COLUMN band TEXT`);
+  }
+  if (!apiCallCols.some(c => c.name === 'route_key')) {
+    // Canonical (origin, destination, date-bucket, pax-class) dedup key, so
+    // one poll shared by N watchers is costed once rather than N times.
+    db.exec(`ALTER TABLE api_calls ADD COLUMN route_key TEXT`);
+  }
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_api_calls_provider_time ON api_calls(provider, called_at)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_api_calls_routekey_time ON api_calls(route_key, called_at)`);
+
+  // affiliate_clicks IS the spec's `click_out` row. Extending it rather than
+  // adding a second table keeps the funnel in one place — a parallel table
+  // would split alert→click→commission across a join nobody maintains.
+  const clickOutCols = db.prepare(`PRAGMA table_info(affiliate_clicks)`).all() as Array<{ name: string }>;
+  const addClickCol = (name: string, ddl: string) => {
+    if (!clickOutCols.some(c => c.name === name)) db.exec(`ALTER TABLE affiliate_clicks ADD COLUMN ${ddl}`);
+  };
+  // The single most valuable join in the product: which alert produced this click.
+  addClickCol('alert_id',             `alert_id INTEGER`);
+  addClickCol('alert_kind',           `alert_kind TEXT`);
+  addClickCol('product',              `product TEXT`);   // flight | hotel | transfer | insurance | esim | tour | compensation
+  addClickCol('sub_id',               `sub_id TEXT`);    // <surface><product><alertType>, e.g. "emflmf"
+  // Fare truth: what we promised vs what was there when they clicked.
+  addClickCol('price_shown_usd',      `price_shown_usd REAL`);
+  addClickCol('price_at_click_usd',   `price_at_click_usd REAL`);
+  addClickCol('verdict',              `verdict TEXT`);
+  addClickCol('confidence_pct',       `confidence_pct INTEGER`);
+  addClickCol('minutes_since_alert',  `minutes_since_alert INTEGER`);
+  // Which cross-shop option was taken and where it sat in the list — this is
+  // how we learn whether ordering the Book panel by expected commission
+  // costs us clicks.
+  addClickCol('option_rank',          `option_rank INTEGER`);
+  addClickCol('option_name',          `option_name TEXT`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_alert ON affiliate_clicks(alert_id)`);
+  db.exec(`CREATE INDEX IF NOT EXISTS idx_aff_clicks_product ON affiliate_clicks(product, occurred_at)`);
+
   const searchCols2 = db.prepare(`PRAGMA table_info(searches)`).all() as Array<{ name: string }>;
   if (!searchCols2.some(c => c.name === 'origins')) {
     // Multi-origin fanout: comma-separated IATA codes. NULL/empty means just
@@ -667,6 +906,23 @@ function init(db: Database.Database) {
   seed.run('max_display_per_adult_usd', '1300');
   seed.run('usd_to_egp', '49.5');
   seed.run('enabled_providers', 'travelpayouts');
+  // Poll economics. Editable in /admin/settings WITHOUT a deploy, because
+  // provider pricing changes and the spec is explicit that a routing/pricing
+  // table must not live in code. USD per successful API call.
+  // Travelpayouts' data API is free on our plan, hence 0 — that is a real
+  // measured value, not a placeholder, and it is why the honest COGS number
+  // is dominated by the paid providers below.
+  seed.run('provider_costs', JSON.stringify({
+    travelpayouts: 0,
+    amadeus: 0,
+    serpapi: 0.015,
+    searchapi: 0.012,
+    duffel: 0,
+    kiwi: 0,
+  }));
+  // Hard monthly poll-spend ceiling in USD. 0 = uncapped (the allocator then
+  // never demotes on budget). Surfaced on the admin cost dashboard.
+  seed.run('poll_budget_monthly_usd', '0');
 }
 
 export function getDb(): Database.Database {
@@ -1514,6 +1770,12 @@ export const queries = {
   },
 
   // -------- Affiliate / commission --------
+  /**
+   * The spec's `click_out` row. Everything the network never sees lives here;
+   * only the opaque token goes out as sub_id3. That keeps user identifiers out
+   * of third-party systems and lets us add dimensions later without
+   * renegotiating the sub-ID scheme with anyone.
+   */
   insertAffiliateClick: (row: {
     token: string; user_id: number | null; search_id: number | null;
     origin: string | null; destination: string | null;
@@ -1521,13 +1783,232 @@ export const queries = {
     per_adult_usd: number | null; provider: string | null; marker: string | null;
     ip: string | null; user_agent: string | null;
     surface?: string | null; route_id?: string | null;
+    alert_id?: number | null; alert_kind?: string | null;
+    product?: string | null; sub_id?: string | null;
+    price_shown_usd?: number | null; price_at_click_usd?: number | null;
+    verdict?: string | null; confidence_pct?: number | null;
+    minutes_since_alert?: number | null;
+    option_rank?: number | null; option_name?: string | null;
   }) => getDb().prepare(
     `INSERT INTO affiliate_clicks
       (token, user_id, search_id, origin, destination, depart_date, return_date,
-       per_adult_usd, provider, marker, ip, user_agent, surface, route_id)
+       per_adult_usd, provider, marker, ip, user_agent, surface, route_id,
+       alert_id, alert_kind, product, sub_id, price_shown_usd, price_at_click_usd,
+       verdict, confidence_pct, minutes_since_alert, option_rank, option_name)
      VALUES (@token, @user_id, @search_id, @origin, @destination, @depart_date, @return_date,
-             @per_adult_usd, @provider, @marker, @ip, @user_agent, @surface, @route_id)`
-  ).run({ surface: null, route_id: null, ...row }),
+             @per_adult_usd, @provider, @marker, @ip, @user_agent, @surface, @route_id,
+             @alert_id, @alert_kind, @product, @sub_id, @price_shown_usd, @price_at_click_usd,
+             @verdict, @confidence_pct, @minutes_since_alert, @option_rank, @option_name)`
+  ).run({
+    surface: null, route_id: null,
+    alert_id: null, alert_kind: null, product: null, sub_id: null,
+    price_shown_usd: null, price_at_click_usd: null,
+    verdict: null, confidence_pct: null, minutes_since_alert: null,
+    option_rank: null, option_name: null,
+    ...row,
+  }),
+
+  /**
+   * Remove a reserved alert row whose every channel failed.
+   *
+   * The row is inserted BEFORE the send so the outbound links can carry its id
+   * (that id is the alert->click join, the spec's most valuable data point). If
+   * nothing actually reached the user, the reservation must not survive — a
+   * phantom alert row would both understate delivery failure and poison the
+   * threshold floor, silencing the route on the next cycle.
+   *
+   * The affiliate_clicks update is DEFENSIVE, not load-bearing: rollback only
+   * happens when no channel delivered, so no link reached anyone and no click
+   * can reference this id yet. It exists so that a future path which persists
+   * links before delivery is confirmed cannot leave a dangling reference —
+   * and it is an explicit delete rather than ON DELETE CASCADE because
+   * production runs with PRAGMA foreign_keys=0, which makes cascades inert.
+   */
+  deleteAlert: (alertId: number) => {
+    const db = getDb();
+    db.prepare('UPDATE affiliate_clicks SET alert_id = NULL WHERE alert_id = ?').run(alertId);
+    return db.prepare('DELETE FROM alerts_sent WHERE id = ?').run(alertId);
+  },
+
+  // ── Operational alarm inputs ────────────────────────────────────────────
+  // Feed the pure probes in lib/ops/monetizationProbes.ts. Kept here so the
+  // probes stay dependency-free and unit-testable.
+
+  /** Per provider: how many DISTINCT prices it returned recently, and over what span. */
+  providerPriceVariety: (hours = 2) =>
+    getDb().prepare(
+      `SELECT f.provider AS provider,
+              COUNT(DISTINCT f.price_per_adult_usd) AS distinct_prices,
+              COUNT(*) AS samples,
+              (julianday(MAX(f.polled_at)) - julianday(MIN(f.polled_at))) * 1440 AS span_minutes
+         FROM fare_snapshots f
+        WHERE f.polled_at >= datetime('now', ?)
+          AND f.provider IS NOT NULL
+        GROUP BY f.provider`
+    ).all(`-${Math.floor(hours)} hours`) as Array<{
+      provider: string; distinct_prices: number; samples: number; span_minutes: number;
+    }>,
+
+  /** Suppressed alerts against alert opportunities, over a window. */
+  deadFareStats: (hours = 24) => {
+    const db = getDb();
+    const suppressed = (db.prepare(
+      `SELECT COUNT(*) AS n FROM dead_fares WHERE occurred_at >= datetime('now', ?)`
+    ).get(`-${Math.floor(hours)} hours`) as { n: number }).n;
+    const sent = (db.prepare(
+      `SELECT COUNT(*) AS n FROM alerts_sent WHERE status = 'sent' AND sent_at >= datetime('now', ?)`
+    ).get(`-${Math.floor(hours)} hours`) as { n: number }).n;
+    return { suppressed, considered: suppressed + sent };
+  },
+
+  /** Today's poll spend against the trailing daily average. */
+  pollSpendToday: () => {
+    const db = getDb();
+    const today = (db.prepare(
+      `SELECT COALESCE(SUM(cost_usd), 0) AS c FROM api_calls
+        WHERE called_at >= datetime('now', 'start of day')`
+    ).get() as { c: number }).c;
+    // Trailing 14 days EXCLUDING today, or today's own spend would drag the
+    // baseline toward itself and mask the spike it is meant to catch.
+    const prior = db.prepare(
+      `SELECT COALESCE(SUM(cost_usd), 0) AS c FROM api_calls
+        WHERE called_at >= datetime('now', '-14 days')
+          AND called_at <  datetime('now', 'start of day')`
+    ).get() as { c: number };
+    return { today, trailingAvg: prior.c / 14 };
+  },
+
+  /** Days since the last commission event, and whether clicks are still happening. */
+  commissionSilence: () => {
+    const db = getDb();
+    const last = db.prepare(
+      `SELECT MAX(received_at) AS t FROM commission_events`
+    ).get() as { t: string | null };
+    const clicks = (db.prepare(
+      `SELECT COUNT(*) AS n FROM affiliate_clicks WHERE occurred_at >= datetime('now', '-7 days')`
+    ).get() as { n: number }).n;
+    let days: number | null = null;
+    if (last?.t) {
+      const ms = Date.now() - Date.parse(last.t.replace(' ', 'T') + 'Z');
+      days = ms / 86_400_000;
+    }
+    return { daysSinceLastEvent: days, hasClicks: clicks > 0 };
+  },
+
+  /**
+   * Alerts attempted against alerts that reached nobody, recently.
+   *
+   * A reservation that was rolled back IS a delivery failure — the row is gone,
+   * so failures are counted from the dead-letter side: attempts logged by the
+   * poller minus rows that survived as 'sent'.
+   */
+  alertDeliveryStats: (hours = 6) => {
+    const db = getDb();
+    const sent = (db.prepare(
+      `SELECT COUNT(*) AS n FROM alerts_sent
+        WHERE status = 'sent' AND sent_at >= datetime('now', ?)`
+    ).get(`-${Math.floor(hours)} hours`) as { n: number }).n;
+    const failed = (db.prepare(
+      `SELECT COUNT(*) AS n FROM error_log
+        WHERE source = 'alert:delivery' AND occurred_at >= datetime('now', ?)`
+    ).get(`-${Math.floor(hours)} hours`) as { n: number }).n;
+    return { attempted: sent + failed, failed };
+  },
+
+  // ── Fare truth ──────────────────────────────────────────────────────────
+
+  insertProviderDisagreement: (row: {
+    route_key: string; search_id: number | null;
+    provider_a: string; provider_b: string;
+    price_a: number; price_b: number; delta_pct: number;
+  }) => getDb().prepare(
+    `INSERT INTO provider_disagreements
+       (route_key, search_id, provider_a, provider_b, price_a, price_b, delta_pct)
+     VALUES (@route_key, @search_id, @provider_a, @provider_b, @price_a, @price_b, @delta_pct)`
+  ).run(row),
+
+  /**
+   * A suppressed alert. Written every time verification refuses to send, so the
+   * cost of the suppression rule is visible rather than guessed at — the rule is
+   * only defensible if you can see what it caught.
+   */
+  insertDeadFare: (row: {
+    search_id: number; fare_snapshot_id: number | null; alert_kind: string;
+    polled_price_usd: number; verified_price_usd: number | null;
+    delta_pct: number | null; polled_by: string | null; verified_by: string | null;
+    reason: string;
+  }) => getDb().prepare(
+    `INSERT INTO dead_fares
+       (search_id, fare_snapshot_id, alert_kind, polled_price_usd, verified_price_usd,
+        delta_pct, polled_by, verified_by, reason)
+     VALUES (@search_id, @fare_snapshot_id, @alert_kind, @polled_price_usd, @verified_price_usd,
+             @delta_pct, @polled_by, @verified_by, @reason)`
+  ).run(row),
+
+  /** Stamp a snapshot with what verification found. */
+  setFareVerification: (snapshotId: number, v: {
+    verified_at: string; verified_price_usd: number | null;
+    verified_by: string | null; verify_outcome: string;
+  }) => getDb().prepare(
+    `UPDATE fare_snapshots
+        SET verified_at = @verified_at, verified_price_usd = @verified_price_usd,
+            verified_by = @verified_by, verify_outcome = @verify_outcome
+      WHERE id = @id`
+  ).run({ id: snapshotId, ...v }),
+
+  /** Record a buy/wait call so it can be scored against what actually happened. */
+  insertVerdictCall: (row: {
+    search_id: number; route_key: string; origin: string; destination: string;
+    verdict: string; confidence_pct: number; price_at_call_usd: number;
+  }) => getDb().prepare(
+    `INSERT OR IGNORE INTO verdict_calls
+       (search_id, route_key, origin, destination, verdict, confidence_pct, price_at_call_usd)
+     VALUES (@search_id, @route_key, @origin, @destination, @verdict, @confidence_pct, @price_at_call_usd)`
+  ).run(row),
+
+  /** Calls whose horizon has elapsed and which have not been scored yet. */
+  verdictCallsDueForScoring: (horizonDays: number, column: 'correct_7d' | 'correct_14d') =>
+    getDb().prepare(
+      `SELECT * FROM verdict_calls
+        WHERE ${column} IS NULL
+          AND called_at <= datetime('now', ?)
+        ORDER BY called_at ASC LIMIT 500`
+    ).all(`-${Math.floor(horizonDays)} days`) as Array<{
+      id: number; search_id: number; verdict: string; price_at_call_usd: number; called_at: string;
+    }>,
+
+  /** Lowest per-adult price seen for a search within N days AFTER a moment.
+   *  A fare verification ruled DEAD was never real; including it drags the
+        -- route's "normal" down, changes future mistake-fare classification, and
+        -- (worst) flips correct `buy` calls to incorrect when a phantom low lands
+        -- inside a scoring horizon. COALESCE because the column is NULL on every
+        -- snapshot that was never put through verification, which is most of them. */
+  minPriceAfter: (searchId: number, sinceIso: string, days: number) =>
+    (getDb().prepare(
+      `SELECT MIN(price_per_adult_usd) AS p FROM fare_snapshots
+        WHERE search_id = ? AND polled_at > ? AND polled_at <= datetime(?, ?)
+          AND COALESCE(verify_outcome, 'ok') <> 'dead'`
+    ).get(searchId, sinceIso, sinceIso, `+${Math.floor(days)} days`) as { p: number | null }).p,
+
+  scoreVerdictCall: (id: number, v: {
+    column: 'correct_7d' | 'correct_14d'; minColumn: 'min_price_7d_usd' | 'min_price_14d_usd';
+    correct: number; minPrice: number | null;
+  }) => getDb().prepare(
+    `UPDATE verdict_calls
+        SET ${v.column} = ?, ${v.minColumn} = ?, scored_at = datetime('now')
+      WHERE id = ?`
+  ).run(v.correct, v.minPrice, id),
+
+  /** When an alert fired — used to derive minutes-since-alert at click time. */
+  alertSentAt: (alertId: number) =>
+    getDb().prepare('SELECT sent_at, kind FROM alerts_sent WHERE id = ?').get(alertId) as
+      { sent_at: string; kind: string } | undefined,
+
+  /** Fill in the click-time re-query result once it lands (async, after the redirect). */
+  setClickPriceAtClick: (token: string, priceUsd: number) =>
+    getDb().prepare(
+      `UPDATE affiliate_clicks SET price_at_click_usd = ? WHERE token = ?`
+    ).run(priceUsd, token),
 
   // Affiliate revenue dashboard aggregations (Phase 5).
   clicksByProvider30d: () =>
@@ -1875,6 +2356,7 @@ export const queries = {
     getDb().prepare(
       `SELECT * FROM fare_snapshots
        WHERE search_id = ? AND polled_at >= datetime('now', ?)
+         AND COALESCE(verify_outcome, 'ok') <> 'dead'
        ORDER BY polled_at`
     ).all(searchId, `-${days} days`) as FareRow[],
 
@@ -1884,6 +2366,7 @@ export const queries = {
       `SELECT date(polled_at) AS day, MIN(price_per_adult_usd) AS per_adult_usd
        FROM fare_snapshots
        WHERE search_id = ? AND polled_at >= datetime('now', ?)
+         AND COALESCE(verify_outcome, 'ok') <> 'dead'
        GROUP BY date(polled_at) ORDER BY day`
     ).all(searchId, `-${days} days`) as Array<{ day: string; per_adult_usd: number }>,
 
@@ -1904,10 +2387,18 @@ export const queries = {
       origin: string; destination: string; depart_date: string; return_date: string;
     }>,
 
-  insertAlert: (searchId: number, snapshotId: number, pricePerAdult: number, kind: 'threshold' | 'price-drop' | 'mistake-fare' = 'threshold') =>
+  insertAlert: (
+    searchId: number, snapshotId: number, pricePerAdult: number,
+    kind: AlertKind = 'threshold',
+    status: 'pending' | 'sent' = 'sent',
+  ) =>
     getDb().prepare(
-      'INSERT INTO alerts_sent (search_id, fare_snapshot_id, price_per_adult_usd, kind) VALUES (?, ?, ?, ?)'
-    ).run(searchId, snapshotId, pricePerAdult, kind),
+      'INSERT INTO alerts_sent (search_id, fare_snapshot_id, price_per_adult_usd, kind, status) VALUES (?, ?, ?, ?, ?)'
+    ).run(searchId, snapshotId, pricePerAdult, kind, status),
+
+  /** Promote a reserved row once a channel has actually delivered. */
+  markAlertSent: (alertId: number) =>
+    getDb().prepare(`UPDATE alerts_sent SET status = 'sent' WHERE id = ?`).run(alertId),
 
   /** Most recent alert for a search, optionally only within the last
    *  `withinDays` days.
@@ -1921,12 +2412,12 @@ export const queries = {
   lastAlertForSearch: (searchId: number, withinDays?: number) =>
     (withinDays && withinDays > 0
       ? getDb().prepare(
-          `SELECT * FROM alerts_sent WHERE search_id = ?
+          `SELECT * FROM alerts_sent WHERE search_id = ? AND status = 'sent'
              AND sent_at > datetime('now', ?)
            ORDER BY sent_at DESC LIMIT 1`
         ).get(searchId, `-${Math.floor(withinDays)} days`)
       : getDb().prepare(
-          'SELECT * FROM alerts_sent WHERE search_id = ? ORDER BY sent_at DESC LIMIT 1'
+          `SELECT * FROM alerts_sent WHERE search_id = ? AND status = 'sent' ORDER BY sent_at DESC LIMIT 1`
         ).get(searchId)
     ) as { id: number; price_per_adult_usd: number; sent_at: string; kind?: string } | undefined,
 
@@ -2067,16 +2558,34 @@ export const queries = {
       origin: string; destination: string; depart_date: string; return_date: string;
     }>,
 
-  logApiCall: (params: { search_id: number | null; ok: boolean; status_code?: number; ms?: number; error?: string }) =>
+  /**
+   * Record one provider API call.
+   *
+   * `provider` and `cost_usd` are what turn this table from a latency log into
+   * the COGS side of the business. cost_usd is resolved by the caller from the
+   * `provider_costs` setting and frozen here, so re-pricing a provider next
+   * month never rewrites what last month actually cost.
+   */
+  logApiCall: (params: {
+    search_id: number | null; ok: boolean; status_code?: number; ms?: number; error?: string;
+    provider?: string | null; cost_usd?: number;
+    phase?: 'sweep' | 'verify' | 'ondemand' | 'click';
+    band?: string | null; route_key?: string | null;
+  }) =>
     getDb().prepare(
-      `INSERT INTO api_calls (search_id, ok, status_code, ms, error)
-       VALUES (@search_id, @ok, @status_code, @ms, @error)`
+      `INSERT INTO api_calls (search_id, ok, status_code, ms, error, provider, cost_usd, phase, band, route_key)
+       VALUES (@search_id, @ok, @status_code, @ms, @error, @provider, @cost_usd, @phase, @band, @route_key)`
     ).run({
       search_id: params.search_id,
       ok: params.ok ? 1 : 0,
       status_code: params.status_code ?? null,
       ms: params.ms ?? null,
       error: params.error ?? null,
+      provider: params.provider ?? null,
+      cost_usd: params.cost_usd ?? 0,
+      phase: params.phase ?? 'sweep',
+      band: params.band ?? null,
+      route_key: params.route_key ?? null,
     }),
 
   apiCallsThisMonth: () =>

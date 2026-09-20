@@ -1,9 +1,16 @@
 import 'server-only';
-import { TIER_LIMITS, limitsForUser, getDb, queries, type SearchRow } from './db';
+import { TIER_LIMITS, limitsForUser, getDb, queries, type SearchRow, type FareRow } from './db';
 import { searchFlights, pickCheapest, summarizeOffer, type FlightOffer } from './flightProvider';
 import { notifyAll, runSubscriptionAlerts } from './notifier';
-import { detectPriceDrop } from './priceDrops';
+import { detectPriceDrop, median7dForSearch } from './priceDrops';
 import { effectiveTarget } from './targets';
+import { routeKey } from './providerCost';
+import { classifyAlert, type AlertKind } from './alertKind';
+import { verifyFare, type VerifyResult } from './fareTruth';
+import { recordVerdictCall } from './verdictScoring';
+import { computeVerdict } from './verdict';
+import { allocate, allocatorMode, dueForPoll } from './pollBudget';
+import type { ProviderId } from './providers/types';
 
 /** How far back the threshold branch looks for a previous alert when deciding
  *  whether a fare is "new news". Override with ALERT_FLOOR_DAYS to tune how
@@ -16,7 +23,7 @@ export type PollResult = {
   ok: boolean;
   cheapest_per_adult?: number;
   alerted?: boolean;
-  alert_kind?: 'threshold' | 'price-drop';
+  alert_kind?: AlertKind;
   drop_pct?: number;
   error?: string;
 };
@@ -98,21 +105,46 @@ async function priceAnyDates(search: SearchRow): Promise<FlightOffer | null> {
   });
 }
 
-async function pollOne(search: SearchRow): Promise<PollResult> {
+/** Offers already fetched this cycle for a canonical route key. */
+type SharedOffers = { cheapest: FlightOffer; offers: FlightOffer[] };
+
+async function pollOne(
+  search: SearchRow,
+  shared?: SharedOffers,
+  onFetched?: (o: SharedOffers) => void,
+): Promise<PollResult> {
+  // Another watcher of the same canonical route already paid for this exact
+  // query on this cycle. Reuse the OFFERS — but still run the full evaluation,
+  // because the poll is shared and the alert decision is not: watchers have
+  // their own targets, their own alert floors and their own channels.
+  if (shared) return finishPoll(search, shared.cheapest, shared.offers);
+
   // Any-dates routes never hit searchFlights — they have no date pair to price.
   if (search.date_mode === 'any') {
     const started = Date.now();
     const offer = await priceAnyDates(search);
+    // Cache read, not a provider call — cost 0, tagged 'cache' so it never lands
+    // in provider cost-per-route. A cold cache falls through to cheapestByMonth(),
+    // whose real provider calls are costed inside the provider fan-out itself.
     queries.logApiCall({
       search_id: search.id, ok: !!offer, status_code: offer ? 200 : 0,
       ms: Date.now() - started, error: offer ? undefined : 'no cheapest window found',
+      provider: 'cache', cost_usd: 0, phase: 'sweep',
+      route_key: routeKey({ origin: search.origin, destination: search.destination,
+        departDate: search.depart_date, returnDate: search.return_date,
+        adults: search.adults, infants: search.infants }),
     });
     if (!offer) {
       return { search_id: search.id, origin: search.origin, ok: true, error: 'no cheapest window found' };
     }
-    return finishPoll(search, offer);
+    // Cache-sourced: no sibling offers, so verification must spend a call.
+    if (onFetched) onFetched({ cheapest: offer, offers: [] });
+    return finishPoll(search, offer, []);
   }
 
+  // Per-provider api_calls rows (with cost) are written inside the provider
+  // fan-out now, so there is deliberately no aggregate row here — a second row
+  // would double-count the poll in every cost and volume figure.
   const result = await searchFlights({
     origin: search.origin,
     destination: search.destination,
@@ -120,15 +152,7 @@ async function pollOne(search: SearchRow): Promise<PollResult> {
     returnDate: search.return_date,
     adults: search.adults,
     infants: search.infants,
-  });
-
-  queries.logApiCall({
-    search_id: search.id,
-    ok: result.ok,
-    status_code: result.status,
-    ms: result.ms,
-    error: result.ok ? undefined : result.error,
-  });
+  }, { searchId: search.id, phase: 'sweep' });
 
   if (!result.ok) {
     return { search_id: search.id, origin: search.origin, ok: false, error: result.error };
@@ -139,11 +163,164 @@ async function pollOne(search: SearchRow): Promise<PollResult> {
     return { search_id: search.id, origin: search.origin, ok: true, error: 'no offers returned' };
   }
 
-  return finishPoll(search, cheapest);
+  if (onFetched) onFetched({ cheapest, offers: result.offers });
+  return finishPoll(search, cheapest, result.offers);
+}
+
+/**
+ * Reserve the alerts_sent row, verify the fare, send, and keep the row only if
+ * something landed.
+ *
+ * Ordering is the point. Every outbound link in the alert carries the id of the
+ * alerts_sent row it descends from — that id is the alert -> click join, without
+ * which commission-per-alert-type and alert -> click -> book conversion cannot be
+ * computed. So the row is written first and threaded into the links; if no
+ * channel succeeded it is rolled back, because alerts_sent is also the threshold
+ * floor and a phantom row would silence the route on the next cycle.
+ */
+async function sendAlert(opts: {
+  kind: AlertKind;
+  search: SearchRow;
+  fare: FareRow;
+  snapshotId: number;
+  thresholdPerAdult: number;
+  ownerUserId: number;
+  pctDrop?: number;
+  median7d?: number | null;
+  nearby?: { depart: string; return: string };
+  offersInHand?: FlightOffer[];
+  polledBy?: string | null;
+}): Promise<boolean> {
+  // ── Verify before sending ───────────────────────────────────────────────
+  // No alert leaves on the strength of a cached poll result. A suppressed alert
+  // costs one possible booking; a dead-fare alert costs a user.
+  let verified: VerifyResult;
+  try {
+    verified = await verifyFare({
+      search: {
+        id: opts.search.id,
+        origin: opts.search.origin,
+        destination: opts.search.destination,
+        departDate: opts.search.depart_date,
+        returnDate: opts.search.return_date,
+        adults: opts.search.adults,
+        infants: opts.search.infants,
+      },
+      polledPrice: opts.fare.price_per_adult_usd,
+      polledBy: (opts.polledBy ?? null) as ProviderId | null,
+      alertKind: opts.kind,
+      offersInHand: opts.offersInHand,
+    });
+  } catch (e) {
+    // A verification that THREW is not a verification that passed. Failing open
+    // would quietly restore exactly the behaviour this guards against.
+    console.error('[poll] verification threw:', (e as Error).message);
+    verified = {
+      outcome: 'unverified', priceToShow: opts.fare.price_per_adult_usd,
+      verifiedAt: new Date().toISOString(), verifiedBy: [], deltaPct: null,
+      sendable: false, reason: `verification error: ${(e as Error).message}`,
+    };
+  }
+
+  try {
+    queries.setFareVerification(opts.snapshotId, {
+      verified_at: verified.verifiedAt,
+      verified_price_usd: verified.priceToShow,
+      verified_by: verified.verifiedBy.join(',') || null,
+      verify_outcome: verified.outcome,
+    });
+  } catch (e) {
+    console.error('[poll] setFareVerification failed:', (e as Error).message);
+  }
+
+  if (!verified.sendable) {
+    try {
+      queries.insertDeadFare({
+        search_id: opts.search.id,
+        fare_snapshot_id: opts.snapshotId,
+        alert_kind: opts.kind,
+        polled_price_usd: opts.fare.price_per_adult_usd,
+        verified_price_usd: verified.outcome === 'dead' ? verified.priceToShow : null,
+        delta_pct: verified.deltaPct,
+        polled_by: opts.polledBy ?? null,
+        verified_by: verified.verifiedBy.join(',') || null,
+        reason: verified.reason,
+      });
+    } catch (e) {
+      console.error('[poll] insertDeadFare failed:', (e as Error).message);
+    }
+    console.warn(
+      `[poll] SUPPRESSED ${opts.kind} alert for search ${opts.search.id} ` +
+      `(${opts.search.origin}\u2192${opts.search.destination}): ${verified.reason}`,
+    );
+    return false;
+  }
+
+  // Send the VERIFIED price. It differs whenever verification landed inside
+  // tolerance, and it is the number we can stand behind at click time.
+  const fare: FareRow = verified.priceToShow !== opts.fare.price_per_adult_usd
+    ? { ...opts.fare, price_per_adult_usd: verified.priceToShow }
+    : opts.fare;
+
+  // Reserved, not sent. Every "what was the last alert" reader filters on
+  // status, so this row is invisible to the email's own vs-last-alert
+  // comparison and to the threshold floor until it earns 'sent'.
+  const alertId = Number(
+    queries.insertAlert(opts.search.id, opts.snapshotId, fare.price_per_adult_usd, opts.kind, 'pending')
+      .lastInsertRowid,
+  );
+
+  let results: Awaited<ReturnType<typeof notifyAll>> = [];
+  try {
+    results = await notifyAll({
+      // notifyAll's channel-selection vocabulary is narrower than the alert
+      // taxonomy; mistake-fare and anomaly ride the threshold path but keep
+      // their real kind in the database and in the links.
+      kind: opts.kind === 'price-drop' ? 'price-drop' : opts.kind === 'ready' ? 'ready' : 'threshold',
+      alertId,
+      alertKind: opts.kind,
+      verifiedAt: verified.verifiedAt,
+      search: opts.search,
+      fare,
+      thresholdPerAdult: opts.thresholdPerAdult,
+      pctDrop: opts.pctDrop,
+      median7d: opts.median7d,
+      ownerUserId: opts.ownerUserId,
+      nearby: opts.nearby,
+    });
+  } catch (e) {
+    console.error('[poll] notifyAll threw:', (e as Error).message);
+  }
+
+  if (results.some(r => r.ok)) {
+    queries.markAlertSent(alertId);
+    return true;
+  }
+  // Recorded before the rollback, because the rollback removes the only other
+  // trace: without this the delivery-failure alarm has nothing to count.
+  try {
+    queries.logError({
+      source: 'alert:delivery',
+      message: `${opts.kind} alert for search ${opts.search.id} (${opts.search.origin}\u2192${opts.search.destination}) reached no channel`,
+    });
+  } catch { /* the alarm is best-effort; the rollback below is not */ }
+  queries.deleteAlert(alertId);
+  return false;
+}
+
+/** How far below this route's own 7-day normal the price sits, when derivable. */
+function pctBelowNormalFor(searchId: number, pricePerAdult: number): number | null {
+  const median = median7dForSearch(searchId);
+  if (!median || median <= 0) return null;
+  return ((median - pricePerAdult) / median) * 100;
 }
 
 /** Shared tail: snapshot the offer, evaluate alert rules, notify. */
-async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<PollResult> {
+async function finishPoll(
+  search: SearchRow,
+  cheapest: FlightOffer,
+  offersInHand: FlightOffer[],
+): Promise<PollResult> {
   const summary = summarizeOffer(cheapest, search.adults, search.infants);
   // Offers sourced from the /get_latest_prices month feed are usually NEARBY
   // dates (often weeks off the requested days), not the exact trip the user
@@ -200,8 +377,30 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
     raw_json: JSON.stringify(cheapest),
   };
 
+  // Score our own calls. Recorded on every poll but deduped to one row per
+  // search per day in SQL, because this measures a judgement, not a sample rate:
+  // a frequently-polled route must not dominate the published accuracy figure by
+  // volume alone.
+  try {
+    const history = queries.fareHistoryDaily(search.id, 30)
+      .map(r => ({ polled_at: r.day, price_per_adult_usd: r.per_adult_usd }));
+    const v = computeVerdict(history, summary.price_per_adult_usd, threshold);
+    if (v) {
+      recordVerdictCall({
+        searchId: search.id,
+        origin: search.origin, destination: search.destination,
+        departDate: search.depart_date, returnDate: search.return_date,
+        adults: search.adults, infants: search.infants,
+        verdict: v.verdict, confidencePct: v.confidencePct,
+        pricePerAdult: summary.price_per_adult_usd,
+      });
+    }
+  } catch (e) {
+    console.error('[poll] recordVerdictCall failed:', (e as Error).message);
+  }
+
   let alerted = false;
-  let alertKind: 'threshold' | 'price-drop' | undefined;
+  let alertKind: AlertKind | undefined;
   let dropPctActual: number | undefined;
 
   // (1) Threshold-cross alert: cheaper than user's target AND cheaper than the
@@ -216,19 +415,20 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   if (underThreshold) {
     const lastAlert = queries.lastAlertForSearch(search.id, ALERT_FLOOR_DAYS);
     if (!lastAlert || summary.price_per_adult_usd < lastAlert.price_per_adult_usd) {
-      const results = await notifyAll({
-        kind: 'threshold',
-        search,
-        fare: fareRow,
+      const kind = classifyAlert({
+        branch: 'threshold',
+        pricePerAdult: summary.price_per_adult_usd,
         thresholdPerAdult: threshold,
-        ownerUserId: ownerId,
-        nearby: nearbyDates,
+        pctBelowNormal: pctBelowNormalFor(search.id, summary.price_per_adult_usd),
       });
-      const anyOk = results.some(r => r.ok);
-      if (anyOk) {
-        queries.insertAlert(search.id, snapshotId, summary.price_per_adult_usd);
+      const sent = await sendAlert({
+        kind, search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        nearby: nearbyDates, offersInHand, polledBy: cheapest.provider,
+      });
+      if (sent) {
         alerted = true;
-        alertKind = 'threshold';
+        alertKind = kind;
       }
     }
   }
@@ -239,19 +439,20 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   if (!alerted && !isNearby) {
     const readyKey = `notify_when_ready:search:${search.id}`;
     if (queries.getUserSetting(ownerId, readyKey) === '1') {
-      const results = await notifyAll({
-        kind: 'ready',
-        search,
-        fare: fareRow,
+      const kind = classifyAlert({
+        branch: 'ready',
+        pricePerAdult: summary.price_per_adult_usd,
         thresholdPerAdult: threshold,
-        ownerUserId: ownerId,
       });
-      const anyOk = results.some(r => r.ok);
-      if (anyOk) {
-        queries.insertAlert(search.id, snapshotId, summary.price_per_adult_usd);
+      const sent = await sendAlert({
+        kind, search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        offersInHand, polledBy: cheapest.provider,
+      });
+      if (sent) {
         queries.deleteUserSetting(ownerId, readyKey);
         alerted = true;
-        alertKind = 'threshold';
+        alertKind = kind;
       }
     }
   }
@@ -264,21 +465,21 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
   if (!alerted && ownerLimits.priceDropAlerts) {
     const drop = detectPriceDrop(search.id, summary.price_per_adult_usd, dropPct, ALERT_FLOOR_DAYS);
     if (drop.isDrop) {
-      const results = await notifyAll({
-        kind: 'price-drop',
-        search,
-        fare: fareRow,
+      const kind = classifyAlert({
+        branch: 'price-drop',
+        pricePerAdult: summary.price_per_adult_usd,
         thresholdPerAdult: threshold,
-        pctDrop: drop.pctBelowMedian,
-        median7d: drop.median7d,
-        ownerUserId: ownerId,
-        nearby: nearbyDates,
+        pctBelowNormal: drop.pctBelowMedian,
       });
-      const anyOk = results.some(r => r.ok);
-      if (anyOk) {
-        queries.insertAlert(search.id, snapshotId, summary.price_per_adult_usd);
+      const sent = await sendAlert({
+        kind, search, fare: fareRow, snapshotId,
+        thresholdPerAdult: threshold, ownerUserId: ownerId,
+        pctDrop: drop.pctBelowMedian, median7d: drop.median7d,
+        nearby: nearbyDates, offersInHand, polledBy: cheapest.provider,
+      });
+      if (sent) {
         alerted = true;
-        alertKind = 'price-drop';
+        alertKind = kind;
         dropPctActual = drop.pctBelowMedian;
       }
     }
@@ -301,14 +502,16 @@ async function finishPoll(search: SearchRow, cheapest: FlightOffer): Promise<Pol
  * owner's TIER_LIMITS.pollIntervalMin has elapsed since its last snapshot.
  * Manual "Poll now" (pollSearch) bypasses this.
  */
-function dueForPoll(s: { id: number; user_id: number }): boolean {
-  // limitsForUser (not a bare tier lookup) so a founding-trial account polls
-  // at the Pro cadence it was promised rather than the free one.
-  const interval = limitsForUser(queries.getUserById(s.user_id)).pollIntervalMin;
-  const row = getDb().prepare('SELECT MAX(polled_at) AS t FROM fare_snapshots WHERE search_id = ?').get(s.id) as { t: string | null };
-  if (!row?.t) return true;
-  const ageMin = (Date.now() - new Date(row.t.replace(' ', 'T') + (row.t.endsWith('Z') ? '' : 'Z')).getTime()) / 60000;
-  return ageMin >= interval - 1; // 1-min slack so a 30-min tier isn't skipped by scheduler jitter
+/** Last poll time for every search, in one query rather than N. */
+function lastPolledMap(ids: number[]): Map<number, string | null> {
+  const out = new Map<number, string | null>();
+  if (ids.length === 0) return out;
+  const rows = getDb().prepare(
+    `SELECT search_id, MAX(polled_at) AS t FROM fare_snapshots
+      WHERE search_id IN (${ids.map(() => '?').join(',')}) GROUP BY search_id`,
+  ).all(...ids) as Array<{ search_id: number; t: string | null }>;
+  for (const r of rows) out.set(r.search_id, r.t);
+  return out;
 }
 
 export async function pollAll(): Promise<PollResult[]> {
@@ -321,13 +524,62 @@ export async function pollAll(): Promise<PollResult[]> {
     }
   } catch (e) { console.error('[poll] founding-period sweep failed:', (e as Error).message); }
   const searches = queries.listActiveSearches();
+
+  // Score every route, band it, and spend the budget top-down. See pollBudget.ts
+  // for why this runs at 'tier-capped' authority by default: at full authority it
+  // would poll a paying customer's low-priority routes more slowly than the
+  // cadence the pricing page sells them.
+  const { routes, budget } = allocate(searches);
+  const bandFor = new Map(routes.map(r => [r.searchId, r]));
+  const lastPolled = lastPolledMap(searches.map(s => s.id));
+  const mode = allocatorMode();
+
+  // Deduplication: two users watching the same canonical route with overlapping
+  // date windows are ONE poll, and the offers are fanned out. At any scale this
+  // is the difference between linear and sub-linear cost growth.
+  const offersThisCycle = new Map<string, SharedOffers>();
+
   const out: PollResult[] = [];
   let skipped = 0;
-  for (const s of searches) {
-    if (!dueForPoll(s)) { skipped++; continue; }
-    out.push(await pollOne(s));
+  let deduped = 0;
+  const byBand: Record<string, number> = {};
+
+  // Highest-priority routes first, so a budget that runs out mid-cycle runs out
+  // on the routes that mattered least.
+  const ordered = [...searches].sort(
+    (a, b) => (bandFor.get(b.id)?.score ?? 0) - (bandFor.get(a.id)?.score ?? 0),
+  );
+
+  for (const s of ordered) {
+    const scored = bandFor.get(s.id);
+    const band = scored?.band ?? 'warm';
+    if (!dueForPoll({ band, userId: s.user_id ?? 1, lastPolledAt: lastPolled.get(s.id) ?? null, mode })) {
+      skipped++;
+      continue;
+    }
+
+    // Already priced this exact canonical query on this cycle. Reuse the offers
+    // and skip the provider call, but STILL evaluate this watcher's own alert
+    // rules against them — sharing the decision would stop the second watcher
+    // ever being alerted, and would stop their snapshot row being written, so
+    // they would be starved on every cycle after.
+    const key = scored?.routeKey;
+    const shared = key ? offersThisCycle.get(key) : undefined;
+    if (shared) deduped++;
+    else byBand[band] = (byBand[band] ?? 0) + 1;
+
+    out.push(await pollOne(s, shared, o => { if (key) offersThisCycle.set(key, o); }));
   }
-  if (skipped) console.log(`[poll] ${out.length} polled, ${skipped} not yet due (tier cadence)`);
+
+  const bandSummary = Object.entries(byBand).map(([b, n]) => `${b}:${n}`).join(' ') || 'none';
+  console.log(
+    `[poll] ${out.length - deduped} polled (${bandSummary}), ${deduped} evaluated from a shared poll, ` +
+    `${skipped} not yet due · allocator=${mode}` +
+    (budget.monthlyCapUsd > 0
+      ? ` · budget $${budget.spentThisMonthUsd.toFixed(2)}/$${budget.monthlyCapUsd.toFixed(2)}` +
+        ` (${(budget.utilisation * 100).toFixed(0)}%)`
+      : ''),
+  );
   // Fan out Slack/Telegram bot subscriptions (`/watch ORIG DEST PRICE`).
   // Best-effort: a failure here must never break the owner's search poll.
   try {

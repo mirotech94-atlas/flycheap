@@ -1,5 +1,5 @@
 import 'server-only';
-import { searchAllProviders } from './providers';
+import { searchAllProviders, type PollContext } from './providers';
 import type { Offer, SearchParams } from './providers/types';
 
 const INFANT_FARE_RATIO = 0.1;
@@ -17,7 +17,7 @@ export type FlightSearchResult =
   | { ok: true; offers: FlightOffer[]; status: number; ms: number }
   | { ok: false; error: string; status: number; ms: number };
 
-export type { SearchParams };
+export type { SearchParams, PollContext };
 
 function adapt(o: Offer): FlightOffer {
   const splitFlightNo = (s: string) => {
@@ -42,9 +42,9 @@ function adapt(o: Offer): FlightOffer {
   };
 }
 
-export async function searchFlights(p: SearchParams): Promise<FlightSearchResult> {
+export async function searchFlights(p: SearchParams, ctx?: PollContext): Promise<FlightSearchResult> {
   const start = Date.now();
-  const { offers, results } = await searchAllProviders(p);
+  const { offers, results } = await searchAllProviders(p, ctx);
   const ms = Date.now() - start;
   if (offers.length === 0) {
     const errs = results.filter(r => !r.ok).map(r => `${r.provider}: ${('error' in r ? r.error : '')}`).join(' | ');

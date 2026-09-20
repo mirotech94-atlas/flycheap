@@ -3,6 +3,10 @@ import Anthropic from '@anthropic-ai/sdk';
 import { queries, type OpsIncidentRow } from '@/lib/db';
 import { commands, run, defaultRunner, type Runner } from './shell';
 import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint, type Finding, type HealthJson } from './probes';
+import {
+  probeStaleProvider, probeDeadFareRate, probeCostSpike,
+  probeCommissionQuiet, probeAlertDeliveryFailures,
+} from './monetizationProbes';
 import { formatCard, formatResolved, formatBackUp, formatFixingText, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
 import { createGroqMessagesClient } from './groqClient';
@@ -71,6 +75,20 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number | null): Pr
       const kb = parseDiskFreeKb((await run(commands.diskFree(), io.runner)).stdout);
       return probeDisk(kb, alreadyOpen);
     }],
+    // The five monetization alarms. These belong here rather than on a page:
+    // a number on a dashboard is only seen when someone looks, and for each of
+    // these the gap between happening and being noticed is the entire cost.
+    ['monetization', async () => {
+      const spend = queries.pollSpendToday();
+      const silence = queries.commissionSilence();
+      return [
+        ...probeStaleProvider(queries.providerPriceVariety(2)),
+        ...probeDeadFareRate(queries.deadFareStats(24)),
+        ...probeCostSpike(spend.today, spend.trailingAvg),
+        ...probeCommissionQuiet(silence.daysSinceLastEvent, silence.hasClicks),
+        ...probeAlertDeliveryFailures(queries.alertDeliveryStats(6)),
+      ];
+    }],
   ];
   for (const [name, p] of probes) {
     try { out.push(...(await p())); }
@@ -116,7 +134,13 @@ function agentDeps(io: DetectorIO): AgentDeps {
 // Sources whose incident cards get the <!channel> critical treatment instead
 // of the ordinary 🔴 marker — the ones a founder should be paged for, not
 // just informed about.
-const CRITICAL_FINGERPRINTS: ReadonlySet<string> = new Set(['health:database', 'health:unreachable', 'crashloop', 'disk:low']);
+const CRITICAL_FINGERPRINTS: ReadonlySet<string> = new Set([
+  'health:database', 'health:unreachable', 'crashloop', 'disk:low',
+  // A provider quoting a frozen price and a batch of alerts reaching nobody are
+  // both silent failures that keep the site looking healthy while the product
+  // stops working. They get the same treatment as the database being down.
+  'monetization:dead-fare-rate', 'monetization:alert-delivery',
+]);
 
 async function openCard(inc: OpsIncidentRow, f: Finding, io: DetectorIO): Promise<{ posted: boolean; restarted: boolean }> {
   const evidence = await evidenceFor(f, io);
