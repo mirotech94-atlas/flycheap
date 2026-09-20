@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { headers } from 'next/headers';
 import { loadDashboard } from '@/lib/dashboard-data';
 import { queries } from '@/lib/db';
 import { getCachedBestDeals } from '@/lib/bestDeals';
@@ -8,15 +9,50 @@ import { KpiStrip } from '@/components/KpiStrip';
 import { FareCalendar } from '@/components/FareCalendar';
 import { Sparkline } from '@/components/Sparkline';
 import { BookingActions } from '@/components/BookingActions';
+import { resolveBoard, recordView } from '@/lib/boardShare';
 
 export const dynamic = 'force-dynamic';
+
+/**
+ * A board shows a family's travel plans to whoever holds the link. Search
+ * engines indexing that is, in the spec's words, a bad day.
+ */
+export const metadata = {
+  title: 'Shared watch board — FlyCheap',
+  robots: { index: false, follow: false, nocache: true },
+};
 
 const DOW_NAMES = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export default async function SharedDashboard({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
-  const expected = queries.getSetting('share_token') ?? '';
-  if (!expected || token !== expected) notFound();
+
+  // Per-group boards, resolved by token HASH. Revocation and expiry are checked
+  // inside the query on every request with nothing cached — the whole value of
+  // revoke is that it is immediate.
+  const board = resolveBoard(token);
+
+  // Back-compat: the single global `share_token` in settings still works so
+  // links already sent to people's families do not break. It is the legacy
+  // path and carries no per-board privacy controls.
+  const legacy = queries.getSetting('share_token') ?? '';
+  const isLegacy = !board && !!legacy && token === legacy;
+  if (!board && !isLegacy) notFound();
+
+  if (board) {
+    const h = await headers();
+    recordView(board.id, {
+      // Truncated the same way affiliate clicks are: enough to tell views
+      // apart, not enough to be a location record of who is watching whom.
+      ip: (h.get('x-forwarded-for') ?? '').split(',')[0].trim().split('.').slice(0, 3).join('.') || null,
+      userAgent: h.get('user-agent'),
+    });
+  }
+
+  // A board may share the schedule without the budget: "a family organiser may
+  // not want everyone to see what they are willing to pay."
+  const showPrices = board ? board.show_prices === 1 : true;
+  const showTargets = board ? board.show_targets === 1 : true;
 
   const rows = loadDashboard();
   const threshold = parseFloat(queries.getSetting('alert_threshold_per_adult_usd') ?? '900');
@@ -125,7 +161,7 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
                   <td>{fmtDate(search.depart_date)}</td>
                   <td>{fmtDate(search.return_date)}</td>
                   <td className="text-right font-semibold">
-                    {fare ? fmtUSD(fare.price_per_adult_usd) : '—'}
+                    {!showPrices ? '—' : fare ? fmtUSD(fare.price_per_adult_usd) : '—'}
                     {/* The age of the number, shown rather than implied. A share
                         board is seen by people who never set the alert and have
                         no idea how fresh this is — a bare price they later find

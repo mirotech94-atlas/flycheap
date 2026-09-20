@@ -817,6 +817,9 @@ function init(db: Database.Database) {
   addWatchCol('poll_band', `poll_band TEXT`);
   // A home route never expires and is the headline retention lever.
   addWatchCol('is_home_route', `is_home_route INTEGER NOT NULL DEFAULT 0`);
+  // Per-watch channel override. "The home route to see family gets SMS; the
+  // speculative Tokyo budget watch gets digest." NULL = use the account default.
+  addWatchCol('alert_channels', `alert_channels TEXT`);
 
   db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_group ON searches(group_id, status)`);
   db.exec(`CREATE INDEX IF NOT EXISTS idx_searches_status ON searches(status, expires_at)`);
@@ -2261,6 +2264,22 @@ export const queries = {
         SET ${v.column} = ?, ${v.minColumn} = ?, scored_at = datetime('now')
       WHERE id = ?`
   ).run(v.correct, v.minPrice, id),
+
+  /**
+   * Alerts delivered to this user today, for the frequency cap.
+   *
+   * Counts only rows that actually reached someone (status='sent'), and only
+   * the kinds the cap applies to — a mistake fare is exempt, so counting it
+   * here would let one glitch fare silence the rest of the day.
+   */
+  alertsSentToday: (userId: number) =>
+    (getDb().prepare(
+      `SELECT COUNT(*) AS n FROM alerts_sent a
+         JOIN searches s ON s.id = a.search_id
+        WHERE s.user_id = ? AND a.status = 'sent'
+          AND a.kind <> 'mistake-fare'
+          AND a.sent_at >= datetime('now', '-1 day')`
+    ).get(userId) as { n: number }).n,
 
   /** When an alert fired — used to derive minutes-since-alert at click time. */
   alertSentAt: (alertId: number) =>

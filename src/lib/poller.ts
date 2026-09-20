@@ -7,6 +7,7 @@ import { effectiveTarget, effectiveTargetOnBasis } from './targets';
 import { routeKey } from './providerCost';
 import { classifyAlert, type AlertKind } from './alertKind';
 import { verifyFare, type VerifyResult } from './fareTruth';
+import { gateAlert } from './alertGate';
 import { recordVerdictCall } from './verdictScoring';
 import { computeVerdict } from './verdict';
 import { allocate, allocatorMode, dueForPoll } from './pollBudget';
@@ -191,6 +192,25 @@ async function sendAlert(opts: {
   offersInHand?: FlightOffer[];
   polledBy?: string | null;
 }): Promise<boolean> {
+  // ── Channel discipline ──────────────────────────────────────────────────
+  // Checked BEFORE the alert row is reserved and before a provider call is
+  // spent on verification: a deferred alert must never become a phantom row in
+  // alerts_sent, because that table is also the threshold floor.
+  //
+  // Quiet hours previously applied to push notifications ONLY — so email, the
+  // channel most likely to wake someone, was the one with no quiet hours at
+  // all, and the daily cap did not exist anywhere.
+  const gate = gateAlert({ kind: opts.kind, search: opts.search, ownerUserId: opts.ownerUserId });
+  if (!gate.send) {
+    // Not a delivery failure: nobody was meant to be told yet. It must not be
+    // counted as one, or the delivery alarm fires on working behaviour.
+    console.log(
+      `[poll] HELD ${opts.kind} for search ${opts.search.id} ` +
+      `(${opts.search.origin}\u2192${opts.search.destination}): ${gate.reason}`,
+    );
+    return false;
+  }
+
   // ── Verify before sending ───────────────────────────────────────────────
   // No alert leaves on the strength of a cached poll result. A suppressed alert
   // costs one possible booking; a dead-fare alert costs a user.
@@ -287,6 +307,9 @@ async function sendAlert(opts: {
       median7d: opts.median7d,
       ownerUserId: opts.ownerUserId,
       nearby: opts.nearby,
+      // The channels the policy actually authorised — which is the per-watch
+      // override when one is set, not the account default.
+      channelsOverride: gate.channels,
     });
   } catch (e) {
     console.error('[poll] notifyAll threw:', (e as Error).message);
