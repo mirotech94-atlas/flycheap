@@ -5,7 +5,7 @@ import { commands, run, defaultRunner, type Runner } from './shell';
 import { probeFailedUnits, probeJobRuns, probeErrors, probeHealth, probeCrashLoop, probeDisk, parseDiskFreeKb, errorFingerprint, type Finding, type HealthJson } from './probes';
 import {
   probeStaleProvider, probeDeadFareRate, probeCostSpike,
-  probeCommissionQuiet, probeAlertDeliveryFailures,
+  probeCommissionQuiet, probeAlertDeliveryFailures, probeDeliverySilence,
 } from './monetizationProbes';
 import { formatCard, formatResolved, formatBackUp, formatFixingText, type CardFooter } from './card';
 import { diagnose, autoFix, type AgentDeps, type MessagesClient } from './agent';
@@ -87,6 +87,9 @@ async function gather(io: DetectorIO, now: Date, lastErrorId: number | null): Pr
         ...probeCostSpike(spend.today, spend.trailingAvg),
         ...probeCommissionQuiet(silence.daysSinceLastEvent, silence.hasClicks),
         ...probeAlertDeliveryFailures(queries.alertDeliveryStats(6)),
+        // 24h, not 6: delivery events lag the send by minutes and a quiet
+        // overnight would otherwise page for nothing.
+        ...probeDeliverySilence(queries.deliverySilenceStats(24)),
       ];
     }],
   ];

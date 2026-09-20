@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
   probeStaleProvider, probeDeadFareRate, probeCostSpike,
-  probeCommissionQuiet, probeAlertDeliveryFailures,
+  probeCommissionQuiet, probeAlertDeliveryFailures, probeDeliverySilence,
   STALE_PROVIDER_MINUTES, COST_SPIKE_MULTIPLE, COMMISSION_QUIET_DAYS,
 } from '@/lib/ops/monetizationProbes';
 
@@ -147,5 +147,46 @@ describe('alarm hygiene', () => {
       expect(f.detail.length).toBeGreaterThan(60);
     }
     expect(new Set(all.map(f => f.fingerprint)).size).toBe(5);
+  });
+});
+
+describe('delivery silence — the blind spot in the failure probe', () => {
+  /**
+   * probeAlertDeliveryFailures counts FAILURES. A dead webhook feed produces
+   * none, so the failure rate reads 0% forever and the probe stays green for
+   * the exact condition its own detail text names. This one fires on the
+   * absence instead. It is what would have caught RESEND_WEBHOOK_SECRET being
+   * unset in production, where 5 alerts went out in a week and email_events
+   * stayed at zero rows.
+   */
+  it('fires when mail went out and the feed recorded nothing', () => {
+    const f = probeDeliverySilence({ sentInWindow: 12, eventsInWindow: 0, windowHours: 24 });
+    expect(f).toHaveLength(1);
+    expect(f[0].fingerprint).toBe('monetization:delivery-silence');
+    expect(f[0].title).toContain('12 emails sent');
+    expect(f[0].detail).toContain('RESEND_WEBHOOK_SECRET');
+  });
+
+  it('stays quiet below the floor — nothing to expect an echo from yet', () => {
+    expect(probeDeliverySilence({ sentInWindow: 4, eventsInWindow: 0, windowHours: 24 })).toEqual([]);
+    expect(probeDeliverySilence({ sentInWindow: 0, eventsInWindow: 0, windowHours: 24 })).toEqual([]);
+  });
+
+  it('stays quiet the moment even one event arrives', () => {
+    expect(probeDeliverySilence({ sentInWindow: 50, eventsInWindow: 1, windowHours: 24 })).toEqual([]);
+  });
+
+  it('is unopinionated about a missing measurement', () => {
+    expect(probeDeliverySilence(null)).toEqual([]);
+  });
+
+  it('is the complement of the failure probe, not a duplicate', () => {
+    // Same window, same sends: failures fire on a bad batch, silence on a
+    // dead feed. Both quiet on a healthy day; neither fires on the other's case.
+    const healthy = { sentInWindow: 50, eventsInWindow: 48, windowHours: 24 };
+    expect(probeDeliverySilence(healthy)).toEqual([]);
+    expect(probeAlertDeliveryFailures({ attempted: 50, failed: 2 })).toEqual([]);
+    expect(probeAlertDeliveryFailures({ attempted: 50, failed: 0 })).toEqual([]);   // dead feed looks like this
+    expect(probeDeliverySilence({ sentInWindow: 50, eventsInWindow: 0, windowHours: 24 })).toHaveLength(1);
   });
 });

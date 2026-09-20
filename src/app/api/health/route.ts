@@ -72,6 +72,22 @@ export async function GET() {
     checks.metrics = { ok: true, detail: `${snaps.toLocaleString()} fare snapshots · ${alertsTotal} alerts sent · ${m.users.total} users · ${m.active_searches} active routes` };
   } catch { /* ignore */ }
 
+  // 6. Delivery feed. Sends succeeding while the webhook records nothing is a
+  //    dead feed wearing a 0%-failure rate. Warn, but do not fail the whole
+  //    health check over it: the mail IS going out.
+  try {
+    const d = queries.deliverySilenceStats(24);
+    const silent = d.sentInWindow >= 5 && d.eventsInWindow === 0;
+    checks.delivery_feed = {
+      ok: !silent,
+      detail: silent
+        ? `${d.sentInWindow} sent in 24h, 0 delivery events — webhook feed is dead (RESEND_WEBHOOK_SECRET?)`
+        : d.sentInWindow === 0
+          ? 'nothing sent in 24h'
+          : `${d.eventsInWindow} events for ${d.sentInWindow} sends in 24h`,
+    };
+  } catch { /* ignore */ }
+
   const allOk = Object.values(checks).every(c => c.ok);
   return NextResponse.json({
     ok: allOk,

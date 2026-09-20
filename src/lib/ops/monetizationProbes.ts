@@ -22,6 +22,8 @@ export const COST_SPIKE_MULTIPLE = 3;
 export const COMMISSION_QUIET_DAYS = 4;
 /** Share of an alert batch that may fail to deliver before it is an incident. */
 export const ALERT_DELIVERY_FAILURE_PCT = 20;
+/** Mail sent with no delivery event at all for this long means the feed is dead, not the mail. */
+export const DELIVERY_SILENCE_MIN_SENT = 5;
 
 /**
  * A provider returning stale or identical prices for over an hour.
@@ -126,5 +128,34 @@ export function probeAlertDeliveryFailures(
       `${stats.failed} of ${stats.attempted} alerts reached no channel at all. Usual causes: the sending ` +
       `domain is unverified, the ESP key has rotated, or a provider is rate-limiting. Every one of these is ` +
       `a fare someone was watching for and did not hear about.`,
+  }];
+}
+
+/**
+ * Mail is going out and the delivery feed has recorded NOTHING.
+ *
+ * The blind spot in probeAlertDeliveryFailures: it counts failures, and a
+ * dead feed produces none. With the ESP webhook refusing every event (an
+ * unset signing secret, a rotated one, a changed endpoint) email_events stays
+ * empty forever, every delivery metric reads 0% failed, and the probe above
+ * stays green for the very condition its own detail text names.
+ *
+ * Silence is only meaningful once enough has been sent to expect an echo;
+ * below the floor there is nothing to say.
+ */
+export function probeDeliverySilence(
+  stats: { sentInWindow: number; eventsInWindow: number; windowHours: number } | null,
+  minSent = DELIVERY_SILENCE_MIN_SENT,
+): Finding[] {
+  if (!stats || stats.sentInWindow < minSent || stats.eventsInWindow > 0) return [];
+  return [{
+    fingerprint: 'monetization:delivery-silence',
+    source: 'health',
+    title: `${stats.sentInWindow} emails sent in ${stats.windowHours}h and the delivery feed recorded none of them`,
+    detail:
+      `email_events has no delivered, bounced or complained event for anything sent in the window. ` +
+      `That is the webhook feed being dead, not the mail — the sends succeeded at the ESP. Usual cause: ` +
+      `RESEND_WEBHOOK_SECRET unset or rotated, so /api/webhooks/resend refuses every event. While it is ` +
+      `dead, every delivery and bounce metric in the product is a zero that looks like good news.`,
   }];
 }
