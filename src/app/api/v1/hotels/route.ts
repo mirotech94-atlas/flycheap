@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { apiAuthBearer } from '@/lib/mobileAuth';
 import { getHotelsForDestination, HOTEL_CITY_CENTERS } from '@/lib/hotelMockData';
 import { queries } from '@/lib/db';
+import { buildPartnerLink } from '@/lib/partnerLink';
 
 export const dynamic = 'force-dynamic';
 
@@ -55,7 +56,11 @@ export async function GET(req: Request) {
     dest.searchParams.set('checkIn', checkIn);
     dest.searchParams.set('checkOut', checkOut);
     dest.searchParams.set('adults', String(adults));
-    const bookUrl = `${baseUrl}/go?${new URLSearchParams({ to: dest.toString(), provider: 'hotellook', surface: 'hotels-mobile' }).toString()}`;
+    const bookUrl = buildPartnerLink({
+      partner: 'hotellook', product: 'hotel', deeplink: dest.toString(),
+      baseUrl,
+      context: { surface: 'mobile-app', routeId: destination || null },
+    });
     return {
       id: h.id,
       name: h.name,

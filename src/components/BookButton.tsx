@@ -3,6 +3,9 @@
 import { useState, useRef, useEffect, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { crossShopLinks } from '@/lib/utils';
+import { buildPartnerLink, routeIdFor, type PartnerId } from '@/lib/partnerLink';
+import { rankBookOptions } from '@/lib/bookPanel';
+import type { AffiliateSurface } from '@/lib/affiliate';
 
 type Opts = {
   origin: string;
@@ -19,6 +22,13 @@ type Opts = {
   /** Surface tag for affiliate analytics. e.g. 'dashboard-cheapest-card'.
    *  Whitelisted in src/lib/affiliate.ts AFFILIATE_SURFACES. */
   surface?: string;
+  /** Expected commission per click, per partner, DERIVED from our own history
+   *  (see lib/bookPanelEpc.ts). Passed down from a server component. Absent
+   *  means "we have not measured this yet" and the panel keeps its existing
+   *  order rather than reshuffling on noise. */
+  epc?: Record<string, number>;
+  /** The alert this panel was opened from, when it descends from one. */
+  alertId?: number | null;
 };
 
 const PROVIDER_KEY: Record<string, string> = {
@@ -31,26 +41,35 @@ const PROVIDER_KEY: Record<string, string> = {
 };
 
 /**
- * Wrap an outbound provider URL in our /go redirector so the click is logged
- * to affiliate_clicks before the redirect fires. Aviasales carries our
- * affiliate marker; the others are cross-shop comparisons but we still want
- * to know which provider users picked.
+ * Wrap an outbound provider URL for click tracking.
+ *
+ * This used to hand-roll its own `/go?...` query, which made it a SECOND link
+ * builder on the product's main conversion surface — so every Book-panel click
+ * went out with no sub_id, no product and no position, and none of it appeared
+ * in the funnel's segments. The hostname guard in tests/partner-links.test.ts
+ * did not catch it, because the hostnames here come from crossShopLinks; the
+ * test now also fails any hand-rolled `/go?` outside the builder.
  */
-function trackedLink(rawHref: string, provider: string, opts: Opts): string {
-  // /go only allows hosts in its allowlist — Google/Kayak/Skyscanner/Momondo/
-  // egyptair.com are all on it. If a future provider isn't whitelisted /go
-  // will 400, so we keep this as the canonical wrapper.
-  const q = new URLSearchParams({
-    to: rawHref,
-    origin: opts.origin,
-    destination: opts.destination,
-    dep: opts.departDate,
-    ret: opts.returnDate,
-    per: String(Math.round(opts.perAdultUsd ?? 0)),
-    provider,
-    surface: opts.surface ?? 'dashboard-cheapest-card',
+function trackedLink(rawHref: string, provider: string, opts: Opts, rank: number, optionName: string): string {
+  return buildPartnerLink({
+    partner: provider as PartnerId,
+    product: 'flight',
+    deeplink: rawHref,
+    context: {
+      surface: (opts.surface ?? 'dashboard-cheapest-card') as AffiliateSurface,
+      routeId: routeIdFor({
+        origin: opts.origin, destination: opts.destination,
+        departDate: opts.departDate, returnDate: opts.returnDate,
+      }),
+      priceShownUsd: opts.perAdultUsd ?? null,
+      alertId: opts.alertId ?? null,
+      // Position in the list and which one was taken. This is how we learn
+      // whether ordering by expected commission costs us clicks — the spec is
+      // explicit that this is the reason to record it.
+      optionRank: rank,
+      optionName,
+    },
   });
-  return `/go?${q.toString()}`;
 }
 
 export function BookButton(opts: Opts) {
@@ -82,13 +101,19 @@ export function BookButton(opts: Opts) {
     };
   }, [open]);
 
-  const rawLinks = crossShopLinks(opts);
-  // Re-route every provider link through /go for click tracking.
-  const links = rawLinks.map(l => ({
+  // Order by expected commission among options within a small tolerance of the
+  // cheapest — and, when prices are known, the cheapest still leads even if it
+  // pays nothing. With no measured EPC the ranking is a no-op and the panel
+  // keeps the order crossShopLinks gave it.
+  const ranked = rankBookOptions(crossShopLinks(opts), {
+    epc: opts.epc,
+    keyOf: l => PROVIDER_KEY[l.name] ?? 'aviasales',
+  });
+  // Re-route every provider link through the one builder, carrying its rank.
+  const links = ranked.map(l => ({
     ...l,
-    href: trackedLink(l.href, PROVIDER_KEY[l.name] ?? 'aviasales', opts),
+    href: trackedLink(l.href, PROVIDER_KEY[l.name] ?? 'aviasales', opts, l.rank, l.short),
   }));
-  // links[0] is Aviasales by convention — it appears first in the dropdown.
 
   // Ref to the portaled menu so clicks inside it don't close it (the menu is
   // no longer a DOM descendant of `ref` since we portal it to <body>).

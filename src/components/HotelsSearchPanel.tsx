@@ -6,6 +6,7 @@ import { hotelCityForDestination, buildBookingUrl } from '@/lib/affiliate';
 import { DatePopover } from './DatePopover';
 import { HotelsGuestsPicker, totalGuests, defaultGuests, type GuestsState } from './HotelsGuestsPicker';
 import { DestinationSelect } from './DestinationSelect';
+import { buildPartnerLink, type PartnerId } from '@/lib/partnerLink';
 
 type Provider = 'hotellook' | 'tripcom' | 'travelpayouts' | 'booking';
 
@@ -33,7 +34,10 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
       u.searchParams.set('children', String(children));
       if (childAges.length) u.searchParams.set('childAge', childAges.join(','));
     }
-    return `/go?to=${encodeURIComponent(u.toString())}&provider=hotellook&surface=offers-page`;
+    return buildPartnerLink({
+      partner: 'hotellook', product: 'hotel', deeplink: u.toString(),
+      context: { surface: 'offers-page', routeId: cityForHotels || null },
+    });
   }
   if (p === 'tripcom') {
     const u = new URL('https://www.trip.com/hotels/list');
@@ -41,7 +45,10 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
     u.searchParams.set('checkin', checkIn);
     u.searchParams.set('checkout', checkOut);
     u.searchParams.set('adult', String(adults));
-    return `/go?to=${encodeURIComponent(u.toString())}&provider=tripcom&surface=offers-page`;
+    return buildPartnerLink({
+      partner: 'tripcom', product: 'hotel', deeplink: u.toString(),
+      context: { surface: 'offers-page', routeId: cityForHotels || null },
+    });
   }
   if (p === 'travelpayouts') {
     // Travelpayouts metasearch — link to its hotel search with a real city.
@@ -50,7 +57,10 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
     u.searchParams.set('checkIn', checkIn);
     u.searchParams.set('checkOut', checkOut);
     u.searchParams.set('adults', String(adults));
-    return `/go?to=${encodeURIComponent(u.toString())}&provider=travelpayouts&surface=offers-page`;
+    return buildPartnerLink({
+      partner: 'travelpayouts', product: 'hotel', deeplink: u.toString(),
+      context: { surface: 'offers-page', routeId: cityForHotels || null },
+    });
   }
   // booking — buildBookingUrl appends ?aid=&label= when NEXT_PUBLIC_BOOKING_AID
   // is set; otherwise sends a plain deeplink. Provider is always 'booking' so
@@ -63,7 +73,10 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
     children,
     label: 'offers-page',
   });
-  return `/go?to=${encodeURIComponent(bookingUrl)}&provider=booking&surface=offers-page`;
+  return buildPartnerLink({
+    partner: 'booking', product: 'hotel', deeplink: bookingUrl,
+    context: { surface: 'offers-page', routeId: cityForHotels || null },
+  });
 }
 
 export function HotelsSearchPanel(props: {
