@@ -5,10 +5,10 @@ import 'server-only';
  *
  * We use TWO distinct mailboxes for clean reputation + clear reply-routing:
  *
- *   alerts@flycheap.18dn.com    — fare alerts, daily digest, mistake-fare flags
+ *   alerts@flycheap.live    — fare alerts, daily digest, mistake-fare flags
  *                                  (transactional, high volume, low engagement reply rate)
  *
- *   support@flycheap.18dn.com   — contact-form replies, magic-link sign-in,
+ *   support@flycheap.live   — contact-form replies, magic-link sign-in,
  *                                  account/billing email, manual outreach
  *                                  (transactional, low volume, human reply expected)
  *
@@ -16,9 +16,9 @@ import 'server-only';
  * the deliverability of magic-link emails (which lock the user out if they
  * land in spam).
  *
- * Required DNS for `flycheap.18dn.com` in Resend dashboard:
+ * Required DNS for `flycheap.live` in Resend dashboard:
  *   - SPF / MX / DKIM (Resend will give you exact records)
- *   - DMARC: v=DMARC1; p=quarantine; rua=mailto:dmarc@flycheap.18dn.com
+ *   - DMARC: v=DMARC1; p=quarantine; rua=mailto:dmarc@flycheap.live
  *
  * Both mailboxes can ride a single verified domain — `From:` just changes.
  */

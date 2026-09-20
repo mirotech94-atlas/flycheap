@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import crypto from 'node:crypto';
 import { queries } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
+import { isBotUserAgent } from '@/lib/botDetect';
 import {
   isValidSurface, isValidProvider,
   cjProviderForHost, cjTemplateFor, cjWrap,
@@ -133,6 +134,13 @@ export async function GET(req: Request) {
     return brandRes;
   }
 
+  // ── Crawler short-circuit ───────────────────────────────────────────────
+  // robots.txt disallows /go, but not every crawler obeys. A bot that reaches
+  // here is sent to the clean destination with NO affiliate parameters and NO
+  // click row: it never hits a partner under our marker, and never inflates
+  // the revenue dashboard. See lib/botDetect.ts for the audit behind this.
+  const isBot = isBotUserAgent(req.headers.get('user-agent'));
+
   const to = url.searchParams.get('to');
   if (!to) return NextResponse.json({ error: 'missing ?to= or ?brand=' }, { status: 400 });
 
@@ -146,6 +154,15 @@ export async function GET(req: Request) {
   const isPathAllowed = pathRestricted ? pathRestricted.pathRegex.test(target.pathname) : false;
   if (!isFullyAllowed && !isPathAllowed) {
     return NextResponse.json({ error: `host not allow-listed: ${target.hostname}` }, { status: 400 });
+  }
+
+  // Crawler: allow-listed destination, but stop here — clean redirect, no
+  // affiliate params appended and no click row written.
+  if (isBot) {
+    const botRes = NextResponse.redirect(target.toString(), 302);
+    botRes.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    botRes.headers.set('X-Robots-Tag', 'noindex, nofollow');
+    return botRes;
   }
 
   // Rate limit: 30 req/min per IP. Prevents click-injection attacks where

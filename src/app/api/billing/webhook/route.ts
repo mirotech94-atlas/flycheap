@@ -9,7 +9,7 @@ const fmtUnix = (t: number | undefined) => (t ? new Date(t * 1000).toISOString()
 export const dynamic = 'force-dynamic';
 
 // Stripe webhook handler. Bind this URL in your Stripe dashboard:
-//   https://flycheap.18dn.com/api/billing/webhook
+//   https://flycheap.live/api/billing/webhook
 // Set STRIPE_WEBHOOK_SECRET to the signing secret Stripe gives you.
 
 type StripeEvent = {
@@ -56,7 +56,11 @@ export async function POST(req: NextRequest) {
         id: string; customer: string; status: string;
         current_period_end?: number; metadata?: Record<string, string>;
       };
-      const userId = Number(sub.metadata?.user_id);
+      // Subscriptions opened through our checkout carry user_id metadata, but
+      // one created in the Stripe dashboard (or before that metadata existed)
+      // does not — and a no-op here would strand the account on the wrong tier.
+      // The customer id is always present, so resolve through it as a fallback.
+      const userId = Number(sub.metadata?.user_id) || (findUserByStripeCustomer(sub.customer)?.id ?? 0);
       if (userId) {
         const renewsIso = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
         const plan = sub.metadata?.plan === 'enterprise' ? 'enterprise' : 'pro';
@@ -75,8 +79,10 @@ export async function POST(req: NextRequest) {
       break;
     }
     case 'customer.subscription.deleted': {
-      const sub = event.data.object as { metadata?: Record<string, string> };
-      const userId = Number(sub.metadata?.user_id);
+      const sub = event.data.object as { customer: string; metadata?: Record<string, string> };
+      // Same fallback as the update case — without it a cancellation made in
+      // Stripe's own billing portal silently leaves the user on a paid tier.
+      const userId = Number(sub.metadata?.user_id) || (findUserByStripeCustomer(sub.customer)?.id ?? 0);
       if (userId) {
         // The in-app Cancel button already dropped the tier and posted; only
         // post here when Stripe is the first to tell us (e.g. portal cancel).
