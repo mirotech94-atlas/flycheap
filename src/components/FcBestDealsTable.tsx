@@ -110,11 +110,11 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.outDay.split(' ')[0]}</span>
-                    {r.out} <span className="fc-mono" style={{ color: '#8a93a6', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
+                    {r.out} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.retDay.split(' ')[0]}</span>
-                    {r.ret} <span className="fc-mono" style={{ color: '#8a93a6', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
+                    {r.ret} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
                   </td>
                   <td style={{ color: 'var(--fc-muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.trip}d</td>
                   <td className="fc-col-price"><span className="currency">$</span>{r.per}</td>
