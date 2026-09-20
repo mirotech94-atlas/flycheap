@@ -52,3 +52,12 @@ Desktop.ini
 # slips past that — twice now a verification worktree pointed at the real sqlite
 # file and `git add -A` committed an absolute link to a developer's machine.
 /data
+
+# Browser-verifying a branch needs a worktree INSIDE the project — Turbopack
+# rejects a node_modules symlink that points outside it — so these land in the
+# repo root, and each is a nested git checkout of ~150MB carrying its own
+# .env.local. `git add -A` would either swallow the lot or write a stray
+# gitlink. Anchored to the root so it cannot touch anything under src/, and
+# matched by PATTERN so the next one is covered without editing this file.
+# (git's `*` matches a leading dot, so `.pol-preview` is included.)
+/*-preview/
