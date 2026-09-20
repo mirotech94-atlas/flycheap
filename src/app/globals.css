@@ -3947,24 +3947,18 @@ body:has(.fc-landing[data-fc-theme="cabin"]) { background: var(--nc-dark); }
 }
 .fc-shell[data-fc-theme="cabin"] .fc-btn-light:hover { background: var(--nc-deck-2); }
 
-/* The white-label brand injection in layout.tsx writes
-   `.text-brand-700,.text-brand-600 { color: <brand> !important }`, and the
-   default brand is the original navy #0a3a6b — 1.55:1 on the cabin ground.
-   The !important is deliberate there (tenant branding must win), so this has
-   to out-specify rather than out-order it: both declarations are !important,
-   so the higher-specificity selector takes it.
+/* The text roles used to be force-painted teal here, because the injection put
+   the tenant's RAW hex into them and a dark brand measured 1.55:1 on the cabin
+   ground. That fixed legibility by discarding the tenant's branding entirely.
 
-   A tenant's own brand colour is overridden on dark surfaces too. That is the
-   right trade for now — an arbitrary tenant hex is not guaranteed legible on
-   any ground — but the real fix is to derive a contrast-safe variant of the
-   brand colour per surface instead of using the raw hex for text. */
-html[data-fc-theme="coal"] .text-brand-700,
-html[data-fc-theme="coal"] .text-brand-600,
-/* Bare `.text-brand` takes brand.DEFAULT, the darkest end of the ramp, so it
-   has exactly the same problem as -700/-600 did: the /pricing "log in" link
-   sat at 1.85:1 on the cabin ground. It was simply missed when those two
-   were fixed. */
-html[data-fc-theme="coal"] .text-brand { color: var(--nc-teal) !important; }
+   layout.tsx now derives the ink instead (see src/lib/brandContrast.ts): it
+   keeps the tenant's hue and moves only lightness until it clears AA, and
+   returns the colour untouched when it already passes. So this override is
+   GONE ON PURPOSE -- it out-specified the injection (0,2,1 vs 0,1,0, both
+   !important), so leaving it here would silently cancel the derivation.
+
+   Backgrounds are still handled below: a brand-coloured surface picks its own
+   ink, so it is a design decision rather than a legibility rescue. */
 
 /* The same injection also writes the brand hex straight into three BACKGROUND
    roles — `.bg-brand`, `.btn-primary`, `.kpi-brand` and the `.bg-brand-gradient`
