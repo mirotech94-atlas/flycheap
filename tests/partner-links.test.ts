@@ -288,3 +288,38 @@ describe('partner hostname containment', () => {
     expect(missing).toEqual([]);
   });
 });
+
+/**
+ * The spec's audit: "The multilingual builds are the likeliest place for a
+ * stale template to be hiding."
+ *
+ * Audited 2026-09-20 across all eight language files: they contain copy only —
+ * no partner hostnames, no /go construction, no link building of any kind. The
+ * risk the spec predicted does not exist here because link building is
+ * centralised. This test keeps it that way: the day someone puts a URL in a
+ * translation file, it fails.
+ */
+describe('the multilingual builds emit no links of their own', () => {
+  const I18N = path.join(SRC, 'lib/i18n');
+
+  it('has language files to check', () => {
+    const files = fs.readdirSync(I18N).filter(f => /^app\.[a-z]{2}\.ts$/.test(f));
+    expect(files.length).toBeGreaterThanOrEqual(7);
+  });
+
+  it('contains no partner hostname and no hand-rolled /go in any language', () => {
+    const hostRx = new RegExp(PARTNER_HOSTS.map(h => h.replace(/\./g, '\\.')).join('|'));
+    const goRx = /['"`]\/go\?/;
+    const offenders: string[] = [];
+    for (const f of fs.readdirSync(I18N)) {
+      if (!f.endsWith('.ts') && !f.endsWith('.tsx')) continue;
+      const src = fs.readFileSync(path.join(I18N, f), 'utf8');
+      if (hostRx.test(src) || goRx.test(src)) offenders.push(f);
+    }
+    expect(offenders, [
+      'A translation file is building an outbound link.',
+      'Localized copy must stay copy — every link comes from buildPartnerLink(),',
+      'or one language quietly ships unattributed while the others do not.',
+    ].join('\n')).toEqual([]);
+  });
+});
