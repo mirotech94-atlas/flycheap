@@ -133,6 +133,37 @@ export function scoreDueVerdicts(horizonDays: 7 | 14): ScoringRun {
   return { horizonDays, considered: due.length, scored, skipped };
 }
 
+/**
+ * The honesty surface: our track record on THIS route family.
+ *
+ * "On the watch detail, show your track record for that route family: how many
+ *  buy calls, how many went lower afterwards. Publishing the hit rate is the
+ *  logical end of the promise that verdicts show their math, and no competitor
+ *  does it."
+ *
+ * Returns raw counts; the caller decides whether the sample is big enough to
+ * state a percentage (see buildTrackRecord). Keeping that decision out of here
+ * means the minimum sample is applied in one place rather than four.
+ */
+export function trackRecordForRoute(
+  origin: string,
+  destination: string,
+  opts: { verdict?: ScoredVerdict; horizonDays?: 7 | 14 } = {},
+): { scored: number; correct: number; horizonDays: 7 | 14 } {
+  const horizon = opts.horizonDays ?? 14;
+  const column = horizon === 7 ? 'correct_7d' : 'correct_14d';
+  const row = getDb().prepare(
+    `SELECT COUNT(*) AS scored, COALESCE(SUM(${column}), 0) AS correct
+       FROM verdict_calls
+      WHERE origin = ? AND destination = ?
+        AND ${column} IS NOT NULL
+        ${opts.verdict ? 'AND verdict = ?' : ''}`,
+  ).get(...[origin.toUpperCase(), destination.toUpperCase(), ...(opts.verdict ? [opts.verdict] : [])]) as
+    { scored: number; correct: number };
+
+  return { scored: row.scored, correct: row.correct, horizonDays: horizon };
+}
+
 export type VerdictAccuracy = {
   horizonDays: 7 | 14;
   /** Scored calls only. Never includes calls we had no evidence for. */
