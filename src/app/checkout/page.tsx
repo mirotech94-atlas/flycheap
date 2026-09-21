@@ -42,7 +42,7 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
             {plan.pitch} You&rsquo;ll confirm payment on Stripe&rsquo;s secure page — card details never touch our servers.
           </p>
 
-          <div className="ed-stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+          <div className="ed-stats">
             <div className="ed-stat"><div className="ed-stat-label">Plan</div><div className="ed-stat-value" style={{ fontSize: 20 }}>{plan.name}</div></div>
             <div className="ed-stat"><div className="ed-stat-label">Billed monthly</div><div className="ed-stat-value" style={{ fontSize: 20 }}>${plan.price}.00 / month</div></div>
             <div className="ed-stat"><div className="ed-stat-label">Commitment</div><div className="ed-stat-value" style={{ fontSize: 20 }}>None · cancel anytime</div></div>

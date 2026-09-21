@@ -111,13 +111,13 @@ export default async function LoginPage(
     // Founder-only admin portal: one identity, no sign-ups, no marketing panel.
     return (
       <div className="ed-panel ed-card">
-        <Link href="/" className="mk-brand" style={{ marginBottom: 22 }}>
+        <div className="mk-brand" style={{ marginBottom: 22 }}>
           <Logo size={34} />
           <span style={{ display: 'flex', flexDirection: 'column' }}>
             <span className="mk-brand-name">FlyCheap</span>
             <span className="mk-brand-meta">Admin portal · founder access</span>
           </span>
-        </Link>
+        </div>
         <h2 className="ed-h2">Superadmin <em>sign in</em></h2>
         <p className="ed-sub">This portal is for the founder account only. Codes are only issued to the owner identity; every other email is refused.</p>
         <Suspense fallback={null}>

@@ -285,13 +285,18 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .mk { background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
 .mk .mk-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
 .mk-nav { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--rule); }
-.mk-nav .mk-wrap { display: flex; align-items: center; justify-content: space-between; height: 62px; gap: 24px; }
+/* flex-wrap + row-gap (task 3.7a fix round 1, F2): at phone width the
+   right-hand link/button group no longer fits one row next to the brand —
+   min-height (not the prior fixed height: 62px) lets the row grow instead
+   of clipping the wrapped line; every label stays visible, just on two
+   lines. Shared by every .mk-nav consumer (Phase 1 /early-access too). */
+.mk-nav .mk-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; min-height: 62px; gap: 24px; row-gap: 8px; padding-top: 10px; padding-bottom: 10px; }
 .mk-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
 .mk-brand-name { font-family: var(--font-serif); font-size: 20px; letter-spacing: -0.01em; }
 .mk-brand-meta { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-2); }
 .mk-nav-links { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
 .mk-nav-links a:hover { color: var(--ink); }
-.mk-nav-right { display: flex; gap: 8px; align-items: center; }
+.mk-nav-right { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
 
 .mk-hero { padding: 72px 0 56px; }
 .mk-hero .mk-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
@@ -1007,9 +1012,16 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
    none of them are in ClientChrome's full-bleed allowlist, and adding
    them there is out of this task's scope) can still go full width. Mirrors
    .ed-page's own padding values/breakpoint exactly so it cancels cleanly
-   instead of leaving a residual gap or a horizontal-scroll sliver. */
-.mk-bleed { margin: -44px -48px -80px; }
-@media (max-width: 720px) { .mk-bleed { margin: -28px -20px -64px; } }
+   instead of leaving a residual gap or a horizontal-scroll sliver.
+
+   Scoped to `.ed-page > .mk-bleed`, not a bare `.mk-bleed`: on the
+   marketing host (flycheap.live) ClientChrome's isFullBleed(...,
+   marketingHost) is true, so AdminAwareMain renders a bare <main> with NO
+   .ed-page wrapper at all — an unconditional negative margin there would
+   pull the page past the viewport edge instead of cancelling anything,
+   causing the exact horizontal overflow this rule exists to prevent. */
+.ed-page > .mk-bleed { margin: -44px -48px -80px; }
+@media (max-width: 720px) { .ed-page > .mk-bleed { margin: -28px -20px -64px; } }
 
 /* Legal-copy sections (terms / trial-terms) — a heading + paragraph list
    with a hairline between entries, and the anchor-jump table of contents
