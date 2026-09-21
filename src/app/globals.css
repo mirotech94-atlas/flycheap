@@ -1918,21 +1918,25 @@ a.fc-radar-fare-link:hover { background: color-mix(in srgb, var(--amber) 10%, va
    src/app/layout.tsx from the fc_lang cookie / Accept-Language.
    ========================================================================== */
 
-/* Script fallbacks — Manrope/Fraunces lack Arabic, Han and Devanagari glyphs.
-   The Google font <link> is injected by the root layout (LOCALES[locale].font). */
+/* Script fallbacks — Public Sans/Newsreader lack Arabic, Han and Devanagari
+   glyphs, so each script's Noto face is listed alongside them (the Google font
+   <link> is injected by the root layout, LOCALES[locale].font). The editorial
+   faces come in as var(--font-ui)/var(--font-serif); the retired Manrope and
+   Fraunces names were left behind by task 3.10's loader removal and would have
+   dropped Latin text in zh/hi onto the Noto face. */
 html[lang="ar"] body, html[lang="ar"] .fc-login {
-  --font-fc-sans: 'Noto Sans Arabic', 'Manrope', system-ui, sans-serif;
-  --font-fc-display: 'Noto Sans Arabic', 'Fraunces', serif;
+  --font-fc-sans: 'Noto Sans Arabic', var(--font-ui), system-ui, sans-serif;
+  --font-fc-display: 'Noto Sans Arabic', var(--font-serif), serif;
   font-family: 'Noto Sans Arabic', var(--font-sans, system-ui), sans-serif;
 }
 html[lang="zh"] body, html[lang="zh"] .fc-login {
-  --font-fc-sans: 'Manrope', 'Noto Sans SC', system-ui, sans-serif;
-  --font-fc-display: 'Fraunces', 'Noto Sans SC', serif;
+  --font-fc-sans: var(--font-ui), 'Noto Sans SC', system-ui, sans-serif;
+  --font-fc-display: var(--font-serif), 'Noto Sans SC', serif;
   font-family: var(--font-sans, system-ui), 'Noto Sans SC', sans-serif;
 }
 html[lang="hi"] body, html[lang="hi"] .fc-login {
-  --font-fc-sans: 'Manrope', 'Noto Sans Devanagari', system-ui, sans-serif;
-  --font-fc-display: 'Fraunces', 'Noto Sans Devanagari', serif;
+  --font-fc-sans: var(--font-ui), 'Noto Sans Devanagari', system-ui, sans-serif;
+  --font-fc-display: var(--font-serif), 'Noto Sans Devanagari', serif;
   font-family: var(--font-sans, system-ui), 'Noto Sans Devanagari', sans-serif;
 }
 /* Tracked small-caps and tight display headings don't suit Arabic script. */
