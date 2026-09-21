@@ -744,7 +744,13 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-brand { display: flex; align-items: center; gap: 10px; color: var(--panel-fg); text-decoration: none; }
 .ad-brand-name { display: block; font-family: var(--font-serif); font-size: 19px; line-height: 1; }
 .ad-brand-meta { display: block; font-family: var(--font-mono-ed); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6; margin-top: 3px; }
-.ad-crumb { opacity: 0.75; } .ad-right { display: flex; gap: 10px; align-items: center; } .ad-live { color: var(--accent); display: inline-flex; gap: 6px; align-items: center; }
+.ad-crumb { opacity: 0.75; } .ad-right { display: flex; gap: 10px; align-items: center; }
+/* Deviation from the brief's verbatim `color: var(--accent)`: --panel-bg is
+   ALWAYS dark (both themes), but --accent flips to a dark teal in light mode
+   — accent-on-panel-bg measures 2.49:1 in light (fails AA). --panel-fg is
+   the correct read per ruling 4 ("text on --panel-bg via --panel-fg"); the
+   dot stays the shared .ed-dot green, which isn't text. */
+.ad-live { color: var(--panel-fg); display: inline-flex; gap: 6px; align-items: center; }
 .ad-top .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
 .ad-rail { position: fixed; top: 56px; bottom: 0; left: 0; width: 214px; overflow: auto; background: var(--surface); border-right: 1px solid var(--rule); padding: 18px 0; }
 .ad-rail-group { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-3); padding: 18px 24px 8px; }
@@ -796,7 +802,7 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-rule-top { border-top: 1px solid var(--rule-soft); }
 .ad-rule-top:first-child { border-top: 0; }
 .ad-panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 16px 18px; }
-.ad-panel-gold { border-color: var(--amber); }
+.ad-panel-gold { border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
 .ad-panel-title { font-family: var(--font-serif); font-weight: 400; font-size: 15px; color: var(--ink); letter-spacing: -0.01em; }
 .ad-kpi { display: block; padding: 14px 16px 15px; }
 .ad-kpi-value { font-family: var(--font-serif); font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
@@ -806,7 +812,10 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-btn { display: inline-flex; align-items: center; gap: 5px; font: 600 11.5px/1 var(--font-ui); padding: 6px 11px; border: 1px solid var(--rule-strong); border-radius: 0; background: var(--surface); color: var(--ink-soft); text-decoration: none; white-space: nowrap; transition: opacity 120ms; }
 .ad-btn:hover { opacity: 0.72; }
 .ad-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-.ad-btn-gold { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+/* --panel-bg, not --ink: --ink flips light in dark mode, and --amber+--ink
+   measures 1.99:1 there (task-2.8-report.md precedent) — --panel-bg stays
+   near-black in both themes, same fix the pricing tile's featured CTA uses. */
+.ad-btn-gold { background: var(--amber); color: var(--panel-bg); border-color: var(--amber); }
 .ad-table { border-collapse: collapse; font-size: 12.5px; }
 .ad-table th { text-align: left; padding: 7px 10px; font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); font-weight: 500; border-bottom: 1px solid var(--ink); background: transparent; }
 .ad-table td { padding: 8px 10px; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); vertical-align: middle; }
@@ -815,7 +824,10 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 .ad-tone-neutral { color: var(--ink); }
-.ad-tone-gold { color: var(--amber); }
+/* Mixed toward --ink, not raw --amber: raw amber text measures 2.92:1 on
+   --surface in light (below AA even at the KPI value's large size) — same
+   65% mix already established for .ed-chip.status-waiting / ad-tone-warn. */
+.ad-tone-gold { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
 .ad-tone-good { color: var(--green); }
 .ad-tone-bad { color: var(--red); }
 .ad-tone-warn { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
