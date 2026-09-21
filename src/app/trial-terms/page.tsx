@@ -1,6 +1,6 @@
-import { LogoMark } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
+import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 
 export const metadata: Metadata = {
   title: 'Free Trial Terms — FlyCheap',
@@ -36,60 +36,47 @@ const TERMS: Array<{ h: string; body: React.ReactNode }> = [
 
 export default function TrialTermsPage() {
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
-      <header className="fc-l-topbar">
-        <Link href="/" className="fc-l-brand">
-          <div className="fc-l-brand-mark">
-            <LogoMark size={22} />
+    <div className="mk mk-bleed">
+      <PublicTopbar right={<Link href="/pricing" className="ed-btn ed-btn-secondary">← Back to pricing</Link>} />
+
+      <section className="mk-section">
+        <div className="mk-wrap" style={{ maxWidth: 860 }}>
+          <div className="ed-eyebrow">3-month free trial</div>
+          <h1 className="ed-h1">
+            Trial terms, in <em>plain English</em>.
+          </h1>
+          <p className="ed-sub" style={{ maxWidth: 640 }}>
+            The short version: <strong>every new account gets 3 months of the full product free</strong> —
+            all Pro and Enterprise features, no card. Love it? Email or call and we&rsquo;ll continue together.
+            Otherwise it just rolls to the Free plan.
+          </p>
+
+          <div className="ed-stats">
+            <div className="ed-stat"><div className="ed-stat-label">Today</div><div className="ed-stat-value" style={{ fontSize: 20 }}>$0.00</div></div>
+            <div className="ed-stat"><div className="ed-stat-label">Months 1–3</div><div className="ed-stat-value" style={{ fontSize: 20 }}>Everything, free</div></div>
+            <div className="ed-stat"><div className="ed-stat-label">Card required</div><div className="ed-stat-value" style={{ fontSize: 20 }}>None, ever</div></div>
+            <div className="ed-stat"><div className="ed-stat-label">After 3 months</div><div className="ed-stat-value" style={{ fontSize: 20 }}>Contact us, or roll to Free</div></div>
           </div>
-          <div>
-            <div className="fc-l-brand-name">FlyCheap</div>
-            <div className="fc-l-brand-meta">Fare Intelligence Platform</div>
+
+          <div className="ed-legal-list">
+            {TERMS.map(t => (
+              <div className="ed-legal-item" key={t.h}>
+                <h3>{t.h}</h3>
+                <p>{t.body}</p>
+              </div>
+            ))}
           </div>
-        </Link>
-        <div className="fc-l-topbar-right">
-          <Link href="/pricing" className="fc-btn fc-btn-light fc-btn-sm">← Back to pricing</Link>
-        </div>
-      </header>
 
-      <section className="fc-section" style={{ marginTop: 48, maxWidth: 860, marginLeft: 'auto', marginRight: 'auto' }}>
-        <div className="fc-smallcaps">3-month free trial</div>
-        <h1 className="fc-section-title" style={{ marginTop: 10 }}>
-          Trial terms, in <em>plain English</em>.
-        </h1>
-        <p className="fc-section-sub" style={{ maxWidth: 640 }}>
-          The short version: <strong>every new account gets 3 months of the full product free</strong> —
-          all Pro and Enterprise features, no card. Love it? Email or call and we&rsquo;ll continue together.
-          Otherwise it just rolls to the Free plan.
-        </p>
-
-        <div className="fc-trial-summary">
-          <div><span className="k">Today</span><span className="v">$0.00</span></div>
-          <div><span className="k">Months 1–3</span><span className="v">Everything, free</span></div>
-          <div><span className="k">Card required</span><span className="v">None, ever</span></div>
-          <div><span className="k">After 3 months</span><span className="v">Contact us, or roll to Free</span></div>
-        </div>
-
-        <div className="fc-trial-terms">
-          {TERMS.map(t => (
-            <div className="fc-trial-term" key={t.h}>
-              <h3>{t.h}</h3>
-              <p>{t.body}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="fc-trial-gate" style={{ marginTop: 22 }}>
-          <Link href="/login" prefetch={false} className="fc-btn fc-btn-gold fc-trial-cta">Start free trial →</Link>
+          <div className="ed-actions" style={{ marginTop: 22, marginBottom: 0 }}>
+            <Link href="/login" prefetch={false} className="ed-btn ed-btn-primary">Start free trial →</Link>
+          </div>
         </div>
       </section>
 
-      <footer className="fc-l-footer" style={{ marginTop: 64 }}>
-        <div className="fc-l-footer-legal" style={{ borderTop: 'none', paddingTop: 0 }}>
-          <div>© 2026 FlyCheap · All rights reserved</div>
-          <div><Link href="/privacy" style={{ color: 'inherit' }}>Privacy</Link> · v2.5 · NYC</div>
-        </div>
-      </footer>
+      <PublicFooter
+        left={<>© 2026 FlyCheap · All rights reserved</>}
+        right={<><Link href="/privacy">Privacy</Link> · v2.5 · NYC</>}
+      />
     </div>
   );
 }

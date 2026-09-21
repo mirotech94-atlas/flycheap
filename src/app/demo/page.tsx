@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import type { Metadata } from 'next';
 import { DemoPlayer, type Chapter } from './DemoPlayer';
+import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 
 export const dynamic = 'force-static';
 
@@ -30,63 +31,49 @@ const CHAPTERS: Chapter[] = [
 
 export default function DemoPage() {
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
-      <header className="fc-l-topbar">
-        <Link href="/" className="fc-l-brand">
-          <div className="fc-l-brand-mark">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M5 5 L5 19 M5 5 L14 5 M5 12 L11 12" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
-              <path d="M22 8 A6 6 0 0 0 16 8 A6 6 0 0 0 22 18" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" fill="none" />
-            </svg>
-          </div>
-          <div>
-            <div className="fc-l-brand-name">FlyCheap</div>
-            <div className="fc-l-brand-meta">Fare Intelligence Platform</div>
-          </div>
-        </Link>
-        <div className="fc-l-topbar-right">
-          <Link href="/" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
-          <Link href="/login" prefetch={false} className="fc-btn fc-btn-light fc-btn-sm">Log in</Link>
-          <Link href="/early-access" className="fc-btn fc-btn-ink fc-btn-sm">Get early access →</Link>
-        </div>
-      </header>
+    <div className="mk mk-bleed">
+      <PublicTopbar
+        right={(
+          <>
+            <Link href="/" className="ed-btn ed-btn-secondary">← Back to site</Link>
+            <Link href="/login" prefetch={false} className="ed-btn ed-btn-secondary">Log in</Link>
+            <Link href="/early-access" className="ed-btn ed-btn-primary">Get early access →</Link>
+          </>
+        )}
+      />
 
-      <section className="fc-section" style={{ marginTop: 44 }}>
-        <div className="fc-section-head">
-          <div>
-            <div className="fc-smallcaps">Narrated walkthrough · every page explained</div>
-            <h1 className="fc-section-title">The <em>live demo</em>.</h1>
-            <p className="fc-section-sub">
-              This is the real product — the actual dashboard, real fare data, every page —
-              with a guided voiceover explaining how it all works. Use the chapters to jump around.
-            </p>
-          </div>
-        </div>
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">Narrated walkthrough · every page explained</div>
+          <h1 className="ed-h1">The <em>live demo</em>.</h1>
+          <p className="ed-sub">
+            This is the real product — the actual dashboard, real fare data, every page —
+            with a guided voiceover explaining how it all works. Use the chapters to jump around.
+          </p>
 
-        <DemoPlayer
-          src="/clips/flycheap-demo.mp4"
-          poster="/clips/flycheap-demo-poster.jpg"
-          chapters={CHAPTERS}
-        />
+          <DemoPlayer
+            src="/clips/flycheap-demo.mp4"
+            poster="/clips/flycheap-demo-poster.jpg"
+            chapters={CHAPTERS}
+          />
 
-        <div className="fc-demo-cta">
-          <div>
-            <div className="fc-smallcaps">Seen enough?</div>
-            <h2>Request access — <em>most approvals land within hours</em>.</h2>
-          </div>
-          <div className="fc-hero-cta" style={{ marginTop: 0 }}>
-            <Link href="/early-access" className="fc-btn fc-btn-gold">Get early access →</Link>
-            <Link href="/pricing" className="fc-btn fc-btn-ghost">See pricing</Link>
+          <div className="ed-panel" style={{ marginTop: 44, display: 'flex', flexWrap: 'wrap', gap: 20, alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <div className="ed-eyebrow">Seen enough?</div>
+              <h2 className="ed-h2" style={{ marginTop: 6 }}>Request access — <em>most approvals land within hours</em>.</h2>
+            </div>
+            <div className="ed-actions" style={{ marginBottom: 0 }}>
+              <Link href="/early-access" className="ed-btn ed-btn-primary">Get early access →</Link>
+              <Link href="/pricing" className="ed-btn ed-btn-secondary">See pricing</Link>
+            </div>
           </div>
         </div>
       </section>
 
-      <footer className="fc-l-footer" style={{ marginTop: 72 }}>
-        <div className="fc-l-footer-legal" style={{ borderTop: 'none', paddingTop: 0 }}>
-          <div>© 2026 FlyCheap · All rights reserved</div>
-          <div>{APP_VERSION_SHORT} · NYC</div>
-        </div>
-      </footer>
+      <PublicFooter
+        left={<>© 2026 FlyCheap · All rights reserved</>}
+        right={<>{APP_VERSION_SHORT} · NYC</>}
+      />
     </div>
   );
 }

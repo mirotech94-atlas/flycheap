@@ -1001,3 +1001,65 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-login-grid > .ed-panel { border: 0; padding: 32px 36px; }
 @media (max-width: 880px) { .ed-login-grid { grid-template-columns: 1fr; } }
 
+/* Escapes the padding AdminAwareMain's <div class="ed-page"> imposes on
+   every non-full-bleed route, so a page that wants its own edge-to-edge
+   .mk-nav / .mk-footer (about/demo/terms/trial-terms/checkout/credits —
+   none of them are in ClientChrome's full-bleed allowlist, and adding
+   them there is out of this task's scope) can still go full width. Mirrors
+   .ed-page's own padding values/breakpoint exactly so it cancels cleanly
+   instead of leaving a residual gap or a horizontal-scroll sliver. */
+.mk-bleed { margin: -44px -48px -80px; }
+@media (max-width: 720px) { .mk-bleed { margin: -28px -20px -64px; } }
+
+/* Legal-copy sections (terms / trial-terms) — a heading + paragraph list
+   with a hairline between entries, and the anchor-jump table of contents
+   above it. */
+.ed-legal-list { display: grid; }
+.ed-legal-item { padding: 20px 0; border-top: 1px solid var(--rule); }
+.ed-legal-item:first-child { border-top: 0; padding-top: 0; }
+.ed-legal-item h3 { font-family: var(--font-serif); font-weight: 400; font-size: 18px; letter-spacing: -0.01em; color: var(--ink); margin: 0 0 8px; }
+.ed-legal-item p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+/* --surface (not --surface-2): --muted measures ~4.17:1 on --surface-2 in
+   light — under the 4.5:1 AA floor for 12.5px text. --surface (near-white)
+   is the pairing the rest of the system already uses for --muted body copy. */
+.ed-toc { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 20px 0 8px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--rule); font-size: 12.5px; }
+.ed-toc a { color: var(--muted); }
+.ed-toc a:hover { color: var(--ink); }
+
+/* Photo-credit grid (/credits). */
+.ed-credits { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 28px; }
+.ed-credit { background: var(--surface); display: flex; flex-direction: column; }
+.ed-credit img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.ed-credit-body { padding: 12px 14px 14px; }
+.ed-credit-place { font-weight: 600; font-size: 13px; color: var(--ink); }
+.ed-credit-code { font-family: var(--font-mono-ed); font-size: 10px; color: var(--muted-2); margin-left: 6px; }
+.ed-credit-author { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ed-credit-meta { font-size: 11.5px; color: var(--muted-2); margin-top: 6px; }
+.ed-credit-meta a { text-decoration: underline; }
+
+/* Demo player (/demo → DemoPlayer.tsx): video stage + chapter list.
+   Traffic-light dots reuse .ed-dot (the acceptance grid's one radius
+   allowance) instead of a new rounded primitive. */
+.ed-demo-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; margin-top: 28px; }
+@media (max-width: 860px) { .ed-demo-layout { grid-template-columns: 1fr; } }
+.ed-demo-stage { background: var(--surface); border: 1px solid var(--rule); }
+.ed-demo-browser-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--rule); background: var(--surface); }
+.ed-demo-browser-dots { display: flex; gap: 5px; }
+.ed-demo-browser-url { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted); }
+.ed-demo-stage video { display: block; width: 100%; }
+.ed-demo-chapters { background: var(--surface); border: 1px solid var(--rule); max-height: 520px; overflow-y: auto; }
+.ed-demo-chapters-head { padding: 12px 14px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted-2); border-bottom: 1px solid var(--rule); }
+.ed-demo-chapter { display: flex; gap: 10px; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--rule-soft); background: transparent; cursor: pointer; }
+.ed-demo-chapter:hover { background: var(--surface-2); }
+.ed-demo-chapter.active { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.ed-demo-chapter .ts { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted-2); flex-shrink: 0; padding-top: 1px; }
+.ed-demo-chapter .body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ed-demo-chapter .label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ed-demo-chapter.active .label { color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
+.ed-demo-chapter .desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+/* The first chapter is .active by default (DemoPlayer's initial state), so
+   this renders on load, not just after a click: --muted/--muted-2 on the
+   8%-accent-tinted background is close enough to the AA floor in light
+   that the tint's own lightness shift can tip it under, so the active
+   row's secondary text steps up to --ink-soft rather than reusing --muted. */
+.ed-demo-chapter.active .ts, .ed-demo-chapter.active .desc { color: var(--ink-soft); }

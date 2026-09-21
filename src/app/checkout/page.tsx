@@ -1,7 +1,7 @@
-import { LogoMark } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { APP_VERSION_SHORT } from '@/lib/version';
+import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 
 export const metadata: Metadata = {
   title: 'Checkout — FlyCheap',
@@ -29,63 +29,48 @@ export default async function CheckoutPage({ searchParams }: { searchParams: Pro
   const plan = PLANS[key];
 
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
-      <header className="fc-l-topbar">
-        <Link href="/" className="fc-l-brand">
-          <div className="fc-l-brand-mark">
-            <LogoMark size={22} />
-          </div>
-          <div>
-            <div className="fc-l-brand-name">FlyCheap</div>
-            <div className="fc-l-brand-meta">Fare Intelligence Platform</div>
-          </div>
-        </Link>
-        <div className="fc-l-topbar-right">
-          <Link href="/pricing" className="fc-btn fc-btn-light fc-btn-sm">← Back to pricing</Link>
-        </div>
-      </header>
+    <div className="mk mk-bleed">
+      <PublicTopbar right={<Link href="/pricing" className="ed-btn ed-btn-secondary">← Back to pricing</Link>} />
 
-      <section className="fc-section" style={{ marginTop: 48, maxWidth: 760, marginLeft: 'auto', marginRight: 'auto' }}>
-        <div className="fc-smallcaps">Checkout · {plan.name} plan</div>
-        <h1 className="fc-section-title" style={{ marginTop: 10 }}>
-          Review, then <em>pay securely</em>.
-        </h1>
-        <p className="fc-section-sub" style={{ maxWidth: 600 }}>
-          {plan.pitch} You&rsquo;ll confirm payment on Stripe&rsquo;s secure page — card details never touch our servers.
-        </p>
-
-        <div className="fc-trial-summary" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
-          <div><span className="k">Plan</span><span className="v">{plan.name}</span></div>
-          <div><span className="k">Billed monthly</span><span className="v">${plan.price}.00 / month</span></div>
-          <div><span className="k">Commitment</span><span className="v">None · cancel anytime</span></div>
-        </div>
-
-        <div className="fc-trial-gate" style={{ marginTop: 22 }}>
-          <ul className="fc-l-tier-list" style={{ marginBottom: 18 }}>
-            {plan.features.map(f => (
-              <li key={f}><span className="check">✓</span><span>{f}</span></li>
-            ))}
-          </ul>
-          <a href={plan.href} className="fc-btn fc-btn-gold fc-trial-cta">Continue to secure payment — ${plan.price}/mo →</a>
-          <div className="fc-trial-note">
-            Secure checkout by Stripe · Cancel anytime from Settings · By continuing you agree to the <Link href="/terms">Terms</Link>
-          </div>
-        </div>
-
-        {key === 'enterprise' && (
-          <p className="fc-section-sub" style={{ marginTop: 22 }}>
-            Need white-label setup, a custom domain, or invoicing instead of card billing?{' '}
-            <a href="mailto:sales@flycheap.live" style={{ color: 'var(--fc-navy)', textDecoration: 'underline' }}>Talk to sales</a> — we&rsquo;ll set it up with you.
+      <section className="mk-section">
+        <div className="mk-wrap" style={{ maxWidth: 760 }}>
+          <div className="ed-eyebrow">Checkout · {plan.name} plan</div>
+          <h1 className="ed-h1">
+            Review, then <em>pay securely</em>.
+          </h1>
+          <p className="ed-sub" style={{ maxWidth: 600 }}>
+            {plan.pitch} You&rsquo;ll confirm payment on Stripe&rsquo;s secure page — card details never touch our servers.
           </p>
-        )}
+
+          <div className="ed-stats" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+            <div className="ed-stat"><div className="ed-stat-label">Plan</div><div className="ed-stat-value" style={{ fontSize: 20 }}>{plan.name}</div></div>
+            <div className="ed-stat"><div className="ed-stat-label">Billed monthly</div><div className="ed-stat-value" style={{ fontSize: 20 }}>${plan.price}.00 / month</div></div>
+            <div className="ed-stat"><div className="ed-stat-label">Commitment</div><div className="ed-stat-value" style={{ fontSize: 20 }}>None · cancel anytime</div></div>
+          </div>
+
+          <div className="ed-panel" style={{ marginTop: 22 }}>
+            <ul className="ed-plan-list" style={{ marginBottom: 18 }}>
+              {plan.features.map(f => <li key={f}>✓ {f}</li>)}
+            </ul>
+            <a href={plan.href} className="ed-btn ed-btn-primary">Continue to secure payment — ${plan.price}/mo →</a>
+            <p className="ed-panel-note" style={{ marginTop: 14 }}>
+              Secure checkout by Stripe · Cancel anytime from Settings · By continuing you agree to the <Link href="/terms">Terms</Link>
+            </p>
+          </div>
+
+          {key === 'enterprise' && (
+            <p className="ed-sub" style={{ marginTop: 22, marginBottom: 0 }}>
+              Need white-label setup, a custom domain, or invoicing instead of card billing?{' '}
+              <a href="mailto:sales@flycheap.live" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Talk to sales</a> — we&rsquo;ll set it up with you.
+            </p>
+          )}
+        </div>
       </section>
 
-      <footer className="fc-l-footer" style={{ marginTop: 64 }}>
-        <div className="fc-l-footer-legal" style={{ borderTop: 'none', paddingTop: 0 }}>
-          <div>© 2026 FlyCheap · All rights reserved</div>
-          <div>{APP_VERSION_SHORT} · NYC</div>
-        </div>
-      </footer>
+      <PublicFooter
+        left={<>© 2026 FlyCheap · All rights reserved</>}
+        right={<>{APP_VERSION_SHORT} · NYC</>}
+      />
     </div>
   );
 }

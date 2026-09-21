@@ -1,7 +1,7 @@
-import { LogoMark } from '@/components/Logo';
 import Link from 'next/link';
 import type { Metadata } from 'next';
 import { APP_VERSION_SHORT } from '@/lib/version';
+import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — FlyCheap',
@@ -59,53 +59,40 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
 
 export default function TermsPage() {
   return (
-    <div className="fc-landing -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
-      <header className="fc-l-topbar">
-        <Link href="/" className="fc-l-brand">
-          <div className="fc-l-brand-mark">
-            <LogoMark size={22} />
+    <div className="mk mk-bleed">
+      <PublicTopbar right={<Link href="/" className="ed-btn ed-btn-secondary">← Back to site</Link>} />
+
+      <section className="mk-section">
+        <div className="mk-wrap" style={{ maxWidth: 860 }}>
+          <div className="ed-eyebrow">Legal · Effective {EFFECTIVE}</div>
+          <h1 className="ed-h1">
+            Terms of <em>service</em>.
+          </h1>
+          <p className="ed-sub" style={{ maxWidth: 640 }}>
+            Written to be read. The essentials: we monitor fares and alert you; we don&rsquo;t sell
+            tickets; paid plans are cancel-anytime with no data loss; some Book links earn us a commission
+            at no cost to you.
+          </p>
+
+          <nav className="ed-toc">
+            {SECTIONS.map(s => <a key={s.id} href={`#${s.id}`}>{s.h.replace(/^\d+ · /, '')}</a>)}
+          </nav>
+
+          <div className="ed-legal-list">
+            {SECTIONS.map(s => (
+              <div className="ed-legal-item" key={s.id} id={s.id}>
+                <h3>{s.h}</h3>
+                <p>{s.body}</p>
+              </div>
+            ))}
           </div>
-          <div>
-            <div className="fc-l-brand-name">FlyCheap</div>
-            <div className="fc-l-brand-meta">Fare Intelligence Platform</div>
-          </div>
-        </Link>
-        <div className="fc-l-topbar-right">
-          <Link href="/" className="fc-btn fc-btn-light fc-btn-sm">← Back to site</Link>
-        </div>
-      </header>
-
-      <section className="fc-section" style={{ marginTop: 48, maxWidth: 860, marginLeft: 'auto', marginRight: 'auto' }}>
-        <div className="fc-smallcaps">Legal · Effective {EFFECTIVE}</div>
-        <h1 className="fc-section-title" style={{ marginTop: 10 }}>
-          Terms of <em>service</em>.
-        </h1>
-        <p className="fc-section-sub" style={{ maxWidth: 640 }}>
-          Written to be read. The essentials: we monitor fares and alert you; we don&rsquo;t sell
-          tickets; paid plans are cancel-anytime with no data loss; some Book links earn us a commission
-          at no cost to you.
-        </p>
-
-        <nav className="fc-terms-toc">
-          {SECTIONS.map(s => <a key={s.id} href={`#${s.id}`}>{s.h.replace(/^\d+ · /, '')}</a>)}
-        </nav>
-
-        <div className="fc-trial-terms">
-          {SECTIONS.map(s => (
-            <div className="fc-trial-term" key={s.id} id={s.id}>
-              <h3>{s.h}</h3>
-              <p>{s.body}</p>
-            </div>
-          ))}
         </div>
       </section>
 
-      <footer className="fc-l-footer" style={{ marginTop: 64 }}>
-        <div className="fc-l-footer-legal" style={{ borderTop: 'none', paddingTop: 0 }}>
-          <div>© 2026 FlyCheap · Operated by Myron Mekhael, New York, USA · All rights reserved</div>
-          <div><Link href="/privacy" style={{ color: 'inherit' }}>Privacy</Link> · <Link href="/trial-terms" style={{ color: 'inherit' }}>Trial terms</Link> · {APP_VERSION_SHORT}</div>
-        </div>
-      </footer>
+      <PublicFooter
+        left={<>© 2026 FlyCheap · Operated by Myron Mekhael, New York, USA · All rights reserved</>}
+        right={<><Link href="/privacy">Privacy</Link> · <Link href="/trial-terms">Trial terms</Link> · {APP_VERSION_SHORT}</>}
+      />
     </div>
   );
 }
