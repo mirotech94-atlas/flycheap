@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Fraunces, Manrope, Archivo } from 'next/font/google';
+import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Fraunces, Manrope, Archivo, Public_Sans, Newsreader, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { GlobeProvider } from '@/lib/globeStore';
 import { contrastSafe, hexToRgbTriple } from '@/lib/brandContrast';
@@ -36,6 +36,10 @@ const cabinDisplay = Archivo({
   weight: ['500', '600', '700', '800'],
 });
 const fcSans = Manrope({ subsets: ['latin'], variable: '--font-fc-sans', display: 'swap', weight: ['400','500','600','700'] });
+// Editorial redesign faces (docs/design/handoff/README.md "Type").
+const publicSans = Public_Sans({ subsets: ['latin'], variable: '--font-public-sans', display: 'swap', weight: ['400', '500', '600', '700'] });
+const newsreader = Newsreader({ subsets: ['latin'], variable: '--font-newsreader', display: 'swap', weight: ['300', '400', '500'] });
+const plexMono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-plex-mono', display: 'swap', weight: ['400', '500'] });
 
 export const metadata: Metadata = {
   title: 'FlyCheap — Executive Dashboard',
@@ -148,7 +152,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const t = getAppDict(locale);
 
   return (
-    <html lang={locale} dir={dir} data-fc-theme="coal" data-fc-accent="gold" className={`dark ${inter.variable} ${display.variable} ${mono.variable} ${fcDisplay.variable} ${fcSans.variable} ${cabinDisplay.variable}`}>
+    <html lang={locale} dir={dir} data-fc-theme="coal" data-fc-accent="gold" className={`dark ${inter.variable} ${display.variable} ${mono.variable} ${fcDisplay.variable} ${fcSans.variable} ${cabinDisplay.variable} ${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
         <style dangerouslySetInnerHTML={{ __html: brandStyle }} />
