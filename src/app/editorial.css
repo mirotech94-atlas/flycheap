@@ -851,6 +851,10 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
    decoration, the exact thing the design rule reserves amber against).
    --red is the correct token: error/failed rows read as --red site-wide. */
 .ad-table tbody tr.row-hot td { background: color-mix(in srgb, var(--red) 6%, transparent); }
+/* Fix round 1 (C2): --muted (.ad-note) on the row-hot tint measures 4.33:1 in
+   light — under AA. --ink-soft clears it (10.73:1 light / 10.0:1 dark) and is
+   already the tone the rest of this row family uses for on-tint text. */
+.ad-table tbody tr.row-hot .ad-note { color: var(--ink-soft); }
 .ad-input { width: 190px; max-width: 46vw; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; padding: 7px 10px; color: var(--ink); font-size: 12.5px; font-family: var(--font-mono-ed); outline: none; }
 .ad-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 

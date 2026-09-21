@@ -52,9 +52,9 @@ export default async function ErrorsPage() {
         </Panel>
       )}
 
-      <Panel title="Recent events" sub={errs.length === 0 ? undefined : `Last ${errs.length} server-side event${errs.length === 1 ? '' : 's'}`}>
+      <Panel title="Recent events">
         {errs.length === 0 ? (
-          <div className="ad-note py-6 text-center">No errors logged. Either everything is healthy or nothing is being logged yet.</div>
+          <div className="ad-note py-6 text-center">🎉 No errors logged. Either everything is healthy or nothing is being logged yet.</div>
         ) : (
           <Table head={['When', 'Level', 'Source', 'Message', 'User', 'Context']}>
             {errs.map(e => (

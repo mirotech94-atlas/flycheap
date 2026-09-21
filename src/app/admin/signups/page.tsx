@@ -81,7 +81,7 @@ export default async function SignupsPage() {
         <FunnelRow label="Enterprise"  value={ent}   max={total} color="amber" />
       </Panel>
 
-      <Panel title={`${users.length} newest signups`}>
+      <Panel title={`${NEWEST_SIGNUPS_LIMIT} newest signups`}>
         <Table head={['Email', 'Tier', 'Joined', 'Routes']}>
           {users.map(u => (
             <tr key={u.id}>
@@ -98,8 +98,14 @@ export default async function SignupsPage() {
 }
 
 const TIER_TINT: Record<string, React.CSSProperties> = {
+  // Bare --accent on its 8% tint measures 6.35:1 light / 6.40:1 dark — clears
+  // AA as-is, no mix needed.
   enterprise: { background: 'color-mix(in srgb, var(--accent) 8%, var(--surface))', color: 'var(--accent)' },
-  pro:        { background: 'color-mix(in srgb, var(--green) 8%, var(--surface))', color: 'var(--green)' },
+  // Fix round 1 (C1): bare --green on its 8% tint measured 4.44:1 in light —
+  // under AA at this chip's 10px size. Mixed 75% toward --ink (the same move
+  // .ad-tone-gold/.ad-tone-warn already make for amber) clears it: 6.21:1
+  // light / 7.28:1 dark.
+  pro:        { background: 'color-mix(in srgb, var(--green) 8%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' },
   // --muted on --surface-2 measures 4.18:1 in light — just under AA for this
   // size of text. --ink-soft clears it (10.35:1 light / 9.8:1 dark).
   free:       { background: 'var(--surface-2)', color: 'var(--ink-soft)' },
