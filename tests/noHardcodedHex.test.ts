@@ -99,7 +99,7 @@ function hexCount(file: string): number {
   // Count hex literals that appear as JSX prop values or inside style objects /
   // string literals — i.e. anything a token cannot reach at runtime.
   const src = readFileSync(file, 'utf8');
-  return (src.match(HEX) || []).filter(h => h.length === 4 || h.length === 7 || h.length === 9).length;
+  return (src.match(HEX) || []).filter(h => [4, 5, 7, 9].includes(h.length)).length;
 }
 
 describe('no hardcoded hex in components', () => {
