@@ -148,18 +148,18 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <AdminAwareMain adminHost={isAdminHost} marketingHost={isMarketingHost}>{children}</AdminAwareMain>
 
         <ClientChrome adminHost={isAdminHost} marketingHost={isMarketingHost}>
-        <footer className="max-w-7xl mx-auto px-6 py-8 text-xs text-slate-500 no-print border-t border-slate-200/60 dark:border-slate-800 mt-12">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+        <footer className="ed-footer no-print">
+          <div className="ed-footer-row">
             <div>
-              <span className="font-semibold text-slate-700 dark:text-slate-300">FlyCheap</span>
+              <span className="ed-footer-brand">FlyCheap</span>
               {' '}· Data via Travelpayouts (Aviasales), Duffel &amp; Google Flights · Cached, polled on schedule
             </div>
-            <div className="text-slate-400 flex flex-wrap gap-x-3 gap-y-1">
+            <div className="ed-footer-links">
               <span>Some Book links are affiliate links — we may earn a commission at no extra cost to you.</span>
-              <a href="/about#affiliate-partners" className="underline">Disclosure</a>
-              <a href="/terms" className="underline">Terms</a>
-              <a href="/privacy" className="underline">Privacy</a>
-              <a href="/credits" className="underline">Photo credits</a>
+              <a href="/about#affiliate-partners">Disclosure</a>
+              <a href="/terms">Terms</a>
+              <a href="/privacy">Privacy</a>
+              <a href="/credits">Photo credits</a>
             </div>
           </div>
         </footer>

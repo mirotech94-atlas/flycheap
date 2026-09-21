@@ -511,6 +511,13 @@ html.dark .flight-conversation-panel__stat {
   }
 }
 
+/* --accent flips per OUTER theme (tuned against --surface/--bg), but
+   --panel-bg is dark in BOTH themes — raw --accent measured 2.49:1 against
+   it in light mode (below both the 4.5:1 text and 3:1 non-text floors; see
+   task-2.12-report.md). Every accent role in this HUD is lifted toward
+   --panel-fg instead, the same "mix toward the panel foreground" rule
+   ruling 6 already applies to text on --panel-bg elsewhere (readouts
+   below, .mk-band, .ed-plan.current) — clears AA in both themes. */
 .globe-hud {
   position: fixed;
   right: 16px;
@@ -518,21 +525,14 @@ html.dark .flight-conversation-panel__stat {
   width: 420px;
   height: 600px;
   z-index: 35;
-  border-radius: 14px;
-  background:
-    radial-gradient(120% 80% at 50% 20%, rgba(63,214,200,0.10), transparent 60%),
-    linear-gradient(180deg, rgba(7,12,24,0.92) 0%, rgba(3,7,16,0.96) 100%);
-  border: 1px solid rgba(63,214,200,0.22);
-  box-shadow:
-    0 0 0 1px rgba(111,179,201,0.08) inset,
-    0 30px 80px -20px rgba(0,0,0,0.7),
-    0 0 60px -10px rgba(63,214,200,0.18);
-  color: #cdf6ef;
+  border-radius: 0;
+  background: var(--panel-bg);
+  border: 1px solid color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
+  color: var(--panel-fg);
   font-family: var(--font-mono, ui-monospace, monospace);
   display: grid;
   grid-template-rows: auto 1fr auto auto;
   overflow: hidden;
-  backdrop-filter: blur(6px);
   transition: width 0.35s ease, height 0.35s ease, opacity 0.25s ease;
 }
 @media (max-width: 900px) {
@@ -550,33 +550,34 @@ html.dark .flight-conversation-panel__stat {
 .globe-hud__chrome { position: absolute; inset: 0; pointer-events: none; }
 .globe-hud__bracket {
   position: absolute; width: 18px; height: 18px;
-  border: 1.5px solid rgba(111,179,201,0.85);
+  border: 1.5px solid color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
 }
 .globe-hud__bracket--tl { top: 8px;    left: 8px;  border-right: none; border-bottom: none; }
 .globe-hud__bracket--tr { top: 8px;    right: 8px; border-left: none;  border-bottom: none; }
 .globe-hud__bracket--bl { bottom: 8px; left: 8px;  border-right: none; border-top: none; }
 .globe-hud__bracket--br { bottom: 8px; right: 8px; border-left: none;  border-top: none; }
 
-/* Scanline that sweeps top→bottom */
+/* Scanline that sweeps top→bottom — flat tint, no gradient fade. */
 .globe-hud__scanline {
-  position: absolute; left: 0; right: 0; height: 60px; top: -60px;
-  background: linear-gradient(180deg, transparent 0%, rgba(63,214,200,0.10) 50%, transparent 100%);
+  position: absolute; left: 0; right: 0; height: 2px; top: -2px;
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
   animation: hud-scan 7s linear infinite;
 }
 .globe-hud--speaking .globe-hud__scanline { animation-duration: 2.5s; }
 @keyframes hud-scan {
-  0%   { transform: translateY(0); }
-  100% { transform: translateY(660px); }
+  0%   { transform: translateY(0); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateY(600px); opacity: 0; }
 }
 
-/* Faint grid background */
+/* Faint grid background — 1px rule lines, no gradient. */
 .globe-hud__grid {
   position: absolute; inset: 40px 12px 60px 12px;
   background-image:
-    linear-gradient(rgba(63,214,200,0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(63,214,200,0.06) 1px, transparent 1px);
+    linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
+    linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
   background-size: 28px 28px;
-  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
 }
 
 /* Header */
@@ -585,26 +586,26 @@ html.dark .flight-conversation-panel__stat {
   display: flex; align-items: center; justify-content: space-between;
   padding: 10px 16px 8px 16px;
   font-size: 10px; letter-spacing: 0.18em; text-transform: uppercase;
-  color: var(--nc-teal, #6FB3C9);
-  border-bottom: 1px solid rgba(111,179,201,0.15);
+  color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
+  border-bottom: 1px solid var(--rule);
 }
 .globe-hud__title { display: flex; align-items: center; gap: 8px; font-weight: 700; }
 .globe-hud__dot {
   width: 7px; height: 7px; border-radius: 50%;
-  background: #3fd6c8; box-shadow: 0 0 10px #3fd6c8;
+  background: color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
   animation: hud-blink 1.6s ease-in-out infinite;
 }
 @keyframes hud-blink { 50% { opacity: 0.35; } }
 .globe-hud__meta { display: flex; align-items: center; gap: 10px; }
-.globe-hud__rec { color: #ef4444; font-weight: 700; animation: hud-blink 0.9s steps(2) infinite; }
-.globe-hud__tx  { color: #3fd6c8; font-weight: 700; }
+.globe-hud__rec { color: color-mix(in srgb, var(--red) 65%, var(--panel-fg)); font-weight: 700; animation: hud-blink 0.9s steps(2) infinite; }
+.globe-hud__tx  { color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg)); font-weight: 700; }
 .globe-hud__btn {
-  background: transparent; border: 1px solid rgba(111,179,201,0.4);
-  color: var(--nc-teal, #6FB3C9); width: 22px; height: 22px;
-  border-radius: 4px; font-size: 12px; line-height: 1; cursor: pointer;
+  background: transparent; border: 1px solid color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
+  color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg)); width: 22px; height: 22px;
+  border-radius: 0; font-size: 12px; line-height: 1; cursor: pointer;
   display: grid; place-items: center;
 }
-.globe-hud__btn:hover { background: rgba(111,179,201,0.12); }
+.globe-hud__btn:hover { background: color-mix(in srgb, var(--accent) 12%, transparent); }
 
 /* Globe canvas */
 .globe-hud__canvas {
@@ -619,21 +620,20 @@ html.dark .flight-conversation-panel__stat {
   position: relative;
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
   padding: 8px 16px;
-  border-top: 1px solid rgba(63,214,200,0.18);
-  background: rgba(2,6,16,0.6);
+  border-top: 1px solid var(--rule);
+  background: var(--panel-bg);
 }
 .globe-hud__readout {
   font-size: 9px;
   text-align: left;
 }
 .globe-hud__readout-label {
-  color: rgba(111,179,201,0.85);
+  color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg));
   letter-spacing: 0.16em; text-transform: uppercase; font-weight: 700;
 }
 .globe-hud__readout-value {
-  color: #cdf6ef; font-size: 14px; font-weight: 700;
+  color: var(--panel-fg); font-size: 14px; font-weight: 700;
   font-variant-numeric: tabular-nums;
-  text-shadow: 0 0 8px rgba(63,214,200,0.4);
 }
 .globe-hud__readout-unit {
   font-size: 9px; opacity: 0.6; margin-left: 2px; font-weight: 500;
@@ -645,18 +645,16 @@ html.dark .flight-conversation-panel__stat {
   padding: 6px 16px 8px 16px;
   font-size: 10px;
   letter-spacing: 0.12em;
-  color: rgba(63,214,200,0.85);
-  border-top: 1px solid rgba(63,214,200,0.10);
+  color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
+  border-top: 1px solid var(--rule);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.globe-hud__status-text::before { content: '▸ '; color: var(--nc-teal, #6FB3C9); }
+.globe-hud__status-text::before { content: '▸ '; color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg)); }
 
-/* When the bot is speaking, give the whole panel a subtle pulse */
+/* When the bot is speaking, give the header a slightly stronger rule instead
+   of a glow — no shadow in the editorial system. */
 .globe-hud--speaking {
-  box-shadow:
-    0 0 0 1px rgba(111,179,201,0.18) inset,
-    0 30px 80px -20px rgba(0,0,0,0.7),
-    0 0 80px -8px rgba(63,214,200,0.45);
+  border-color: color-mix(in srgb, var(--accent) 65%, var(--panel-fg));
 }
 
 /* ============================================================
