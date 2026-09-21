@@ -41,3 +41,18 @@ describe('editorial.css obeys the geometry constraints', () => {
     expect(code.match(/\b(rgba?|hsla?)\(/g) || []).toEqual([]);
   });
 });
+
+/**
+ * Task 3.9: the night-cabin theme machinery (the [data-fc-theme] gate,
+ * .fc-shell/.fc-landing scoping, and the --nc-* migration aliases) is
+ * deleted from globals.css, not just unused. A regression here means the
+ * retired machinery crept back in rather than every surface staying on
+ * editorial tokens directly.
+ */
+describe('globals.css has no night-cabin theme machinery', () => {
+  const globalsCss = readFileSync('src/app/globals.css', 'utf8');
+
+  it('has no data-fc-theme, fc-shell, fc-landing, or --nc- occurrence', () => {
+    expect(globalsCss.match(/data-fc-theme|fc-shell|fc-landing|--nc-/g) || []).toEqual([]);
+  });
+});

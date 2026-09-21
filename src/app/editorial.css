@@ -56,34 +56,14 @@ html[data-theme="dark"] {
 }
 
 /* ---- Migration aliases ---------------------------------------------------
-   The three legacy token families are re-pointed at the new layer so the
-   app keeps rendering while each surface is converted. Each alias block is
-   deleted by the task that removes the last consumer of that family
-   (grep-gated). Do NOT add new consumers of any --nc-/--fc- name. */
+   The night-cabin token family was re-pointed here the same way and was
+   deleted in Task 3.9 once its last consumer went. The block below is not
+   a migration shim any more (see its own comment) — do NOT add new
+   consumers of any other retired token name. */
 
 :root {
-  /* night-cabin (--nc-*) → editorial */
-  --nc-dark: var(--bg);
-  --nc-deck: var(--surface);
-  --nc-deck-2: var(--surface-2);
-  --nc-rule: var(--rule);
-  --nc-rule-2: var(--rule-strong);
-  --nc-on-dark: var(--ink);
-  --nc-on-dark-mute: var(--muted);
-  --nc-on-dark-faint: var(--muted-2);
-  --nc-amber: var(--amber);
-  --nc-teal: var(--accent);
-  --nc-mint: var(--green);
-  --nc-signal: var(--red);
-  --nc-stock: var(--surface-2);
-
-}
-
-:root {
-  /* legacy (--fc-*) → editorial. Every --fc-* name globals.css's
-     .fc-shell/.fc-landing block defines, re-pointed here so it resolves to a
-     token regardless of theme gate — the gated re-point blocks this used to
-     rely on covered only some names and left the rest as hex. */
+  /* dashboard-widget token aliases (consumed by the .fc-* rules in
+     globals.css). */
   --fc-ink: var(--ink);
   --fc-navy: var(--accent);
   --fc-navy-2: var(--accent);
@@ -1147,7 +1127,7 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-input-sm:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
 
 /* Savings headline figure (client detail + reports queue). The night-cabin
-   version painted this --nc-amber (2.92:1 on a light surface, the exact
+   version painted this amber (2.92:1 on a light surface, the exact
    failure board.css's fare-digit comment documents) — this is a derived
    report figure, not literally a fare, so per the brief's own money-figure
    rule it takes plain --ink (inherited, no color set here) and only steps
