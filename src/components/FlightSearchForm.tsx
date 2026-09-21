@@ -212,8 +212,8 @@ export function FlightSearchForm({
             className="text-xs px-3 py-1 font-semibold transition"
             style={{
               borderRadius: 0,
-              background: tripType === t ? 'var(--accent)' : 'transparent',
-              color: tripType === t ? 'var(--on-accent)' : 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))',
+              background: tripType === t ? 'var(--panel-fg)' : 'transparent',
+              color: tripType === t ? 'var(--panel-bg)' : 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))',
             }}
           >
             {t === 'round-trip' ? 'Round-trip' : 'One-way'}

@@ -817,16 +817,19 @@ html.dark .flight-conversation-panel__stat {
   text-decoration: none;
 }
 .fc-btn-gold {
-  background: var(--fc-gold);
-  color: var(--fc-navy-3);
+  /* The .ed-btn-primary recipe: --fc-gold paired with --fc-navy-3 (now both
+     alias to --accent post-S1) read as 1.03:1 dark / 2.46:1 light. */
+  background: var(--btn-bg);
+  color: var(--btn-fg);
 }
 .fc-btn-gold:hover { opacity: 0.72; }
 .fc-btn-ghost {
-  background: color-mix(in srgb, var(--panel-fg) 5%, var(--panel-bg));
-  color: var(--fc-cream);
-  border-color: color-mix(in srgb, var(--panel-fg) 16%, var(--panel-bg));
+  /* The .ed-btn-secondary recipe. */
+  background: var(--surface);
+  color: var(--ink-soft);
+  border-color: var(--rule-strong);
 }
-.fc-btn-ghost:hover { background: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)); }
+.fc-btn-ghost:hover { opacity: 0.72; }
 .fc-btn-light {
   background: var(--surface);
   color: var(--fc-ink);
@@ -880,7 +883,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-ticker-tag {
   background: var(--fc-accent);
-  color: var(--fc-navy-3);
+  color: var(--on-accent);
   font-weight: 700;
   font-size: 10px;
   letter-spacing: .16em;
@@ -1098,9 +1101,9 @@ html.dark .flight-conversation-panel__stat {
 .fc-deals-table tbody tr { transition: background .12s; cursor: pointer; }
 .fc-deals-table tbody tr:hover td { background: color-mix(in srgb, var(--amber) 5%, var(--surface)); }
 .fc-deals-table .fc-col-rank { font-family: var(--fc-font-mono); font-size: 11px; color: var(--fc-faint); width: 36px; }
-.fc-deals-table .fc-col-route { font-weight: 600; }
+.fc-deals-table .fc-col-route { font-weight: 600; color: var(--ink); }
 .fc-deals-table .fc-col-route .arrow { color: var(--fc-faint); margin: 0 4px; }
-.fc-deals-table .fc-col-route .dest { color: var(--fc-navy); }
+.fc-deals-table .fc-col-route .dest { color: var(--muted); }
 .fc-deals-table .fc-col-date { color: var(--fc-muted); font-size: 13px; }
 .fc-deals-table .fc-col-date .day {
   display: inline-block;
@@ -1116,6 +1119,7 @@ html.dark .flight-conversation-panel__stat {
   font-size: 22px;
   font-weight: 400;
   letter-spacing: -.01em;
+  color: var(--ink);
 }
 .fc-deals-table .fc-col-price .currency {
   font-size: 11px; font-family: var(--fc-font-mono); color: var(--fc-muted);
@@ -1124,7 +1128,7 @@ html.dark .flight-conversation-panel__stat {
 .fc-deals-table .fc-col-vs { text-align: right; font-size: 12px; font-weight: 600; }
 .fc-deals-table .fc-vs-below { color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
 .fc-deals-table .fc-vs-above { color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
-.fc-row-sweetspot { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.fc-row-sweetspot { background: color-mix(in srgb, var(--accent) 2%, var(--surface)); }
 .fc-row-sweetspot .fc-col-rank::after { content: "✦"; color: var(--fc-gold); margin-left: 2px; }
 
 .fc-badge {
@@ -2926,7 +2930,9 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
    =========================================================================== */
 .fc-verdict {
   --fcv-accent: var(--fc-emerald);
-  --fcv-tint: color-mix(in srgb, var(--green) 8%, var(--surface));
+  /* 2%, not S5's 8% cap: --muted on the tint (.fc-verdict-conf) only clears
+     4.5:1 in light theme at ≤3%; 2% keeps a safety margin (measured 4.5–4.6). */
+  --fcv-tint: color-mix(in srgb, var(--green) 2%, var(--surface));
   border: 1px solid var(--fc-line);
   border-left: 4px solid var(--fcv-accent);
   border-radius: 0;
@@ -2935,8 +2941,8 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
   color: var(--fc-ink);
   font-family: var(--fc-font-sans);
 }
-.fc-verdict-wait { --fcv-accent: var(--fc-gold); --fcv-tint: color-mix(in srgb, var(--amber) 8%, var(--surface)); }
-.fc-verdict-hold { --fcv-accent: var(--fc-navy); --fcv-tint: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.fc-verdict-wait { --fcv-accent: var(--fc-gold); --fcv-tint: color-mix(in srgb, var(--amber) 2%, var(--surface)); }
+.fc-verdict-hold { --fcv-accent: var(--fc-navy); --fcv-tint: color-mix(in srgb, var(--accent) 2%, var(--surface)); }
 .fc-verdict-compact { padding: 12px 14px 10px; }
 .fc-verdict-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .fc-verdict-call { display: flex; align-items: center; gap: 8px; }
