@@ -2,8 +2,12 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { queries } from '@/lib/db';
 import { fmtRelative } from '@/lib/utils';
+import { PageHead, Panel, Status, Table, type Tone } from '../_components/ui';
+import { StackedBars } from '../_components/StackedBars';
 
 export const dynamic = 'force-dynamic';
+
+const LEVEL_TONE: Record<string, Tone> = { error: 'bad', warn: 'warn', info: 'neutral' };
 
 export default async function ErrorsPage() {
   const user = await getCurrentUser();
@@ -21,62 +25,61 @@ export default async function ErrorsPage() {
   }
   const byLevel = errs.reduce<Record<string, number>>((a, e) => { a[e.level] = (a[e.level] ?? 0) + 1; return a; }, {});
 
-  return (
-    <div className="space-y-6 motion-fade-in">
-      <div>
-        <div className="eyebrow mb-1">Admin · debug</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
-          Error log
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Last {errs.length} server-side events. {byLevel.error || 0} errors · {byLevel.warn || 0} warnings · {byLevel.info || 0} info.
-        </p>
-      </div>
+  // Daily volume, bucketed from the events this page already loaded (no new
+  // query). `recentErrors(200)` is a row LIMIT, not a date range, so the
+  // oldest day in the window is almost always a partial day — kept in, it
+  // renders as a fake dip. Drop it rather than imply a complete calendar range.
+  const byDay = new Map<string, number>();
+  for (const e of errs) {
+    const day = e.occurred_at.slice(0, 10);
+    byDay.set(day, (byDay.get(day) ?? 0) + 1);
+  }
+  const days = Array.from(byDay.keys()).sort();
+  const dailySeries = (days.length > 1 ? days.slice(1) : days)
+    .map(day => ({ a: byDay.get(day) ?? 0, label: day.slice(5) }));
 
-      {errs.length === 0 ? (
-        <div className="card text-center py-12 text-slate-500 text-sm">🎉 No errors logged. Either everything is healthy or nothing is being logged yet.</div>
-      ) : (
-        <div className="card overflow-x-auto">
-          <table className="fmt">
-            <thead>
-              <tr>
-                <th>When</th>
-                <th>Level</th>
-                <th>Source</th>
-                <th>Message</th>
-                <th>User</th>
-                <th>Context</th>
-              </tr>
-            </thead>
-            <tbody>
-              {errs.map(e => (
-                <tr key={e.id} className={e.level === 'error' ? 'row-hot' : ''}>
-                  <td className="text-slate-500 text-xs whitespace-nowrap">{fmtRelative(e.occurred_at + 'Z')}</td>
-                  <td>
-                    <span className={`badge ${e.level === 'error' ? 'badge-warn' : e.level === 'warn' ? 'badge-gold' : 'badge-muted'}`}>
-                      {e.level}
-                    </span>
-                  </td>
-                  <td className="text-xs font-mono text-slate-600 dark:text-slate-300">{e.source ?? '—'}</td>
-                  <td className="text-xs">
-                    <div className="font-semibold text-slate-900 dark:text-white">{e.message.slice(0, 120)}</div>
-                    {e.stack && (
-                      <details className="mt-1">
-                        <summary className="text-[10px] text-slate-400 cursor-pointer">stack</summary>
-                        <pre className="text-[10px] text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/50 rounded p-2 mt-1 overflow-x-auto whitespace-pre-wrap">{e.stack.slice(0, 1200)}</pre>
-                      </details>
-                    )}
-                  </td>
-                  <td className="text-xs text-slate-500">{e.user_id == null
-                    ? <span className="text-slate-400 italic">system</span>
-                    : (userLabel.get(e.user_id) ?? `user #${e.user_id}`)}</td>
-                  <td className="text-[10px] font-mono text-slate-500 max-w-xs truncate" title={e.context ?? ''}>{e.context ?? ''}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+  return (
+    <div className="space-y-6">
+      <PageHead
+        eyebrow="Admin · debug"
+        title="Error log"
+        sub={`Last ${errs.length} server-side events. ${byLevel.error || 0} errors · ${byLevel.warn || 0} warnings · ${byLevel.info || 0} info.`}
+      />
+
+      {dailySeries.length > 1 && (
+        <Panel title="Daily volume" sub="All log levels, bucketed from the window below — not a complete calendar range">
+          <StackedBars series={dailySeries} />
+        </Panel>
       )}
+
+      <Panel title="Recent events" sub={errs.length === 0 ? undefined : `Last ${errs.length} server-side event${errs.length === 1 ? '' : 's'}`}>
+        {errs.length === 0 ? (
+          <div className="ad-note py-6 text-center">No errors logged. Either everything is healthy or nothing is being logged yet.</div>
+        ) : (
+          <Table head={['When', 'Level', 'Source', 'Message', 'User', 'Context']}>
+            {errs.map(e => (
+              <tr key={e.id} className={e.level === 'error' ? 'row-hot' : ''}>
+                <td className="ad-note whitespace-nowrap">{fmtRelative(e.occurred_at + 'Z')}</td>
+                <td><Status tone={LEVEL_TONE[e.level] ?? 'neutral'}>{e.level}</Status></td>
+                <td className="font-mono text-[11.5px]" style={{ color: 'var(--ink-soft)' }}>{e.source ?? '—'}</td>
+                <td className="text-[12.5px]">
+                  <div className="font-medium" style={{ color: 'var(--ink)' }}>{e.message.slice(0, 120)}</div>
+                  {e.stack && (
+                    <details className="mt-1">
+                      <summary className="ad-note cursor-pointer">stack</summary>
+                      <pre className="ed-code mt-1 overflow-x-auto whitespace-pre-wrap" style={{ display: 'block' }}>{e.stack.slice(0, 1200)}</pre>
+                    </details>
+                  )}
+                </td>
+                <td className="ad-note">{e.user_id == null
+                  ? <span className="italic">system</span>
+                  : (userLabel.get(e.user_id) ?? `user #${e.user_id}`)}</td>
+                <td className="font-mono text-[10.5px] max-w-xs truncate" style={{ color: 'var(--muted-2)' }} title={e.context ?? ''}>{e.context ?? ''}</td>
+              </tr>
+            ))}
+          </Table>
+        )}
+      </Panel>
     </div>
   );
 }

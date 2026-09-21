@@ -20,7 +20,6 @@ const ALLOWLIST: Record<string, number> = {
   // Counts below are the actual regex-matched baseline (run 2026-09-21), not the
   // grep -c estimate this file started from — see task-0.2-report.md for the RED evidence.
   'src/components/WorldMap.tsx': 16,
-  'src/app/admin/signups/page.tsx': 12,
   // Tenant brand data, not styling: the 8 palette-preset swatches + the 2
   // occurrences of the house-blue default (useState initial + API fallback).
   // Task 2.11b converted every styling hex in this file to tokens; these are
@@ -52,7 +51,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/queue/page.tsx': 2,
   'src/app/admin/tickets/page.tsx': 2,
   'src/components/AdminFarePilotWidget.tsx': 2,
-  'src/app/admin/page.tsx': 1,
   'src/app/admin/users/RowMenu.tsx': 1,
   'src/components/BookButton.tsx': 1,
   'src/components/LanguageMenu.tsx': 1,
