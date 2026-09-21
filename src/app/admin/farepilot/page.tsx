@@ -4,6 +4,7 @@ import { headers } from 'next/headers';
 import { queries } from '@/lib/db';
 import { AdminFarePilot } from '@/components/AdminFarePilot';
 import { fmtRelative } from '@/lib/utils';
+import { Panel } from '../_components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,37 +22,35 @@ export default async function FarePilotAdminPage() {
   return (
     <div className="space-y-6 motion-fade-in">
       <div>
-        <div className="eyebrow mb-1">Admin · operator console</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
+        <div className="ad-eyebrow accent mb-1">Admin · operator console</div>
+        <h1 className="ed-h1">
           FarePilot Admin
         </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Owner-only. Full read / write / execute over the app and any client. Runs as <code className="text-xs">egyflights</code> on production. Every action is logged below.
+        <p className="ed-sub">
+          Owner-only. Full read / write / execute over the app and any client. Runs as <code className="ed-code">egyflights</code> on production. Every action is logged below.
         </p>
-
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_320px]">
         <AdminFarePilot totpEnabled={totpEnabled} />
 
-        <div className="card">
-          <div className="eyebrow mb-2">Recent actions</div>
+        <Panel title="Recent actions">
           {audit.length === 0 ? (
-            <p className="text-xs text-slate-400">No actions yet.</p>
+            <p className="text-xs ad-note">No actions yet.</p>
           ) : (
             <ul className="space-y-2 text-xs">
               {audit.map(a => (
-                <li key={a.id} className="border-b border-slate-100 pb-2 dark:border-slate-800">
+                <li key={a.id} className="ad-rule-top pb-2 pt-2">
                   <div className="flex items-center justify-between">
-                    <span className={`font-mono ${a.ok ? 'text-slate-700 dark:text-slate-200' : 'text-red-500'}`}>{a.tool}</span>
-                    <span className="text-slate-400">{fmtRelative(a.created_at + 'Z')}</span>
+                    <span className={`font-mono ${a.ok ? 'ad-tone-neutral' : 'ad-tone-bad'}`}>{a.tool}</span>
+                    <span className="ad-note">{fmtRelative(a.created_at + 'Z')}</span>
                   </div>
-                  {a.input && <div className="mt-0.5 truncate font-mono text-[10px] text-slate-400" title={a.input}>{a.input}</div>}
+                  {a.input && <div className="mt-0.5 truncate font-mono text-[10px] ad-note" title={a.input}>{a.input}</div>}
                 </li>
               ))}
             </ul>
           )}
-        </div>
+        </Panel>
       </div>
     </div>
   );

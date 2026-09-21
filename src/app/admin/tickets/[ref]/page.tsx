@@ -28,7 +28,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
   return (
     <div className="space-y-6">
       <div>
-        <Link href="/admin/tickets" className="text-[12px] text-white/45 hover:text-white/80 transition">← All tickets</Link>
+        <Link href="/admin/tickets" className="text-[12px] ad-note transition">← All tickets</Link>
       </div>
       <PageHead
         eyebrow={`Ticket ${ticket.ref}`}
@@ -64,19 +64,15 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                 return (
                   <div
                     key={m.id}
-                    className={`rounded-lg border p-3.5 ${
-                      fromUs
-                        ? 'border-[#E8A33D]/25 bg-[#E8A33D]/[0.06] ml-6'
-                        : 'border-white/[0.08] bg-white/[0.02] mr-6'
-                    }`}
+                    className={`ad-thread-msg ${fromUs ? 'ours ml-6' : 'theirs mr-6'}`}
                   >
                     <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <span className={`text-[11px] font-mono uppercase tracking-wider ${fromUs ? 'text-[#6FB3C9]' : 'text-white/50'}`}>
+                      <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: fromUs ? 'var(--accent)' : 'var(--muted)' }}>
                         {fromUs ? 'FlyCheap' : ticket.name}
                       </span>
-                      <span className="text-[11px] text-white/35">{fmtWhen(m.created_at)}</span>
+                      <span className="text-[11px]" style={{ color: 'var(--muted-2)' }}>{fmtWhen(m.created_at)}</span>
                     </div>
-                    <div className="text-[13.5px] text-white/85 leading-relaxed whitespace-pre-wrap">{m.body}</div>
+                    <div className="text-[13.5px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{m.body}</div>
                   </div>
                 );
               })}
@@ -92,10 +88,10 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                 required
                 rows={5}
                 placeholder={`Write your reply to ${ticket.name.split(' ')[0]}…`}
-                className="w-full rounded-lg bg-[#131C2E] border border-white/10 px-3.5 py-3 text-[14px] text-white placeholder:text-white/30 focus:outline-none focus:border-[#E8A33D]/50 resize-y"
+                className="ed-input resize-y"
               />
               <div className="flex items-center justify-between gap-3">
-                <span className="text-[11.5px] text-white/40">Goes to {ticket.email}</span>
+                <span className="text-[11.5px] ad-note">Goes to {ticket.email}</span>
                 <button type="submit" className="ad-btn ad-btn-gold">Send reply</button>
               </div>
             </form>
@@ -115,21 +111,17 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                   <button
                     type="submit"
                     disabled={isCurrent}
-                    className={`w-full flex items-center justify-between rounded-lg border px-3 py-2 text-[13px] transition ${
-                      isCurrent
-                        ? 'border-[#E8A33D]/40 bg-[#E8A33D]/[0.08] text-white cursor-default'
-                        : 'border-white/[0.08] text-white/70 hover:text-white hover:border-white/20'
-                    }`}
+                    className={`ad-statuspick${isCurrent ? ' active' : ''}`}
                   >
                     <Status tone={sm.tone}>{sm.label}</Status>
-                    {isCurrent && <span className="text-[10px] font-mono uppercase tracking-wider text-white/40">current</span>}
+                    {isCurrent && <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--muted-2)' }}>current</span>}
                   </button>
                 </form>
               );
             })}
           </div>
-          <p className="text-[11.5px] text-white/40 mt-3 leading-snug">
-            Set <span className="text-white/70">Waiting</span> when the ball is in the customer&apos;s court — their next reply reopens it automatically.
+          <p className="text-[11.5px] ad-note mt-3 leading-snug">
+            Set <span className="ad-tone-neutral">Waiting</span> when the ball is in the customer&apos;s court — their next reply reopens it automatically.
           </p>
         </Panel>
       </div>
