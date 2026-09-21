@@ -1,4 +1,4 @@
-import { Logo, LogoMark } from '@/components/Logo';
+import { Logo } from '@/components/Logo';
 import { Suspense } from 'react';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import Link from 'next/link';
@@ -110,114 +110,106 @@ export default async function LoginPage(
   if (adminPortal) {
     // Founder-only admin portal: one identity, no sign-ups, no marketing panel.
     return (
-      <div className="fc-shell fc-admin-login -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="coal" data-fc-accent="gold">
-        <div className="fc-admin-login-card">
-          <div className="fc-admin-login-brand">
-            <Logo size={34} />
-            <div><div className="n">FlyCheap</div><div className="m">Admin portal · founder access</div></div>
-          </div>
-          <h2>Superadmin <em>sign in</em></h2>
-          <p className="sub">This portal is for the founder account only. Codes are only issued to the owner identity; every other email is refused.</p>
-          <div className="fc-login-card">
-            <Suspense fallback={null}>
-              <LoginForm t={t.form} adminOnly />
-            </Suspense>
-          </div>
-          <p className="legal">Every admin action is written to the audit log · <Link href="https://flycheap.live/">← back to flycheap</Link></p>
-        </div>
+      <div className="ed-panel ed-card">
+        <Link href="/" className="mk-brand" style={{ marginBottom: 22 }}>
+          <Logo size={34} />
+          <span style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="mk-brand-name">FlyCheap</span>
+            <span className="mk-brand-meta">Admin portal · founder access</span>
+          </span>
+        </Link>
+        <h2 className="ed-h2">Superadmin <em>sign in</em></h2>
+        <p className="ed-sub">This portal is for the founder account only. Codes are only issued to the owner identity; every other email is refused.</p>
+        <Suspense fallback={null}>
+          <LoginForm t={t.form} adminOnly />
+        </Suspense>
+        <p className="ed-panel-note" style={{ marginTop: 18 }}>Every admin action is written to the audit log · <Link href="https://flycheap.live/">← back to flycheap</Link></p>
       </div>
     );
   }
 
   return (
-    <div className="fc-shell fc-login -mx-6 -my-8 -mb-24 md:-mb-8" data-fc-theme="cabin" data-fc-accent="gold">
+    <div className="ed-login-grid">
       {/* ── Left: live intelligence panel (real data) ── */}
-      <div className="fc-login-intel">
-        <div className="fc-login-intel-inner">
-          <Link href="/" className="fc-l-brand" style={{ color: 'var(--fc-cream)' }}>
-            <div className="fc-l-brand-mark" style={{ background: 'rgba(255,255,255,.08)' }}>
-              <LogoMark size={22} />
-            </div>
-            <div>
-              <div className="fc-l-brand-name" style={{ color: 'var(--fc-ink)' }}>FlyCheap</div>
-              <div className="fc-l-brand-meta" style={{ color: 'rgba(255,255,255,.5)' }}>{t.brandMeta}</div>
-            </div>
-          </Link>
+      <div className="ed-panel">
+        <Link href="/" className="mk-brand">
+          <Logo size={26} />
+          <span style={{ display: 'flex', flexDirection: 'column' }}>
+            <span className="mk-brand-name">FlyCheap</span>
+            <span className="mk-brand-meta">{t.brandMeta}</span>
+          </span>
+        </Link>
 
-          <div className="fc-login-hero">
-            <div className="fc-login-pill"><span className="dot" />{t.pill}</div>
-            <h1><Em r={t.h1[0]} /><br /><Em r={t.h1[1]} /></h1>
-            <p>{t.lede}</p>
+        <div className="ed-eyebrow" style={{ marginTop: 26, display: 'flex', alignItems: 'center', gap: 8 }}>
+          <span className="ed-dot" />{t.pill}
+        </div>
+        <h1 className="ed-h1" style={{ fontSize: 32 }}><Em r={t.h1[0]} /><br /><Em r={t.h1[1]} /></h1>
+        <p className="ed-sub">{t.lede}</p>
+
+        <div className="ed-stats" style={{ gridTemplateColumns: 'repeat(2, 1fr)', marginBottom: 0 }}>
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.statSnapshots}</div>
+            <div className="ed-stat-value" style={{ fontSize: 26 }}>{fmtK(stats.snapshots)}</div>
           </div>
-
-          <div className="fc-login-stats">
-            <div>
-              <div className="v">{fmtK(stats.snapshots)}</div>
-              <div className="k">{t.statSnapshots}</div>
-            </div>
-            <div>
-              <div className="v">{stats.routes}</div>
-              <div className="k">{t.statRoutes}</div>
-            </div>
-            <div>
-              <div className="v">{stats.alerts}</div>
-              <div className="k">{t.statAlerts}</div>
-            </div>
-            {stats.cheapest && (
-              <div>
-                <div className="v gold">${stats.cheapest.price}</div>
-                <div className="k">{t.statCheapest} · {stats.cheapest.route}</div>
-              </div>
-            )}
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.statRoutes}</div>
+            <div className="ed-stat-value" style={{ fontSize: 26 }}>{stats.routes}</div>
           </div>
-
-          {stats.topDeals.length > 0 && (
-            <div className="fc-login-deals">
-              <div className="fc-login-deals-head">
-                <span>{t.dealsHead}</span>
-                <span className="tag">{dict.common.live}</span>
-              </div>
-              <table>
-                <thead>
-                  <tr><th>{t.thRoute}</th><th>{t.thDates}</th><th>{t.thPerAdult}</th></tr>
-                </thead>
-                <tbody>
-                  {stats.topDeals.map(d => (
-                    <tr key={d.route}>
-                      <td className="route">{d.route}</td>
-                      <td className="dates">{d.out} – {d.ret}</td>
-                      <td className="price">${d.per}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <div className="fc-login-deals-foot">
-                {t.dealsFoot}
-              </div>
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.statAlerts}</div>
+            <div className="ed-stat-value" style={{ fontSize: 26 }}>{stats.alerts}</div>
+          </div>
+          {stats.cheapest && (
+            <div className="ed-stat accent">
+              <div className="ed-stat-label">{t.statCheapest} · {stats.cheapest.route}</div>
+              <div className="ed-stat-value ed-fare-text" style={{ fontSize: 26 }}>${stats.cheapest.price}</div>
             </div>
           )}
         </div>
-        <div className="fc-login-intel-foot">FlyCheap · {APP_VERSION_SHORT} · NYC</div>
+
+        {stats.topDeals.length > 0 && (
+          <div style={{ marginTop: 26 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span className="ed-eyebrow">{t.dealsHead}</span>
+              <span className="ed-mono" style={{ color: 'var(--accent)', display: 'flex', alignItems: 'center', gap: 5 }}>
+                <span className="ed-dot" />{dict.common.live}
+              </span>
+            </div>
+            <table className="ed-table" style={{ marginTop: 10 }}>
+              <thead>
+                <tr><th>{t.thRoute}</th><th>{t.thDates}</th><th className="num">{t.thPerAdult}</th></tr>
+              </thead>
+              <tbody>
+                {stats.topDeals.map(d => (
+                  <tr key={d.route}>
+                    <td>{d.route}</td>
+                    <td>{d.out} – {d.ret}</td>
+                    <td className="num ed-fare-text">${d.per}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <p className="ed-panel-note" style={{ marginTop: 8 }}>{t.dealsFoot}</p>
+          </div>
+        )}
+
+        <p className="ed-panel-note" style={{ marginTop: 22 }}>FlyCheap · {APP_VERSION_SHORT} · NYC</p>
       </div>
 
       {/* ── Right: auth panel ── */}
-      <div className="fc-login-auth">
-        <div className="fc-login-auth-inner">
-          <div className="fc-smallcaps" style={{ marginBottom: 6 }}>{t.welcomeBack}</div>
-          <h2><Em r={t.h2} /></h2>
-          <p className="sub">
-            {t.sub}
-          </p>
-          <div className="fc-login-card">
-            <Suspense fallback={null}>
-              <LoginForm t={t.form} />
-            </Suspense>
-          </div>
-          <p className="legal">
-            {t.legalA}<Link href="/privacy">{t.privacy}</Link>
-            {t.legalB}<Link href="/trial-terms">{t.trialTerms}</Link>{t.legalC}
-          </p>
-        </div>
+      <div className="ed-panel">
+        <div className="ed-eyebrow">{t.welcomeBack}</div>
+        <h2 className="ed-h2" style={{ marginTop: 6 }}><Em r={t.h2} /></h2>
+        <p className="ed-sub">
+          {t.sub}
+        </p>
+        <Suspense fallback={null}>
+          <LoginForm t={t.form} />
+        </Suspense>
+        <p className="ed-panel-note" style={{ marginTop: 18 }}>
+          {t.legalA}<Link href="/privacy">{t.privacy}</Link>
+          {t.legalB}<Link href="/trial-terms">{t.trialTerms}</Link>{t.legalC}
+        </p>
       </div>
     </div>
   );

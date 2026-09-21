@@ -965,3 +965,39 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-statuspick:hover { opacity: 0.8; }
 .ad-statuspick.active { background: var(--surface-2); border-color: var(--accent); color: var(--ink); cursor: default; }
 .ad-statuspick:disabled { cursor: default; }
+
+/* ---- Task 3.7a (login, public chrome, trip) — small set of generically
+   reusable primitives the existing library didn't cover. Nothing here is
+   route-specific; each composes with .ed-panel/.ed-btn/.mk-* rather than
+   duplicating them. */
+
+/* Centers a max-width column inside .ed-panel (auth card, trip card,
+   admin-login card) — the library had no centered-column primitive. */
+.ed-card { max-width: 34rem; margin: clamp(2.5rem, 10vh, 6rem) auto 0; }
+
+/* Field hint / helper text under an .ed-input, and a checkbox row — the
+   two .nc-confirm-card pieces (nc-field-hint, nc-check) that had no
+   .ed-* analog. */
+.ed-field-block { display: block; margin: 16px 0 8px; }
+.ed-field-hint { display: block; font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 4px; }
+.ed-checkbox { display: flex; gap: 8px; align-items: flex-start; margin-top: 16px; font-size: 13px; color: var(--ink); }
+.ed-checkbox input { margin-top: 3px; accent-color: var(--accent); }
+.ed-checkbox .ed-field-hint { margin-top: 2px; }
+
+/* Literal --amber as TEXT on a light surface measures 2.8-2.9:1 (checked
+   against the actual token hex) — well under the 4.5:1 AA floor; every
+   existing amber-as-text use in this file sits on --panel-bg (dark ground),
+   never on --surface/--bg. Same fix as .ed-chip.status-waiting's amber
+   formula: mix 65% toward --ink so light clears AA (5.2-5.4:1) and dark
+   stays comfortably legible (9-9.7:1) without losing the amber hue. Used
+   for the one amber fare figure that renders on a light ground (login's
+   live stats/deals rail, outside any .ed-photo-hero/.ad-btn-gold panel). */
+.ed-fare-text { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+
+/* Two-column login layout (intel panel + auth panel). Same hairline-grid
+   technique as .ed-stats/.mk-pricing: 1px background gap reads as a rule
+   between the two panels in both themes without a literal border color. */
+.ed-login-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-login-grid > .ed-panel { border: 0; padding: 32px 36px; }
+@media (max-width: 880px) { .ed-login-grid { grid-template-columns: 1fr; } }
+
