@@ -185,31 +185,25 @@ export function HotelsBoard({
       {/* View toggle + sort */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
-          <span style={{ color: 'var(--text-muted, #64748b)' }}>Sort by:</span>
+          <span style={{ color: 'var(--muted)' }}>Sort by:</span>
           <select
             value={sort}
             onChange={e => setSort(e.target.value as SortKey)}
-            className="rounded border px-2 py-1 text-xs"
-            style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, #cbd5e1)' }}
+            className="ed-input"
+            style={{ width: 'auto' }}
           >
             {(Object.keys(SORT_LABELS) as SortKey[]).map(k => (
               <option key={k} value={k}>{SORT_LABELS[k]}</option>
             ))}
           </select>
         </div>
-        <div className="inline-flex rounded-lg border overflow-hidden text-xs" style={{ borderColor: 'var(--border, #cbd5e1)' }}>
+        <div className="ed-seg">
           {(['list', 'split', 'map'] as ViewMode[]).map(v => (
             <button
               key={v}
               type="button"
               onClick={() => setView(v)}
-              className="px-3 py-1 transition-colors"
-              style={{
-                // The accent is a LIGHT hue, so a white label on it was 2.77:1.
-                // Dark ink on the fill is the legible pairing.
-                background: view === v ? 'var(--nc-teal, #6FB3C9)' : 'transparent',
-                color: view === v ? 'var(--nc-dark, #0B1220)' : 'var(--text)',
-              }}
+              className={`ed-seg-btn${view === v ? ' active' : ''}`}
             >
               {v === 'list' ? 'List view' : v === 'split' ? 'Split view' : 'Map view'}
             </button>

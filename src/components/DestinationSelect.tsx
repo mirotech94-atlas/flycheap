@@ -75,7 +75,7 @@ export const DEST_LABEL_BY_CODE: Record<string, string> = (() => {
   return r;
 })();
 
-const DEFAULT_CLASSNAME = 'w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700';
+const DEFAULT_CLASSNAME = 'ed-input';
 
 /**
  * Grouped destination `<select>` shared by the Hotels and Airbnbs search

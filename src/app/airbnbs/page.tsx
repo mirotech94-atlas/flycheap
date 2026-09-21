@@ -92,7 +92,7 @@ export default async function AirbnbsPage({ searchParams }: PageProps) {
       <FcPageHead
         title="Airbnbs"
         lede="Whole homes, apartments and rooms for the dates you are already flying. Pick a destination, see the neighbourhoods people book, and we open Airbnb with your dates and party already filled in."
-        action={<Link href="/hotels" className="nc-btn-quiet inline-flex shrink-0">Hotels</Link>}
+        action={<Link href="/hotels" className="ed-btn ed-btn-secondary inline-flex shrink-0">Hotels</Link>}
       />
 
       {/* Animated worldwide showcase — Search Airbnb on every slide */}
@@ -103,54 +103,56 @@ export default async function AirbnbsPage({ searchParams }: PageProps) {
       </DealSlideshow>
 
       <>
-        <form action="/airbnbs" method="get" className="card p-6 space-y-4">
+        <form action="/airbnbs" method="get" className="ed-panel space-y-4">
           <div className="grid gap-4 md:grid-cols-4">
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs uppercase tracking-wide text-slate-500">Destination</span>
+              <span className="ed-label">Destination</span>
               <DestinationSelect
                 name="destination"
                 value={destination}
                 trackedDestinations={trackedDestinations}
-                className="w-full"
+                className="ed-input"
               />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs uppercase tracking-wide text-slate-500">Check-in</span>
-              <input type="date" name="checkIn" defaultValue={checkIn} className="w-full" />
+              <span className="ed-label">Check-in</span>
+              <input type="date" name="checkIn" defaultValue={checkIn} className="ed-input" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs uppercase tracking-wide text-slate-500">Check-out</span>
-              <input type="date" name="checkOut" defaultValue={checkOut} className="w-full" />
+              <span className="ed-label">Check-out</span>
+              <input type="date" name="checkOut" defaultValue={checkOut} className="ed-input" />
             </label>
             <label className="flex flex-col gap-1 text-sm">
-              <span className="text-xs uppercase tracking-wide text-slate-500">Adults</span>
-              <input type="number" name="adults" min={1} max={16} defaultValue={adults} className="w-full" />
+              <span className="ed-label">Adults</span>
+              <input type="number" name="adults" min={1} max={16} defaultValue={adults} className="ed-input" />
             </label>
           </div>
-          <button type="submit" className="btn btn-primary">Update search</button>
+          <button type="submit" className="ed-btn ed-btn-primary">Update search</button>
         </form>
 
         {canSearch ? (
-          <div className="card p-6 flex flex-wrap gap-3">
-            <a href={airbnbHref!} target="_blank" rel="noopener sponsored" className="btn btn-gold">
+          <div className="ed-panel flex flex-wrap gap-3">
+            <a href={airbnbHref!} target="_blank" rel="noopener sponsored" className="ed-btn ed-btn-primary">
               Search Airbnb →
             </a>
-            <a href={vrboHref!} target="_blank" rel="noopener sponsored" className="btn btn-gold">
+            <a href={vrboHref!} target="_blank" rel="noopener sponsored" className="ed-btn ed-btn-primary">
               Vrbo →
             </a>
           </div>
         ) : (
-          <div className="card p-6 text-sm text-slate-500">
-            Enter a destination and valid check-in / check-out dates (check-out after check-in) to open an Airbnb search.
+          <div className="ed-panel">
+            <p className="ed-panel-note" style={{ margin: 0 }}>
+              Enter a destination and valid check-in / check-out dates (check-out after check-in) to open an Airbnb search.
+            </p>
           </div>
         )}
       </>
 
       {trackedDestinations.length > 1 && (
-        <div className="card">
-          <div className="eyebrow">Across your tracked routes</div>
-          <h2 className="!mb-2 mt-1">Airbnbs in every destination you watch</h2>
-          <p className="text-xs text-slate-500 mb-4">
+        <div className="ed-panel">
+          <div className="ed-eyebrow">Across your tracked routes</div>
+          <h2 className="ed-h2" style={{ marginTop: 4 }}>Airbnbs in every destination you watch</h2>
+          <p className="ed-panel-note" style={{ marginBottom: 16 }}>
             One upsell card per distinct destination across your tracked searches. Dates default to each search&rsquo;s outbound/return.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
@@ -173,7 +175,7 @@ export default async function AirbnbsPage({ searchParams }: PageProps) {
         </div>
       )}
 
-      <p className="text-xs text-slate-500">
+      <p className="ed-panel-note">
         Airbnb and Vrbo searches are plain links prefilled with your dates — no commission. Prices and availability are shown on their sites.
       </p>
     </div>

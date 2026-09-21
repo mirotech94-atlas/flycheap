@@ -48,7 +48,7 @@ export default async function HotelsPage({ searchParams }: PageProps) {
       <FcPageHead
         title="Somewhere to stay"
         lede="Hotels for the dates you are already flying. Pick a destination, see what a night actually costs there, and we hand you to the provider with the better price. Looking for a whole home? Use Airbnbs."
-        action={<Link href="/airbnbs" className="nc-btn-quiet inline-flex shrink-0">Airbnbs</Link>}
+        action={<Link href="/airbnbs" className="ed-btn ed-btn-secondary inline-flex shrink-0">Airbnbs</Link>}
       />
 
       {/* Animated worldwide showcase — Book now on every slide */}
@@ -58,7 +58,7 @@ export default async function HotelsPage({ searchParams }: PageProps) {
         ))}
       </DealSlideshow>
 
-      <Suspense fallback={<div className="text-xs text-slate-500">Loading hotel search…</div>}>
+      <Suspense fallback={<div className="ed-tile-meta">Loading hotel search…</div>}>
         <HotelsBoard
           destinationDefault={destination}
           checkInDefault={checkIn}
@@ -69,10 +69,10 @@ export default async function HotelsPage({ searchParams }: PageProps) {
       </Suspense>
 
       {trackedDestinations.length > 1 && (
-        <div className="card">
-          <div className="eyebrow">Across your tracked routes</div>
-          <h2 className="!mb-2 mt-1">Hotels in every destination you watch</h2>
-          <p className="text-xs text-slate-500 mb-4">
+        <div className="ed-panel">
+          <div className="ed-eyebrow">Across your tracked routes</div>
+          <h2 className="ed-h2" style={{ marginTop: 4 }}>Hotels in every destination you watch</h2>
+          <p className="ed-panel-note" style={{ marginBottom: 16 }}>
             One upsell card per distinct destination across your tracked searches. Dates default to each search&rsquo;s outbound/return.
           </p>
           <div className="grid md:grid-cols-2 gap-4">
