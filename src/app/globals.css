@@ -3873,30 +3873,9 @@ html[data-fc-theme="coal"] .bg-brand-gradient {
   box-shadow: inset 0 1px 0 0 rgba(255,255,255,.20);
 }
 
-/* ===================================================================
-   Admin portal — night-cabin, and the same glass as the rest.
-
-   The console had no design system of its own: Tailwind utilities with
-   the old Bloomberg palette written inline, which is why it never got
-   the cabin conversion — it declares no data-fc-theme for a theme block
-   to hook. The colours are now cabin literals; these rules give its two
-   chrome surfaces the glass treatment the client portal and the
-   marketing site already use, so the three read as one product.
-   =================================================================== */
-.ad-glass-bar {
-  background: linear-gradient(180deg, rgba(255,255,255,.055), rgba(255,255,255,.02));
-  -webkit-backdrop-filter: blur(18px) saturate(170%);
-  backdrop-filter: blur(18px) saturate(170%);
-  border-bottom: 1px solid var(--nc-rule, rgba(255,255,255,.10));
-  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.14);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .ad-glass-bar { background: var(--nc-deck, #131C2E); }
-}
-
-/* Admin's card/kpi surfaces are declared !important inside the inline <style>
-   in admin/layout.tsx, so the glass for them lives there too rather than losing
-   a specificity fight from here. Only the sticky bar is styled from this file. */
+/* Admin portal chrome — RETIRED in Task 3.1 (editorial redesign). The
+   dark top bar + rail no longer use glass (blur/gradient/shadow); they're
+   .ad-top / .ad-rail on tokens now, defined in editorial.css. */
 
 /* ============================================================
    Org portal — the work queue and client detail.

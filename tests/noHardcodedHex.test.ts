@@ -19,16 +19,13 @@ const ALLOWLIST: Record<string, number> = {
   // ---- migration ledger: shrink to zero over Phases 1–3 ----
   // Counts below are the actual regex-matched baseline (run 2026-09-21), not the
   // grep -c estimate this file started from — see task-0.2-report.md for the RED evidence.
-  'src/app/admin/layout.tsx': 24,
   'src/components/WorldMap.tsx': 16,
-  'src/app/admin/_components/AdminSidebar.tsx': 13,
   'src/app/admin/signups/page.tsx': 12,
   // Tenant brand data, not styling: the 8 palette-preset swatches + the 2
   // occurrences of the house-blue default (useState initial + API fallback).
   // Task 2.11b converted every styling hex in this file to tokens; these are
   // what a tenant sees as THEIR colour, which is exactly what stays literal.
   'src/components/WhiteLabelSettings.tsx': 10,
-  'src/app/admin/_components/ui.tsx': 11,
   'src/app/admin/users/page.tsx': 10,
   'src/components/InteractiveGlobe.tsx': 10,
   'src/components/Logo.tsx': 10,
