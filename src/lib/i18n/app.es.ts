@@ -164,6 +164,7 @@ export const es: AppDict = {
     lede: 'FlyCheap vigila más de 1.000 aerolíneas las 24 horas y te avisa en cuanto una tarifa de tu ruta baja del umbral. Se acabó refrescar Google Flights a las 2 de la mañana.',
     bookCheapest: 'Reservar la más barata → {price}', addFirst: 'Añade tu primera ruta →', addWatch: 'Añadir una vigilancia',
     cheapestNow: 'Más barato ahora', median: 'Mediana de la caché', destinations: 'Destinos activos', cities: 'ciudades',
+    rankedTitle: 'Dónde se sitúa cada ruta en su rango de 30 días', bookArrow: 'Reservar →',
     globeTl: 'RED EN VIVO · {n} RUTAS', globeBr: '{a} ARCOS ACTIVOS · {t} VIGILADAS',
     ticker: 'TARIFAS EN VIVO', polling: 'Sondeando…',
     quickEyebrow: 'Búsqueda rápida', quickSub: 'Busca vuelos o explora ofertas desde cualquier ciudad', fullExplore: 'Explorar todo →',

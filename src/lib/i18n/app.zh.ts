@@ -164,6 +164,7 @@ export const zh: AppDict = {
     lede: 'FlyCheap 全天候监控 1,000 多家航空公司——你航线上的票价一跌破阈值就立即告诉你。再也不用凌晨 2 点刷新 Google Flights。',
     bookCheapest: '预订最低价 → {price}', addFirst: '添加你的第一条航线 →', addWatch: '添加新监控',
     cheapestNow: '当前最低价', median: '缓存中位数', destinations: '在线目的地', cities: '座城市',
+    rankedTitle: '每条航线在其 30 天区间中的位置', bookArrow: '预订 →',
     globeTl: '实时网络 · {n} 条航线', globeBr: '{a} 条活跃弧线 · {t} 条监控中',
     ticker: '实时票价', polling: '轮询中…',
     quickEyebrow: '快速搜索', quickSub: '从任意城市搜索航班或浏览优惠', fullExplore: '完整探索 →',

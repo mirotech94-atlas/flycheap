@@ -700,7 +700,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* === Feature block: ranked bars — where each tracked route sits in
           its own 30-day range. Reuses routeHistories/routeVerdicts/routeCurrent
           computed above from allRows; no second verdict computation. === */}
-      <h2 className="ed-h2">Where each route sits in its 30-day range</h2>
+      <h2 className="ed-h2">{t.rankedTitle}</h2>
       <div className="ed-ranked">
         {trackedRoutes.map(r => {
           const k = routeKey(r.origin, r.destination);
@@ -726,9 +726,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
               <div className="ed-bar"><div className={`ed-bar-fill ${barClass}`} style={{ width: `${pct}%` }} /></div>
               <div className="ed-ranked-value">{cur ? fmtUSD(cur.price) : '—'}</div>
               {cur ? (
-                <a className="ed-btn ed-btn-row" href={bookHref} target="_blank" rel="noopener noreferrer">Book →</a>
+                <a className="ed-btn ed-btn-row" href={bookHref} target="_blank" rel="noopener noreferrer">{t.bookArrow}</a>
               ) : (
-                <Link className="ed-btn ed-btn-row" href={bookHref}>Book →</Link>
+                <Link className="ed-btn ed-btn-row" href={bookHref}>{t.bookArrow}</Link>
               )}
             </div>
           );

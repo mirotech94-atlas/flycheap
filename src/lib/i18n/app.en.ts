@@ -174,6 +174,7 @@ export const en = {
     lede: 'FlyCheap watches 1,000+ airlines around the clock — and tells you the moment a fare on your route drops below threshold. No more refreshing Google Flights at 2 AM.',
     bookCheapest: 'Book cheapest → {price}', addFirst: 'Add your first route →', addWatch: 'Add a new watch',
     cheapestNow: 'Cheapest right now', median: 'Median across cache', destinations: 'Destinations live', cities: 'cities',
+    rankedTitle: 'Where each route sits in its 30-day range', bookArrow: 'Book →',
     globeTl: 'LIVE NETWORK · {n} ROUTES', globeBr: '{a} ACTIVE ARCS · {t} TRACKED',
     ticker: 'LIVE FARES', polling: 'Polling…',
     quickEyebrow: 'Quick search', quickSub: 'Search flights or browse deals from any city', fullExplore: 'Full explore →',

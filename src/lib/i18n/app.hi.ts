@@ -164,6 +164,7 @@ export const hi: AppDict = {
     lede: 'FlyCheap 1,000+ एयरलाइनों पर चौबीसों घंटे नज़र रखता है — और आपके रूट पर किराया सीमा से नीचे जाते ही बताता है। अब रात 2 बजे Google Flights रिफ़्रेश करने की ज़रूरत नहीं।',
     bookCheapest: 'सबसे सस्ता बुक करें → {price}', addFirst: 'अपना पहला रूट जोड़ें →', addWatch: 'नई वॉच जोड़ें',
     cheapestNow: 'अभी सबसे सस्ता', median: 'कैश का मीडियन', destinations: 'लाइव गंतव्य', cities: 'शहर',
+    rankedTitle: 'हर रूट अपनी 30-दिन की रेंज में कहां खड़ा है', bookArrow: 'बुक करें →',
     globeTl: 'लाइव नेटवर्क · {n} रूट', globeBr: '{a} सक्रिय आर्क · {t} ट्रैक',
     ticker: 'लाइव किराए', polling: 'पोल हो रहा है…',
     quickEyebrow: 'त्वरित खोज', quickSub: 'किसी भी शहर से फ़्लाइट खोजें या डील्स देखें', fullExplore: 'पूरा एक्सप्लोर →',

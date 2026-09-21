@@ -164,6 +164,7 @@ export const ar: AppDict = {
     lede: 'FlyCheap يراقب أكثر من 1,000 شركة طيران على مدار الساعة — ويخبرك لحظة انخفاض السعر على مسارك تحت الحد. لا مزيد من تحديث Google Flights في الثانية فجرًا.',
     bookCheapest: 'احجز الأرخص ← {price}', addFirst: 'أضف أول مسار لك ←', addWatch: 'أضف مراقبة جديدة',
     cheapestNow: 'الأرخص الآن', median: 'الوسيط عبر الذاكرة المؤقتة', destinations: 'وجهات مباشرة', cities: 'مدينة',
+    rankedTitle: 'موقع كل مسار ضمن نطاقه لـ 30 يومًا', bookArrow: 'احجز ←',
     globeTl: 'شبكة مباشرة · {n} مسارًا', globeBr: '{a} أقواس نشطة · {t} متتبَّعة',
     ticker: 'أسعار مباشرة', polling: 'جارٍ الاستطلاع…',
     quickEyebrow: 'بحث سريع', quickSub: 'ابحث عن رحلات أو تصفّح العروض من أي مدينة', fullExplore: 'الاستكشاف الكامل ←',
