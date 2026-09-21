@@ -112,3 +112,39 @@ export function hexToRgbTriple(hex: string, fallback = '26,68,89'): string {
   const rgb = toRgb(hex);
   return rgb ? rgb.join(',') : fallback;
 }
+
+/**
+ * Pick whichever of two candidate inks reads better as a LABEL painted ON a
+ * brand-coloured FILL (not on a page ground — a caller previewing a
+ * brand-filled button, for instance, has a light candidate like the fixed
+ * `--panel-fg` white and a dark candidate like the current theme's `--bg`,
+ * and needs to know which one is actually legible against that specific
+ * fill colour).
+ *
+ * Deliberately does not fall back to whichever candidate happens to be
+ * non-null: a candidate that failed to load (an empty token read, typically)
+ * is untrustworthy and is only used if it *independently* clears `min`
+ * against `brand` — otherwise the caller gets `onAccent`, a token meant to
+ * always be legible regardless of what did or didn't load. This is the
+ * WhiteLabelSettings preview bug from task 2.11b round 2: a `candidate &&
+ * pickHigherRatio : otherCandidate` ternary silently used the other
+ * candidate whenever the first read as null, which is exactly wrong when
+ * that other candidate is the thing failing AA.
+ */
+export function pickCtaInk(
+  brand: string,
+  panelFg: string | null,
+  ground: string | null,
+  onAccent = '#FFFFFF',
+  min = 4.5,
+): string {
+  const rPanelFg = panelFg ? contrastRatio(panelFg, brand) : null;
+  const rGround = ground ? contrastRatio(ground, brand) : null;
+
+  if (rPanelFg !== null && rGround !== null) {
+    return rPanelFg >= rGround ? panelFg! : ground!;
+  }
+  if (rPanelFg !== null) return rPanelFg >= min ? panelFg! : onAccent;
+  if (rGround !== null) return rGround >= min ? ground! : onAccent;
+  return onAccent;
+}

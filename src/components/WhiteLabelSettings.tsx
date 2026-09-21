@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PUBLIC_CLIENT_HOST } from '@/lib/hosts';
-import { contrastSafe, contrastRatio, BRAND_GROUNDS } from '@/lib/brandContrast';
+import { contrastSafe, contrastRatio, pickCtaInk, BRAND_GROUNDS } from '@/lib/brandContrast';
 
 type Branding = {
   brand_color: string | null;
@@ -41,10 +41,13 @@ export function WhiteLabelSettings() {
   // Which of the two editorial grounds the reader is actually looking at —
   // the preview has to judge the brand against THAT one, not a fixed guess.
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
-  // The fixed-white ink token (--panel-fg), read live rather than hardcoded,
-  // for picking the CTA label's ink below — it needs a light AND a dark
-  // candidate to choose between, and this is the light one.
+  // The two candidate inks for the CTA preview below — read live rather
+  // than hardcoded, and read TOGETHER (same effect, same mount pass, same
+  // MutationObserver) so neither can be stale relative to the other or to
+  // `theme`. --panel-fg is the fixed-white candidate; --bg is the current
+  // theme's page ground, the dark candidate.
   const [panelFg, setPanelFg] = useState<string | null>(null);
+  const [bg, setBg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/me').then(r => r.ok ? r.json() : null).then(j => {
@@ -70,8 +73,10 @@ export function WhiteLabelSettings() {
   useEffect(() => {
     const read = () => {
       const root = document.documentElement;
+      const cs = getComputedStyle(root);
       setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
-      setPanelFg(getComputedStyle(root).getPropertyValue('--panel-fg').trim() || null);
+      setPanelFg(cs.getPropertyValue('--panel-fg').trim() || null);
+      setBg(cs.getPropertyValue('--bg').trim() || null);
     };
     read();
     const mo = new MutationObserver(read);
@@ -112,12 +117,14 @@ export function WhiteLabelSettings() {
 
   // The CTA label sits ON the brand FILL, not on the page ground — a
   // different pairing from derivedInk above (which answers "is brand text
-  // legible on the page?"). Pick whichever of the two candidate inks —
-  // --panel-fg (light) or the page ground (which is near-black in dark
-  // theme) — contrasts more with the brand colour itself.
-  const ctaInk = panelFg && (contrastRatio(panelFg, color) ?? 0) >= (contrastRatio(ground, color) ?? 0)
-    ? panelFg
-    : ground;
+  // legible on the page?"). pickCtaInk chooses whichever of --panel-fg
+  // (light) or the live --bg (near-black in dark theme) contrasts more with
+  // the brand colour itself — and, if one of those reads came back empty,
+  // refuses to default to the other one unless IT independently clears AA,
+  // falling back to --on-accent instead. (Round 2: the previous inline
+  // ternary defaulted to `ground` whenever `panelFg` was falsy, which is
+  // exactly backwards when `ground` is the one failing contrast.)
+  const ctaInk = pickCtaInk(color, panelFg, bg, 'var(--on-accent)');
 
   return (
     <div className="ed-panel" style={{ opacity: isFree ? 0.9 : 1 }}>

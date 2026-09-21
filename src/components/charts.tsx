@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
   LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid,
@@ -60,6 +60,34 @@ function pieColors(tokens: ChartTokens): string[] {
   return [tokens.accent, tokens.amber, tokens.green, tokens.tick, mixAccent, mixAmber];
 }
 
+type LegendPayloadEntry = { value: ReactNode; color?: string };
+
+/**
+ * A `Legend` `content` render function — NOT a `formatter` — because
+ * `formatter`'s return value is rendered INSIDE the span recharts already
+ * hardcodes to the series colour, so nesting a differently-coloured span
+ * there fixes the pixels but not that outer span's own resolved `color`
+ * (what a computed-style contrast check reads). `content` replaces the
+ * renderer outright: the icon swatch keeps the series colour, the label
+ * text is the only element recharts would otherwise colour, and it is
+ * `muted`, full stop.
+ */
+function legendContent(muted: string) {
+  return function MutedLegend({ payload }: { payload?: LegendPayloadEntry[] }) {
+    if (!payload || payload.length === 0) return null;
+    return (
+      <ul style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14, padding: 0, margin: '4px 0 0', listStyle: 'none' }}>
+        {payload.map((entry, i) => (
+          <li key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span aria-hidden style={{ width: 10, height: 10, background: entry.color, display: 'inline-block', flexShrink: 0 }} />
+            <span style={{ color: muted, fontSize: 12 }}>{entry.value}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+}
+
 export function PieCard({
   title,
   data,
@@ -102,15 +130,16 @@ export function PieCard({
               itemStyle={{ color: 'var(--ink)' }}
               labelStyle={{ color: 'var(--muted)' }}
             />
-            {/* wrapperStyle colours the legend's container, not each item's
-                text (recharts paints that in the series colour) — the
-                formatter is what actually fixes the 2.34:1 legend. */}
-            <Legend
-              verticalAlign="bottom"
-              height={24}
-              wrapperStyle={{ color: tokens.muted }}
-              formatter={(value) => <span style={{ color: tokens.muted }}>{value}</span>}
-            />
+            {/* DefaultLegendContent hardcodes the item TEXT span's colour to
+                the series colour (`style={{color: entry.color}}` on the very
+                span the text renders in — see recharts'
+                DefaultLegendContent.renderItems). A `formatter` renders
+                INSIDE that span, so nesting another coloured span there only
+                fixes the pixels, not that outer span's own resolved colour —
+                which is what a computed-style contrast check reads. `content`
+                replaces the renderer outright, so the only span that exists
+                is the one this file colours. */}
+            <Legend verticalAlign="bottom" height={24} content={legendContent(tokens.muted)} />
           </PieChart>
         </ResponsiveContainer>
       )}
