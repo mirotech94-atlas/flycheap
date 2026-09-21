@@ -1,5 +1,5 @@
 import 'server-only';
-import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, PRIVILEGED_TOOLS, type AdminToolCtx } from '@/lib/adminAgentTools';
+import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, PRIVILEGED_TOOLS, buildLiveTableList, type AdminToolCtx } from '@/lib/adminAgentTools';
 import type { ProviderAttempt } from '@/lib/ai/providers';
 
 /** Tool steps allowed per turn. Real diagnostic work legitimately needs room to
@@ -68,8 +68,11 @@ export async function runLoop(
   chain: ProviderAttempt[], userMessages: ChatMsg[], ctx: AdminToolCtx,
 ): Promise<LoopResult> {
   const oaTools = ADMIN_TOOLS.map(t => ({ type: 'function' as const, function: { name: t.name, description: t.description, parameters: t.input_schema } }));
+  // The live table list is queried once per request (cheap: one sqlite_master
+  // SELECT) and appended to the system prompt so the model never has to guess
+  // — or worse, assume absence — about what tables currently exist.
   const messages: OAMsg[] = [
-    { role: 'system', content: ADMIN_SYSTEM_PROMPT },
+    { role: 'system', content: `${ADMIN_SYSTEM_PROMPT}\n\n${buildLiveTableList()}` },
     ...userMessages.map(m => ({ role: m.role, content: m.content } as OAMsg)),
   ];
   const toolCalls: ToolCall[] = [];
