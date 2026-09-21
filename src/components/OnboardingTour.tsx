@@ -157,7 +157,7 @@ export function OnboardingTour({ shouldShow = false }: { shouldShow?: boolean })
     <div className="fixed inset-0 z-[80] no-print" aria-modal="true" role="dialog">
       {/* Dimmer; the spotlight is marked with a ring rather than a box-shadow
           cut-out, since the editorial system carries no shadows. */}
-      <div className="absolute inset-0" style={{ background: 'color-mix(in srgb, var(--ink) 65%, transparent)' }} />
+      <div className="absolute inset-0" style={{ background: 'var(--ink)', opacity: 0.65 }} />
       {spotlight && (
         <div
           style={{

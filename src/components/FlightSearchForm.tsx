@@ -213,7 +213,7 @@ export function FlightSearchForm({
             style={{
               borderRadius: 0,
               background: tripType === t ? 'var(--accent)' : 'transparent',
-              color: tripType === t ? 'var(--on-accent)' : 'color-mix(in srgb, var(--panel-fg) 65%, var(--panel-bg))',
+              color: tripType === t ? 'var(--on-accent)' : 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))',
             }}
           >
             {t === 'round-trip' ? 'Round-trip' : 'One-way'}
@@ -276,7 +276,7 @@ export function FlightSearchForm({
         {/* Budget (anywhere) OR Dates (specific dest) */}
         {isAnywhere ? (
           <div className={field + ' shrink-0'} style={{ minWidth: 130 }}>
-            <span className="text-sm" style={iconColor}>$</span>
+            <span className="text-sm" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>$</span>
             <input type="number" min={50} max={5000} step={50} value={budget}
               onChange={e => setBudget(Number(e.target.value))}
               className={inp} style={{ width: 64 }} aria-label="Max budget USD"
@@ -317,7 +317,7 @@ export function FlightSearchForm({
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
             <span className="text-sm font-semibold">{adults} adult{adults !== 1 ? 's' : ''}</span>
-            <span className="text-xs" style={{ color: 'color-mix(in srgb, var(--panel-fg) 40%, var(--panel-bg))' }}>▾</span>
+            <span className="text-xs" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>▾</span>
           </button>
           {paxOpen && (
             <div className="absolute right-0 mt-1 w-52 p-3" style={{ zIndex: 9999, background: 'var(--surface)', border: '1px solid var(--rule)', borderRadius: 0 }}>
@@ -343,7 +343,7 @@ export function FlightSearchForm({
         {/* Submit */}
         <button type="submit" disabled={submitting}
           className="ed-btn ed-btn-primary shrink-0 px-5 py-2.5 text-sm justify-center"
-          style={{ background: 'var(--amber)', color: 'var(--ink)' }}
+          style={{ background: 'var(--amber)', color: 'var(--panel-bg)' }}
         >
           {submitting ? 'Loading…' : isAnywhere ? 'Find deals' : 'Search flights'}
         </button>

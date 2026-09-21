@@ -81,8 +81,8 @@ html.dark .eyebrow { color: #94a3b8; }
 .card {
   background: var(--bg-elevated);
   border: 1px solid var(--border);
-  border-radius: 14px;
-  box-shadow: var(--shadow-card);
+  border-radius: 0;
+  box-shadow: none;
   padding: 1.25rem;
   position: relative;
 }
@@ -232,10 +232,11 @@ html.dark .badge-gold  { background:rgba(124,92,16,.3); color:#fde68a; border-co
    Form inputs
    ============================================================ */
 input, select, textarea {
-  @apply px-3 py-1.5 rounded-lg text-sm transition-all;
+  @apply px-3 py-1.5 text-sm transition-all;
   background: var(--bg-elevated);
   color: var(--text);
   border: 1px solid var(--border);
+  border-radius: 0;
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
@@ -665,30 +666,9 @@ html.dark .flight-conversation-panel__stat {
    ============================================================ */
 .fc-shell,
 .fc-landing {
-  --fc-ink:         #0a1426;
-  --fc-navy:        #1A4459;
-  --fc-navy-2:      #0d2540;
-  --fc-navy-3:      #061a35;
-  /* Two accents, two jobs. --fc-gold is the READING LIGHT: fares and the one
-     primary action. --fc-accent is everything else -- eyebrows, labels, quote
-     marks, frame tags, step numbers. They were a single token, which is why
-     amber kept turning up on decoration no matter how often it was swept. */
-  --fc-gold:        #E8A33D;
-  --fc-gold-soft:   #f0d674;
-  --fc-accent:      #6FB3C9;
-  --fc-accent-soft: #9ACBDB;
-  --fc-emerald:     #1f8a5b;
-  --fc-crimson:     #c1426b;
-  --fc-paper:       #f5f1e8;
-  --fc-paper-2:     #ebe5d4;
-  --fc-cream:       #faf7ef;
-  --fc-line:        rgba(10,20,38,.10);
-  --fc-line-strong: rgba(10,20,38,.18);
-  --fc-muted:       #5b6678;
-  --fc-faint:       #697181;   /* was #8a93a6 — 3.09:1 on a white .fc-card */
-  --fc-font-display: var(--font-fc-display, 'Fraunces', 'Times New Roman', serif);
-  --fc-font-sans:    var(--font-fc-sans, 'Manrope', ui-sans-serif, system-ui, sans-serif);
-  --fc-font-mono:    var(--font-mono, 'JetBrains Mono', ui-monospace, monospace);
+  /* The --fc-* values themselves now live in editorial.css's migration-alias
+     :root block (every name that used to be defined here, re-pointed to a
+     token) so they resolve everywhere, not just under a theme gate. */
   font-family: var(--fc-font-sans);
   color: var(--fc-ink);
   font-feature-settings: "ss01","cv11";
@@ -704,7 +684,7 @@ html.dark .flight-conversation-panel__stat {
 .fc-shell[data-fc-accent="emerald"] { --fc-accent: var(--green); --fc-accent-soft: color-mix(in srgb, var(--green) 70%, var(--surface)); }
 .fc-shell[data-fc-accent="copper"]  { --fc-accent: var(--amber); --fc-accent-soft: color-mix(in srgb, var(--amber) 70%, var(--surface)); }
 .fc-shell[data-fc-accent="violet"]  { --fc-accent: var(--accent); --fc-accent-soft: color-mix(in srgb, var(--accent) 70%, var(--surface)); }
-.fc-shell[data-fc-theme="coal"] { background: var(--panel-bg); color: var(--panel-fg); }
+.fc-shell[data-fc-theme="coal"] { background: var(--surface-2); color: var(--panel-fg); }
 .fc-shell[data-fc-theme="coal"] .fc-card,
 .fc-shell[data-fc-theme="coal"] .fc-kpi { background: var(--surface-2); border-color: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)); color: var(--panel-fg); }
 .fc-shell[data-fc-theme="coal"] .fc-card-title,
@@ -1015,13 +995,19 @@ html.dark .flight-conversation-panel__stat {
 .fc-kpi-trend { position: absolute; right: 14px; top: 18px; width: 64px; height: 28px; }
 .fc-kpi.fc-kpi-accent {
   background: var(--fc-navy);
-  color: var(--fc-cream);
+  color: var(--fc-ink);
   border: 1px solid var(--fc-navy-3);
 }
-.fc-kpi.fc-kpi-accent .fc-kpi-label { color: color-mix(in srgb, var(--panel-fg) 60%, var(--panel-bg)); }
-.fc-kpi.fc-kpi-accent .fc-kpi-value { color: var(--fc-gold); }
-.fc-kpi.fc-kpi-accent .fc-kpi-value .fc-unit { color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); }
-.fc-kpi.fc-kpi-accent .fc-kpi-sub { color: color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg)); }
+/* Under the dashboard's cabin theme, .fc-shell[data-fc-theme="cabin"] .fc-kpi
+   (0,3,0) out-specifies this tile's own background/color (0,2,0), so the
+   "accent" tile actually renders on the same card surface as every other
+   KPI — its label/value/sub read the same as the base tile, not a dark
+   panel. Amber stays reserved for the delta/sparkline, not the headline
+   number (README: KPI values are ink; amber marks deltas). */
+.fc-kpi.fc-kpi-accent .fc-kpi-label { color: var(--fc-muted); }
+.fc-kpi.fc-kpi-accent .fc-kpi-value { color: var(--fc-ink); }
+.fc-kpi.fc-kpi-accent .fc-kpi-value .fc-unit { color: var(--fc-muted); }
+.fc-kpi.fc-kpi-accent .fc-kpi-sub { color: var(--fc-muted); }
 
 /* Card */
 .fc-card {
@@ -1136,9 +1122,9 @@ html.dark .flight-conversation-panel__stat {
   font-weight: 500; margin-right: 1px;
 }
 .fc-deals-table .fc-col-vs { text-align: right; font-size: 12px; font-weight: 600; }
-.fc-deals-table .fc-vs-below { color: var(--fc-emerald); }
-.fc-deals-table .fc-vs-above { color: var(--fc-crimson); }
-.fc-row-sweetspot { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
+.fc-deals-table .fc-vs-below { color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
+.fc-deals-table .fc-vs-above { color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
+.fc-row-sweetspot { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .fc-row-sweetspot .fc-col-rank::after { content: "✦"; color: var(--fc-gold); margin-left: 2px; }
 
 .fc-badge {
@@ -1149,7 +1135,7 @@ html.dark .flight-conversation-panel__stat {
   border-radius: 0;
   letter-spacing: .02em;
 }
-.fc-badge-ok    { background: color-mix(in srgb, var(--green) 13%, var(--surface)); color: var(--green); }
+.fc-badge-ok    { background: color-mix(in srgb, var(--green) 8%, var(--surface)); color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
 .fc-badge-warn  { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--ink); }
 .fc-badge-info  { background: color-mix(in srgb, var(--fc-navy) 10%, var(--surface)); color: var(--fc-navy); }
 .fc-badge-mute  { background: var(--fc-paper); color: var(--fc-muted); }
@@ -1210,8 +1196,12 @@ html.dark .flight-conversation-panel__stat {
   animation: fc-feed-in .35s ease both;
 }
 @keyframes fc-feed-in {
-  from { opacity: 0; transform: translateY(-6px); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
-  to   { opacity: 1; transform: translateY(0); background: transparent; }
+  /* No animated colour: the browser interpolates an animated <color> in
+     OKLab by default regardless of how the endpoints were written, which a
+     computed-style contrast audit reads as an unparseable oklab(...). Slide
+     + fade only. */
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 .fc-feed-time { font-family: var(--fc-font-mono); font-size: 10.5px; color: var(--fc-faint); line-height: 1.3; }
 .fc-feed-time strong { display: block; color: var(--fc-ink); font-weight: 600; font-size: 11px; }
@@ -1256,7 +1246,7 @@ html.dark .flight-conversation-panel__stat {
   color: var(--panel-fg);
 }
 .fc-radar-h em { color: var(--fc-gold); font-style: italic; }
-.fc-radar-lede { color: color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg)); max-width: 460px; line-height: 1.55; font-size: 14px; }
+.fc-radar-lede { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); max-width: 460px; line-height: 1.55; font-size: 14px; }
 .fc-radar-fare-list { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
 .fc-radar-fare {
   display: grid;
@@ -1272,12 +1262,12 @@ html.dark .flight-conversation-panel__stat {
   cursor: pointer;
 }
 .fc-radar-fare:hover { background: color-mix(in srgb, var(--panel-fg) 7%, var(--panel-bg)); border-color: color-mix(in srgb, var(--amber) 30%, var(--panel-bg)); }
-.fc-radar-fare-time { font-family: var(--fc-font-mono); font-size: 10px; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); letter-spacing: .1em; }
+.fc-radar-fare-time { font-family: var(--fc-font-mono); font-size: 10px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); letter-spacing: .1em; }
 .fc-radar-fare-route { font-weight: 600; }
-.fc-radar-fare-route .small { display: block; font-weight: 400; font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); margin-top: 2px; }
-.fc-radar-fare-was { font-family: var(--fc-font-mono); font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 40%, var(--panel-bg)); text-decoration: line-through; }
+.fc-radar-fare-route .small { display: block; font-weight: 400; font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); margin-top: 2px; }
+.fc-radar-fare-was { font-family: var(--fc-font-mono); font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); text-decoration: line-through; }
 .fc-radar-fare-now { font-family: var(--fc-font-display); font-size: 22px; color: var(--fc-gold); letter-spacing: -.01em; }
-.fc-radar-fare-now .pct { display: block; font-family: var(--fc-font-mono); font-size: 10px; color: var(--fc-emerald); font-weight: 600; margin-top: 2px; }
+.fc-radar-fare-now .pct { display: block; font-family: var(--fc-font-mono); font-size: 10px; color: color-mix(in srgb, var(--green) 70%, var(--panel-fg)); font-weight: 600; margin-top: 2px; }
 .fc-radar-right { position: relative; padding: 32px; display: grid; place-items: center; z-index: 1; }
 .fc-radar-ring {
   position: relative;
@@ -1316,7 +1306,7 @@ html.dark .flight-conversation-panel__stat {
   font-size: 9.5px;
   letter-spacing: .2em;
   text-transform: uppercase;
-  color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg));
+  color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg));
   margin-top: 4px;
   font-style: normal;
 }
@@ -1485,13 +1475,13 @@ html.dark .flight-conversation-panel__stat {
 .fc-carbon-cta {
   margin-top: 16px;
   padding: 14px;
-  background: color-mix(in srgb, var(--green) 14%, var(--surface));
+  background: color-mix(in srgb, var(--green) 8%, var(--surface));
   border-radius: 0;
   font-size: 12.5px;
-  color: var(--green);
+  color: color-mix(in srgb, var(--green) 75%, var(--ink));
   line-height: 1.4;
 }
-.fc-carbon-cta strong { color: var(--green); font-weight: 700; }
+.fc-carbon-cta strong { color: color-mix(in srgb, var(--green) 75%, var(--ink)); font-weight: 700; }
 
 /* Concierge */
 .fc-concierge {
@@ -2114,14 +2104,14 @@ body:has(main > .fc-landing) .chat-widget {
    blends with the dark surfaces instead of flashing as a white island.
    =========================================================================== */
 .fc-dna-reco {
-  background: color-mix(in srgb, var(--green) 14%, var(--surface));
+  background: color-mix(in srgb, var(--green) 8%, var(--surface));
   border-radius: 0;
   padding: 12px 14px;
   font-size: 12.5px;
-  color: var(--green);
+  color: color-mix(in srgb, var(--green) 75%, var(--ink));
   line-height: 1.4;
 }
-.fc-dna-reco-strong { color: var(--green); }
+.fc-dna-reco-strong { color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
 
 /* ===========================================================================
    COAL THEME — global overrides
@@ -2323,7 +2313,7 @@ a.fc-radar-fare-link {
   cursor: pointer;
   display: grid; /* re-assert same layout as the div variant */
 }
-a.fc-radar-fare-link:hover { background: color-mix(in srgb, var(--amber) 10%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--surface)); }
+a.fc-radar-fare-link:hover { background: color-mix(in srgb, var(--amber) 10%, var(--panel-bg)); border-color: color-mix(in srgb, var(--amber) 45%, var(--panel-bg)); }
 
 /* Best deals table — make the horizontal scrollbar always visible (not
    clipped by the KPI strip above) and styled to match the dark/coal theme. */
@@ -2936,23 +2926,22 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
    =========================================================================== */
 .fc-verdict {
   --fcv-accent: var(--fc-emerald);
-  --fcv-tint: rgba(31,138,91,.10);
+  --fcv-tint: color-mix(in srgb, var(--green) 8%, var(--surface));
   border: 1px solid var(--fc-line);
   border-left: 4px solid var(--fcv-accent);
-  border-radius: 12px;
-  background: linear-gradient(180deg, white, var(--fc-cream));
+  border-radius: 0;
+  background: var(--fcv-tint);
   padding: 14px 16px 12px;
   color: var(--fc-ink);
   font-family: var(--fc-font-sans);
 }
-.fc-verdict-wait { --fcv-accent: var(--fc-gold); --fcv-tint: rgba(232,163,61,.16); }
-.fc-verdict-hold { --fcv-accent: var(--fc-navy); --fcv-tint: rgba(26,68,89,.10); }
+.fc-verdict-wait { --fcv-accent: var(--fc-gold); --fcv-tint: color-mix(in srgb, var(--amber) 8%, var(--surface)); }
+.fc-verdict-hold { --fcv-accent: var(--fc-navy); --fcv-tint: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
 .fc-verdict-compact { padding: 12px 14px 10px; }
 .fc-verdict-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 .fc-verdict-call { display: flex; align-items: center; gap: 8px; }
 .fc-verdict-dot {
-  width: 9px; height: 9px; border-radius: 999px; background: var(--fcv-accent);
-  box-shadow: 0 0 0 4px var(--fcv-tint);
+  width: 9px; height: 9px; border-radius: 50%; background: var(--fcv-accent);
 }
 .fc-verdict-label {
   font-family: var(--fc-font-display);
@@ -2964,7 +2953,7 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
   color: var(--fc-muted); white-space: nowrap;
 }
 .fc-verdict-conf strong { color: var(--fc-ink); font-size: 12px; }
-.fc-verdict-reason { margin: 8px 0 12px; font-size: 12.5px; line-height: 1.45; color: #2f3a4d; }
+.fc-verdict-reason { margin: 8px 0 12px; font-size: 12.5px; line-height: 1.45; color: var(--fc-ink); }
 .fc-verdict-reason strong { color: var(--fc-ink); }
 
 /* Typical-range band (Google pattern) with the current price marker */
@@ -2976,22 +2965,21 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
 }
 .fc-verdict-range-labels b, .fc-verdict-range-foot b { color: var(--fc-ink); font-weight: 600; }
 .fc-verdict-track {
-  position: relative; height: 8px; margin: 18px 0 6px; border-radius: 999px;
-  background: linear-gradient(90deg, rgba(31,138,91,.55), rgba(111,179,201,.55) 55%, rgba(193,66,107,.55));
+  position: relative; height: 8px; margin: 18px 0 6px; border-radius: 0;
+  background: var(--track);
 }
 .fc-verdict-band {
-  position: absolute; top: -3px; bottom: -3px; border-radius: 999px;
-  background: rgba(26,68,89,.14); border: 1px solid rgba(26,68,89,.28);
+  position: absolute; top: -3px; bottom: -3px; border-radius: 0;
+  background: color-mix(in srgb, var(--fc-navy) 14%, var(--surface)); border: 1px solid color-mix(in srgb, var(--fc-navy) 28%, var(--surface));
 }
 .fc-verdict-marker {
   position: absolute; top: 50%; width: 14px; height: 14px; margin-left: -7px; transform: translateY(-50%);
-  border-radius: 999px; background: var(--fcv-accent); border: 2px solid white;
-  box-shadow: 0 1px 4px rgba(10,20,38,.35);
+  border-radius: 0; background: var(--fcv-accent); border: 2px solid var(--surface);
 }
 .fc-verdict-marker-price {
   position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%);
   font-family: var(--fc-font-mono); font-size: 10px; font-weight: 700; color: var(--fc-ink);
-  background: white; border: 1px solid var(--fc-line); border-radius: 6px; padding: 1px 5px; white-space: nowrap;
+  background: var(--surface); border: 1px solid var(--fc-line); border-radius: 0; padding: 1px 5px; white-space: nowrap;
 }
 .fc-verdict-stats {
   display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px;
@@ -3001,8 +2989,8 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
   font-family: var(--fc-font-mono); font-size: 9.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--fc-faint);
 }
 .fc-verdict-stat-value { font-family: var(--fc-font-mono); font-size: 13px; font-weight: 600; color: var(--fc-ink); }
-.fc-verdict-stat-value.down { color: #0e6240; }
-.fc-verdict-stat-value.up { color: #9a3d1f; }
+.fc-verdict-stat-value.down { color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
+.fc-verdict-stat-value.up { color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
 
 /* Route sparkline */
 .fc-spark { display: block; width: 100%; }
@@ -3010,39 +2998,39 @@ html:is([data-fc-theme="coal"], .dark) .fc-landing .fc-terms-toc a { background:
   display: flex; justify-content: space-between; gap: 8px; margin-bottom: 4px;
   font-family: var(--fc-font-mono); font-size: 10px; letter-spacing: .06em; text-transform: uppercase;
 }
-.fc-spark-min { color: #0e6240; font-weight: 600; }
-.fc-spark-max { color: #9a3d1f; font-weight: 600; }
+.fc-spark-min { color: color-mix(in srgb, var(--green) 75%, var(--ink)); font-weight: 600; }
+.fc-spark-max { color: color-mix(in srgb, var(--red) 75%, var(--ink)); font-weight: 600; }
 .fc-spark-delta { color: var(--fc-muted); }
-.fc-spark-delta.down { color: #0e6240; }
-.fc-spark-delta.up { color: #9a3d1f; }
+.fc-spark-delta.down { color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
+.fc-spark-delta.up { color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
 .fc-spark-svg { display: block; width: 100%; height: 56px; overflow: visible; }
-.fc-spark-area { fill: rgba(111,179,201,.22); }
+.fc-spark-area { fill: color-mix(in srgb, var(--accent) 22%, transparent); }
 .fc-spark-line { fill: none; stroke: var(--fc-navy); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
 .fc-spark-target { stroke: var(--fc-faint); stroke-width: 1; stroke-dasharray: 3 3; opacity: .7; vector-effect: non-scaling-stroke; }
-.fc-spark-low { fill: var(--fc-gold); stroke: white; stroke-width: 1.5; }
-.fc-spark-last { fill: var(--fc-navy); stroke: white; stroke-width: 1.5; }
+.fc-spark-low { fill: var(--fc-gold); stroke: var(--surface); stroke-width: 1.5; }
+.fc-spark-last { fill: var(--fc-navy); stroke: var(--surface); stroke-width: 1.5; }
 .fc-spark-caption { margin-top: 4px; font-family: var(--fc-font-mono); font-size: 9.5px; letter-spacing: .08em; text-transform: uppercase; color: var(--fc-faint); }
 .fc-spark-empty { padding: 6px 0; }
 
 /* Coal theme */
-html:is([data-fc-theme="coal"], .dark) .fc-verdict { background: linear-gradient(180deg, #1a1f2a, #14181f); color: #e8ecf4; border-color: rgba(255,255,255,.08); }
-html:is([data-fc-theme="coal"], .dark) .fc-verdict-reason { color: rgba(255,255,255,.78); }
+html:is([data-fc-theme="coal"], .dark) .fc-verdict { background: var(--surface-2); color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg)); }
+html:is([data-fc-theme="coal"], .dark) .fc-verdict-reason { color: color-mix(in srgb, var(--panel-fg) 78%, var(--panel-bg)); }
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-reason strong,
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-conf strong,
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-stat-value,
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-range-labels b,
-html:is([data-fc-theme="coal"], .dark) .fc-verdict-range-foot b { color: #f5f1e8; }
-html:is([data-fc-theme="coal"], .dark) .fc-verdict-marker-price { background: #1a1f2a; color: #f5f1e8; border-color: rgba(255,255,255,.14); }
-html:is([data-fc-theme="coal"], .dark) .fc-verdict-marker { border-color: #14181f; }
-html:is([data-fc-theme="coal"], .dark) .fc-spark-line { stroke: #7fb2e8; }
-html:is([data-fc-theme="coal"], .dark) .fc-spark-last { fill: #7fb2e8; stroke: #14181f; }
-html:is([data-fc-theme="coal"], .dark) .fc-spark-low { stroke: #14181f; }
+html:is([data-fc-theme="coal"], .dark) .fc-verdict-range-foot b { color: var(--panel-fg); }
+html:is([data-fc-theme="coal"], .dark) .fc-verdict-marker-price { background: var(--surface-2); color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 14%, var(--panel-bg)); }
+html:is([data-fc-theme="coal"], .dark) .fc-verdict-marker { border-color: var(--panel-bg); }
+html:is([data-fc-theme="coal"], .dark) .fc-spark-line { stroke: var(--accent); }
+html:is([data-fc-theme="coal"], .dark) .fc-spark-last { fill: var(--accent); stroke: var(--panel-bg); }
+html:is([data-fc-theme="coal"], .dark) .fc-spark-low { stroke: var(--panel-bg); }
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-stat-value.down,
 html:is([data-fc-theme="coal"], .dark) .fc-spark-min,
-html:is([data-fc-theme="coal"], .dark) .fc-spark-delta.down { color: #5fd39a; }
+html:is([data-fc-theme="coal"], .dark) .fc-spark-delta.down { color: color-mix(in srgb, var(--green) 70%, var(--panel-fg)); }
 html:is([data-fc-theme="coal"], .dark) .fc-verdict-stat-value.up,
 html:is([data-fc-theme="coal"], .dark) .fc-spark-max,
-html:is([data-fc-theme="coal"], .dark) .fc-spark-delta.up { color: #f0a080; }
+html:is([data-fc-theme="coal"], .dark) .fc-spark-delta.up { color: color-mix(in srgb, var(--red) 70%, var(--panel-fg)); }
 /* Verdict range: room for the floating marker price above the track. */
 .fc-verdict-track { margin-top: 30px; }
 
@@ -3269,7 +3257,7 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 .fc-admin-login .legal a { color: rgba(255,255,255,.6); text-decoration: underline; }
 /* Live feed: slide-in for the newest row */
 .fc-feed-item.fresh { animation: fc-feed-in .45s ease both; }
-@keyframes fc-feed-in { from { opacity: 0; transform: translateY(-8px); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); } to { opacity: 1; transform: none; } }
+@keyframes fc-feed-in { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: none; } }
 /* Founding period banner (dashboard) */
 .fc-founding-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 0; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel-bg)); color: var(--panel-fg); font-size: 13.5px; line-height: 1.5; }
 .fc-founding-banner.due { background: color-mix(in srgb, var(--accent) 14%, var(--panel-bg)); border-color: color-mix(in srgb, var(--accent) 50%, var(--panel-bg)); }
@@ -3425,29 +3413,7 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
    fares and the primary CTA stay the one loud thing on the page.
    ============================================================ */
 .fc-shell[data-fc-theme="cabin"] {
-  --fc-ink:         var(--nc-on-dark);
-  /* --fc-navy is read as INK (section-title accents, route destinations),
-     not as a surface. Mapping it to a panel grey painted those elements in
-     the colour of the panel behind them — 1.2:1. The landing block always
-     had this right; the shell did not, and nobody saw it because the shell
-     was being reverted to coal before it ever painted. */
-  --fc-navy:        var(--nc-teal);
-  --fc-gold:        var(--nc-amber);
-  --fc-gold-soft:   color-mix(in srgb, var(--amber) 70%, var(--surface));
-  --fc-accent:      var(--nc-teal);
-  --fc-accent-soft: color-mix(in srgb, var(--accent) 65%, var(--surface));
-  --fc-emerald:     var(--nc-mint);
-  --fc-crimson:     var(--nc-signal);
-  --fc-paper:       var(--nc-dark);
-  --fc-cream:       var(--nc-deck);
-  --fc-line:        var(--nc-rule);
-  --fc-line-strong: var(--nc-rule-2);
-  --fc-muted:       var(--nc-on-dark-mute);
-  --fc-faint:       var(--nc-on-dark-faint);
-  --fc-font-display: var(--font-serif);
-  --fc-font-mono:    var(--font-mono-ed);
-  --fc-font-sans:    var(--font-ui);
-
+  /* --fc-* re-points now live once, ungated, in editorial.css. */
   background: var(--nc-dark);
   color: var(--nc-on-dark);
 }
@@ -3470,6 +3436,16 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
 .fc-shell[data-fc-theme="cabin"] .fc-eyebrow,
 .fc-shell[data-fc-theme="cabin"] .fc-hero-stat-label { color: var(--nc-on-dark-faint); }
+
+/* .fc-radar is a --panel-bg surface even though it lives inside a
+   --surface card shell — in light theme --panel-bg equals --ink, so the
+   blanket h1–h3/eyebrow colour above (which assumes the card surface)
+   reads as ink-on-ink. Restore panel-fg for anything inside it. */
+.fc-shell[data-fc-theme="cabin"] .fc-radar h1,
+.fc-shell[data-fc-theme="cabin"] .fc-radar h2,
+.fc-shell[data-fc-theme="cabin"] .fc-radar h3,
+.fc-shell[data-fc-theme="cabin"] .fc-radar-h { color: var(--panel-fg); }
+.fc-shell[data-fc-theme="cabin"] .fc-radar .fc-eyebrow { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
 
 /* Every fare on the dashboard gets the reading light. */
 .fc-shell[data-fc-theme="cabin"] .fc-hero-stat-value,
@@ -3494,22 +3470,7 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
    product as the app behind it.
    ============================================================ */
 .fc-landing[data-fc-theme="cabin"] {
-  --fc-ink:         var(--nc-on-dark);
-  --fc-navy:        var(--nc-teal);
-  --fc-gold:        var(--nc-amber);
-  --fc-gold-soft:   #F2C67A;
-  --fc-accent:      var(--nc-teal);
-  --fc-accent-soft: #9ACBDB;
-  --fc-emerald:     var(--nc-mint);
-  --fc-crimson:     var(--nc-signal);
-  --fc-paper:       var(--nc-deck);
-  --fc-cream:       var(--nc-dark);
-  --fc-line:        var(--nc-rule);
-  --fc-line-strong: var(--nc-rule-2);
-  --fc-muted:       var(--nc-on-dark-mute);
-  --fc-faint:       var(--nc-on-dark-faint);
-  --fc-font-display: var(--nc-display);
-
+  /* --fc-* re-points now live once, ungated, in editorial.css. */
   background: var(--nc-dark);
   color: var(--nc-on-dark);
 }
@@ -3779,8 +3740,8 @@ html[data-fc-theme="coal"] .bg-brand-gradient {
 
 /* Status badges kept their light-theme inks over their own tinted washes. */
 .fc-shell[data-fc-theme="cabin"] .fc-badge-ok {
-  background: color-mix(in srgb, var(--nc-mint) 14%, var(--nc-dark));
-  color: var(--nc-mint);
+  background: color-mix(in srgb, var(--nc-mint) 8%, var(--nc-dark));
+  color: color-mix(in srgb, var(--nc-mint) 75%, var(--nc-on-dark));
 }
 
 /* The login intel panel is always dark, so its figures were written in

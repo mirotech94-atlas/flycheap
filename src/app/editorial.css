@@ -79,6 +79,33 @@ html[data-theme="dark"] {
 
 }
 
+:root {
+  /* legacy (--fc-*) → editorial. Every --fc-* name globals.css's
+     .fc-shell/.fc-landing block defines, re-pointed here so it resolves to a
+     token regardless of theme gate — the gated re-point blocks this used to
+     rely on covered only some names and left the rest as hex. */
+  --fc-ink: var(--ink);
+  --fc-navy: var(--accent);
+  --fc-navy-2: var(--accent);
+  --fc-navy-3: var(--accent);
+  --fc-gold: var(--amber);
+  --fc-gold-soft: color-mix(in srgb, var(--amber) 70%, var(--surface));
+  --fc-accent: var(--accent);
+  --fc-accent-soft: color-mix(in srgb, var(--accent) 65%, var(--surface));
+  --fc-emerald: var(--green);
+  --fc-crimson: var(--red);
+  --fc-paper: var(--bg);
+  --fc-paper-2: var(--surface-2);
+  --fc-cream: var(--surface);
+  --fc-line: var(--rule);
+  --fc-line-strong: var(--rule-strong);
+  --fc-muted: var(--muted);
+  --fc-faint: var(--muted-2);
+  --fc-font-display: var(--font-serif);
+  --fc-font-sans: var(--font-ui);
+  --fc-font-mono: var(--font-mono-ed);
+}
+
 /* Type faces — bound to next/font variables in layout.tsx (Task 0.5). */
 :root {
   --font-ui: var(--font-public-sans, 'Public Sans'), system-ui, sans-serif;
@@ -162,8 +189,8 @@ html[data-theme="dark"] {
 .ed-field { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)); border: 1px solid color-mix(in srgb, var(--panel-fg) 20%, var(--panel-bg)); border-radius: 0; color: var(--panel-fg); }
 .ed-field-input { flex: 1; min-width: 0; border: 0; background: transparent; font: 600 13px var(--font-ui); color: var(--panel-fg); padding: 0; }
 .ed-field-input:focus { outline: none; }
-.ed-field-input::placeholder { color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); }
-.ed-field-tag { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); flex-shrink: 0; }
+.ed-field-input::placeholder { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-field-tag { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); flex-shrink: 0; }
 .ed-field-drop { position: absolute; left: 0; right: 0; margin-top: 4px; max-height: 240px; overflow: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 0; }
 .ed-field-drop-row { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--rule-soft); color: var(--ink); background: transparent; }
 .ed-field-drop-row:last-child { border-bottom: none; }

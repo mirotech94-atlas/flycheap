@@ -76,10 +76,10 @@ export function OnboardingWizard({ userEmail }: { userEmail: string }) {
         <div className="px-6 py-4 relative" style={{ background: 'var(--panel-bg)', color: 'var(--panel-fg)' }}>
           <div className="relative flex items-center justify-between">
             <div>
-              <div className="ed-mono" style={{ color: 'color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg))' }}>Welcome, {userEmail}</div>
+              <div className="ed-mono" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>Welcome, {userEmail}</div>
               <h2 className="ed-h2" style={{ color: 'var(--panel-fg)', marginBottom: 0 }}>Set up your first route</h2>
             </div>
-            <button onClick={() => setSkipped(true)} className="text-xs px-2 py-1" style={{ color: 'color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg))' }}>Skip</button>
+            <button onClick={() => setSkipped(true)} className="text-xs px-2 py-1" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>Skip</button>
           </div>
           <div className="relative mt-4 flex items-center gap-1">
             {[1, 2, 3].map(s => (

@@ -53,7 +53,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/FcFareCalendar.tsx': 5,
   'src/components/HotelsBoard.tsx': 5,
   'src/app/admin/economics/page.tsx': 4,
-  'src/components/FcBestDealsTable.tsx': 4,
   'src/components/Toaster.tsx': 4,
   'src/app/layout.tsx': 3,
   'src/app/onboarding/page.tsx': 3,

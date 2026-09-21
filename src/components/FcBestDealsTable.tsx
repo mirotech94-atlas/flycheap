@@ -126,10 +126,12 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 38, height: 4, background: '#eef2f7', borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{ width: 38, height: 4, background: 'var(--track)', borderRadius: 0, overflow: 'hidden' }}>
                         <div style={{
                           width: `${r.conf}%`, height: '100%',
-                          background: r.conf > 80 ? '#1f8a5b' : r.conf > 70 ? '#E8A33D' : '#c1426b',
+                          // Amber is reserved for fares/primary actions (CLAUDE.md) — this is a
+                          // confidence indicator, not a fare, so the middle tier reads as accent.
+                          background: r.conf > 80 ? 'var(--green)' : r.conf > 70 ? 'var(--accent)' : 'var(--red)',
                         }} />
                       </div>
                       <span className="fc-mono" style={{ fontSize: 11, color: 'var(--fc-muted)' }}>{r.conf}%</span>
