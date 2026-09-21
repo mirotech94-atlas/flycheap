@@ -30,21 +30,21 @@ export default async function ContactPage() {
 
       <div className="ed-tiles" style={{ marginBottom: 28 }}>
         <div className="ed-tile">
-          <div className="ed-tile-kicker">Faster channels</div>
+          <div className="ed-tile-kicker">⚡ Faster channels</div>
           <div className="ed-tile-value" style={{ fontSize: 16 }}>In-app concierge</div>
           <p className="ed-tile-meta">
             Click <strong>Ask concierge</strong> bottom-left on any page. FarePilot can answer most questions about your dashboard, fares, settings, and alerts.
           </p>
         </div>
         <div className="ed-tile">
-          <div className="ed-tile-kicker">Operational</div>
+          <div className="ed-tile-kicker">🔧 Operational</div>
           <div className="ed-tile-value" style={{ fontSize: 16 }}>System status</div>
           <p className="ed-tile-meta">
             Live health for the poller, providers, and last-alert pipeline at <Link href="/status">/status</Link>.
           </p>
         </div>
         <div className="ed-tile">
-          <div className="ed-tile-kicker">Bugs</div>
+          <div className="ed-tile-kicker">🐛 Bugs</div>
           <div className="ed-tile-value" style={{ fontSize: 16 }}>Found something off?</div>
           <p className="ed-tile-meta">
             Tell us the URL, what you expected vs. what happened, and the time (UTC). Screenshots help a lot — paste them into the message.

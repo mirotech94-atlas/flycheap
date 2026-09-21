@@ -36,6 +36,7 @@ export function ComparePanel() {
   if (pins.length === 0) {
     return (
       <div className="ed-empty">
+        <div style={{ fontSize: 40, marginBottom: 8 }}>📌</div>
         <h2 className="ed-empty-head">No pins yet</h2>
         <p className="ed-empty-body">
           On the dashboard, click the 📌 icon next to any deal to add it here. Compare up to three at a time.
@@ -74,7 +75,7 @@ export function ComparePanel() {
         <button onClick={clearAll} className="ed-btn ed-btn-secondary">Clear all</button>
       </div>
 
-      <div className="ed-tiles" style={{ gridTemplateColumns: `repeat(${pins.length}, 1fr)` }}>
+      <div className="ed-tiles ed-tiles-compare">
         {pins.map(d => {
           const stops = Math.max(d.outbound_transfers ?? 0, d.return_transfers ?? 0);
           const isCheapest = d.per_adult_usd === minPerAdult;

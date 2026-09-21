@@ -47,6 +47,7 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
   if (status === 'sent') {
     return (
       <div className="ed-panel" style={{ textAlign: 'center', padding: '40px 24px' }}>
+        <div style={{ fontSize: 32, marginBottom: 8 }}>✅</div>
         <h2 className="ed-h2" style={{ marginBottom: 8 }}>Ticket opened</h2>
         <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>
           Thanks — we&apos;ll reply to <strong>{email}</strong> within one business day.

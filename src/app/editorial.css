@@ -526,6 +526,16 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .ed-fare-cell { transition: outline-color 120ms; }
 .ed-fare-cell:hover { outline: 2px solid var(--accent); outline-offset: -1px; }
 
+/* Rule BETWEEN rows, not above the first (task 3.7b fix1, /status per-check
+   list) — the `divide-y` equivalent without a Tailwind utility. */
+.ed-check-row + .ed-check-row { border-top: 1px solid var(--rule); }
+
+/* ComparePanel's pin cards (task 3.7b fix1) — reflows 1/2/3 up like the base
+   Tailwind grid-cols breakpoints did, via auto-fit rather than an inline
+   fixed column count (which forced N equal columns at every width). A
+   wider floor than the shared .ed-tiles default keeps a 3-up row readable. */
+.ed-tiles-compare { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
 /* Table row highlight — "this option is within range of the cheapest one
    shown". An 8% amber wash per the tint ceiling, so body text stays legible
    at full ink. */

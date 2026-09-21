@@ -1,8 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { travelpayoutsReferralUrl } from '@/lib/affiliate';
-import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
-import { APP_VERSION_SHORT } from '@/lib/version';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy · FlyCheap',
@@ -13,14 +11,10 @@ export default function PrivacyPage() {
   const lastUpdated = '2026-05-12';
 
   return (
-    <div className="mk mk-bleed">
-      <PublicTopbar right={<Link href="/" className="ed-btn ed-btn-secondary">← Back to site</Link>} />
-
-      <section className="mk-section">
-        <div className="mk-wrap" style={{ maxWidth: 720 }}>
-          <div className="ed-eyebrow">Legal · Last updated {lastUpdated}</div>
-          <h1 className="ed-h1">Privacy <em>policy</em>.</h1>
-          <p className="ed-sub" style={{ maxWidth: 640 }}>
+    <div style={{ maxWidth: 720 }}>
+      <div className="ed-eyebrow">Legal · Last updated {lastUpdated}</div>
+      <h1 className="ed-h1">Privacy <em>policy</em>.</h1>
+      <p className="ed-sub" style={{ maxWidth: 640 }}>
             FlyCheap (the &quot;Service&quot;, available at{' '}
             <a href="https://flycheap.live">flycheap.live</a>) is operated by Myron Mekhael
             (sole proprietor, New York, USA) and is a fare-monitoring tool that lets you track
@@ -168,17 +162,10 @@ export default function PrivacyPage() {
             </div>
           </div>
 
-          <p className="ed-panel-note" style={{ marginTop: 28 }}>
-            Operated by the FlyCheap team. Questions:{' '}
-            <a href="mailto:privacy@flycheap.live">privacy@flycheap.live</a>.
-          </p>
-        </div>
-      </section>
-
-      <PublicFooter
-        left={<>© 2026 FlyCheap · Operated by Myron Mekhael, New York, USA · All rights reserved</>}
-        right={<><Link href="/terms">Terms</Link> · <Link href="/trial-terms">Trial terms</Link> · {APP_VERSION_SHORT}</>}
-      />
+      <p className="ed-panel-note" style={{ marginTop: 28 }}>
+        Operated by the FlyCheap team. Questions:{' '}
+        <a href="mailto:privacy@flycheap.live">privacy@flycheap.live</a>.
+      </p>
     </div>
   );
 }
