@@ -17,7 +17,7 @@ function Btn() {
 export function ArchiveButton({ id }: { id: number }) {
   const [res, action] = useActionState<RouteResult | null, FormData>(archiveRoute, null);
   if (res?.message) {
-    return <span className={`text-[11.5px] ${res.ok ? 'text-emerald-300' : 'text-rose-300'}`}>{res.ok ? '✓ ' : '✕ '}{res.message}</span>;
+    return <span className={`text-[11.5px] ${res.ok ? 'ad-tone-good' : 'ad-tone-bad'}`}>{res.ok ? '✓ ' : '✕ '}{res.message}</span>;
   }
   return (
     <form action={action}>

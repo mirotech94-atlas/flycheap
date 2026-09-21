@@ -5,6 +5,7 @@ import { APP_URL } from '@/lib/hosts';
 import {
   PageHead, SectionHead, Kpi, Panel, Status, Table, BarRow, fmtInt, fmtMoney, type Tone,
 } from '../_components/ui';
+import { Funnel } from '../_components/Funnel';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +30,6 @@ export default async function FunnelPage() {
   if (!isAdminUser(user)) redirect(APP_URL);
 
   const m = funnelMetrics(30);
-  const maxStage = Math.max(...m.overall.map(s => s.n), 1);
 
   const sent = m.overall[0]?.n ?? 0;
   const clicked = m.overall[1]?.n ?? 0;
@@ -77,24 +77,8 @@ export default async function FunnelPage() {
 
       <SectionHead title="The funnel" />
       <Panel className="mb-6">
-        {m.overall.map(s => (
-          <BarRow
-            key={s.stage}
-            label={s.stage}
-            value={s.n}
-            max={maxStage}
-            tone={s.n === 0 ? 'bad' : 'neutral'}
-            right={
-              <>
-                {fmtInt(s.n)}
-                {s.ofPreviousPct != null && (
-                  <span className="text-white/35 ml-2">{s.ofPreviousPct.toFixed(1)}% of previous</span>
-                )}
-              </>
-            }
-          />
-        ))}
-        <p className="text-[11.5px] text-white/40 mt-3">
+        <Funnel stages={m.overall} />
+        <p className="ad-note mt-3">
           {m.deliveryInstrumented ? (
             <>
               <strong>delivered</strong> and <strong>opened</strong> come from the ESP webhook.
@@ -120,7 +104,7 @@ export default async function FunnelPage() {
       />
       <Panel className="mb-6">
         {m.byAlertKind.length === 0 ? (
-          <p className="text-sm text-white/45">No alerts recorded in this window.</p>
+          <p className="ad-note">No alerts recorded in this window.</p>
         ) : (
           <>
             <Table head={['Alert type', 'Sent', 'Clicked', 'CTR', 'Commission']}>
@@ -138,7 +122,7 @@ export default async function FunnelPage() {
                 </tr>
               ))}
             </Table>
-            <p className="text-[11.5px] text-white/40 mt-3">
+            <p className="ad-note mt-3">
               If mistake-fare alerts convert several times better than threshold alerts, poll harder for
               anomalies and throttle threshold checks. This table is the evidence for that decision —
               before the alert kind was recorded correctly, it could not be made.
@@ -150,7 +134,7 @@ export default async function FunnelPage() {
       <div className="grid gap-3 lg:grid-cols-2 mb-6">
         <Panel title="By surface" sub="Where the click came from">
           {m.byChannel.length === 0 ? (
-            <p className="text-sm text-white/45">No clicks recorded.</p>
+            <p className="ad-note">No clicks recorded.</p>
           ) : (
             m.byChannel.map(c => (
               <BarRow
@@ -160,7 +144,7 @@ export default async function FunnelPage() {
               />
             ))
           )}
-          <p className="text-[11.5px] text-white/40 mt-3">
+          <p className="ad-note mt-3">
             An <strong>untagged</strong> row means a surface is emitting links outside the builder.
             That is the marker bug in miniature; find it before it grows.
           </p>
@@ -168,7 +152,7 @@ export default async function FunnelPage() {
 
         <Panel title="By product" sub="What the click was for — the axis the trip chain monetizes along">
           {m.byProduct.length === 0 ? (
-            <p className="text-sm text-white/45">No clicks recorded.</p>
+            <p className="ad-note">No clicks recorded.</p>
           ) : (
             m.byProduct.map(p => (
               <BarRow
@@ -187,7 +171,7 @@ export default async function FunnelPage() {
       />
       <Panel>
         {m.cohorts.length === 0 ? (
-          <p className="text-sm text-white/45">No accounts yet.</p>
+          <p className="ad-note">No accounts yet.</p>
         ) : (
           <Table head={['Cohort', 'Users', 'Active M+1', 'Active M+3', 'Ever clicked']}>
             {m.cohorts.map(c => {
@@ -206,7 +190,7 @@ export default async function FunnelPage() {
             })}
           </Table>
         )}
-        <p className="text-[11.5px] text-white/40 mt-3">
+        <p className="ad-note mt-3">
           A cohort with users but zero click-outs has not activated at all — that is an onboarding
           problem, not a monetization one, and no amount of chain email will fix it.
         </p>

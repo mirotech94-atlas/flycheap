@@ -902,3 +902,36 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-stackbar-seg.b { background: var(--amber); }
 .ed-stackbars-axis { display: flex; gap: 5px; margin-top: 6px; }
 .ed-stackbars-tick { flex: 1 1 0; min-width: 2px; text-align: center; font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Funnel (Funnel.tsx) — README "Feature-block catalogue": Funnel.
+   5(+) stages, 44px bars on --surface-2, last (conversion) stage
+   --amber, serif value right. Stage count is whatever `stages.length`
+   the caller passes — never fixed here (see the component's own
+   comment on funnelMetrics' conditional delivered/opened rows). */
+.ed-funnel { display: grid; }
+.ed-funnel-row { display: grid; grid-template-columns: minmax(140px, 1fr) 2.4fr auto; align-items: center; gap: 18px; padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+.ed-funnel-row:first-child { border-top: 0; }
+.ed-funnel-label { font-size: 13px; color: var(--ink-soft); }
+.ed-funnel-bar { height: 44px; background: var(--surface-2); }
+.ed-funnel-bar-fill { height: 100%; background: var(--accent); }
+/* Raw --amber on --surface-2 measures 2.59:1 in light (below the 3:1
+   non-text floor, WCAG 1.4.11) — --surface-2 is itself a warm cream
+   close in lightness to amber. Reuses .ad-tone-gold's same 65%
+   amber/ink mix (4.81:1 light / 8.78:1 dark against --surface-2). */
+.ed-funnel-bar-fill.amber { background: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+.ed-funnel-value { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ed-funnel-value-n { font-family: var(--font-serif); font-weight: 400; font-size: 22px; letter-spacing: -0.01em; line-height: 1; color: var(--ink); }
+.ed-funnel-meta { font-family: var(--font-mono-ed); font-size: 10.5px; color: var(--muted-2); white-space: nowrap; }
+
+/* ---- Poll heatmap (Heatmap.tsx) — README "Feature-block catalogue":
+   Fare engine. 20px cells, 3px gap, radius 0, accent mixed 12→92% by
+   call volume, tinted toward --red by error share. Row/cell counts
+   come entirely from the caller's data (see the component's own
+   comment — providerHealthHourly has no provider dimension, so Fare
+   engine renders one 1×24 strip, not a fabricated 7×24 week). */
+.ed-heatmap-row { display: flex; align-items: center; margin-bottom: 3px; }
+.ed-heatmap-row-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-2); width: 96px; flex-shrink: 0; }
+.ed-heatmap-grid { display: grid; }
+.ed-heatmap-cell { border-radius: 0; }
+.ed-heatmap-axis { display: grid; margin-top: 6px; }
+.ed-heatmap-tick { font-family: var(--font-mono-ed); font-size: 9.5px; color: var(--muted-2); text-align: center; white-space: nowrap; overflow: hidden; }
