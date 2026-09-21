@@ -14,5 +14,8 @@ export async function POST(req: Request) {
   if (!r.ok) {
     return NextResponse.json({ ok: false, error: r.error || r.skipped || 'unknown' }, { status: 500 });
   }
-  return NextResponse.json({ ok: true, id: r.id });
+  // Report the address the notifier actually used. The form field can hold
+  // an edited-but-unsaved value, and the send reads the SAVED alert_email —
+  // quoting the field told the owner to check an address nothing was sent to.
+  return NextResponse.json({ ok: true, id: r.id, to: r.to ?? null });
 }

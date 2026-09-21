@@ -50,7 +50,17 @@ export function SettingsForm({
     try {
       const res = await fetch('/api/settings/test-email', { method: 'POST' });
       const j = await res.json().catch(() => ({}));
-      if (j.ok) setMsg(`Test email sent (id ${j.id || '—'}). Check ${email}.`);
+      if (j.ok) {
+        // Name the address the server actually sent to. Send-test uses the
+        // SAVED alert email, so if the field has been edited and not saved,
+        // the two differ — say so rather than pointing at the wrong inbox.
+        const sentTo = j.to || email;
+        const unsaved = sentTo !== email;
+        setMsg(
+          `Test email sent (id ${j.id || '—'}). Check ${sentTo}.`
+          + (unsaved ? ` Save first if you meant ${email} — the test uses your saved address.` : '')
+        );
+      }
       else setMsg(`Test email failed: ${j.error || res.statusText}`);
     } finally {
       setTesting(false);

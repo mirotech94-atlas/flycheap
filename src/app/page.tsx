@@ -632,7 +632,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* First-run guided tour of every tab — self-triggers from the sign-up flag. */}
       <OnboardingTour />
 
-      {/* === Header === */}
+      {/* === Header — brief on the left, live globe on the right === */}
+      <div className="ed-brief">
+      <div className="ed-brief-copy">
       <div className="ed-eyebrow">{t.eyebrow}</div>
       {/* Background polling runs silently — no status pill in the header. */}
       <h1 className="ed-h1">
@@ -663,6 +665,19 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         )}
         <Link className="ed-btn ed-btn-secondary" href="/searches">{t.addWatch}</Link>
       </div>
+      </div>
+
+      <div className="fc-hero-globe ed-brief-globe" style={{ border: '1px solid var(--rule)' }}>
+        <div className="fc-globe-frame">
+          <span className="fc-corner tl" /><span className="fc-corner tr" />
+          <span className="fc-corner bl" /><span className="fc-corner br" />
+        </div>
+        <div className="fc-globe-tag tl">{fill(t.globeTl, { n: filteredDeals.length || 87 })}</div>
+        <div className="fc-globe-tag br">{fill(t.globeBr, { a: belowThresholdCount || 2, t: trackedRoutes.length })}</div>
+        <FcGlobe />
+      </div>
+      </div>
+
       <hr className="ed-rule" />
       <div className="ed-stats">
         <div className="ed-stat">
@@ -740,17 +755,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         )}
       </div>
 
-      {/* === Live network + ticker — stay, restyled onto editorial tokens === */}
+      {/* === Ticker tape — the globe it used to sit under now rides beside the
+             brief at the top of the page. === */}
       <section>
-        <div className="fc-hero-globe" style={{ border: '1px solid var(--rule)' }}>
-          <div className="fc-globe-frame">
-            <span className="fc-corner tl" /><span className="fc-corner tr" />
-            <span className="fc-corner bl" /><span className="fc-corner br" />
-          </div>
-          <div className="fc-globe-tag tl">{fill(t.globeTl, { n: filteredDeals.length || 87 })}</div>
-          <div className="fc-globe-tag br">{fill(t.globeBr, { a: belowThresholdCount || 2, t: trackedRoutes.length })}</div>
-          <FcGlobe />
-        </div>
         {/* Ticker tape */}
         <div className="fc-ticker" style={{ background: 'var(--surface-2)' }}>
           <div className="fc-ticker-tag ed-mono">{t.ticker}</div>

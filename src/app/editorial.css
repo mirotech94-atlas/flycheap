@@ -172,6 +172,15 @@ a.ed-ranked-row:hover, a.ed-tile:hover { opacity: 0.72; }
 .ed-bar { height: 8px; background: var(--track); } .ed-bar-fill { height: 100%; background: var(--accent); }
 .ed-bar-fill.amber { background: var(--amber); } .ed-bar-fill.green { background: var(--green); }
 .ed-ranked-value { font-family: var(--font-mono-ed); font-size: 12px; text-align: right; color: var(--ink); }
+/* The four fixed tracks (180px name + bar + 90px value + CTA) cannot fit a
+   phone: they forced the whole document ~26px wider than the viewport, which
+   let the page slide sideways under the fixed rail. Below 560px the row
+   becomes two lines — name and value, then the bar and its action. */
+@media (max-width: 560px) {
+  .ed-ranked-row { grid-template-columns: minmax(0, 1fr) auto; gap: 8px 12px; }
+  .ed-ranked-bar { grid-column: 1 / -1; }
+  .ed-ranked-value { text-align: left; }
+}
 
 /* Panel — a ruled surface block (PageKit's FcPanel; also used directly by
    pages composing their own feature blocks, e.g. OffersExplorer.tsx). 1px
@@ -514,9 +523,27 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .pt-rail-item.active .pt-rail-item-inner svg { opacity: 1; color: var(--accent); }
 
 @media (min-width: 901px) {
-  body:has(.pt-rail) main { margin-left: 214px; }
-  body:has(.pt-rail) .ed-footer { margin-left: 214px; }
+  /* `width: auto`, not just the margin: <main> carries Tailwind's w-full
+     (width: 100%), so a bare margin-left made the page exactly 214px wider
+     than the viewport — the whole document slid sideways under the fixed
+     rail. The footer gets the same treatment for the same reason. */
+  body:has(.pt-rail) main { margin-left: 214px; width: auto; }
+  body:has(.pt-rail) .ed-footer { margin-left: 214px; width: auto; }
 }
+
+/* The executive brief reads left-to-right: the headline and its actions, then
+   the live globe beside them. Below 1100px the globe drops under the copy
+   rather than squeezing it. */
+.ed-brief { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 32px; align-items: start; }
+.ed-brief-globe { min-height: 320px; }
+@media (max-width: 1100px) { .ed-brief { grid-template-columns: minmax(0, 1fr); } .ed-brief-globe { min-height: 260px; } }
+
+/* Support: the thread list is the main column, the "open a ticket" form sits
+   beside it. Previously a 64ch column centred in a full-width page, with the
+   space either side left empty. */
+.ed-support-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 400px); gap: 32px; align-items: start; }
+.ed-support-form { position: sticky; top: 86px; }
+@media (max-width: 900px) { .ed-support-grid { grid-template-columns: minmax(0, 1fr); } .ed-support-form { position: static; } }
 
 /* Below the rail breakpoint the ☰ in the top bar owns it: closed by default
    so a phone opens on content, and it pushes the page rather than floating

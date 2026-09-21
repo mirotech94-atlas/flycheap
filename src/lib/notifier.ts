@@ -16,6 +16,9 @@ export type NotifyResult = {
   error?: string;
   id?: string;
   skipped?: string;
+  /** The address/number the send actually used — callers report it so a UI
+   *  cannot name an edited-but-unsaved value the send never saw. */
+  to?: string;
 };
 
 function shortMessage(opts: {
@@ -625,7 +628,9 @@ export async function sendTestNotification(
           flexDates: [{ depart: '2026-12-18', return: '2027-01-03', price: 890 }],
         },
       });
-      return { channel, ok: r.ok, error: r.ok ? undefined : r.error, id: r.ok ? r.id : undefined };
+      // `to` travels back so the caller can name the address that was used —
+      // the settings form can be holding an edited, unsaved one.
+      return { channel, ok: r.ok, error: r.ok ? undefined : r.error, id: r.ok ? r.id : undefined, to: email };
     }
     case 'sms':      return sendTwilio('sms', phone, body);
     case 'whatsapp': return sendTwilio('whatsapp', phoneWa, body);
