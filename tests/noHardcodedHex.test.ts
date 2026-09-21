@@ -23,7 +23,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/layout.tsx': 24,
   'src/components/WorldMap.tsx': 16,
   'src/app/admin/_components/AdminSidebar.tsx': 13,
-  'src/app/support/[ref]/page.tsx': 13,
   'src/app/admin/signups/page.tsx': 12,
   // Tenant brand data, not styling: the 8 palette-preset swatches + the 2
   // occurrences of the house-blue default (useState initial + API fallback).
@@ -48,7 +47,6 @@ const ALLOWLIST: Record<string, number> = {
   // viewport.themeColor onto BRAND_GROUNDS.dark; this is the one unrelated
   // literal left).
   'src/app/layout.tsx': 1,
-  'src/app/onboarding/page.tsx': 3,
   'src/components/AdminChip.tsx': 3,
   'src/components/BestDealsCard.tsx': 3,
   'src/components/ClientSidebar.tsx': 3,
