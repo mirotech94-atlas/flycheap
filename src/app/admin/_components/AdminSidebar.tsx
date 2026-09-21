@@ -119,6 +119,11 @@ export function AdminSidebar({ email }: { email: string }) {
           </button>
         </form>
       </nav>
+
+      <Link href="/" className="ad-rail-foot">
+        <Icon kind="back" />
+        Back to client app
+      </Link>
     </aside>
   );
 }

@@ -59,7 +59,6 @@ export default async function AdminLayout({ children }: { children: React.ReactN
         <div className="flex items-center gap-3 ad-right">
           <span className="hidden md:inline ed-mono ad-founder">Founder access</span>
           <ThemeToggle />
-          <a href="/" className="ed-btn ed-btn-secondary ed-mono">Client portal</a>
         </div>
       </header>
 

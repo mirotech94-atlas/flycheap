@@ -777,6 +777,12 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-rail-item-inner svg { opacity: 0.65; flex-shrink: 0; }
 .ad-rail-item.active .ad-rail-item-inner svg { opacity: 1; color: var(--accent); }
 .ad-rail-logout { width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; cursor: pointer; font: inherit; }
+/* Restored per fix-round-1 ruling A1: the base sidebar's footer control,
+   dropped in the first pass, mirrored here on tokens (was text-[11px]
+   text-white/55 hover:text-white on a border-t). */
+.ad-rail-foot { display: flex; align-items: center; gap: 8px; padding: 14px 24px; margin-top: 8px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--muted); text-decoration: none; }
+.ad-rail-foot:hover { color: var(--ink); }
+.ad-rail-foot svg { flex-shrink: 0; opacity: 0.7; }
 
 /* ---- generic remaps for admin pages not yet converted off .card/.kpi/
    raw headings/slate utilities/<code> — kept until their own tasks land.
@@ -791,6 +797,13 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-shell h1:not(.ed-h1) { font-size: 2.05rem; line-height: 1.04; }
 .ad-shell h2:not(.ed-h2) { font-size: 1.4rem; line-height: 1.1; }
 .ad-shell h3 { font-size: 1.1rem; }
+/* Added per fix-round-1 ruling A2: the report claimed this rule already
+   existed and it didn't — 5 not-yet-converted pages use the bare .eyebrow
+   class (farepilot, integrations, queue, errors, revenue) and were falling
+   through to the global Tailwind .eyebrow. Raw --accent measures 6.88:1
+   (light, on --bg) / 7.18:1 (light, on --surface) / 7.32–8.01:1 (dark) — no
+   mix needed. */
+.ad-shell .eyebrow { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
 .ad-shell .card, .ad-shell .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); }
 .ad-shell .card-elevated { border-color: var(--accent); background: var(--surface); }
 .ad-shell .card:hover { border-color: var(--rule-strong); }
