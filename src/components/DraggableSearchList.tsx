@@ -126,7 +126,7 @@ export function DraggableSearchList({
   if (ordered.length === 0) return null;
 
   return (
-    <table className="fmt">
+    <table className="ed-table">
       <thead>
         <tr>
           <th className="w-6" />
@@ -135,8 +135,8 @@ export function DraggableSearchList({
           <th>Route</th>
           <th>Dates</th>
           <th>Party</th>
-          <th className="text-right">Per adult</th>
-          <th className="text-right">30d price history</th>
+          <th className="num">Per adult</th>
+          <th className="num">30d price history</th>
           <th>Created</th>
           <th></th>
         </tr>
@@ -160,20 +160,20 @@ export function DraggableSearchList({
               onDragEnd={reset}
               style={{
                 opacity: isDragging ? 0.45 : 1,
-                outline: isOver ? '2px dashed rgba(212,175,55,0.65)' : 'none',
+                outline: isOver ? '2px dashed var(--accent)' : 'none',
                 outlineOffset: -2,
                 cursor: 'grab',
               }}
             >
-              <td className="text-slate-400 select-none" title="Drag to reorder">⋮⋮</td>
-              <td className="text-slate-500 font-mono">{s.id}</td>
+              <td className="select-none" style={{ color: 'var(--muted-2)' }} title="Drag to reorder">⋮⋮</td>
+              <td className="num" style={{ color: 'var(--muted)' }}>{s.id}</td>
               <td>
                 {s.active === 1
-                  ? <span className="badge badge-success">active</span>
-                  : <span className="badge badge-muted">paused</span>}
+                  ? <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}><span className="ed-dot" aria-hidden /> active</span>
+                  : <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, color: 'var(--muted-2)' }}><span className="ed-dot" style={{ background: 'var(--muted-2)' }} aria-hidden /> paused</span>}
               </td>
               <td className="font-semibold whitespace-nowrap">{s.origin} → {s.destination}</td>
-              <td className="text-slate-600 dark:text-slate-300 whitespace-nowrap">
+              <td className="whitespace-nowrap" style={{ color: 'var(--ink-soft)' }}>
                 {s.date_mode === 'any' ? (
                   <span title="We scan every month and alert on the cheapest window">
                     Any dates · cheapest window
@@ -183,28 +183,28 @@ export function DraggableSearchList({
                 )}
               </td>
               <td className="whitespace-nowrap">{s.adults}A + {s.infants}I</td>
-              <td className="text-right font-semibold tabular whitespace-nowrap">
+              <td className="num whitespace-nowrap">
                 {fare != null ? (
-                  <span className={under ? 'text-emerald-600 dark:text-emerald-400' : ''}>
+                  <span style={under ? { color: 'var(--green)' } : undefined}>
                     {fmtUSD(fare)}
-                    {under && <span className="ml-1 text-[10px] uppercase tracking-wide">below</span>}
+                    {under && <span className="ed-mono" style={{ marginLeft: 4, color: 'var(--green)' }}>below</span>}
                   </span>
-                ) : <span className="text-slate-400">—</span>}
+                ) : <span style={{ color: 'var(--muted-2)' }}>—</span>}
               </td>
               <td className="text-right">
                 {hist.length > 1 ? (
                   <div className="inline-block w-[132px]"><Sparkline data={hist} threshold={en?.threshold} showMinMax /></div>
-                ) : <span className="text-slate-400 text-xs">no data</span>}
+                ) : <span className="text-xs" style={{ color: 'var(--muted-2)' }}>no data</span>}
               </td>
-              <td className="text-slate-500 whitespace-nowrap">{fmtRelative(s.created_at)}</td>
-              <td>
+              <td className="whitespace-nowrap" style={{ color: 'var(--muted)' }}>{fmtRelative(s.created_at)}</td>
+              <td className="cta">
                 <div className="flex items-center gap-1.5 justify-end">
                   {fare != null && (
                     <a
                       href={trackedBookHref(s, fare)}
                       target="_blank"
                       rel="noopener noreferrer sponsored"
-                      className="btn btn-sm btn-primary"
+                      className="ed-btn ed-btn-row"
                       title={`Book ${s.origin} → ${s.destination} via Aviasales`}
                     >
                       Book →

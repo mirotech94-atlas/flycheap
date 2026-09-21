@@ -51,12 +51,12 @@ export function SearchForm() {
   }
 
   return (
-    <form onSubmit={submit} className="card">
-      <h2>Add a new search</h2>
+    <form onSubmit={submit} className="ed-panel">
+      <h2 className="ed-h2">Add a new search</h2>
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
         <div>
-          <label>Origin</label>
-          <select value={origin} onChange={(e) => setOrigin(e.target.value as 'JFK' | 'EWR')} className="w-full">
+          <label className="ed-label">Origin</label>
+          <select value={origin} onChange={(e) => setOrigin(e.target.value as 'JFK' | 'EWR')} className="ed-input">
             <option value="JFK">JFK — New York</option>
             <option value="EWR">EWR — Newark (no nonstop on EgyptAir)</option>
           </select>
@@ -72,12 +72,12 @@ export function SearchForm() {
           onChange={setReturnDate}
           minDate={departDate}
         />
-        <button type="submit" className="btn btn-primary" disabled={pending}>
+        <button type="submit" className="ed-btn ed-btn-primary" disabled={pending}>
           {pending ? 'Adding…' : 'Add search'}
         </button>
       </div>
-      <p className="text-xs text-slate-500 mt-2">Party fixed at 4 adults + 1 infant on lap, EgyptAir nonstop only, destination CAI. Note: EgyptAir does NOT fly nonstop EWR→CAI — only JFK.</p>
-      {err && <p className="text-sm text-red-600 mt-2">{err}</p>}
+      <p className="ed-panel-note">Party fixed at 4 adults + 1 infant on lap, EgyptAir nonstop only, destination CAI. Note: EgyptAir does NOT fly nonstop EWR→CAI — only JFK.</p>
+      {err && <p className="ed-panel-note" style={{ color: 'var(--red)', marginTop: 8 }}>{err}</p>}
     </form>
   );
 }
