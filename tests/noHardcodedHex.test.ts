@@ -25,7 +25,11 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/_components/AdminSidebar.tsx': 13,
   'src/app/support/[ref]/page.tsx': 13,
   'src/app/admin/signups/page.tsx': 12,
-  'src/components/WhiteLabelSettings.tsx': 12,
+  // Tenant brand data, not styling: the 8 palette-preset swatches + the 2
+  // occurrences of the house-blue default (useState initial + API fallback).
+  // Task 2.11b converted every styling hex in this file to tokens; these are
+  // what a tenant sees as THEIR colour, which is exactly what stays literal.
+  'src/components/WhiteLabelSettings.tsx': 10,
   'src/app/admin/_components/ui.tsx': 11,
   'src/app/admin/users/page.tsx': 10,
   'src/components/InteractiveGlobe.tsx': 10,
@@ -36,12 +40,14 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/tickets/[ref]/page.tsx': 7,
   'src/components/GlobeHUD.tsx': 7,
   'src/app/admin/health/page.tsx': 6,
-  'src/components/charts.tsx': 5,
   'src/components/ExecKpiStrip.tsx': 5,
   'src/components/fc/SkyGradient.tsx': 5,
   'src/components/FcFareCalendar.tsx': 5,
   'src/app/admin/economics/page.tsx': 4,
-  'src/app/layout.tsx': 3,
+  // viewport.themeColor + the tenant house-blue default (out of scope for
+  // 2.11b — the tenant-ink DERIVATION this file does was converted; these
+  // two are unrelated literals it still carries).
+  'src/app/layout.tsx': 2,
   'src/app/onboarding/page.tsx': 3,
   'src/components/AdminChip.tsx': 3,
   'src/components/BestDealsCard.tsx': 3,

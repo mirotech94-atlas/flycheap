@@ -18,6 +18,17 @@
 
 const HEX = /^#?([\da-f]{6})$/i;
 
+/**
+ * The two grounds tenant ink is derived against — the editorial system's
+ * `--bg` in each theme (`src/app/editorial.css`). A tenant's brand colour is
+ * never drawn as ink directly; it is always checked against whichever of
+ * these the page is actually sitting on, via `contrastSafe`.
+ */
+export const BRAND_GROUNDS = {
+  light: '#FBFAF7',
+  dark: '#0E1113',
+} as const;
+
 /** sRGB relative luminance, per WCAG 2.1. */
 export function relativeLuminance(hex: string): number | null {
   const m = HEX.exec(hex.trim());

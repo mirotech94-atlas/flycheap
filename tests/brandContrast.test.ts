@@ -6,8 +6,8 @@ import {
   relativeLuminance,
 } from '../src/lib/brandContrast';
 
-const CABIN = '#0B1220'; // --nc-dark, the ground tenant ink is drawn on
-const STOCK = '#F4F2EC'; // --nc-stock, the light document surface
+const CABIN = '#0E1113'; // editorial --bg (dark), one of the two grounds tenant ink is drawn on
+const STOCK = '#FBFAF7'; // editorial --bg (light), the other ground
 
 describe('relativeLuminance', () => {
   it('anchors at the WCAG endpoints', () => {

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { PUBLIC_CLIENT_HOST } from '@/lib/hosts';
-import { contrastSafe, contrastRatio } from '@/lib/brandContrast';
+import { contrastSafe, contrastRatio, BRAND_GROUNDS } from '@/lib/brandContrast';
 
 type Branding = {
   brand_color: string | null;
@@ -13,6 +13,8 @@ type Branding = {
   stripe_customer_id?: string | null;
 };
 
+// Tenant brand data, not styling — these are the colours on offer, and the
+// swatches render them literally so the tenant sees their own choice.
 const PRESETS = [
   { name: 'House blue (default)', color: '#1A4459' },
   { name: 'Emerald',         color: '#047857' },
@@ -36,6 +38,9 @@ export function WhiteLabelSettings() {
   const [domain, setDomain] = useState('');
   const [domainSaving, setDomainSaving] = useState(false);
   const [domainNote, setDomainNote] = useState<string | null>(null);
+  // Which of the two editorial grounds the reader is actually looking at —
+  // the preview has to judge the brand against THAT one, not a fixed guess.
+  const [theme, setTheme] = useState<'light' | 'dark'>('light');
 
   useEffect(() => {
     fetch('/api/me').then(r => r.ok ? r.json() : null).then(j => {
@@ -56,6 +61,16 @@ export function WhiteLabelSettings() {
     }
   }, [color]);
 
+  // Track the live theme so the preview always judges against the ground the
+  // reader is on, the same way layout.tsx picks --brand-ink per theme.
+  useEffect(() => {
+    const read = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+
   async function save() {
     setBusy(true); setMsg(null);
     try {
@@ -74,30 +89,32 @@ export function WhiteLabelSettings() {
   }
 
   if (!me) {
-    return <div className="card text-sm text-slate-500 text-center py-6">Sign in to manage branding.</div>;
+    return <div className="ed-panel" style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '24px 0' }}>Sign in to manage branding.</div>;
   }
 
   const isFree = me.tier === 'free';
 
-  // What the app will actually draw as ink on the dark chrome. Mirrors exactly
-  // what layout.tsx injects, so the preview cannot drift from the real thing.
-  const NC_DARK = '#0B1220';
-  const derivedInk = contrastSafe(color, NC_DARK);
-  const ratio = contrastRatio(color, NC_DARK) ?? 0;
+  // What the app will actually draw as ink on the ground the reader is
+  // currently looking at. Mirrors exactly what layout.tsx derives (same
+  // BRAND_GROUNDS, same contrastSafe call), so the preview cannot drift from
+  // the real thing.
+  const ground = BRAND_GROUNDS[theme];
+  const derivedInk = contrastSafe(color, ground);
+  const ratio = contrastRatio(color, ground) ?? 0;
 
   return (
-    <div className={`card ${isFree ? 'opacity-90' : ''}`}>
-      <div className="card-head">
+    <div className="ed-panel" style={{ opacity: isFree ? 0.9 : 1 }}>
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-brand-700">White-label</div>
-          <h2 className="!mb-0">Branding</h2>
+          <div className="ed-eyebrow">White-label</div>
+          <h2 className="ed-panel-title">Branding</h2>
         </div>
         {isFree
-          ? <a href="/api/billing/checkout" className="btn btn-primary btn-sm">Upgrade to Pro to unlock</a>
-          : <span className="badge badge-info">{me.tier}</span>}
+          ? <a href="/api/billing/checkout" className="ed-btn ed-btn-primary">Upgrade to Pro to unlock</a>
+          : <span className="ed-chip">{me.tier}</span>}
       </div>
 
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="ed-panel-note" style={{ marginBottom: 16 }}>
         Customize the dashboard&apos;s brand color, logo, and the sender email used for fare-alert notifications.
         Live preview is applied to the dashboard chrome the moment you change a value.
       </p>
@@ -105,9 +122,7 @@ export function WhiteLabelSettings() {
       <div className="space-y-4">
         {/* Brand color */}
         <div>
-          <label className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-1.5 block">
-            Brand color
-          </label>
+          <label className="ed-label">Brand color</label>
           <div className="flex items-center gap-3 flex-wrap">
             <div className="flex items-center gap-2">
               <input
@@ -115,7 +130,7 @@ export function WhiteLabelSettings() {
                 value={color}
                 onChange={e => setColor(e.target.value)}
                 disabled={isFree}
-                className="!w-12 !h-12 !p-0 !rounded-lg border-2"
+                style={{ width: 44, height: 44, padding: 0, border: '1px solid var(--rule-strong)', borderRadius: 0, background: 'var(--surface)' }}
               />
               <input
                 type="text"
@@ -123,54 +138,55 @@ export function WhiteLabelSettings() {
                 onChange={e => setColor(e.target.value)}
                 disabled={isFree}
                 pattern="^#[0-9a-fA-F]{6}$"
-                className="font-mono text-sm w-28"
+                className="ed-input"
+                style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 13, width: 112 }}
               />
             </div>
             <div className="flex gap-1.5 flex-wrap">
-              {PRESETS.map(p => (
-                <button
-                  key={p.color}
-                  type="button"
-                  onClick={() => setColor(p.color)}
-                  disabled={isFree}
-                  title={p.name}
-                  className={`w-8 h-8 rounded-lg border-2 transition hover:scale-110 disabled:hover:scale-100 ${color.toLowerCase() === p.color.toLowerCase() ? 'border-slate-900 dark:border-white' : 'border-transparent'}`}
-                  style={{ background: p.color }}
-                />
-              ))}
+              {PRESETS.map(p => {
+                const selected = color.toLowerCase() === p.color.toLowerCase();
+                return (
+                  <button
+                    key={p.color}
+                    type="button"
+                    onClick={() => setColor(p.color)}
+                    disabled={isFree}
+                    title={p.name}
+                    style={{
+                      width: 30,
+                      height: 30,
+                      background: p.color,
+                      border: '1px solid var(--rule-strong)',
+                      borderRadius: 0,
+                      outline: selected ? '2px solid var(--ink)' : 'none',
+                      outlineOffset: 2,
+                      cursor: isFree ? 'not-allowed' : 'pointer',
+                      padding: 0,
+                    }}
+                  />
+                );
+              })}
             </div>
           </div>
           {/* Live mini preview */}
-          <div className="mt-3 rounded-xl overflow-hidden border border-slate-200 dark:border-slate-700">
+          <div className="mt-3" style={{ border: '1px solid var(--rule-strong)' }}>
             <div
-              className="h-12 flex items-center justify-between px-4 text-white text-sm font-display font-bold"
-              style={{ background: `linear-gradient(135deg, ${color} 0%, ${color}cc 100%)` }}
+              className="h-12 flex items-center justify-between px-4 text-sm font-display font-bold"
+              style={{ background: color, color: 'var(--panel-fg)' }}
             >
               <span>Brand preview</span>
-              <span className="text-[10px] uppercase tracking-wider opacity-70">Header</span>
+              <span className="ed-mono" style={{ opacity: 0.7, color: 'inherit' }}>Header</span>
             </div>
-            {/* This row previews the tenant's raw brand hex as ink. It used to sit
-                on dark:bg-slate-900, where the DEFAULT brand (#0a3a6b) read at
-                1.55:1 -- the preview was unreadable for every tenant who had
-                not picked a colour yet. A preview card is a document surface,
-                so it is pinned to ticket stock in both themes: the swatch is
-                then judged against the light chrome it actually ships on. */}
-            <div className="px-4 py-3 bg-[var(--nc-stock)] flex items-center gap-2">
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white" style={{ background: color }}>Primary CTA</button>
-              <span className="text-xs font-semibold" style={{ color }}>Brand text</span>
-            </div>
-
-            {/* The SAME colour on the dark chrome, which is where a dark brand
-                used to vanish at 1.55:1. The app no longer prints the raw hex
-                as ink there -- it derives a variant that keeps the hue and
-                clears AA -- so this row shows the tenant BOTH: what they picked,
-                and what the app will actually draw. Without it the derivation is
-                invisible and looks like the product ignoring their choice. */}
-            <div className="px-4 py-3 bg-[var(--nc-dark)] flex items-center gap-2 border-t border-white/10">
-              <button type="button" className="px-3 py-1.5 rounded-md text-xs font-semibold text-white" style={{ background: color }}>Primary CTA</button>
+            {/* This row previews the tenant's raw brand hex as ink, judged
+                against whichever editorial ground (--bg light or dark) the
+                reader is currently on — the same two grounds layout.tsx
+                derives --brand-ink against, read live via data-theme so the
+                preview never shows a ground the page isn't actually using. */}
+            <div className="px-4 py-3 flex items-center gap-2" style={{ background: 'var(--bg)', borderTop: theme === 'dark' ? '1px solid var(--rule)' : undefined }}>
+              <button type="button" className="ed-btn" style={{ background: color, color: derivedInk }}>Primary CTA</button>
               <span className="text-xs font-semibold" style={{ color: derivedInk }}>Brand text</span>
               {derivedInk.toLowerCase() !== color.toLowerCase() && (
-                <span className="ml-auto text-[10px] font-mono text-[var(--nc-on-dark-faint)]" title={`Your ${color} is ${ratio.toFixed(2)}:1 on the dark chrome — below the 4.5:1 needed to read. Lightened to ${derivedInk}, same hue.`}>
+                <span className="ed-mono" style={{ marginLeft: 'auto', color: 'var(--muted-2)' }} title={`Your ${color} is ${ratio.toFixed(2)}:1 on this ground — below the 4.5:1 needed to read. Lightened to ${derivedInk}, same hue.`}>
                   lightened to {derivedInk} for contrast
                 </span>
               )}
@@ -180,12 +196,12 @@ export function WhiteLabelSettings() {
 
         {/* Logo URL */}
         <div>
-          <label className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-1.5 block">
-            Logo URL <span className="text-slate-400 normal-case font-normal">— PNG/SVG, square, recommended 256×256</span>
+          <label className="ed-label">
+            Logo URL <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--muted-2)', fontWeight: 400 }}>— PNG/SVG, square, recommended 256×256</span>
           </label>
           <div className="flex items-center gap-3">
             {logo && (
-              <img src={logo} alt="Logo preview" className="w-12 h-12 rounded-lg object-contain bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700" />
+              <img src={logo} alt="Logo preview" style={{ width: 44, height: 44, objectFit: 'contain', background: 'var(--surface-2)', border: '1px solid var(--rule-strong)', borderRadius: 0 }} />
             )}
             <input
               type="url"
@@ -193,16 +209,16 @@ export function WhiteLabelSettings() {
               onChange={e => setLogo(e.target.value)}
               disabled={isFree}
               placeholder="https://your-cdn.com/logo.png"
-              className="flex-1 text-sm"
+              className="ed-input flex-1"
             />
           </div>
         </div>
 
         {/* Sender email */}
         <div>
-          <label className="text-[11px] uppercase tracking-wider font-semibold text-slate-500 mb-1.5 block">
+          <label className="ed-label">
             From-address for alert emails
-            <span className="text-slate-400 normal-case font-normal"> — must be on a Resend-verified domain</span>
+            <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--muted-2)', fontWeight: 400 }}> — must be on a Resend-verified domain</span>
           </label>
           <input
             type="email"
@@ -210,32 +226,30 @@ export function WhiteLabelSettings() {
             onChange={e => setSender(e.target.value)}
             disabled={isFree}
             placeholder="alerts@yourdomain.com"
-            className="w-full text-sm"
+            className="ed-input"
           />
         </div>
 
-        <div className="flex items-center gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-700">
-          <button onClick={save} disabled={busy || isFree} className="btn btn-primary">
+        <div className="flex items-center gap-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+          <button onClick={save} disabled={busy || isFree} className="ed-btn ed-btn-primary">
             {busy ? 'Saving…' : 'Save branding'}
           </button>
           {isFree && (
-            <a href="/api/billing/checkout" className="text-xs text-brand-700 underline">
+            <a href="/api/billing/checkout" className="ed-mono" style={{ color: 'var(--accent)' }}>
               Upgrade to Pro for white-label
             </a>
           )}
-          {msg && <span className="text-xs text-slate-500">{msg}</span>}
+          {msg && <span className="ed-panel-note" style={{ margin: 0 }}>{msg}</span>}
         </div>
 
         {/* Custom domain section */}
-        <div className="pt-4 border-t border-slate-200/60 dark:border-slate-700">
+        <div className="pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
           <div className="flex items-center gap-2 mb-1">
-            <label className="text-[11px] uppercase tracking-wider font-semibold text-slate-500">
-              Custom domain
-            </label>
-            {!isFree && <span className="badge badge-info">{me.tier}</span>}
+            <label className="ed-label" style={{ margin: 0 }}>Custom domain</label>
+            {!isFree && <span className="ed-chip">{me.tier}</span>}
           </div>
-          <p className="text-[11px] text-slate-500 mb-2">
-            Point your own domain at the dashboard. Add a CNAME record from your DNS to <code className="font-mono">{PUBLIC_CLIENT_HOST}</code>;
+          <p className="ed-panel-note" style={{ marginBottom: 8 }}>
+            Point your own domain at the dashboard. Add a CNAME record from your DNS to <code className="ed-code">{PUBLIC_CLIENT_HOST}</code>;
             once it propagates, that hostname will load with your branding and your data.
           </p>
           <div className="flex items-center gap-2">
@@ -245,7 +259,8 @@ export function WhiteLabelSettings() {
               value={domain}
               onChange={e => setDomain(e.target.value.toLowerCase())}
               disabled={isFree}
-              className="flex-1 font-mono text-sm"
+              className="ed-input flex-1"
+              style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 13 }}
             />
             <button
               onClick={async () => {
@@ -260,13 +275,13 @@ export function WhiteLabelSettings() {
                 setDomainNote(j.ok ? j.note : `Error: ${j.error}`);
               }}
               disabled={domainSaving || isFree}
-              className="btn btn-sm"
+              className="ed-btn ed-btn-secondary"
             >
               {domainSaving ? 'Saving…' : (domain ? 'Save domain' : 'Remove')}
             </button>
           </div>
           {domainNote && (
-            <div className="mt-2 text-xs text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-800/40 rounded-lg p-2 border border-slate-200/60 dark:border-slate-700">
+            <div className="ed-subpanel mt-2" style={{ fontSize: 12, color: 'var(--ink-soft)' }}>
               {domainNote}
             </div>
           )}
@@ -274,13 +289,13 @@ export function WhiteLabelSettings() {
 
         {/* Billing portal */}
         {!isFree && me.stripe_customer_id && (
-          <div className="pt-4 border-t border-slate-200/60 dark:border-slate-700">
+          <div className="pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
             <div className="flex items-center justify-between gap-3">
               <div>
-                <div className="font-semibold text-sm">Billing &amp; subscription</div>
-                <p className="text-[11px] text-slate-500">Manage your card, invoices, and cancel anytime via Stripe.</p>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Billing &amp; subscription</div>
+                <p className="ed-panel-note" style={{ margin: 0 }}>Manage your card, invoices, and cancel anytime via Stripe.</p>
               </div>
-              <a href="/api/billing/portal" className="btn btn-sm">Open billing portal ↗</a>
+              <a href="/api/billing/portal" className="ed-btn ed-btn-secondary">Open billing portal ↗</a>
             </div>
           </div>
         )}

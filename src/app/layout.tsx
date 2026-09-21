@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Fraunces, Manrope, Archivo, Public_Sans, Newsreader, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { GlobeProvider } from '@/lib/globeStore';
-import { contrastSafe, hexToRgbTriple } from '@/lib/brandContrast';
+import { contrastSafe, hexToRgbTriple, BRAND_GROUNDS } from '@/lib/brandContrast';
 import { headers } from 'next/headers';
 import { ClientChrome, AdminAwareMain, HideOnEmbed } from '@/components/ClientChrome';
 import { PortalTopBar } from '@/components/PortalTopBar';
@@ -62,19 +62,8 @@ export const viewport = {
   initialScale: 1,
 };
 
-// Color helpers — used to build the brand gradient at request time so each
-// tenant's chosen color flows through the layout without runtime JS.
-// The ground every tenant ink is measured against (--nc-dark).
-const NC_DARK = '#0B1220';
-function shadeColor(hex: string, percent: number): string {
-  const m = hex.replace('#', '').match(/^([\da-f]{6})$/i);
-  if (!m) return hex;
-  const n = parseInt(m[1], 16);
-  const r = Math.min(255, Math.max(0, ((n >> 16) & 255) + Math.round(255 * percent / 100)));
-  const g = Math.min(255, Math.max(0, ((n >> 8)  & 255) + Math.round(255 * percent / 100)));
-  const b = Math.min(255, Math.max(0,  (n        & 255) + Math.round(255 * percent / 100)));
-  return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-}
+// The two grounds every tenant ink is measured against — the editorial
+// system's `--bg` in each theme (BRAND_GROUNDS, src/lib/brandContrast.ts).
 
 const themeBoot = `
   try {
@@ -105,11 +94,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // tenant's branding. contrastSafe keeps their HUE and moves only lightness
   // until it clears AA, and returns the colour untouched when it already does.
   //
+  // The editorial system swaps `--bg` per theme (light on :root, dark under
+  // html[data-theme="dark"]), so the ink has to be derived against BOTH
+  // grounds and selected the same way -- a value derived only against the
+  // dark ground would under- or over-shoot once the reader flips to light.
+  //
   // Only the TEXT roles are derived. A brand-coloured background already picks
   // its own ink to contrast, so deriving it would change the design rather than
   // rescue it -- the cabin overrides in globals.css handle those.
-  const brandInk = contrastSafe(brand, NC_DARK);
-  const brandStyle = `:root{--brand:${brand};--brand-rgb:${hexToRgbTriple(brand)};--brand-ink:${brandInk};} .bg-brand-gradient{background:linear-gradient(135deg,${brand} 0%, ${shadeColor(brand, 12)} 55%, ${shadeColor(brand, 28)} 100%)!important;} .bg-brand,.btn-primary,.kpi-brand{background:${brand}!important;} .text-brand-700,.text-brand-600,.text-brand{color:${brandInk}!important;} .border-brand-500,.ring-brand-500{border-color:${brand};}`;
+  const brandInkLight = contrastSafe(brand, BRAND_GROUNDS.light);
+  const brandInkDark = contrastSafe(brand, BRAND_GROUNDS.dark);
+  const brandStyle = `:root{--brand:${brand};--brand-rgb:${hexToRgbTriple(brand)};--brand-ink-light:${brandInkLight};--brand-ink-dark:${brandInkDark};--brand-ink:${brandInkLight};} html[data-theme="dark"]{--brand-ink:${brandInkDark};} .bg-brand-gradient{background:${brand}!important;} .bg-brand,.btn-primary,.kpi-brand{background:${brand}!important;} .text-brand-700,.text-brand-600,.text-brand{color:var(--brand-ink)!important;} .border-brand-500,.ring-brand-500{border-color:${brand};}`;
 
   // UI locale: fc_lang cookie → Accept-Language → en. Drives <html lang dir>,
   // an extra Google font for Arabic / Chinese / Devanagari, and the nav
