@@ -36,7 +36,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/ExecKpiStrip.tsx': 5,
   'src/components/fc/SkyGradient.tsx': 5,
   'src/components/FcFareCalendar.tsx': 5,
-  'src/app/admin/economics/page.tsx': 4,
   // The tenant house-blue default (out of scope for 2.11b — the tenant-ink
   // DERIVATION this file does was converted, and Round 1 also moved
   // viewport.themeColor onto BRAND_GROUNDS.dark; this is the one unrelated
