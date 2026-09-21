@@ -874,6 +874,23 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-bar-fill.muted { background: var(--track); }
 .ed-footer a { color: var(--ink); text-decoration: underline; }
 
+/* Task 3.4: RowMenu.tsx's per-row ⋯ popover on /admin/users — a flat panel,
+   not an elevated card: --surface ground, 1px --rule-strong, radius 0, no
+   shadow (was a literal #131C2E fill with a rounded-lg + drop shadow). */
+.ad-menu { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ad-menu-trigger { color: var(--muted); transition: color 120ms; }
+.ad-menu-trigger:hover { color: var(--ink); }
+.ad-menu-item { color: var(--ink-soft); }
+.ad-menu-item:hover { opacity: 0.72; }
+/* Destructive trigger inside the menu list (the danger-red text-only row,
+   distinct from .ed-btn-danger's own bordered button used on the real
+   Delete submit). */
+.ad-menu-item.danger { color: var(--red); }
+.ad-menu-heading { color: var(--muted-2); }
+/* Confirm-delete field inside the popover — same flat input, red accent. */
+.ed-input.danger { border-color: var(--red); }
+.ed-input.danger:focus { outline-color: var(--red); }
+
 /* ---- Stacked bars (StackedBars.tsx) — README "Feature-block catalogue":
    Command centre, Click stream, Acquisition, Errors. 190px tall, 5px gap,
    --accent over --amber, bottom rule, mono axis labels. Bar count is

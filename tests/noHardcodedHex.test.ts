@@ -25,7 +25,6 @@ const ALLOWLIST: Record<string, number> = {
   // Task 2.11b converted every styling hex in this file to tokens; these are
   // what a tenant sees as THEIR colour, which is exactly what stays literal.
   'src/components/WhiteLabelSettings.tsx': 10,
-  'src/app/admin/users/page.tsx': 10,
   'src/components/InteractiveGlobe.tsx': 10,
   'src/components/Logo.tsx': 10,
   'src/app/m/verify/page.tsx': 9,
@@ -50,7 +49,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/queue/page.tsx': 2,
   'src/app/admin/tickets/page.tsx': 2,
   'src/components/AdminFarePilotWidget.tsx': 2,
-  'src/app/admin/users/RowMenu.tsx': 1,
   'src/components/BookButton.tsx': 1,
   'src/components/LanguageMenu.tsx': 1,
 };

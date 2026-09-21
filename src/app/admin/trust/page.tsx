@@ -3,7 +3,7 @@ import { getCurrentUser, isAdmin as isAdminUser } from '@/lib/auth';
 import { trustMetrics, HARD_DELTA_THRESHOLD_PCT } from '@/lib/analytics';
 import { APP_URL } from '@/lib/hosts';
 import {
-  PageHead, SectionHead, Kpi, Panel, Status, Table, BarRow, fmtInt, ago,
+  PageHead, SectionHead, Kpi, Panel, Status, Table, fmtInt, ago,
   type Tone,
 } from '../_components/ui';
 
@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic';
 /** "—" and a reason, rather than a number we cannot stand behind. */
 function Unknown({ why }: { why: string }) {
   return (
-    <span className="text-white/35">
+    <span style={{ color: 'var(--muted-2)' }}>
       —<span className="ml-2 text-[11px] font-normal normal-case tracking-normal">{why}</span>
     </span>
   );
@@ -33,6 +33,31 @@ function Unknown({ why }: { why: string }) {
 
 function pctStr(n: number | null, digits = 1): string {
   return n == null ? '—' : `${n.toFixed(digits)}%`;
+}
+
+/** One row of the "Provider disagreement" ranked list — the task 3.4
+ *  feature block (README "ranked bars"): name + meta / 8px bar on
+ *  --track / mono value. Bar length is `n` ranked against the max `n` in
+ *  the shown list, same measure the BarRow version used. `red` (not
+ *  amber) carries the "materially different prices" signal — amber is
+ *  reserved for a real wait/warning state, and this one already had a
+ *  bad/neutral tone before this conversion. */
+function DisagreementRow({ d, max }: { d: { pair: string; n: number; medianDeltaPct: number }; max: number }) {
+  const pct = max > 0 ? Math.max(1, Math.round((d.n / max) * 100)) : 0;
+  const bad = d.medianDeltaPct >= 10;
+  return (
+    <div className="ed-ranked-row">
+      <div>
+        <div className="ed-ranked-name">{d.pair}</div>
+        <div className="ed-ranked-meta">median {d.medianDeltaPct.toFixed(1)}%</div>
+      </div>
+      <div className="ed-bar">
+        <div className={`ed-bar-fill${bad ? ' red' : ''}`} style={{ width: `${pct}%` }} />
+      </div>
+      <div className="ed-ranked-value">{fmtInt(d.n)}</div>
+      <div />
+    </div>
+  );
 }
 
 export default async function TrustPage() {
@@ -110,7 +135,7 @@ export default async function TrustPage() {
       <div className="grid gap-3 lg:grid-cols-2 mb-6">
         <Panel title="By call, 7-day horizon" sub="Unscored calls are excluded, never counted as correct">
           {v7.byVerdict.length === 0 ? (
-            <p className="text-sm text-white/45">
+            <p className="ad-note">
               No calls have been scored yet. Calls are recorded on every poll and scored once their
               7-day horizon has elapsed, so the first figures appear a week after this ships.
             </p>
@@ -123,7 +148,7 @@ export default async function TrustPage() {
                   <td className="font-mono tabular-nums">{fmtInt(r.correct)}</td>
                   <td className="font-mono tabular-nums">
                     {r.accuracyPct == null
-                      ? <span className="text-white/35">— need 20</span>
+                      ? <span style={{ color: 'var(--muted-2)' }}>— need 20</span>
                       : `${r.accuracyPct.toFixed(0)}%`}
                   </td>
                 </tr>
@@ -134,7 +159,7 @@ export default async function TrustPage() {
 
         <Panel title="14-day horizon" sub="A buy that looked right at 7 days can still be wrong at 14">
           {m.verdict14d.byVerdict.length === 0 ? (
-            <p className="text-sm text-white/45">Nothing scored at 14 days yet.</p>
+            <p className="ad-note">Nothing scored at 14 days yet.</p>
           ) : (
             <Table head={['Call', 'Scored', 'Correct', 'Accuracy']}>
               {m.verdict14d.byVerdict.map(r => (
@@ -144,7 +169,7 @@ export default async function TrustPage() {
                   <td className="font-mono tabular-nums">{fmtInt(r.correct)}</td>
                   <td className="font-mono tabular-nums">
                     {r.accuracyPct == null
-                      ? <span className="text-white/35">— need 20</span>
+                      ? <span style={{ color: 'var(--muted-2)' }}>— need 20</span>
                       : `${r.accuracyPct.toFixed(0)}%`}
                   </td>
                 </tr>
@@ -164,7 +189,7 @@ export default async function TrustPage() {
           </Status>}
         >
           {m.providerSuccess.length === 0 ? (
-            <p className="text-sm text-white/45">No provider calls recorded in this window.</p>
+            <p className="ad-note">No provider calls recorded in this window.</p>
           ) : (
             <Table head={['Provider', 'Calls', 'Success']}>
               {m.providerSuccess.map(r => (
@@ -187,21 +212,14 @@ export default async function TrustPage() {
           sub="Tracked per pair — two providers quoting materially different prices for the same query"
         >
           {m.disagreements.length === 0 ? (
-            <p className="text-sm text-white/45">
+            <p className="ad-note">
               No material disagreements recorded. Either the providers agree, or only one provider is
               enabled and there is nothing to disagree with.
             </p>
           ) : (
-            <div>
+            <div className="ed-ranked">
               {m.disagreements.map(d => (
-                <BarRow
-                  key={d.pair}
-                  label={d.pair}
-                  value={d.n}
-                  max={Math.max(...m.disagreements.map(x => x.n))}
-                  tone={d.medianDeltaPct >= 10 ? 'bad' : 'neutral'}
-                  right={`${fmtInt(d.n)} · median ${d.medianDeltaPct.toFixed(1)}%`}
-                />
+                <DisagreementRow key={d.pair} d={d} max={Math.max(...m.disagreements.map(x => x.n))} />
               ))}
             </div>
           )}
@@ -214,7 +232,7 @@ export default async function TrustPage() {
       />
       <Panel>
         {m.flagged.length === 0 ? (
-          <p className="text-sm text-white/45">
+          <p className="ad-note">
             Nothing flagged. Every alert-to-click delta in this window is inside {HARD_DELTA_THRESHOLD_PCT}%.
           </p>
         ) : (
@@ -229,7 +247,7 @@ export default async function TrustPage() {
                     {f.deltaPct > 0 ? '+' : ''}{f.deltaPct.toFixed(1)}%
                   </Status>
                 </td>
-                <td className="text-white/50">{ago(f.occurred_at)}</td>
+                <td style={{ color: 'var(--muted)' }}>{ago(f.occurred_at)}</td>
               </tr>
             ))}
           </Table>

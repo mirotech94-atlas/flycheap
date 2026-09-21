@@ -24,23 +24,26 @@ export default async function UsersPage({
   return (
     <div className="space-y-6">
       <div>
-        <div className="text-[11px] uppercase tracking-[0.18em] text-[#E8A33D] mb-1">Admin · users</div>
+        <div className="ad-eyebrow accent mb-1">Admin · users</div>
         <h1 className="text-3xl font-bold tracking-tight">Users</h1>
-        <p className="text-sm text-white/55 mt-1">{all.length} total · {filtered.length} matching.</p>
+        <p className="ad-note mt-1">{all.length} total · {filtered.length} matching.</p>
       </div>
 
       <form className="flex flex-wrap gap-3 items-center">
-        <input
-          type="text"
-          name="q"
-          defaultValue={q}
-          placeholder="Search email or name…"
-          className="flex-1 min-w-[200px] px-3 py-2 rounded-md border border-white/10 bg-white/5 text-sm text-white placeholder-white/40 focus:outline-none focus:border-[#E8A33D]/50"
-        />
+        <div className="flex-1 min-w-[200px]">
+          <input
+            type="text"
+            name="q"
+            defaultValue={q}
+            placeholder="Search email or name…"
+            className="ed-input"
+          />
+        </div>
         <select
           name="tier"
           defaultValue={tierFilter}
-          className="px-3 py-2 rounded-md border border-white/10 bg-white/5 text-sm text-white"
+          className="ed-input"
+          style={{ width: 'auto' }}
         >
           <option value="">All tiers</option>
           <option value="free">Free</option>
@@ -49,16 +52,16 @@ export default async function UsersPage({
         </select>
         <button
           type="submit"
-          className="px-4 py-2 rounded-md bg-[#E8A33D] text-[#0B1220] text-sm font-semibold hover:bg-[#F2C67A] transition"
+          className="ed-btn ed-btn-primary"
         >
           Filter
         </button>
       </form>
 
-      <div className="rounded-xl border border-white/6 bg-[#1B2740] overflow-hidden">
+      <div className="ad-panel overflow-hidden" style={{ padding: 0 }}>
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wider text-white/45 border-b border-white/5">
+            <tr className="text-left text-[10px] uppercase tracking-wider" style={{ color: 'var(--muted-2)', borderBottom: '1px solid var(--rule)' }}>
               <th className="px-4 py-2">Email</th>
               <th className="px-4 py-2">Tier</th>
               <th className="px-4 py-2">Status</th>
@@ -71,29 +74,25 @@ export default async function UsersPage({
           </thead>
           <tbody>
             {filtered.length === 0 && (
-              <tr><td colSpan={8} className="px-4 py-6 text-center text-white/50 text-sm">No users match.</td></tr>
+              <tr><td colSpan={8} className="px-4 py-6 text-center text-sm" style={{ color: 'var(--muted)' }}>No users match.</td></tr>
             )}
             {filtered.map(u => (
-              <tr key={u.id} className="border-t border-white/5 hover:bg-white/3">
+              <tr key={u.id} className="hover:opacity-[0.85]" style={{ borderTop: '1px solid var(--rule-soft)' }}>
                 <td className="px-4 py-2">
-                  <Link href={`/admin/users/${u.id}`} className="text-white hover:text-[#F2C67A] underline underline-offset-2">
+                  <Link href={`/admin/users/${u.id}`} className="underline underline-offset-2 hover:opacity-[0.72]" style={{ color: 'var(--ink)' }}>
                     {u.email}
                   </Link>
-                  {u.name && <div className="text-[10px] text-white/45">{u.name}</div>}
-                  {u.custom_domain && <div className="text-[10px] text-[#E8A33D]">{u.custom_domain}</div>}
+                  {u.name && <div className="text-[10px]" style={{ color: 'var(--muted-2)' }}>{u.name}</div>}
+                  {u.custom_domain && <div className="text-[10px]" style={{ color: 'var(--accent)' }}>{u.custom_domain}</div>}
                 </td>
                 <td className="px-4 py-2 text-xs">
-                  <span className={`px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px] ${
-                    u.tier === 'enterprise' ? 'bg-[#E8A33D]/20 text-[#F2C67A]' :
-                    u.tier === 'pro'        ? 'bg-emerald-500/20 text-emerald-300' :
-                    'bg-white/10 text-white/60'
-                  }`}>{u.tier}</span>
+                  <TierChip tier={u.tier} />
                 </td>
-                <td className="px-4 py-2 text-xs text-white/55">{u.subscription_status ?? '—'}</td>
+                <td className="px-4 py-2 text-xs" style={{ color: 'var(--muted)' }}>{u.subscription_status ?? '—'}</td>
                 <td className="px-4 py-2 text-right tabular-nums">{u.active_searches}/{u.total_searches}</td>
                 <td className="px-4 py-2 text-right tabular-nums">{u.live_sessions}</td>
-                <td className="px-4 py-2 text-xs text-white/55">{u.last_action_at ? fmtRelative(u.last_action_at + 'Z') : '—'}</td>
-                <td className="px-4 py-2 text-xs text-white/55">{fmtRelative(u.created_at + 'Z')}</td>
+                <td className="px-4 py-2 text-xs" style={{ color: 'var(--muted)' }}>{u.last_action_at ? fmtRelative(u.last_action_at + 'Z') : '—'}</td>
+                <td className="px-4 py-2 text-xs" style={{ color: 'var(--muted)' }}>{fmtRelative(u.created_at + 'Z')}</td>
                 <td className="px-4 py-2 text-right">
                   <RowMenu
                     userId={u.id}
@@ -109,5 +108,27 @@ export default async function UsersPage({
         </table>
       </div>
     </div>
+  );
+}
+
+const TIER_TINT: Record<string, React.CSSProperties> = {
+  // Bare --accent on its 8% tint measures 6.35:1 light / 6.40:1 dark — clears
+  // AA as-is, no mix needed. Same map as signups/page.tsx's TierChip.
+  enterprise: { background: 'color-mix(in srgb, var(--accent) 8%, var(--surface))', color: 'var(--accent)' },
+  // Fix round 1 (C1): bare --green on its 8% tint measured 4.44:1 in light —
+  // under AA at this chip's 10px size. Mixed 75% toward --ink (the same move
+  // .ad-tone-gold/.ad-tone-warn already make for amber) clears it: 6.21:1
+  // light / 7.28:1 dark.
+  pro:        { background: 'color-mix(in srgb, var(--green) 8%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' },
+  // --muted on --surface-2 measures 4.18:1 in light — just under AA for this
+  // size of text. --ink-soft clears it (10.35:1 light / 9.8:1 dark).
+  free:       { background: 'var(--surface-2)', color: 'var(--ink-soft)' },
+};
+
+function TierChip({ tier }: { tier: string }) {
+  return (
+    <span className="ad-chip" style={{ textTransform: 'uppercase', ...(TIER_TINT[tier] ?? TIER_TINT.free) }}>
+      {tier}
+    </span>
   );
 }
