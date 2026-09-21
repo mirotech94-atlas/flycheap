@@ -36,7 +36,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/tickets/[ref]/page.tsx': 7,
   'src/components/GlobeHUD.tsx': 7,
   'src/app/admin/health/page.tsx': 6,
-  'src/components/PricingClient.tsx': 6,
   'src/components/charts.tsx': 5,
   'src/components/ExecKpiStrip.tsx': 5,
   'src/components/fc/SkyGradient.tsx': 5,

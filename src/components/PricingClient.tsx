@@ -17,6 +17,19 @@ const PRICES: Record<Plan, Record<Period, number>> = {
   enterprise: { month: 39, year: 299 }, // $299/yr · $169 off vs monthly · ~36% off
 };
 
+// The period switch's "save up to N%" chip, derived from the same formula
+// pricingLabel() uses for the per-plan yearly sub-line, not a second typed
+// number next to it. The larger of the two plans' savings (enterprise, 36%)
+// is what "up to" refers to.
+function annualSavingsPct(plan: Plan): number {
+  const monthly = PRICES[plan].month;
+  const perMonthOnYearly = PRICES[plan].year / 12;
+  return Math.round((1 - perMonthOnYearly / monthly) * 100);
+}
+const MAX_ANNUAL_SAVINGS_PCT = Math.max(
+  ...(Object.keys(PRICES) as Plan[]).map(annualSavingsPct)
+);
+
 /**
  * Plan bullets are DERIVED, not typed — see lib/tierCopy.ts.
  *
@@ -85,44 +98,50 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
     <div className="space-y-6">
       {/* Monthly / yearly toggle */}
       <div className="flex items-center justify-center">
-        <div className="inline-flex rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-1 shadow-sm">
+        <div className="ed-seg">
           <button
+            type="button"
             onClick={() => setPeriod('month')}
-            className={`px-4 py-1.5 text-sm font-semibold rounded-full transition ${
-              period === 'month' ? 'bg-brand text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
+            className={`ed-seg-btn${period === 'month' ? ' active' : ''}`}
           >
             Monthly
           </button>
           <button
+            type="button"
             onClick={() => setPeriod('year')}
-            className={`px-4 py-1.5 text-sm font-semibold rounded-full transition ${
-              period === 'year' ? 'bg-brand text-white' : 'text-slate-500 hover:text-slate-700'
-            }`}
+            className={`ed-seg-btn${period === 'year' ? ' active' : ''}`}
           >
-            Yearly <span className={`ml-1 text-[10px] uppercase tracking-wide ${period === 'year' ? 'text-white/80' : 'text-emerald-600'}`}>save up to 36%</span>
+            Yearly{' '}
+            <span
+              className="ed-mono"
+              style={{ marginLeft: 2, opacity: period === 'year' ? 0.82 : 1, color: period === 'year' ? undefined : 'var(--green)' }}
+            >
+              save up to {MAX_ANNUAL_SAVINGS_PCT}%
+            </span>
           </button>
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="ed-plans">
         {/* FREE */}
-        <div className="card flex flex-col">
-          <div className="eyebrow">Free</div>
-          <h3 className="font-display font-bold text-2xl mt-1">$0</h3>
-          <p className="text-xs text-slate-500">forever — email alerts only</p>
-          <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
+        <div className={`ed-plan${currentTier === 'free' ? ' current' : ''}`}>
+          <div className="ed-eyebrow">Free</div>
+          <div className="ed-plan-price">$0</div>
+          <p className="ed-plan-note">forever — email alerts only</p>
+          <ul className="ed-plan-list">
             {bullets.free.map(f => <Bullet key={f.text} f={f} />)}
           </ul>
-          {!signedIn ? (
-            <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
-          ) : currentTier === 'free' ? (
-            <button className="btn w-full" disabled>Your current plan</button>
-          ) : (
-            <button type="button" className="btn btn-danger w-full" disabled={cancelling} onClick={downgrade}>
-              {cancelling ? 'Cancelling…' : 'Downgrade to Free now'}
-            </button>
-          )}
+          <div className="ed-plan-cta">
+            {!signedIn ? (
+              <a href="/early-access" className="ed-btn ed-btn-primary w-full justify-center text-center">Get early access →</a>
+            ) : currentTier === 'free' ? (
+              <button className="ed-btn ed-btn-secondary w-full justify-center" disabled>Your current plan</button>
+            ) : (
+              <button type="button" className="ed-btn ed-btn-danger w-full justify-center" disabled={cancelling} onClick={downgrade}>
+                {cancelling ? 'Cancelling…' : 'Downgrade to Free now'}
+              </button>
+            )}
+          </div>
         </div>
 
         {/* PRO */}
@@ -130,28 +149,30 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
           const lbl = pricingLabel(plan);
           const isCurrent = currentTier === plan;
           return (
-            <div key={plan} className="card flex flex-col relative overflow-hidden border-brand-700">
-              <div className="absolute top-3 right-3 text-[10px] uppercase tracking-wide font-bold bg-[var(--nc-teal)] text-[var(--nc-dark)] px-2 py-0.5 rounded-full">Most popular</div>
-              <div className="eyebrow text-brand-700">Pro</div>
-              <h3 className="font-display font-bold text-2xl mt-1">{lbl.headline}</h3>
-              <p className="text-xs text-slate-500">{lbl.sub}</p>
-              <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
+            <div key={plan} className={`ed-plan featured${isCurrent ? ' current' : ''}`}>
+              <div className="ed-plan-badge">Most popular</div>
+              <div className="ed-eyebrow">Pro</div>
+              <div className="ed-plan-price">{lbl.headline}</div>
+              <p className="ed-plan-note">{lbl.sub}</p>
+              <ul className="ed-plan-list">
                 {bullets[plan].map(f => <Bullet key={f.text} f={f} />)}
               </ul>
-              {!signedIn ? (
-                <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
-              ) : isCurrent ? (
-                <button className="btn w-full" disabled>Your current plan</button>
-              ) : (
-                <div className="space-y-2">
-                  <a href={checkoutHref('stripe', plan)} className="btn btn-primary w-full text-center">
-                    Subscribe with card →
-                  </a>
-                  <a href={checkoutHref('paypal', plan)} className="btn w-full text-center" style={{ background: '#ffc439', color: '#0a3a6b', borderColor: '#ffc439' }}>
-                    Subscribe with PayPal
-                  </a>
-                </div>
-              )}
+              <div className="ed-plan-cta">
+                {!signedIn ? (
+                  <a href="/early-access" className="ed-btn ed-btn-primary w-full justify-center text-center">Get early access →</a>
+                ) : isCurrent ? (
+                  <button className="ed-btn ed-btn-secondary w-full justify-center" disabled>Your current plan</button>
+                ) : (
+                  <>
+                    <a href={checkoutHref('stripe', plan)} className="ed-btn ed-btn-primary w-full justify-center text-center">
+                      Subscribe with card →
+                    </a>
+                    <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
+                      Subscribe with PayPal
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
@@ -162,36 +183,38 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
           const lbl = pricingLabel(plan);
           const isCurrent = currentTier === plan;
           return (
-            <div key={plan} className="card flex flex-col">
-              <div className="eyebrow">Enterprise</div>
-              <h3 className="font-display font-bold text-2xl mt-1">{lbl.headline}</h3>
-              <p className="text-xs text-slate-500">{lbl.sub}</p>
-              <p className="text-[11px] text-slate-500 font-medium mt-1">Billed immediately · no trial</p>
-              <ul className="text-sm space-y-1 mt-4 mb-6 flex-1">
+            <div key={plan} className={`ed-plan${isCurrent ? ' current' : ''}`}>
+              <div className="ed-eyebrow">Enterprise</div>
+              <div className="ed-plan-price">{lbl.headline}</div>
+              <p className="ed-plan-note">{lbl.sub}</p>
+              <p className="ed-plan-note" style={{ marginTop: 1, fontWeight: 500 }}>Billed immediately · no trial</p>
+              <ul className="ed-plan-list">
                 {bullets[plan].map(f => <Bullet key={f.text} f={f} />)}
               </ul>
-              {!signedIn ? (
-                <a href="/early-access" className="btn btn-primary w-full text-center">Get early access →</a>
-              ) : isCurrent ? (
-                <button className="btn w-full" disabled>Your current plan</button>
-              ) : (
-                <div className="space-y-2">
-                  <a href={checkoutHref('stripe', plan)} className="btn btn-primary w-full text-center">
-                    Subscribe with card →
-                  </a>
-                  <a href={checkoutHref('paypal', plan)} className="btn w-full text-center" style={{ background: '#ffc439', color: '#0a3a6b', borderColor: '#ffc439' }}>
-                    Subscribe with PayPal
-                  </a>
-                </div>
-              )}
+              <div className="ed-plan-cta">
+                {!signedIn ? (
+                  <a href="/early-access" className="ed-btn ed-btn-primary w-full justify-center text-center">Get early access →</a>
+                ) : isCurrent ? (
+                  <button className="ed-btn ed-btn-secondary w-full justify-center" disabled>Your current plan</button>
+                ) : (
+                  <>
+                    <a href={checkoutHref('stripe', plan)} className="ed-btn ed-btn-primary w-full justify-center text-center">
+                      Subscribe with card →
+                    </a>
+                    <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
+                      Subscribe with PayPal
+                    </a>
+                  </>
+                )}
+              </div>
             </div>
           );
         })}
       </div>
 
       {/* Accepted payment methods */}
-      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2 text-xs text-slate-500">
-        <span className="uppercase tracking-wider text-[10px] font-semibold text-slate-400">We accept</span>
+      <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 pt-2" style={{ fontSize: 12, color: 'var(--muted)' }}>
+        <span className="ed-mono" style={{ color: 'var(--muted-2)' }}>We accept</span>
         {[
           { icon: '💳', label: 'Debit & credit cards' },
           { icon: '🅿️', label: 'PayPal' },
@@ -202,7 +225,7 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
             <span aria-hidden>{m.icon}</span>{m.label}
           </span>
         ))}
-        <span className="text-slate-400">· Secure checkout · Cancel anytime</span>
+        <span style={{ color: 'var(--muted-2)' }}>· Secure checkout · Cancel anytime</span>
       </div>
     </div>
   );
@@ -212,5 +235,5 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
 function Bullet({ f }: { f: PlanFeature }) {
   return f.included
     ? <li>✓ {f.text}</li>
-    : <li className="text-slate-400">— {f.text}</li>;
+    : <li className="off">— {f.text}</li>;
 }

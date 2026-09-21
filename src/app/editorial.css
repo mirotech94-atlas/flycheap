@@ -133,6 +133,11 @@ html[data-theme="dark"] {
 .ed-btn.ed-btn-row { background: var(--btn-bg); color: var(--btn-fg); padding: 7px 13px; font-size: 11.5px; justify-self: end; }
 .ed-btn.ed-btn-tile { background: transparent; color: currentColor; border-color: currentColor; padding: 6px 11px; font-size: 11px; }
 .ed-btn-hero { padding: 13px 22px; font-size: 14px; }
+/* Destructive action (downgrade/cancel/revoke) — an outline, not a fill: a
+   filled --red with white text measures 2.99:1 in dark, below AA. --red
+   text + --red border on --surface clears AA in both themes (see
+   task-2.8-report.md for the computed ratios). */
+.ed-btn.ed-btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
 
 /* Stat strip — 2–4 KPIs in a ruled row. */
 .ed-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 0 0 36px; }
@@ -558,3 +563,36 @@ html[data-theme] .ed-date-panel .rdp-selected .rdp-day_button { background: var(
 html[data-theme] .ed-date-panel .rdp-today:not(.rdp-outside) .rdp-day_button { outline: 1px solid var(--accent); outline-offset: -2px; }
 html[data-theme] .ed-date-panel .rdp-disabled:not(.rdp-selected) { color: var(--muted-2); opacity: 1; }
 html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { background: var(--surface-2); }
+
+/* ---- Plans (client portal /pricing, PricingClient.tsx) — three plan tiles,
+   1px gaps over --rule like .ed-tiles. Two modifiers, independent and
+   co-occurring:
+   - `.current` — the signed-in user's OWN tier inverts onto --panel-bg/
+     --panel-fg (README: "current plan uses --panel-bg"). --ink is NOT reused
+     for the inverted text: --ink flips per theme (light in dark mode), so on
+     --panel-bg (dark in both themes) it would read fine in light mode and
+     fail in dark. Every inverted text role instead keys off --panel-fg,
+     the pattern already used by .mk-band.
+   - `.featured` — the "Most popular" (Pro) tile's own subscribe CTA may be
+     amber (ruling 5), but only paired with a foreground that does not flip:
+     --panel-bg is dark in both themes (light #14181B, dark #0A0C0E), so
+     amber/panel-bg clears AA in both — light 6.29:1, dark 8.52:1. --ink
+     would fail in dark (--ink is light there): amber/ink measures 1.99:1. */
+.ed-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-plan { position: relative; background: var(--surface); padding: 24px 22px 22px; display: flex; flex-direction: column; }
+.ed-plan-badge { position: absolute; top: 18px; right: 18px; font-family: var(--font-mono-ed); font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-accent); background: var(--accent); padding: 3px 9px; }
+.ed-plan-price { font-family: var(--font-serif); font-weight: 400; font-size: 38px; letter-spacing: -0.02em; line-height: 1; color: var(--ink); margin-top: 6px; }
+.ed-plan-note { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.ed-plan-list { list-style: none; margin: 18px 0 22px; padding: 0; flex: 1; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.ed-plan-list li.off { color: var(--muted-2); }
+.ed-plan-cta { margin-top: auto; display: grid; gap: 8px; }
+
+.ed-plan.featured .ed-btn-primary { background: var(--amber); color: var(--panel-bg); }
+
+.ed-plan.current { background: var(--panel-bg); color: var(--panel-fg); }
+.ed-plan.current .ed-eyebrow,
+.ed-plan.current .ed-plan-note { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-plan.current .ed-plan-price { color: var(--panel-fg); }
+.ed-plan.current .ed-plan-list { color: color-mix(in srgb, var(--panel-fg) 90%, var(--panel-bg)); }
+.ed-plan.current .ed-plan-list li.off { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-plan.current .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
