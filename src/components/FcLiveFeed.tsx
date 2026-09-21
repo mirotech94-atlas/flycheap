@@ -1,5 +1,6 @@
 'use client';
 import { useEffect, useRef, useState } from 'react';
+import { pollWithBackoff } from '@/lib/useLivePoll';
 
 export type LiveFeedItem = {
   id: string;
@@ -14,7 +15,7 @@ export type LiveFeedItem = {
 type PoolItem = { route: string; price: number; delta: number; airline: string; provider: string; out: string; ret: string; trip: number };
 
 const ROTATE_MS = 4000;      // a new real fare slides in every 4 s
-const POOL_REFRESH_MS = 90_000;
+const POOL_REFRESH_MS = 4000;
 const ALERTS_REFRESH_MS = 30_000;
 const MAX_ROWS = 8;
 
@@ -46,16 +47,12 @@ export function FcLiveFeed({ initialItems, providersLabel }: { initialItems?: Li
     return () => clearInterval(c);
   }, []);
 
-  // Rotating pool of real best fares.
+  // Rotating pool of real best fares. The rotation (ROTATE_MS) and the pool
+  // refresh (POOL_REFRESH_MS) are independent: rotation just walks `cursor`
+  // through whatever pool is currently loaded, so swapping the pool under it
+  // never has to reset the cursor (a reset raced the rotation once these two
+  // cadences converged, and kept re-showing row 0).
   useEffect(() => {
-    let cancelled = false;
-    async function loadPool() {
-      try {
-        const r = await fetch('/api/early-access/feed', { cache: 'no-store' });
-        const j = await r.json();
-        if (!cancelled && j.ok && Array.isArray(j.items) && j.items.length) { pool.current = j.items; cursor.current = 0; }
-      } catch { /* keep current pool */ }
-    }
     function rotate() {
       const p = pool.current;
       if (p.length === 0) return;
@@ -70,10 +67,27 @@ export function FcLiveFeed({ initialItems, providersLabel }: { initialItems?: Li
       };
       setItems(prev => [item, ...prev].slice(0, MAX_ROWS));
     }
-    loadPool().then(rotate);
     const r = setInterval(rotate, ROTATE_MS);
-    const p = setInterval(loadPool, POOL_REFRESH_MS);
-    return () => { cancelled = true; clearInterval(r); clearInterval(p); };
+
+    // Pool refresh: chained setTimeout, paused while hidden, aborted on
+    // unmount, backed off on failure. Fires immediately since `pool` starts
+    // empty and the feed otherwise sits on "Scanning routes…" — but only that
+    // very first fetch also triggers a rotate (to paint a row right away);
+    // every later refresh just swaps the pool and lets the ROTATE_MS interval
+    // above pick it up, so refreshing never rotates faster than 4 s.
+    let firstLoad = true;
+    const stop = pollWithBackoff(async signal => {
+      const resp = await fetch('/api/early-access/feed', { cache: 'no-store', signal });
+      const j = await resp.json();
+      if (j.ok && Array.isArray(j.items) && j.items.length) {
+        pool.current = j.items;
+        if (firstLoad) { firstLoad = false; rotate(); }
+        return true;
+      }
+      return false;
+    }, { baseDelayMs: POOL_REFRESH_MS, immediate: true });
+
+    return () => { clearInterval(r); stop(); };
   }, []);
 
   // Real alert events: merge any new ones by id.
