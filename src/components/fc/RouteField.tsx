@@ -70,10 +70,13 @@ export function RouteField({ className, style }: { className?: string; style?: R
     ro.observe(canvas);
 
     // Read the palette from the cascade rather than hardcoding it, so the field
-    // follows the theme like everything else.
+    // follows the theme like everything else. The token layer always defines
+    // both — if either is somehow empty, draw nothing for this frame rather
+    // than fall back to a hardcoded hex.
     const css = getComputedStyle(document.documentElement);
-    const teal = (css.getPropertyValue('--nc-teal').trim() || '#6FB3C9');
-    const amber = (css.getPropertyValue('--nc-amber').trim() || '#E8A33D');
+    const accent = css.getPropertyValue('--accent').trim();
+    const amber = css.getPropertyValue('--amber').trim();
+    if (!accent || !amber) return;
 
     const arc = (r: (typeof ROUTES)[number]) => {
       const [x0, y0, x1, y1, lift] = r;
@@ -106,7 +109,7 @@ export function RouteField({ className, style }: { className?: string; style?: R
         ctx.beginPath();
         ctx.moveTo(a.ax, a.ay);
         ctx.quadraticCurveTo(a.cx, a.cy, a.bx, a.by);
-        ctx.strokeStyle = teal;
+        ctx.strokeStyle = accent;
         // Under 20%. This is the whole discipline of the piece.
         ctx.globalAlpha = 0.13 + (i % 4) * 0.022;
         ctx.lineWidth = i % 3 === 0 ? 1.1 : 0.8;
