@@ -16,7 +16,33 @@
  * than rescue it.
  */
 
-const HEX = /^#?([\da-f]{6})$/i;
+// Accepts 3/4-digit shorthand (#fff, #abcd) alongside the full 6/8-digit
+// forms. Round 3 of task 2.11b: Lightning CSS (Turbopack's production CSS
+// minifier) folds `#FFFFFF` down to `#fff` in the served bundle, so a
+// 6-digit-only parser silently rejects every live read of a token that was
+// spelled in full in the source — `relativeLuminance` returned null,
+// `pickCtaInk` discarded the white candidate, and the ground candidate won
+// (or lost) by whatever it happened to be, not by an actual contrast check.
+// Verify against the LIVE bundle when touching this, not the source CSS —
+// see docs/design's contrast-audit notes.
+const HEX = /^#?([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i;
+
+/**
+ * Normalize any accepted hex spelling to a plain 6-digit `#rrggbb`:
+ * expands 3/4-digit shorthand by doubling each nibble, then drops alpha
+ * (the last 2 of an 8-digit value) — this module works in opaque sRGB only.
+ * Returns null for anything `HEX` doesn't match, including genuinely
+ * malformed input like `#12` or `#12345` (neither length is accepted).
+ */
+function normalizeHex(hex: string): string | null {
+  const m = HEX.exec(hex.trim());
+  if (!m) return null;
+  let digits = m[1];
+  if (digits.length === 3 || digits.length === 4) {
+    digits = digits.split('').map((d) => d + d).join('');
+  }
+  return `#${digits.slice(0, 6).toLowerCase()}`;
+}
 
 /**
  * The two grounds tenant ink is derived against — the editorial system's
@@ -31,9 +57,9 @@ export const BRAND_GROUNDS = {
 
 /** sRGB relative luminance, per WCAG 2.1. */
 export function relativeLuminance(hex: string): number | null {
-  const m = HEX.exec(hex.trim());
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
+  const norm = normalizeHex(hex);
+  if (!norm) return null;
+  const n = parseInt(norm.slice(1), 16);
   const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -50,9 +76,9 @@ export function contrastRatio(a: string, b: string): number | null {
 }
 
 function toRgb(hex: string): [number, number, number] | null {
-  const m = HEX.exec(hex.trim());
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
+  const norm = normalizeHex(hex);
+  if (!norm) return null;
+  const n = parseInt(norm.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 

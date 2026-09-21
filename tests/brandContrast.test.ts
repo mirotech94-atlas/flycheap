@@ -18,7 +18,18 @@ describe('relativeLuminance', () => {
 
   it('rejects a malformed hex rather than guessing', () => {
     expect(relativeLuminance('nonsense')).toBeNull();
-    expect(relativeLuminance('#fff')).toBeNull(); // shorthand is not accepted
+    expect(relativeLuminance('#12')).toBeNull();
+    expect(relativeLuminance('#12345')).toBeNull();
+  });
+
+  it('accepts 3/4-digit shorthand — the spelling Lightning CSS folds full hex down to in the production bundle (2.11b round 3)', () => {
+    // A 6-digit-only parser silently rejected every live `getComputedStyle`
+    // read of a token the minifier had folded (`#FFFFFF` -> `#fff`), which is
+    // exactly what broke the round-2 fix in the served bundle even though it
+    // worked against the unminified source.
+    expect(relativeLuminance('#fff')).toBeCloseTo(relativeLuminance('#ffffff')!, 10);
+    expect(relativeLuminance('#000')).toBeCloseTo(relativeLuminance('#000000')!, 10);
+    expect(relativeLuminance('#0e1')).toBeCloseTo(relativeLuminance('#00ee11')!, 10);
   });
 });
 
@@ -131,6 +142,15 @@ describe('pickCtaInk', () => {
     expect(pickCtaInk('#1A4459', null, null, onAccent)).toBe(onAccent);
     expect(pickCtaInk('#1A4459', '', '', onAccent)).toBe(onAccent);
   });
+
+  it('picks correctly when the candidates arrive minified — the spellings the served bundle actually hands the component (2.11b round 3)', () => {
+    // getComputedStyle on the live bundle returns '#fff' for --panel-fg and
+    // '#0e1113' for --bg in dark, not the '#FFFFFF' / '#0E1113' the source
+    // CSS spells them as. Before round 3 this made panelFg's ratio come back
+    // null, and CABIN — the ground that fails at 1.82:1 — won by whatever
+    // the fallback path did instead of an actual comparison.
+    expect(pickCtaInk('#1A4459', '#fff', '#0e1113')).toBe('#fff');
+  });
 });
 
 describe('hexToRgbTriple', () => {
@@ -139,6 +159,12 @@ describe('hexToRgbTriple', () => {
   });
 
   it('falls back to the house blue, not the retired navy', () => {
-    expect(hexToRgbTriple('bad')).toBe('26,68,89');
+    // Not 'bad' — round 3 made 3-digit shorthand legal, and 'bad' is one
+    // (#bad, a pale purple), which is correct CSS but no longer malformed.
+    expect(hexToRgbTriple('not-a-colour')).toBe('26,68,89');
+  });
+
+  it('still expands minified shorthand rather than rejecting it', () => {
+    expect(hexToRgbTriple('#bad')).toBe('187,170,221');
   });
 });
