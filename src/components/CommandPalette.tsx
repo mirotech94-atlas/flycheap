@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { applyTheme } from '@/lib/theme';
 
 type Action = {
   id: string;
@@ -62,8 +63,8 @@ export function CommandPalette() {
       run: () => { window.location.href = '/api/alerts/export'; setOpen(false); } },
     { id: 'theme', group: 'View', label: 'Toggle dark / light theme', keywords: 'mode color',
       run: () => {
-        const dark = document.documentElement.classList.toggle('dark');
-        try { localStorage.setItem('egyptair-theme', dark ? 'dark' : 'light'); } catch {}
+        const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
+        applyTheme(next);
       } },
     { id: 'print', group: 'View', label: 'Print / save dashboard as PDF',
       run: () => { setOpen(false); setTimeout(() => window.print(), 100); } },
