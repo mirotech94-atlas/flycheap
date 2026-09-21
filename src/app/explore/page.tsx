@@ -196,7 +196,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
               >
                 <div className="ed-tile-kicker" style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                   {c.label}
-                  {isActive && <span className="ed-dot" style={{ background: 'var(--accent)' }} />}
+                  {isActive && <><span className="ed-dot" style={{ background: 'var(--accent)' }} /><span className="sr-only">active</span></>}
                 </div>
                 <div className="ed-tile-value" style={{ fontSize: 18 }}>{c.title}</div>
                 <p className="ed-tile-meta">{c.desc}</p>

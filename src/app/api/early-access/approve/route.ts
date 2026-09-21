@@ -6,9 +6,11 @@ export const dynamic = 'force-dynamic';
 
 function page(title: string, body: string, ok = true) {
   return new NextResponse(`<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${title}</title>
-  <style>body{margin:0;background:#0B1220;color:#E9EDF5;font-family:Manrope,-apple-system,system-ui,sans-serif;display:grid;place-items:center;min-height:100vh}
-  .c{max-width:460px;padding:36px;border:1px solid rgba(255,255,255,.12);border-radius:16px;background:#131C2E;text-align:center}
-  h1{font-size:26px;margin:0 0 10px;color:${ok ? '#E8A33D' : '#ff9db5'}}p{color:#98A4BA;line-height:1.6;margin:0}a{color:#E8A33D}</style></head>
+  <style>/* Standalone document — no app stylesheet here, so the editorial palette is
+  written out as literals, like the email templates. Flat, square, light. */
+  body{margin:0;background:#FBFAF7;color:#14181B;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;display:grid;place-items:center;min-height:100vh}
+  .c{max-width:460px;padding:36px;border:1px solid #E6E2DA;background:#FFFFFF;text-align:center}
+  h1{font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px;letter-spacing:-.02em;margin:0 0 10px;color:${ok ? '#14181B' : '#B4453C'}}p{color:#3B3833;line-height:1.6;margin:0;font-size:14px}a{color:#1F615D}</style></head>
   <body><div class="c"><h1>${title}</h1><p>${body}</p></div></body></html>`, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
 

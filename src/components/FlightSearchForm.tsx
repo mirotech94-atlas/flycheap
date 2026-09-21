@@ -329,11 +329,11 @@ export function FlightSearchForm({
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setAdults(v => Math.max(1, v - 1))}
                     className="w-7 h-7 text-sm font-bold flex items-center justify-center"
-                    style={{ borderRadius: '50%', border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>−</button>
+                    style={{ borderRadius: 0, border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>−</button>
                   <span className="w-4 text-center font-semibold tabular" style={{ color: 'var(--ink)' }}>{adults}</span>
                   <button type="button" onClick={() => setAdults(v => Math.min(9, v + 1))}
                     className="w-7 h-7 text-sm font-bold flex items-center justify-center"
-                    style={{ borderRadius: '50%', border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>+</button>
+                    style={{ borderRadius: 0, border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>+</button>
                 </div>
               </div>
             </div>

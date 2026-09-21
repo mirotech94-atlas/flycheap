@@ -41,25 +41,20 @@ html.dark {
 }
 
 html, body {
-  background: var(--bg-app);
-  color: var(--text);
+  /* The page ground is the editorial canvas, not the pre-night-cabin
+     --bg-app/--text pair. Those two legacy tokens outlived both migrations
+     because the per-route audit samples elements INSIDE body and never body
+     itself, so the ground it painted was invisible to every sweep. */
+  background: var(--bg);
+  color: var(--ink);
   font-feature-settings: "ss01","cv11","cv05","cv02";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Subtle ambient background — radial brand glow + faint grid */
-body {
-  background-image:
-    radial-gradient(1100px 600px at 12% -8%, rgba(26,68,89,.08), transparent 60%),
-    radial-gradient(900px 500px at 110% 0%, rgba(111,179,201,.07), transparent 55%);
-  background-attachment: fixed;
-}
-html.dark body {
-  background-image:
-    radial-gradient(1100px 600px at 12% -8%, rgba(31,95,165,.18), transparent 60%),
-    radial-gradient(900px 500px at 110% 0%, rgba(111,179,201,.06), transparent 55%);
-}
+/* The two radial "ambient glow" gradients that used to sit on body are gone:
+   the editorial sheet has no gradients, and these shipped on every page of
+   all three surfaces in both themes. */
 
 /* ============================================================
    Typography
@@ -69,9 +64,9 @@ h2, h3 { letter-spacing: -0.01em; }
 
 /* Page eyebrow / section labels */
 .eyebrow {
-  @apply text-[11px] uppercase tracking-[0.14em] font-semibold text-slate-500;
+  @apply text-[11px] uppercase tracking-[0.14em] font-semibold;
+  color: var(--muted);
 }
-html.dark .eyebrow { color: #94a3b8; }
 
 /* Tabular numerics everywhere money/dates render */
 .tabular { font-variant-numeric: tabular-nums; }
@@ -80,8 +75,11 @@ html.dark .eyebrow { color: #94a3b8; }
    Cards
    ============================================================ */
 .card {
-  background: var(--bg-elevated);
-  border: 1px solid var(--border);
+  /* Live on the dashboard brief and the two route loading skeletons. Was on
+     the legacy --bg-elevated/--border pair (white/navy, slate borders), which
+     read as a foreign card among editorial panels in dark. */
+  background: var(--surface);
+  border: 1px solid var(--rule);
   border-radius: 0;
   box-shadow: none;
   padding: 1.25rem;
