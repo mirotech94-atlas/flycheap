@@ -27,7 +27,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/WhiteLabelSettings.tsx': 10,
   'src/components/InteractiveGlobe.tsx': 10,
   'src/components/Logo.tsx': 10,
-  'src/app/m/verify/page.tsx': 9,
   'src/components/SvgGlobe.tsx': 9,
   'src/components/GlobeHUD.tsx': 7,
   'src/components/ExecKpiStrip.tsx': 5,
@@ -44,7 +43,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/ExecutiveTopBar.tsx': 3,
   'src/components/FcKpiStrip.tsx': 3,
   'src/components/FcRouteDna.tsx': 3,
-  'src/components/BookButton.tsx': 1,
   'src/components/LanguageMenu.tsx': 1,
 };
 
