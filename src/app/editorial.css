@@ -59,7 +59,7 @@ html[data-theme="dark"] {
    The three legacy token families are re-pointed at the new layer so the
    app keeps rendering while each surface is converted. Each alias block is
    deleted by the task that removes the last consumer of that family
-   (grep-gated). Do NOT add new consumers of any --nc-/--fc-/--dc- name. */
+   (grep-gated). Do NOT add new consumers of any --nc-/--fc- name. */
 
 :root {
   /* night-cabin (--nc-*) → editorial */
@@ -77,19 +77,6 @@ html[data-theme="dark"] {
   --nc-signal: var(--red);
   --nc-stock: var(--surface-2);
 
-  /* marketing (--dc-*) → editorial */
-  --dc-bg: var(--bg);
-  --dc-bg2: var(--surface-2);
-  --dc-bg3: var(--surface);
-  --dc-card: var(--surface);
-  --dc-line: var(--rule);
-  --dc-line2: var(--rule-strong);
-  --dc-text: var(--ink);
-  --dc-muted: var(--muted);
-  --dc-dim: var(--muted-2);
-  --dc-gold: var(--amber);
-  --dc-gold2: var(--amber);
-  --dc-teal: var(--accent);
 }
 
 /* Type faces — bound to next/font variables in layout.tsx (Task 0.5). */
