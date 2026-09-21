@@ -699,18 +699,19 @@ html.dark .flight-conversation-panel__stat {
 /* These repoint the DECORATION accent. They used to repoint --fc-gold, which
    meant picking "emerald" turned every FARE emerald -- the price stops being
    the reading light. Unreachable today (FcTweaks pins the attribute to gold),
-   but the wiring was backwards. */
-.fc-shell[data-fc-accent="emerald"] { --fc-accent: #1f8a5b; --fc-accent-soft: #34a874; }
-.fc-shell[data-fc-accent="copper"]  { --fc-accent: #c97444; --fc-accent-soft: #e0916a; }
-.fc-shell[data-fc-accent="violet"]  { --fc-accent: #8964d7; --fc-accent-soft: #a586e8; }
-.fc-shell[data-fc-theme="coal"] { background: #14181f; color: #e8ecf4; }
+   but the wiring was backwards. Tokenised to the nearest editorial colour
+   even though dead, so no hex survives in a rule this file still owns. */
+.fc-shell[data-fc-accent="emerald"] { --fc-accent: var(--green); --fc-accent-soft: color-mix(in srgb, var(--green) 70%, var(--surface)); }
+.fc-shell[data-fc-accent="copper"]  { --fc-accent: var(--amber); --fc-accent-soft: color-mix(in srgb, var(--amber) 70%, var(--surface)); }
+.fc-shell[data-fc-accent="violet"]  { --fc-accent: var(--accent); --fc-accent-soft: color-mix(in srgb, var(--accent) 70%, var(--surface)); }
+.fc-shell[data-fc-theme="coal"] { background: var(--panel-bg); color: var(--panel-fg); }
 .fc-shell[data-fc-theme="coal"] .fc-card,
-.fc-shell[data-fc-theme="coal"] .fc-kpi { background: #1a1f2a; border-color: rgba(255,255,255,.06); color: #e8ecf4; }
+.fc-shell[data-fc-theme="coal"] .fc-kpi { background: var(--surface-2); border-color: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)); color: var(--panel-fg); }
 .fc-shell[data-fc-theme="coal"] .fc-card-title,
 .fc-shell[data-fc-theme="coal"] .fc-section-title,
-.fc-shell[data-fc-theme="coal"] .fc-kpi-value { color: #f5f1e8; }
-.fc-shell[data-fc-theme="coal"] .fc-deals-table thead th { background: #14181f; color: rgba(255,255,255,.5); border-color: rgba(255,255,255,.06); }
-.fc-shell[data-fc-theme="coal"] .fc-deals-table tbody td { border-color: rgba(255,255,255,.06); }
+.fc-shell[data-fc-theme="coal"] .fc-kpi-value { color: var(--panel-fg); }
+.fc-shell[data-fc-theme="coal"] .fc-deals-table thead th { background: var(--panel-bg); color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); border-color: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)); }
+.fc-shell[data-fc-theme="coal"] .fc-deals-table tbody td { border-color: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)); }
 
 /* Hero */
 .fc-hero {
@@ -754,7 +755,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-eyebrow::after {
   content: ""; flex: 1; height: 1px;
-  background: linear-gradient(90deg, rgba(111,179,201,.5), transparent);
+  background: var(--rule);
   max-width: 120px;
 }
 .fc-hero h1 {
@@ -770,9 +771,9 @@ html.dark .flight-conversation-panel__stat {
 .fc-hero h1 em { font-style: italic; color: var(--fc-accent); }
 .fc-hero h1 .fc-strike {
   font-style: italic;
-  color: rgba(255,255,255,.45);
+  color: var(--muted-2);
   text-decoration: line-through;
-  text-decoration-color: rgba(111,179,201,.6);
+  text-decoration-color: var(--accent);
   text-decoration-thickness: 2px;
 }
 .fc-hero-lede {
@@ -822,7 +823,7 @@ html.dark .flight-conversation-panel__stat {
   font-size: 13px;
   font-weight: 600;
   padding: 11px 18px;
-  border-radius: 10px;
+  border-radius: 0;
   border: 1px solid transparent;
   background: transparent;
   color: inherit;
@@ -830,7 +831,7 @@ html.dark .flight-conversation-panel__stat {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all .15s;
+  transition: opacity .15s;
   letter-spacing: -.005em;
   white-space: nowrap;
   text-decoration: none;
@@ -838,24 +839,23 @@ html.dark .flight-conversation-panel__stat {
 .fc-btn-gold {
   background: var(--fc-gold);
   color: var(--fc-navy-3);
-  box-shadow: 0 8px 20px -10px rgba(232,163,61,.5), inset 0 1px 0 rgba(255,255,255,.3);
 }
-.fc-btn-gold:hover { background: var(--fc-gold-soft); transform: translateY(-1px); }
+.fc-btn-gold:hover { opacity: 0.72; }
 .fc-btn-ghost {
-  background: rgba(255,255,255,.05);
+  background: color-mix(in srgb, var(--panel-fg) 5%, var(--panel-bg));
   color: var(--fc-cream);
-  border-color: rgba(255,255,255,.16);
+  border-color: color-mix(in srgb, var(--panel-fg) 16%, var(--panel-bg));
 }
-.fc-btn-ghost:hover { background: rgba(255,255,255,.10); }
+.fc-btn-ghost:hover { background: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)); }
 .fc-btn-light {
-  background: white;
+  background: var(--surface);
   color: var(--fc-ink);
   border-color: var(--fc-line-strong);
 }
 .fc-btn-light:hover { background: var(--fc-paper); }
 .fc-btn-ink { background: var(--fc-ink); color: var(--fc-cream); }
 .fc-btn-ink:hover { background: var(--fc-navy-2); }
-.fc-btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 8px; }
+.fc-btn-sm { padding: 7px 12px; font-size: 12px; border-radius: 0; }
 
 /* Globe panel */
 .fc-hero-globe {
@@ -865,7 +865,7 @@ html.dark .flight-conversation-panel__stat {
   place-items: center;
 }
 .fc-globe-frame { position: absolute; inset: 0; pointer-events: none; }
-.fc-globe-frame .fc-corner { position: absolute; width: 22px; height: 22px; border: 1.5px solid rgba(111,179,201,.7); }
+.fc-globe-frame .fc-corner { position: absolute; width: 22px; height: 22px; border: 1.5px solid color-mix(in srgb, var(--accent) 70%, var(--surface)); }
 .fc-globe-frame .tl { top:0; left:0; border-right:none; border-bottom:none; }
 .fc-globe-frame .tr { top:0; right:0; border-left:none; border-bottom:none; }
 .fc-globe-frame .bl { bottom:0; left:0; border-right:none; border-top:none; }
@@ -881,7 +881,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-globe-tag::before {
   content: ""; width: 4px; height: 4px; border-radius: 50%;
-  background: var(--fc-accent); box-shadow: 0 0 0 3px rgba(111,179,201,.18);
+  background: var(--fc-accent);
 }
 .fc-globe-tag.tl { top: 6px; left: 14px; }
 .fc-globe-tag.br { bottom: 6px; right: 14px; }
@@ -892,7 +892,7 @@ html.dark .flight-conversation-panel__stat {
   display: flex; align-items: center;
   background: var(--fc-ink);
   color: var(--fc-cream);
-  border-top: 1px solid rgba(111,179,201,.18);
+  border-top: 1px solid color-mix(in srgb, var(--accent) 18%, var(--panel-bg));
   font-family: var(--fc-font-mono);
   font-size: 12px;
   height: 38px;
@@ -915,11 +915,11 @@ html.dark .flight-conversation-panel__stat {
   animation: fc-ticker-scroll 60s linear infinite;
 }
 .fc-ticker-item { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
-.fc-ticker-route { color: rgba(255,255,255,.75); }
+.fc-ticker-route { color: color-mix(in srgb, var(--panel-fg) 75%, var(--panel-bg)); }
 .fc-ticker-price { color: var(--fc-gold); }
-.fc-ticker-delta-down { color: #4ade80; font-weight: 600; }
-.fc-ticker-delta-up { color: #f87171; font-weight: 600; }
-.fc-ticker-sep { width: 4px; height: 4px; border-radius: 50%; background: rgba(111,179,201,.35); flex-shrink: 0; }
+.fc-ticker-delta-down { color: var(--green); font-weight: 600; }
+.fc-ticker-delta-up { color: var(--red); font-weight: 600; }
+.fc-ticker-sep { width: 4px; height: 4px; border-radius: 50%; background: color-mix(in srgb, var(--accent) 35%, var(--panel-bg)); flex-shrink: 0; }
 @keyframes fc-ticker-scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
 /* Sections */
@@ -973,16 +973,15 @@ html.dark .flight-conversation-panel__stat {
 }
 @media (max-width: 880px) { .fc-kpi-strip { grid-template-columns: repeat(2, 1fr); } }
 .fc-kpi {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--fc-line);
-  border-radius: 16px;
+  border-radius: 0;
   padding: 18px 20px 16px;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 18px 40px -22px rgba(26,68,89,.22);
-  transition: transform .2s ease, box-shadow .2s ease;
+  transition: opacity .15s;
 }
-.fc-kpi:hover { transform: translateY(-2px); box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 24px 44px -20px rgba(26,68,89,.30); }
+.fc-kpi:hover { opacity: 0.92; }
 .fc-kpi-label {
   font-family: var(--fc-font-mono);
   font-size: 9.5px;
@@ -992,7 +991,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-kpi-value {
   font-family: var(--fc-font-display);
-  font-size: 38px;
+  font-size: 34px;
   line-height: 1.05;
   letter-spacing: -.02em;
   margin: 8px 0 4px;
@@ -1015,22 +1014,21 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-kpi-trend { position: absolute; right: 14px; top: 18px; width: 64px; height: 28px; }
 .fc-kpi.fc-kpi-accent {
-  background: linear-gradient(160deg, var(--fc-navy) 0%, var(--fc-navy-3) 100%);
+  background: var(--fc-navy);
   color: var(--fc-cream);
   border: 1px solid var(--fc-navy-3);
 }
-.fc-kpi.fc-kpi-accent .fc-kpi-label { color: rgba(255,255,255,.6); }
+.fc-kpi.fc-kpi-accent .fc-kpi-label { color: color-mix(in srgb, var(--panel-fg) 60%, var(--panel-bg)); }
 .fc-kpi.fc-kpi-accent .fc-kpi-value { color: var(--fc-gold); }
-.fc-kpi.fc-kpi-accent .fc-kpi-value .fc-unit { color: rgba(255,255,255,.5); }
-.fc-kpi.fc-kpi-accent .fc-kpi-sub { color: rgba(255,255,255,.7); }
+.fc-kpi.fc-kpi-accent .fc-kpi-value .fc-unit { color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); }
+.fc-kpi.fc-kpi-accent .fc-kpi-sub { color: color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg)); }
 
 /* Card */
 .fc-card {
-  background: white;
+  background: var(--surface);
   border: 1px solid var(--fc-line);
-  border-radius: 18px;
+  border-radius: 0;
   overflow: hidden;
-  box-shadow: 0 1px 2px rgba(15,23,42,.04), 0 14px 36px -22px rgba(26,68,89,.18);
 }
 .fc-card-head {
   padding: 20px 24px 14px;
@@ -1039,7 +1037,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-card-title {
   font-family: var(--fc-font-display);
-  font-size: 26px;
+  font-size: 23px;
   line-height: 1.05;
   letter-spacing: -.015em;
   margin: 4px 0 0;
@@ -1073,21 +1071,21 @@ html.dark .flight-conversation-panel__stat {
   font-size: 11.5px;
   font-weight: 500;
   padding: 6px 12px;
-  border-radius: 999px;
+  border-radius: 0;
   background: var(--fc-paper);
   border: 1px solid transparent;
   cursor: pointer;
   color: var(--fc-ink);
-  transition: all .12s;
+  transition: opacity .12s;
   display: flex; align-items: center; gap: 6px;
   white-space: nowrap;
 }
 .fc-chip:hover { background: var(--fc-paper-2); }
 .fc-chip.active { background: var(--fc-ink); color: var(--fc-cream); }
 .fc-chip-gold {
-  background: linear-gradient(180deg, #fef3c7, #fde68a);
-  color: #7c5c10;
-  border-color: rgba(111,179,201,.4);
+  background: color-mix(in srgb, var(--amber) 22%, var(--surface));
+  color: var(--ink);
+  border-color: color-mix(in srgb, var(--accent) 40%, var(--surface));
 }
 .fc-chip-gold::before { content: "✦"; color: var(--fc-gold); }
 
@@ -1112,7 +1110,7 @@ html.dark .flight-conversation-panel__stat {
   vertical-align: middle;
 }
 .fc-deals-table tbody tr { transition: background .12s; cursor: pointer; }
-.fc-deals-table tbody tr:hover td { background: rgba(232,163,61,.045); }
+.fc-deals-table tbody tr:hover td { background: color-mix(in srgb, var(--amber) 5%, var(--surface)); }
 .fc-deals-table .fc-col-rank { font-family: var(--fc-font-mono); font-size: 11px; color: var(--fc-faint); width: 36px; }
 .fc-deals-table .fc-col-route { font-weight: 600; }
 .fc-deals-table .fc-col-route .arrow { color: var(--fc-faint); margin: 0 4px; }
@@ -1140,7 +1138,7 @@ html.dark .flight-conversation-panel__stat {
 .fc-deals-table .fc-col-vs { text-align: right; font-size: 12px; font-weight: 600; }
 .fc-deals-table .fc-vs-below { color: var(--fc-emerald); }
 .fc-deals-table .fc-vs-above { color: var(--fc-crimson); }
-.fc-row-sweetspot { background: linear-gradient(90deg, rgba(111,179,201,.06), transparent 70%); }
+.fc-row-sweetspot { background: color-mix(in srgb, var(--accent) 6%, var(--surface)); }
 .fc-row-sweetspot .fc-col-rank::after { content: "✦"; color: var(--fc-gold); margin-left: 2px; }
 
 .fc-badge {
@@ -1148,16 +1146,16 @@ html.dark .flight-conversation-panel__stat {
   font-size: 10.5px;
   font-weight: 600;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: 0;
   letter-spacing: .02em;
 }
-.fc-badge-ok    { background: rgba(31,138,91,.13); color: #0e6240; }
-.fc-badge-warn  { background: rgba(111,179,201,.18); color: #7c5c10; }
-.fc-badge-info  { background: rgba(26,68,89,.10); color: var(--fc-navy); }
+.fc-badge-ok    { background: color-mix(in srgb, var(--green) 13%, var(--surface)); color: var(--green); }
+.fc-badge-warn  { background: color-mix(in srgb, var(--accent) 18%, var(--surface)); color: var(--ink); }
+.fc-badge-info  { background: color-mix(in srgb, var(--fc-navy) 10%, var(--surface)); color: var(--fc-navy); }
 .fc-badge-mute  { background: var(--fc-paper); color: var(--fc-muted); }
 .fc-badge-hot   {
-  background: linear-gradient(135deg, var(--fc-crimson), #8a2342);
-  color: white;
+  background: var(--fc-crimson);
+  color: var(--on-accent);
   text-transform: uppercase;
   font-size: 9.5px;
   letter-spacing: .12em;
@@ -1198,7 +1196,6 @@ html.dark .flight-conversation-panel__stat {
 .fc-feed-pulse .dot {
   width: 7px; height: 7px; border-radius: 50%;
   background: var(--fc-emerald);
-  box-shadow: 0 0 0 4px rgba(31,138,91,.16);
   animation: fc-blink 1.4s ease-in-out infinite;
 }
 @keyframes fc-blink { 50% { opacity: .4; } }
@@ -1213,7 +1210,7 @@ html.dark .flight-conversation-panel__stat {
   animation: fc-feed-in .35s ease both;
 }
 @keyframes fc-feed-in {
-  from { opacity: 0; transform: translateY(-6px); background: rgba(111,179,201,.12); }
+  from { opacity: 0; transform: translateY(-6px); background: color-mix(in srgb, var(--accent) 12%, var(--surface)); }
   to   { opacity: 1; transform: translateY(0); background: transparent; }
 }
 .fc-feed-time { font-family: var(--fc-font-mono); font-size: 10.5px; color: var(--fc-faint); line-height: 1.3; }
@@ -1242,19 +1239,12 @@ html.dark .flight-conversation-panel__stat {
   display: grid;
   grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
   gap: 0; position: relative; overflow: hidden;
-  border-radius: 18px;
-  background: linear-gradient(135deg, var(--fc-navy-3), var(--fc-ink) 65%, #1a1109);
-  color: var(--fc-cream);
+  border-radius: 0;
+  background: var(--panel-bg);
+  color: var(--panel-fg);
   isolation: isolate;
 }
 @media (max-width: 900px) { .fc-radar { grid-template-columns: 1fr; } }
-.fc-radar::before {
-  content: ""; position: absolute; inset: 0;
-  background:
-    radial-gradient(700px 400px at 80% 0%, rgba(111,179,201,.18), transparent 60%),
-    radial-gradient(500px 300px at 20% 100%, rgba(193,66,107,.12), transparent 55%);
-  pointer-events: none;
-}
 .fc-radar-left { padding: 32px 36px; position: relative; z-index: 1; }
 .fc-radar-h {
   font-family: var(--fc-font-display);
@@ -1263,10 +1253,10 @@ html.dark .flight-conversation-panel__stat {
   letter-spacing: -.02em;
   font-weight: 400;
   margin: 14px 0 12px;
-  color: var(--fc-cream);
+  color: var(--panel-fg);
 }
 .fc-radar-h em { color: var(--fc-gold); font-style: italic; }
-.fc-radar-lede { color: rgba(255,255,255,.7); max-width: 460px; line-height: 1.55; font-size: 14px; }
+.fc-radar-lede { color: color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg)); max-width: 460px; line-height: 1.55; font-size: 14px; }
 .fc-radar-fare-list { margin-top: 22px; display: flex; flex-direction: column; gap: 8px; }
 .fc-radar-fare {
   display: grid;
@@ -1274,18 +1264,18 @@ html.dark .flight-conversation-panel__stat {
   gap: 16px;
   align-items: center;
   padding: 14px 16px;
-  background: rgba(255,255,255,.04);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--panel-fg) 4%, var(--panel-bg));
+  border: 1px solid color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg));
+  border-radius: 0;
   font-size: 13px;
-  transition: all .15s;
+  transition: opacity .15s;
   cursor: pointer;
 }
-.fc-radar-fare:hover { background: rgba(255,255,255,.07); border-color: rgba(232,163,61,.3); }
-.fc-radar-fare-time { font-family: var(--fc-font-mono); font-size: 10px; color: rgba(255,255,255,.5); letter-spacing: .1em; }
+.fc-radar-fare:hover { background: color-mix(in srgb, var(--panel-fg) 7%, var(--panel-bg)); border-color: color-mix(in srgb, var(--amber) 30%, var(--panel-bg)); }
+.fc-radar-fare-time { font-family: var(--fc-font-mono); font-size: 10px; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); letter-spacing: .1em; }
 .fc-radar-fare-route { font-weight: 600; }
-.fc-radar-fare-route .small { display: block; font-weight: 400; font-size: 11px; color: rgba(255,255,255,.5); margin-top: 2px; }
-.fc-radar-fare-was { font-family: var(--fc-font-mono); font-size: 11px; color: rgba(255,255,255,.4); text-decoration: line-through; }
+.fc-radar-fare-route .small { display: block; font-weight: 400; font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); margin-top: 2px; }
+.fc-radar-fare-was { font-family: var(--fc-font-mono); font-size: 11px; color: color-mix(in srgb, var(--panel-fg) 40%, var(--panel-bg)); text-decoration: line-through; }
 .fc-radar-fare-now { font-family: var(--fc-font-display); font-size: 22px; color: var(--fc-gold); letter-spacing: -.01em; }
 .fc-radar-fare-now .pct { display: block; font-family: var(--fc-font-mono); font-size: 10px; color: var(--fc-emerald); font-weight: 600; margin-top: 2px; }
 .fc-radar-right { position: relative; padding: 32px; display: grid; place-items: center; z-index: 1; }
@@ -1294,26 +1284,24 @@ html.dark .flight-conversation-panel__stat {
   width: 280px;
   aspect-ratio: 1;
   border-radius: 50%;
-  border: 1px solid rgba(111,179,201,.25);
+  border: 1px solid color-mix(in srgb, var(--accent) 25%, var(--panel-bg));
   display: grid; place-items: center;
 }
 .fc-radar-ring::before, .fc-radar-ring::after {
   content: ""; position: absolute; border-radius: 50%;
-  border: 1px solid rgba(111,179,201,.18);
+  border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--panel-bg));
 }
 .fc-radar-ring::before { inset: 20%; }
 .fc-radar-ring::after { inset: 40%; }
 .fc-radar-sweep {
   position: absolute; inset: 0; border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0deg, rgba(111,179,201,.25) 30deg, transparent 60deg);
+  border-top: 2px solid color-mix(in srgb, var(--accent) 45%, var(--panel-bg));
   animation: fc-sweep 4s linear infinite;
-  mask-image: radial-gradient(circle, black 30%, transparent 100%);
 }
 @keyframes fc-sweep { to { transform: rotate(360deg); } }
 .fc-radar-blip {
   position: absolute; width: 8px; height: 8px; border-radius: 50%;
   background: var(--fc-gold);
-  box-shadow: 0 0 0 4px rgba(232,163,61,.2), 0 0 18px rgba(232,163,61,.55);
 }
 .fc-radar-center {
   font-family: var(--fc-font-display);
@@ -1328,7 +1316,7 @@ html.dark .flight-conversation-panel__stat {
   font-size: 9.5px;
   letter-spacing: .2em;
   text-transform: uppercase;
-  color: rgba(255,255,255,.55);
+  color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg));
   margin-top: 4px;
   font-style: normal;
 }
@@ -1355,19 +1343,19 @@ html.dark .flight-conversation-panel__stat {
   text-transform: uppercase;
   color: var(--fc-muted);
 }
-.fc-dna-bar { height: 6px; border-radius: 999px; background: var(--fc-paper); position: relative; overflow: hidden; }
+.fc-dna-bar { height: 6px; border-radius: 0; background: var(--fc-paper); position: relative; overflow: hidden; }
 .fc-dna-fill {
   position: absolute; left: 0; top: 0; bottom: 0;
-  background: linear-gradient(90deg, var(--fc-navy), var(--fc-gold));
-  border-radius: 999px;
+  background: var(--fc-gold);
+  border-radius: 0;
   transition: width .6s ease;
 }
 .fc-dna-val { font-family: var(--fc-font-mono); font-size: 12px; font-weight: 600; text-align: right; }
 .fc-dna-flightcard {
   margin: 0 24px 22px;
   border: 1px solid var(--fc-line);
-  border-radius: 14px;
-  background: linear-gradient(180deg, white, var(--fc-cream));
+  border-radius: 0;
+  background: var(--surface);
   padding: 16px;
 }
 .fc-dna-route { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
@@ -1390,14 +1378,14 @@ html.dark .flight-conversation-panel__stat {
 .fc-dna-iata.right { text-align: right; }
 .fc-dna-plane { flex: 1; margin: 0 14px; position: relative; height: 24px; }
 .fc-dna-plane::before {
-  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 1px;
-  background: repeating-linear-gradient(90deg, var(--fc-line-strong) 0 4px, transparent 4px 8px);
+  content: ""; position: absolute; left: 0; right: 0; top: 50%; height: 0;
+  border-top: 1px dashed var(--fc-line-strong);
 }
 .fc-dna-plane svg {
   position: absolute; left: 50%; top: 50%;
   transform: translate(-50%, -50%);
   color: var(--fc-navy);
-  background: white;
+  background: var(--surface);
   padding: 0 8px;
 }
 
@@ -1424,7 +1412,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-cal-cell {
   aspect-ratio: 1;
-  border-radius: 5px;
+  border-radius: 0;
   background: var(--fc-paper);
   display: grid; place-items: center;
   font-size: 10px;
@@ -1432,15 +1420,16 @@ html.dark .flight-conversation-panel__stat {
   font-weight: 500;
   color: var(--fc-faint);
   cursor: pointer;
-  transition: transform .15s;
+  transition: opacity .15s;
   position: relative;
 }
-.fc-cal-cell:hover { transform: scale(1.12); z-index: 2; }
+.fc-cal-cell:hover { opacity: 0.72; z-index: 2; }
+/* Month-grid intensity ramp — color-mix(var(--accent) N%) per the heatmap spec. */
 .fc-cal-cell.l0 { background: var(--fc-paper); }
-.fc-cal-cell.l1 { background: #e7e9d9; color: #4f6240; }
-.fc-cal-cell.l2 { background: #c5d6a8; color: #2b4d1f; }
-.fc-cal-cell.l3 { background: #88b56e; color: white; }
-.fc-cal-cell.l4 { background: #4f8a3e; color: white; }
+.fc-cal-cell.l1 { background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--ink); }
+.fc-cal-cell.l2 { background: color-mix(in srgb, var(--accent) 34%, var(--surface)); color: var(--ink); }
+.fc-cal-cell.l3 { background: color-mix(in srgb, var(--accent) 58%, var(--surface)); color: var(--on-accent); }
+.fc-cal-cell.l4 { background: color-mix(in srgb, var(--accent) 82%, var(--surface)); color: var(--on-accent); }
 .fc-cal-cell.l5 { background: var(--fc-gold); color: var(--fc-navy-3); }
 .fc-cal-cell.l5::after { content: "★"; position: absolute; bottom: 1px; right: 2px; font-size: 7px; }
 .fc-cal-legend {
@@ -1453,7 +1442,7 @@ html.dark .flight-conversation-panel__stat {
   margin-top: 14px;
 }
 .fc-cal-legend .swatches { display: flex; gap: 2px; }
-.fc-cal-legend .sw { width: 12px; height: 12px; border-radius: 3px; }
+.fc-cal-legend .sw { width: 12px; height: 12px; border-radius: 0; }
 
 /* Carbon */
 .fc-carbon { padding: 22px 24px; }
@@ -1487,7 +1476,7 @@ html.dark .flight-conversation-panel__stat {
 .fc-carbon-row:first-child { border-top: none; }
 .fc-carbon-icon {
   width: 28px; height: 28px;
-  border-radius: 8px;
+  border-radius: 0;
   background: var(--fc-paper);
   display: grid; place-items: center;
   color: var(--fc-navy);
@@ -1496,13 +1485,13 @@ html.dark .flight-conversation-panel__stat {
 .fc-carbon-cta {
   margin-top: 16px;
   padding: 14px;
-  background: linear-gradient(180deg, #f0f7f1, #e3eedf);
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--green) 14%, var(--surface));
+  border-radius: 0;
   font-size: 12.5px;
-  color: #2b4d1f;
+  color: var(--green);
   line-height: 1.4;
 }
-.fc-carbon-cta strong { color: #0e6240; font-weight: 700; }
+.fc-carbon-cta strong { color: var(--green); font-weight: 700; }
 
 /* Concierge */
 .fc-concierge {
@@ -1623,7 +1612,7 @@ html.dark .flight-conversation-panel__stat {
 }
 .fc-tweak-item:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
 .fc-tweak-item.active { background: rgba(111,179,201, 0.16); color: #fff; font-weight: 600; }
-.fc-tweak-check { margin-left: auto; color: var(--fc-accent, #6FB3C9); font-weight: 700; }
+.fc-tweak-check { margin-left: auto; color: var(--fc-accent, var(--accent)); font-weight: 700; }
 
 
 /* Footer */
@@ -2077,7 +2066,7 @@ main:has(> .fc-landing) {
   background: var(--fc-cream);
   min-height: 100vh;
 }
-.fc-shell[data-fc-theme="coal"]   { background: #14181f; color: #e8ecf4; }
+.fc-shell[data-fc-theme="coal"]   { background: var(--surface-2); color: var(--panel-fg); }
 .fc-landing {
   background: var(--fc-cream);
   min-height: 100vh;
@@ -2096,7 +2085,7 @@ html.dark body:has(main > .fc-landing) {
 }
 html.dark .fc-shell,
 html.dark .fc-landing { color: var(--fc-ink); }
-html.dark .fc-shell[data-fc-theme="coal"] { color: #e8ecf4; }
+html.dark .fc-shell[data-fc-theme="coal"] { color: var(--panel-fg); }
 
 /* GlobeHUD self-gates inside the React component — only renders while FarePilot
    is actively speaking/listening, then auto-hides after a 5s linger. No CSS
@@ -2125,14 +2114,14 @@ body:has(main > .fc-landing) .chat-widget {
    blends with the dark surfaces instead of flashing as a white island.
    =========================================================================== */
 .fc-dna-reco {
-  background: linear-gradient(180deg, #f0f7f1, #e3eedf);
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--green) 14%, var(--surface));
+  border-radius: 0;
   padding: 12px 14px;
   font-size: 12.5px;
-  color: #2b4d1f;
+  color: var(--green);
   line-height: 1.4;
 }
-.fc-dna-reco-strong { color: #0e6240; }
+.fc-dna-reco-strong { color: var(--green); }
 
 /* ===========================================================================
    COAL THEME — global overrides
@@ -2144,15 +2133,15 @@ body:has(main > .fc-landing) .chat-widget {
 
 html[data-fc-theme="coal"] body,
 html[data-fc-theme="coal"] {
-  background: #0a0e16;
-  color: #e8ecf4;
+  background: var(--panel-bg);
+  color: var(--panel-fg);
 }
 
 /* FC shell + sections */
 html[data-fc-theme="coal"] .fc-shell,
 html[data-fc-theme="coal"] .fc-landing {
-  background: #0a0e16 !important;
-  color: #e8ecf4 !important;
+  background: var(--panel-bg) !important;
+  color: var(--panel-fg) !important;
 }
 html[data-fc-theme="coal"] .fc-card,
 html[data-fc-theme="coal"] .fc-kpi,
@@ -2165,41 +2154,41 @@ html[data-fc-theme="coal"] .fc-deals,
 html[data-fc-theme="coal"] .fc-dna,
 html[data-fc-theme="coal"] .fc-calendar,
 html[data-fc-theme="coal"] .fc-carbon {
-  background: #14181f !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
-  color: #e8ecf4 !important;
+  background: var(--surface-2) !important;
+  border-color: color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg)) !important;
+  color: var(--panel-fg) !important;
 }
 html[data-fc-theme="coal"] .fc-card-title,
 html[data-fc-theme="coal"] .fc-section-title,
 html[data-fc-theme="coal"] .fc-kpi-value,
 html[data-fc-theme="coal"] h1, html[data-fc-theme="coal"] h2,
 html[data-fc-theme="coal"] h3, html[data-fc-theme="coal"] h4 {
-  color: #f5f1e8 !important;
+  color: var(--panel-fg) !important;
 }
 html[data-fc-theme="coal"] .fc-kpi-label,
 html[data-fc-theme="coal"] .fc-card-sub,
 html[data-fc-theme="coal"] .fc-eyebrow {
-  color: rgba(255, 255, 255, 0.55) !important;
+  color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)) !important;
 }
 html[data-fc-theme="coal"] .fc-deals-table thead th {
-  background: #0e1218 !important;
-  color: rgba(255, 255, 255, 0.55) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: var(--panel-bg) !important;
+  color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)) !important;
+  border-color: color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg)) !important;
 }
 html[data-fc-theme="coal"] .fc-deals-table tbody td,
 html[data-fc-theme="coal"] .fc-deals-table tbody tr {
-  border-color: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.85) !important;
+  border-color: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)) !important;
+  color: color-mix(in srgb, var(--panel-fg) 85%, var(--panel-bg)) !important;
 }
 html[data-fc-theme="coal"] .fc-chip {
-  background: rgba(255, 255, 255, 0.06) !important;
-  color: rgba(255, 255, 255, 0.7) !important;
-  border-color: rgba(255, 255, 255, 0.1) !important;
+  background: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)) !important;
+  color: color-mix(in srgb, var(--panel-fg) 70%, var(--panel-bg)) !important;
+  border-color: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)) !important;
 }
 html[data-fc-theme="coal"] .fc-chip.active,
 html[data-fc-theme="coal"] .fc-chip-gold.active {
-  background: var(--fc-gold, #E8A33D) !important;
-  color: #0a0e16 !important;
+  background: var(--fc-gold) !important;
+  color: var(--panel-bg) !important;
 }
 
 /* Legacy Tailwind cards / surfaces — used by /settings, /searches, /admin … */
@@ -2269,11 +2258,11 @@ html[data-fc-theme="coal"] table tbody td { color: rgba(255, 255, 255, 0.82); bo
 /* Route DNA recommendation panel — dim down the green-on-cream treatment so it
    integrates with the rest of the dark surface. */
 html[data-fc-theme="coal"] .fc-dna-reco {
-  background: linear-gradient(180deg, rgba(232,163,61,0.12), rgba(232,163,61,0.03)) !important;
-  color: #f0d674 !important;
-  border: 1px solid rgba(232,163,61, 0.18);
+  background: color-mix(in srgb, var(--amber) 12%, var(--panel-bg)) !important;
+  color: var(--fc-gold) !important;
+  border: 1px solid color-mix(in srgb, var(--amber) 18%, var(--panel-bg));
 }
-html[data-fc-theme="coal"] .fc-dna-reco-strong { color: var(--fc-gold, #E8A33D) !important; }
+html[data-fc-theme="coal"] .fc-dna-reco-strong { color: var(--fc-gold) !important; }
 
 /* ===========================================================================
    PAPER THEME — neutral light gray surfaces (subtle alternate to Ivory).
@@ -2281,11 +2270,11 @@ html[data-fc-theme="coal"] .fc-dna-reco-strong { color: var(--fc-gold, #E8A33D) 
 
 /* Coal-theme: flatten the inner light gradient on the Route DNA flightcard. */
 html[data-fc-theme="coal"] .fc-dna-flightcard {
-  background: linear-gradient(180deg, #1a1f2a, #14181f) !important;
-  border-color: rgba(255, 255, 255, 0.08) !important;
+  background: var(--surface-2) !important;
+  border-color: color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg)) !important;
 }
-html[data-fc-theme="coal"] .fc-dna-iata .label { color: rgba(255, 255, 255, 0.55) !important; }
-html[data-fc-theme="coal"] .fc-dna-bar { background: rgba(255, 255, 255, 0.06) !important; }
+html[data-fc-theme="coal"] .fc-dna-iata .label { color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-dna-bar { background: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)) !important; }
 
 /* ===========================================================================
    COAL THEME — Fare Calendar + Carbon Ledger surfaces
@@ -2293,38 +2282,38 @@ html[data-fc-theme="coal"] .fc-dna-bar { background: rgba(255, 255, 255, 0.06) !
    as orphan white islands against the dark surfaces. Re-skin to dark.
    =========================================================================== */
 
-/* Fare calendar heat cells — flip the light-green ramp to a navy→gold ramp */
-html[data-fc-theme="coal"] .fc-cal-cell.l0 { background: rgba(255,255,255,0.04) !important; color: rgba(255,255,255,0.35) !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l1 { background: rgba(232,163,61,0.08) !important; color: rgba(255,255,255,0.55) !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l2 { background: rgba(232,163,61,0.18) !important; color: rgba(255,255,255,0.75) !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l3 { background: rgba(232,163,61,0.32) !important; color: #fff !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l4 { background: rgba(232,163,61,0.55) !important; color: #0a0e16 !important; }
-html[data-fc-theme="coal"] .fc-cal-cell.l5 { background: var(--fc-gold, #E8A33D) !important; color: #0a0e16 !important; }
-html[data-fc-theme="coal"] .fc-cal-dow { color: rgba(255,255,255,0.45) !important; }
-html[data-fc-theme="coal"] .fc-cal-legend { color: rgba(255,255,255,0.55) !important; }
-html[data-fc-theme="coal"] .fc-cal-legend .sw.l0 { background: rgba(255,255,255,0.06) !important; }
+/* Fare calendar heat cells — flip the light ramp to an accent→gold ramp */
+html[data-fc-theme="coal"] .fc-cal-cell.l0 { background: color-mix(in srgb, var(--panel-fg) 4%, var(--panel-bg)) !important; color: color-mix(in srgb, var(--panel-fg) 35%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l1 { background: color-mix(in srgb, var(--accent) 16%, var(--panel-bg)) !important; color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l2 { background: color-mix(in srgb, var(--accent) 34%, var(--panel-bg)) !important; color: color-mix(in srgb, var(--panel-fg) 75%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l3 { background: color-mix(in srgb, var(--accent) 58%, var(--panel-bg)) !important; color: var(--panel-fg) !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l4 { background: color-mix(in srgb, var(--accent) 82%, var(--panel-bg)) !important; color: var(--panel-bg) !important; }
+html[data-fc-theme="coal"] .fc-cal-cell.l5 { background: var(--fc-gold) !important; color: var(--panel-bg) !important; }
+html[data-fc-theme="coal"] .fc-cal-dow { color: color-mix(in srgb, var(--panel-fg) 45%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-cal-legend { color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)) !important; }
+html[data-fc-theme="coal"] .fc-cal-legend .sw.l0 { background: color-mix(in srgb, var(--panel-fg) 6%, var(--panel-bg)) !important; }
 
 /* Calendar month nav (left/right + label) */
-html[data-fc-theme="coal"] .fc-cal-month { color: #fff !important; }
+html[data-fc-theme="coal"] .fc-cal-month { color: var(--panel-fg) !important; }
 
 /* Carbon ledger surfaces */
-html[data-fc-theme="coal"] .fc-carbon-hero { color: #f5f1e8 !important; }
-html[data-fc-theme="coal"] .fc-carbon-hero .fc-unit { color: rgba(255,255,255,0.5) !important; }
+html[data-fc-theme="coal"] .fc-carbon-hero { color: var(--panel-fg) !important; }
+html[data-fc-theme="coal"] .fc-carbon-hero .fc-unit { color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)) !important; }
 html[data-fc-theme="coal"] .fc-carbon-row {
-  border-top-color: rgba(255, 255, 255, 0.08) !important;
-  color: rgba(255, 255, 255, 0.82) !important;
+  border-top-color: color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg)) !important;
+  color: color-mix(in srgb, var(--panel-fg) 82%, var(--panel-bg)) !important;
 }
 html[data-fc-theme="coal"] .fc-carbon-icon {
-  background: rgba(111,179,201, 0.12) !important;
-  color: var(--fc-accent, #6FB3C9) !important;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-bg)) !important;
+  color: var(--fc-accent) !important;
 }
-html[data-fc-theme="coal"] .fc-carbon-row .val { color: #f0d674 !important; }
+html[data-fc-theme="coal"] .fc-carbon-row .val { color: var(--fc-gold) !important; }
 html[data-fc-theme="coal"] .fc-carbon-cta {
-  background: linear-gradient(180deg, rgba(111,179,201,0.14), rgba(111,179,201,0.04)) !important;
-  border: 1px solid rgba(111,179,201, 0.22);
-  color: #f0d674 !important;
+  background: color-mix(in srgb, var(--accent) 12%, var(--panel-bg)) !important;
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, var(--panel-bg));
+  color: var(--fc-gold) !important;
 }
-html[data-fc-theme="coal"] .fc-carbon-cta strong { color: var(--fc-gold, #E8A33D) !important; }
+html[data-fc-theme="coal"] .fc-carbon-cta strong { color: var(--fc-gold) !important; }
 
 /* Mistake-fare radar rows are now anchors when bookHref is set; ensure the
    <a> still lays out as a row, has no underline, and uses pointer cursor. */
@@ -2334,19 +2323,19 @@ a.fc-radar-fare-link {
   cursor: pointer;
   display: grid; /* re-assert same layout as the div variant */
 }
-a.fc-radar-fare-link:hover { background: rgba(232,163,61,.10); border-color: rgba(232,163,61,.45); }
+a.fc-radar-fare-link:hover { background: color-mix(in srgb, var(--amber) 10%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--surface)); }
 
 /* Best deals table — make the horizontal scrollbar always visible (not
    clipped by the KPI strip above) and styled to match the dark/coal theme. */
 .fc-deals-table-wrap {
   overflow-x: auto;
   scrollbar-width: thin;
-  scrollbar-color: rgba(232,163,61,0.45) rgba(255,255,255,0.04);
+  scrollbar-color: color-mix(in srgb, var(--amber) 45%, var(--panel-bg)) color-mix(in srgb, var(--panel-fg) 4%, var(--panel-bg));
 }
 .fc-deals-table-wrap::-webkit-scrollbar { height: 10px; }
-.fc-deals-table-wrap::-webkit-scrollbar-track { background: rgba(255,255,255,0.04); border-radius: 999px; }
-.fc-deals-table-wrap::-webkit-scrollbar-thumb { background: rgba(232,163,61,0.55); border-radius: 999px; }
-.fc-deals-table-wrap::-webkit-scrollbar-thumb:hover { background: rgba(232,163,61,0.85); }
+.fc-deals-table-wrap::-webkit-scrollbar-track { background: color-mix(in srgb, var(--panel-fg) 4%, var(--panel-bg)); border-radius: 0; }
+.fc-deals-table-wrap::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--amber) 55%, var(--panel-bg)); border-radius: 0; }
+.fc-deals-table-wrap::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--amber) 85%, var(--panel-bg)); }
 
 /* Book provider dropdown — translucent glass. Always sits at z:999999 via
    inline style, but we extend the look here (hovers, text, dividers). */
@@ -3280,12 +3269,12 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 .fc-admin-login .legal a { color: rgba(255,255,255,.6); text-decoration: underline; }
 /* Live feed: slide-in for the newest row */
 .fc-feed-item.fresh { animation: fc-feed-in .45s ease both; }
-@keyframes fc-feed-in { from { opacity: 0; transform: translateY(-8px); background: rgba(111,179,201,.10); } to { opacity: 1; transform: none; } }
+@keyframes fc-feed-in { from { opacity: 0; transform: translateY(-8px); background: color-mix(in srgb, var(--accent) 10%, var(--surface)); } to { opacity: 1; transform: none; } }
 /* Founding period banner (dashboard) */
-.fc-founding-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 12px; background: rgba(111,179,201,.08); border: 1px solid rgba(111,179,201,.3); color: #e8ecf4; font-size: 13.5px; line-height: 1.5; }
-.fc-founding-banner.due { background: rgba(111,179,201,.14); border-color: rgba(111,179,201,.5); }
-.fc-founding-banner a { color: var(--fc-gold, #E8A33D); text-decoration: underline; }
-.fc-founding-tag { font-family: var(--fc-font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--fc-gold, #E8A33D); white-space: nowrap; }
+.fc-founding-banner { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin: 0 0 16px; padding: 12px 16px; border-radius: 0; background: color-mix(in srgb, var(--accent) 8%, var(--panel-bg)); border: 1px solid color-mix(in srgb, var(--accent) 30%, var(--panel-bg)); color: var(--panel-fg); font-size: 13.5px; line-height: 1.5; }
+.fc-founding-banner.due { background: color-mix(in srgb, var(--accent) 14%, var(--panel-bg)); border-color: color-mix(in srgb, var(--accent) 50%, var(--panel-bg)); }
+.fc-founding-banner a { color: var(--fc-gold); text-decoration: underline; }
+.fc-founding-tag { font-family: var(--fc-font-mono, ui-monospace, monospace); font-size: 10px; letter-spacing: .18em; text-transform: uppercase; color: var(--fc-gold); white-space: nowrap; }
 
 /* ============================================================
    Night cabin — FlyCheap travel design language.
@@ -3444,9 +3433,9 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
      was being reverted to coal before it ever painted. */
   --fc-navy:        var(--nc-teal);
   --fc-gold:        var(--nc-amber);
-  --fc-gold-soft:   #F2C67A;
+  --fc-gold-soft:   color-mix(in srgb, var(--amber) 70%, var(--surface));
   --fc-accent:      var(--nc-teal);
-  --fc-accent-soft: #9ACBDB;
+  --fc-accent-soft: color-mix(in srgb, var(--accent) 65%, var(--surface));
   --fc-emerald:     var(--nc-mint);
   --fc-crimson:     var(--nc-signal);
   --fc-paper:       var(--nc-dark);
@@ -3455,31 +3444,23 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
   --fc-line-strong: var(--nc-rule-2);
   --fc-muted:       var(--nc-on-dark-mute);
   --fc-faint:       var(--nc-on-dark-faint);
-  --fc-font-display: var(--nc-display);
+  --fc-font-display: var(--font-serif);
+  --fc-font-mono:    var(--font-mono-ed);
+  --fc-font-sans:    var(--font-ui);
 
   background: var(--nc-dark);
   color: var(--nc-on-dark);
 }
 
 /* Surfaces that hardcode a light background in the base sheet. */
-/* The client portal's panels, in the same glass as the marketing site and the
-   admin console — so the three surfaces read as one product rather than three
-   that happen to share a palette. A facing gradient, a lit top lip, and
-   blur+saturate so the shell's own atmosphere shows through the panel. */
+/* The client portal's panels sit on a flat editorial surface — no glass,
+   no gradient, no blur, no shadow, per the redesign's geometry rule. */
 .fc-shell[data-fc-theme="cabin"] .fc-card,
 .fc-shell[data-fc-theme="cabin"] .fc-kpi,
 .fc-shell[data-fc-theme="cabin"] .fc-panel {
-  background: linear-gradient(160deg, rgba(255,255,255,.055), rgba(255,255,255,.018));
-  -webkit-backdrop-filter: blur(14px) saturate(160%);
-  backdrop-filter: blur(14px) saturate(160%);
+  background: var(--surface);
   border-color: var(--nc-rule);
   color: var(--nc-on-dark);
-  box-shadow: inset 0 1px 0 0 rgba(255,255,255,.12);
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .fc-shell[data-fc-theme="cabin"] .fc-card,
-  .fc-shell[data-fc-theme="cabin"] .fc-kpi,
-  .fc-shell[data-fc-theme="cabin"] .fc-panel { background: var(--nc-deck); }
 }
 .fc-shell[data-fc-theme="cabin"] .fc-card-title,
 .fc-shell[data-fc-theme="cabin"] .fc-section-title,
@@ -3499,7 +3480,7 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
 
 /* The hero sits on the deck rather than on its own light card. */
 .fc-shell[data-fc-theme="cabin"] .fc-hero {
-  background: linear-gradient(180deg, var(--nc-deck) 0%, var(--nc-dark) 100%);
+  background: var(--nc-deck);
   border-color: var(--nc-rule);
   color: var(--nc-on-dark);
 }
@@ -3798,7 +3779,7 @@ html[data-fc-theme="coal"] .bg-brand-gradient {
 
 /* Status badges kept their light-theme inks over their own tinted washes. */
 .fc-shell[data-fc-theme="cabin"] .fc-badge-ok {
-  background: rgba(123, 196, 154, .14);
+  background: color-mix(in srgb, var(--nc-mint) 14%, var(--nc-dark));
   color: var(--nc-mint);
 }
 
