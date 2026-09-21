@@ -70,7 +70,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                       <span className="text-[11px] font-mono uppercase tracking-wider" style={{ color: fromUs ? 'var(--accent)' : 'var(--muted)' }}>
                         {fromUs ? 'FlyCheap' : ticket.name}
                       </span>
-                      <span className="text-[11px]" style={{ color: 'var(--muted-2)' }}>{fmtWhen(m.created_at)}</span>
+                      <span className="text-[11px]" style={{ color: 'var(--ink-soft)' }}>{fmtWhen(m.created_at)}</span>
                     </div>
                     <div className="text-[13.5px] leading-relaxed" style={{ color: 'var(--ink-soft)' }}>{m.body}</div>
                   </div>
@@ -114,7 +114,7 @@ export default async function AdminTicketDetail({ params }: { params: Promise<{ 
                     className={`ad-statuspick${isCurrent ? ' active' : ''}`}
                   >
                     <Status tone={sm.tone}>{sm.label}</Status>
-                    {isCurrent && <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--muted-2)' }}>current</span>}
+                    {isCurrent && <span className="text-[10px] font-mono uppercase tracking-wider" style={{ color: 'var(--ink-soft)' }}>current</span>}
                   </button>
                 </form>
               );
