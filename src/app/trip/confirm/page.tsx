@@ -1,4 +1,3 @@
-import '../trip.css';
 import { tripForConfirmToken } from '@/lib/tripChain';
 import { answer } from './actions';
 
@@ -34,10 +33,10 @@ export default async function TripConfirmPage(
   if (sp.done) {
     return (
       <Shell>
-        <h1 className="nc-h1">
+        <h1 className="ed-h2">
           {sp.done === 'booked' ? 'Brilliant — have a great trip.' : 'Noted, no rush.'}
         </h1>
-        <p className="nc-lede">
+        <p className="ed-sub">
           {sp.done === 'booked'
             ? 'We’ll follow up with a few things that make the trip easier — somewhere to stay, getting in from the airport. One email at a time, and you can turn them off in a click.'
             : 'We’ll keep watching this route and let you know how the fare moves.'}
@@ -49,8 +48,8 @@ export default async function TripConfirmPage(
   if (!trip) {
     return (
       <Shell>
-        <h1 className="nc-h1">That link has expired.</h1>
-        <p className="nc-lede">
+        <h1 className="ed-h2">That link has expired.</h1>
+        <p className="ed-sub">
           Confirmation links last 30 days and can only be used once. Nothing is wrong with your
           account — there is just nothing left to answer here.
         </p>
@@ -60,23 +59,23 @@ export default async function TripConfirmPage(
 
   return (
     <Shell>
-      <h1 className="nc-h1">Did you get the {trip.destination} fare?</h1>
-      <p className="nc-lede">
+      <h1 className="ed-h2">Did you get the {trip.destination} fare?</h1>
+      <p className="ed-sub">
         {trip.origin} → {trip.destination}
         {trip.depart_date ? ` · ${trip.depart_date}` : ''}
         {trip.fare_per_adult_usd ? ` · $${Math.round(trip.fare_per_adult_usd)} per adult` : ''}
       </p>
-      <p className="nc-lede">
+      <p className="ed-sub">
         It is the one thing we can&rsquo;t see, and it tells us which alerts are actually worth
         sending.
       </p>
 
-      <form action={answer} className="nc-actions">
+      <form action={answer} className="ed-actions" style={{ marginBottom: 0 }}>
         <input type="hidden" name="token" value={token} />
-        <button type="submit" name="answer" value="booked" className="nc-btn">
+        <button type="submit" name="answer" value="booked" className="ed-btn ed-btn-primary">
           Yes, I booked it
         </button>
-        <button type="submit" name="answer" value="deciding" className="nc-btn-quiet">
+        <button type="submit" name="answer" value="deciding" className="ed-btn ed-btn-secondary">
           Still deciding
         </button>
       </form>
@@ -86,8 +85,6 @@ export default async function TripConfirmPage(
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="fc-shell" data-theme="cabin">
-      <div className="nc-confirm-card">{children}</div>
-    </main>
+    <div className="ed-panel ed-card">{children}</div>
   );
 }

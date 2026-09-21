@@ -1,4 +1,3 @@
-import '../trip.css';
 import { verifyCommercialUnsubscribe } from '@/lib/tripChain';
 import { unsubscribeCommercial } from './actions';
 
@@ -29,8 +28,8 @@ export default async function CommercialUnsubscribePage(
   if (sp.done) {
     return (
       <Shell>
-        <h1 className="nc-h1">Done — no more trip offers.</h1>
-        <p className="nc-lede">
+        <h1 className="ed-h2">Done — no more trip offers.</h1>
+        <p className="ed-sub">
           <strong>Your fare alerts are untouched.</strong> They are a separate subscription and they
           keep working exactly as before. If you meant to stop those too, you can do it from your
           alert settings.
@@ -42,25 +41,25 @@ export default async function CommercialUnsubscribePage(
   if (!ok) {
     return (
       <Shell>
-        <h1 className="nc-h1">That unsubscribe link isn&rsquo;t valid.</h1>
-        <p className="nc-lede">You can change every email preference from your account settings.</p>
+        <h1 className="ed-h2">That unsubscribe link isn&rsquo;t valid.</h1>
+        <p className="ed-sub">You can change every email preference from your account settings.</p>
       </Shell>
     );
   }
 
   return (
     <Shell>
-      <h1 className="nc-h1">Stop trip offers?</h1>
-      <p className="nc-lede">
+      <h1 className="ed-h2">Stop trip offers?</h1>
+      <p className="ed-sub">
         This turns off the hotel, transfer, insurance and eSIM emails that follow a booking.
         <strong> Your fare alerts are not affected</strong> — they are a separate subscription.
       </p>
-      <form action={unsubscribeCommercial} className="nc-actions">
+      <form action={unsubscribeCommercial} className="ed-actions" style={{ marginBottom: 0 }}>
         <input type="hidden" name="u" value={String(userId)} />
         <input type="hidden" name="s" value={sp.s ?? ''} />
         {/* Quiet, not amber: amber marks the one thing a page wants you to do,
             and this is a choice we present rather than encourage. */}
-        <button type="submit" className="nc-btn-quiet">Turn off trip offers</button>
+        <button type="submit" className="ed-btn ed-btn-secondary">Turn off trip offers</button>
       </form>
     </Shell>
   );
@@ -68,8 +67,6 @@ export default async function CommercialUnsubscribePage(
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="fc-shell" data-theme="cabin">
-      <div className="nc-confirm-card">{children}</div>
-    </main>
+    <div className="ed-panel ed-card">{children}</div>
   );
 }
