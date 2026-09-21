@@ -110,7 +110,7 @@ export default async function RevenuePage() {
 
       {!markerSet && (
         <Panel className="mb-6">
-          <Status tone="bad">TRAVELPAYOUTS_MARKER is not set in this environment</Status>
+          <Status tone="bad">⚠ TRAVELPAYOUTS_MARKER is not set in this environment.</Status>
           <p className="ad-note mt-1.5">All current outbound clicks pay $0 commission. Set the env var and redeploy.</p>
         </Panel>
       )}
@@ -178,15 +178,19 @@ export default async function RevenuePage() {
       </Panel>
 
       <SectionHead title="Daily clicks & revenue · last 90 days"
-                   sub={`Revenue per day against the forecast run-rate — ${daily.length}-day window`} />
+                   sub={`Revenue and clicks per day against the forecast run-rate — ${daily.length}-day window`} />
       <Panel className="mb-6">
         <AreaChart
           points={daily.map(d => ({ x: d.day.slice(5), y: d.revenue_usd }))}
+          secondary={daily.map(d => ({ x: d.day.slice(5), y: d.clicks }))}
           compare={daily.map(d => ({ x: d.day.slice(5), y: dailyPotential }))}
         />
-        <div className="flex items-center gap-4 mt-2">
+        <div className="flex items-center gap-4 mt-2 flex-wrap">
           <span className="ad-note inline-flex items-center gap-1.5">
             <span className="ed-dot" style={{ background: 'var(--accent)' }} /> revenue
+          </span>
+          <span className="ad-note inline-flex items-center gap-1.5">
+            <span className="ed-dot" style={{ background: 'var(--muted-2)' }} /> clicks
           </span>
           <span className="ad-note inline-flex items-center gap-1.5">
             <span className="ed-dot amber" /> forecast run-rate ({usd(dailyPotential)}/day)
