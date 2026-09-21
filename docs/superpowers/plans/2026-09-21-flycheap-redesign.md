@@ -28,7 +28,7 @@ Copied verbatim from the spec and the brief; every task implicitly includes thes
 - **Verify the computed token, not the vibe.** After each surface run the §8 audit in BOTH themes and confirm zero results.
 - **Contrast audit** (from `docs/design/getlayers.md` §8, run in the in-app browser console on every enumerated route):
   ```js
-  const L=c=>{const m=c.match(/[\d.]+/g);if(!m)return null;const[r,g,b]=m.slice(0,3).map(Number);
+  const L=c=>{const cs=/^color\(srgb/.test(c);const m=c.replace(/^color\(srgb\s*/,'').match(/[\d.]+/g);if(!m)return null;let[r,g,b]=m.slice(0,3).map(Number);if(cs){r*=255;g*=255;b*=255}
   if(m[3]!==undefined&&+m[3]<0.3)return null;const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4};
   return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b)};
   const B=e=>{while(e){const l=L(getComputedStyle(e).backgroundColor);if(l!==null)return l;e=e.parentElement}return 0};
