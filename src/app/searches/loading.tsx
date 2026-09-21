@@ -2,16 +2,16 @@ export default function SearchesLoading() {
   return (
     <div className="space-y-6 motion-fade-in">
       {/* Hero skeleton */}
-      <div className="rounded-3xl bg-brand-gradient/90 h-44 animate-pulse" />
+      <div className="h-44 animate-pulse" style={{ background: 'var(--surface-2)' }} />
       {/* Quick-add skeleton */}
-      <div className="card h-40 animate-pulse bg-slate-100 dark:bg-slate-800/60" />
+      <div className="card h-40 animate-pulse" style={{ background: 'var(--surface-2)' }} />
       {/* Table skeleton */}
       <div className="card space-y-3">
-        <div className="h-5 w-40 rounded bg-slate-200 dark:bg-slate-700 animate-pulse" />
+        <div className="h-5 w-40 animate-pulse" style={{ background: 'var(--surface-2)' }} />
         {Array.from({ length: 6 }).map((_, i) => (
-          <div key={i} className="h-12 rounded-lg bg-slate-100 dark:bg-slate-800/60 animate-pulse" style={{ animationDelay: `${i * 100}ms` }} />
+          <div key={i} className="h-12 animate-pulse" style={{ background: 'var(--surface-2)', animationDelay: `${i * 100}ms` }} />
         ))}
-        <p className="text-xs text-slate-400 text-center pt-2">
+        <p className="text-xs text-center pt-2" style={{ color: 'var(--muted)' }}>
           Loading your tracked searches — polling live fares…
         </p>
       </div>
