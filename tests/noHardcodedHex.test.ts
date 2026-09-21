@@ -25,7 +25,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/_components/AdminSidebar.tsx': 13,
   'src/app/support/[ref]/page.tsx': 13,
   'src/app/admin/signups/page.tsx': 12,
-  'src/app/guides/page.tsx': 12,
   'src/components/WhiteLabelSettings.tsx': 12,
   'src/app/admin/_components/ui.tsx': 11,
   'src/app/admin/users/page.tsx': 10,
