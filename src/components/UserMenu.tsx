@@ -50,7 +50,7 @@ export function UserMenu() {
         className="flex items-center gap-2 px-2 py-1 rounded-full hover:bg-white/10 transition"
         aria-label="Account menu"
       >
-        <div className="w-7 h-7 rounded-full bg-[var(--nc-teal)] text-[var(--nc-dark)] grid place-items-center font-bold text-sm">
+        <div className="w-7 h-7 rounded-full bg-[var(--accent)] text-[var(--on-accent)] grid place-items-center font-bold text-sm">
           {initial}
         </div>
         <span className="text-xs text-white/80 hidden lg:inline">{me.email}</span>

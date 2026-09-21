@@ -110,15 +110,15 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.outDay.split(' ')[0]}</span>
-                    {r.out} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
+                    {r.out} <span className="fc-mono" style={{ color: 'var(--muted-2)', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.retDay.split(' ')[0]}</span>
-                    {r.ret} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
+                    {r.ret} <span className="fc-mono" style={{ color: 'var(--muted-2)', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
                   </td>
-                  <td style={{ color: 'var(--fc-muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.trip}d</td>
+                  <td style={{ color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.trip}d</td>
                   <td className="fc-col-price"><span className="currency">$</span>{r.per}</td>
-                  <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--fc-muted)' }}>
+                  <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--muted)' }}>
                     ${r.party.toLocaleString()}
                   </td>
                   <td className={'fc-col-vs ' + (below ? 'fc-vs-below' : 'fc-vs-above')}>
@@ -134,7 +134,7 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                           background: r.conf > 80 ? 'var(--green)' : r.conf > 70 ? 'var(--accent)' : 'var(--red)',
                         }} />
                       </div>
-                      <span className="fc-mono" style={{ fontSize: 11, color: 'var(--fc-muted)' }}>{r.conf}%</span>
+                      <span className="fc-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{r.conf}%</span>
                     </div>
                   </td>
                   <td>

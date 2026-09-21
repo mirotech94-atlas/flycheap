@@ -19,31 +19,43 @@ const ALLOWLIST: Record<string, number> = {
   // ---- migration ledger: shrink to zero over Phases 1–3 ----
   // Counts below are the actual regex-matched baseline (run 2026-09-21), not the
   // grep -c estimate this file started from — see task-0.2-report.md for the RED evidence.
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw WorldMap src` check.
   'src/components/WorldMap.tsx': 16,
   // Tenant brand data, not styling: the 8 palette-preset swatches + the 2
   // occurrences of the house-blue default (useState initial + API fallback).
   // Task 2.11b converted every styling hex in this file to tokens; these are
   // what a tenant sees as THEIR colour, which is exactly what stays literal.
   'src/components/WhiteLabelSettings.tsx': 10,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw InteractiveGlobe src` check.
   'src/components/InteractiveGlobe.tsx': 10,
+  // Brand-mark art — the logo tile/gradient/plane-glyph hex is the FlyCheap
+  // mark itself, not page styling; a token swap would change the brand.
   'src/components/Logo.tsx': 10,
-  'src/components/SvgGlobe.tsx': 9,
-  'src/components/GlobeHUD.tsx': 7,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw ExecKpiStrip src` check.
   'src/components/ExecKpiStrip.tsx': 5,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw SkyGradient src` check.
   'src/components/fc/SkyGradient.tsx': 5,
-  'src/components/FcFareCalendar.tsx': 5,
   // The tenant house-blue default (out of scope for 2.11b — the tenant-ink
   // DERIVATION this file does was converted, and Round 1 also moved
   // viewport.themeColor onto BRAND_GROUNDS.dark; this is the one unrelated
   // literal left).
   'src/app/layout.tsx': 1,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw AdminChip src` check.
   'src/components/AdminChip.tsx': 3,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw BestDealsCard src` check.
   'src/components/BestDealsCard.tsx': 3,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw ClientSidebar src` check.
   'src/components/ClientSidebar.tsx': 3,
+  // Orphan — Task 3.9 deletes this file (and this entry) along with it; not a
+  // live import per Task 3.8's `grep -rlw ExecutiveTopBar src` check.
   'src/components/ExecutiveTopBar.tsx': 3,
-  'src/components/FcKpiStrip.tsx': 3,
-  'src/components/FcRouteDna.tsx': 3,
-  'src/components/LanguageMenu.tsx': 1,
 };
 
 const HEX = /#[0-9a-fA-F]{3,8}\b/g;

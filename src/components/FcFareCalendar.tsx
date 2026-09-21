@@ -176,11 +176,10 @@ export function FcFareCalendar({
                 <div
                   style={{
                     position: 'absolute', top: '110%', right: 0, zIndex: 30,
-                    background: 'var(--fc-card-bg, #fff)',
-                    color: 'var(--fc-ink, #1a1d24)',
-                    border: '1px solid rgba(0,0,0,.12)',
-                    borderRadius: 6,
-                    boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+                    background: 'var(--surface)',
+                    color: 'var(--ink)',
+                    border: '1px solid var(--rule-strong)',
+                    borderRadius: 0,
                     minWidth: 160, padding: 4, maxHeight: 280, overflowY: 'auto',
                   }}
                   onMouseLeave={() => setRouteOpen(false)}
@@ -194,10 +193,10 @@ export function FcFareCalendar({
                         onClick={() => switchRoute(r.origin, r.destination)}
                         style={{
                           display: 'block', width: '100%', textAlign: 'left',
-                          padding: '6px 10px', fontSize: 13, borderRadius: 4,
-                          background: active ? 'rgba(212,175,55,.18)' : 'transparent',
+                          padding: '6px 10px', fontSize: 13, borderRadius: 0,
+                          background: active ? 'color-mix(in srgb, var(--amber) 18%, transparent)' : 'transparent',
                           fontFamily: 'var(--font-mono)', border: 'none', cursor: 'pointer',
-                          color: 'var(--fc-ink, #1a1d24)',
+                          color: 'var(--ink)',
                         }}
                       >{r.origin} → {r.destination}</button>
                     );
@@ -214,7 +213,7 @@ export function FcFareCalendar({
         <div className="fc-cal-month">
           <span>{monthLabel}</span>
           {deltaPct !== null && (
-            <span className="fc-mono" style={{ fontSize: 9, color: deltaPct <= 0 ? '#1f8a5b' : '#b04a2f' }}>
+            <span className="fc-mono" style={{ fontSize: 9, color: deltaPct <= 0 ? 'var(--green)' : 'var(--red)' }}>
               {deltaPct <= 0 ? '▼' : '▲'} {Math.abs(deltaPct)}% vs {MONTH_NAMES[(m0 + 11) % 12]}
             </span>
           )}
@@ -233,8 +232,8 @@ export function FcFareCalendar({
               onClick={() => onDayClick(c.dateKey)}
               onMouseEnter={() => setHoverDate(c.dateKey)}
               style={inRange(c.dateKey) ? {
-                outline: '2px solid rgba(212,175,55,.85)',
-                background: 'rgba(212,175,55,.22)',
+                outline: '2px solid var(--amber)',
+                background: 'color-mix(in srgb, var(--amber) 22%, transparent)',
                 cursor: 'pointer',
               } : { cursor: 'pointer' }}
             >
@@ -257,9 +256,9 @@ export function FcFareCalendar({
           style={{
             display: 'flex', alignItems: 'center', gap: 10,
             margin: '0 24px 18px', padding: '8px 14px',
-            background: 'rgba(212,175,55,.10)',
-            border: '1px solid rgba(212,175,55,.45)',
-            borderRadius: 8,
+            background: 'color-mix(in srgb, var(--amber) 10%, transparent)',
+            border: '1px solid color-mix(in srgb, var(--amber) 45%, transparent)',
+            borderRadius: 0,
             fontFamily: 'var(--font-mono)', fontSize: 12,
           }}
         >

@@ -24,7 +24,7 @@ export function PinButton({ deal }: { deal: PinnedDeal }) {
       title={pinned ? 'Unpin from comparison' : 'Pin to compare (up to 3)'}
       className={`inline-flex items-center justify-center w-7 h-7 rounded-full transition-all ${
         pinned
-          ? 'bg-[var(--nc-teal)] text-[var(--nc-dark)] shadow ring-2 ring-[var(--nc-teal)]/40'
+          ? 'bg-[var(--accent)] text-[var(--on-accent)] ring-2 ring-[var(--accent)]'
           : 'text-slate-400 hover:text-brand-700 hover:bg-brand/5'
       }`}
     >

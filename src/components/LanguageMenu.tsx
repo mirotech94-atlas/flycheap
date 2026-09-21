@@ -77,7 +77,7 @@ export function LanguageMenu({
       </summary>
       <div
         role="menu"
-        className="absolute bottom-full mb-1 start-0 min-w-[170px] rounded-lg border border-white/10 bg-[#0f1f3a] p-1 shadow-xl shadow-black/40 z-50"
+        className="absolute bottom-full mb-1 start-0 min-w-[170px] border border-white/10 bg-[var(--panel-bg)] p-1 z-50"
       >
         {codes.map(code => (
           <a

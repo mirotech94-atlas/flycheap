@@ -16,6 +16,7 @@
 import dynamic from 'next/dynamic';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useGlobe } from '@/lib/globeStore';
+import { hexToRgbTriple, contrastSafe } from '@/lib/brandContrast';
 
 // react-globe.gl pulls Three.js + WebGL — must be client-only.
 const Globe = dynamic(() => import('react-globe.gl').then(m => m.default), { ssr: false });
@@ -28,19 +29,70 @@ const LAND_TOPO_URL =
 
 type LandFeature = { type: string; properties: Record<string, unknown>; geometry: unknown };
 
-function colorForPrice(price: number | undefined): string {
-  if (!price) return 'rgba(212,175,55,0.85)'; // gold default
-  if (price < 600) return '#10b981';
-  if (price < 900) return '#84cc16';
-  if (price < 1200) return '#eab308';
-  if (price < 1600) return '#f97316';
-  return '#ef4444';
+/**
+ * react-globe.gl / three-globe resolve colour props once, as literal Three.js
+ * Color strings — a CSS custom property string can't be handed to them
+ * directly (same constraint SatelliteExploreMap's maplibre layers have).
+ * Read the editorial tokens once on mount and re-read whenever `data-theme`
+ * flips, the same pattern charts.tsx's `useChartTokens` uses. Nothing that
+ * needs a literal colour renders until the first read succeeds.
+ *
+ * The HUD itself sits on `--panel-bg` (globals.css's `.globe-hud`), which
+ * stays dark in BOTH themes — raw `--accent` measures 2.49:1 against it in
+ * light mode, below the WCAG floor even for non-text. That file's own
+ * comment documents the fix (task-2.12-report.md): lift every token toward
+ * `--panel-fg` until it clears contrast against the panel it is actually
+ * drawn on. `contrastSafe` (brandContrast.ts) is that same "keep the hue,
+ * move the lightness" walk, reused here for the globe's own literal props.
+ */
+type GlobeTokens = { accent: string; amber: string; green: string; red: string; accentRgb: string; amberRgb: string };
+
+function useGlobeTokens(): GlobeTokens | null {
+  const [tokens, setTokens] = useState<GlobeTokens | null>(null);
+
+  useEffect(() => {
+    const read = () => {
+      const css = getComputedStyle(document.documentElement);
+      const panelBg = css.getPropertyValue('--panel-bg').trim();
+      const panelFg = css.getPropertyValue('--panel-fg').trim();
+      const rawAccent = css.getPropertyValue('--accent').trim();
+      const rawAmber = css.getPropertyValue('--amber').trim();
+      const rawGreen = css.getPropertyValue('--green').trim();
+      const rawRed = css.getPropertyValue('--red').trim();
+      if (!panelBg || !panelFg || !rawAccent || !rawAmber || !rawGreen || !rawRed) return;
+      const accent = contrastSafe(rawAccent, panelBg, { min: 3, fallback: panelFg });
+      const amber = contrastSafe(rawAmber, panelBg, { min: 3, fallback: panelFg });
+      const green = contrastSafe(rawGreen, panelBg, { min: 3, fallback: panelFg });
+      const red = contrastSafe(rawRed, panelBg, { min: 3, fallback: panelFg });
+      setTokens({ accent, amber, green, red, accentRgb: hexToRgbTriple(accent), amberRgb: hexToRgbTriple(amber) });
+    };
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+
+  return tokens;
+}
+
+// Fare-price tiers for the point-cloud / arcs — literal tokens (see
+// useGlobeTokens above). Amber covers "no data yet" the way the token roles
+// use it for a neutral "wait" state; green/red are the two-sided cheap/pricey
+// read, with the original code's outer thresholds (900, 1600) kept as the
+// boundary between them since editorial only carries three data colours
+// where night-cabin's version used five.
+function colorForPrice(price: number | undefined, tokens: GlobeTokens): string {
+  if (!price) return tokens.amber;
+  if (price < 900) return tokens.green;
+  if (price < 1600) return tokens.amber;
+  return tokens.red;
 }
 
 export function GlobeHUD() {
   const {
     focus, arcs, points, readouts, statusLine, pulse, speaking, listening,
   } = useGlobe();
+  const tokens = useGlobeTokens();
 
   const globeRef = useRef<unknown>(null);
   const [collapsed, setCollapsed] = useState(false);
@@ -114,22 +166,22 @@ export function GlobeHUD() {
   }, [pulse, focus]);
 
   const pointsData = useMemo(
-    () => points.map(p => ({
+    () => (!tokens ? [] : points.map(p => ({
       lat: p.lat, lng: p.lng, label: p.label || p.iata || '', iata: p.iata,
       size: 0.28 + (p.intensity ?? 0.6) * 0.4,
-      color: colorForPrice(p.price),
-    })),
-    [points]
+      color: colorForPrice(p.price, tokens),
+    }))),
+    [points, tokens]
   );
 
   const arcsData = useMemo(
-    () => arcs.map(a => ({
+    () => (!tokens ? [] : arcs.map(a => ({
       startLat: a.startLat, startLng: a.startLng,
       endLat: a.endLat, endLng: a.endLng,
-      color: [colorForPrice(a.price), '#E8A33D'],
+      color: [colorForPrice(a.price, tokens), tokens.amber],
       label: a.label,
-    })),
-    [arcs]
+    }))),
+    [arcs, tokens]
   );
 
   const ringsData = useMemo(
@@ -169,7 +221,9 @@ export function GlobeHUD() {
       </header>
 
       <div ref={wrapperRef} className="globe-hud__canvas">
-        {!collapsed && (
+        {/* Globe waits for the token read (see useGlobeTokens) — every
+            colour prop below needs a literal string, not a CSS var(). */}
+        {!collapsed && tokens && (
           <Globe
             // @ts-expect-error react-globe.gl ref typings are loose
             ref={globeRef}
@@ -177,7 +231,7 @@ export function GlobeHUD() {
             height={size.h}
             backgroundColor="rgba(0,0,0,0)"
             showAtmosphere
-            atmosphereColor="#3fd6c8"
+            atmosphereColor={tokens.accent}
             atmosphereAltitude={0.22}
             // Dark globe surface — solid color, no texture, so the hex points
             // and arcs read as the dominant visual.
@@ -189,7 +243,7 @@ export function GlobeHUD() {
             hexPolygonResolution={3}
             hexPolygonMargin={0.4}
             hexPolygonUseDots
-            hexPolygonColor={() => 'rgba(63, 214, 200, 0.78)'}
+            hexPolygonColor={() => `rgba(${tokens.accentRgb}, 0.78)`}
             // Arcs (origin → destination)
             arcsData={arcsData}
             arcColor="color"
@@ -207,7 +261,7 @@ export function GlobeHUD() {
             pointLabel="label"
             // Pulse ring on focus change
             ringsData={ringsData}
-            ringColor={() => (t: number) => `rgba(212,175,55,${1 - t})`}
+            ringColor={() => (t: number) => `rgba(${tokens.amberRgb},${1 - t})`}
             ringMaxRadius={6}
             ringPropagationSpeed={3}
             ringRepeatPeriod={800}

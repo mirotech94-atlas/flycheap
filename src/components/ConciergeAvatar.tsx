@@ -44,14 +44,19 @@ export function ConciergeAvatar({
 }) {
   const d = DIMENSIONS[size];
 
-  // Per-mode ring + glow tones. Tailwind classes resolved at build time, so
-  // we list them here rather than building strings dynamically (which would
-  // get purged).
+  // Per-mode ring tone — a token outline, not a glow. Tailwind classes
+  // resolved at build time, so we list them here rather than building
+  // strings dynamically (which would get purged). No opacity modifier on
+  // these: Tailwind 3.4 can't compose a `/NN` alpha onto an arbitrary
+  // `var()` colour (it needs an `<alpha-value>`-shaped triple), so
+  // `ring-[var(--x)]/70` silently emits no `--tw-ring-color` at all and the
+  // ring falls back to Tailwind's default blue reset — verified against the
+  // built CSS, which had zero `.ring-\[var` rules before this fix.
   const ringTone =
-    mode === 'speaking' ? 'ring-[var(--nc-teal)]/70 shadow-[0_0_18px_rgba(111,179,201,0.50)]'
-    : mode === 'listening' ? 'ring-red-300/70 shadow-[0_0_18px_rgba(239,68,68,0.5)]'
-    : mode === 'thinking' ? 'ring-emerald-300/60 shadow-[0_0_14px_rgba(16,185,129,0.45)]'
-    : 'ring-white/30 shadow-[0_0_10px_rgba(255,255,255,0.18)]';
+    mode === 'speaking' ? 'ring-[var(--accent)]'
+    : mode === 'listening' ? 'ring-[var(--red)]'
+    : mode === 'thinking' ? 'ring-[var(--green)]'
+    : 'ring-[var(--rule-strong)]';
 
   // Animation classes — defined in the inline <style> block below so we
   // don't depend on globals.css edits.
@@ -61,15 +66,15 @@ export function ConciergeAvatar({
     <div
       role="img"
       aria-label={ariaLabel}
-      className={`relative inline-grid place-items-center rounded-full ${d.ring} ${ringTone} bg-brand-gradient transition-shadow duration-300 ${className}`}
+      className={`relative inline-grid place-items-center rounded-full ${d.ring} ${ringTone} bg-brand-gradient transition-colors duration-300 ${className}`}
       style={{ width: d.box, height: d.box }}
     >
       <svg viewBox="0 0 64 64" width="72%" height="72%" className={waveClass} aria-hidden="true">
-        {/* Aviator wings — FarePilot. Gold on the navy badge. */}
-        <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="var(--nc-teal)" />
-        <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="var(--nc-teal)" />
-        <circle cx="32" cy="32" r="7.5" fill="none" stroke="var(--nc-teal)" strokeWidth="2.2" />
-        <circle cx="32" cy="32" r="2.6" fill="var(--nc-teal)" />
+        {/* Aviator wings — FarePilot, in the accent token. */}
+        <path d="M31 32 C22 26.5 14.5 27.5 7 33 C16.5 33 24 34 31 34.4 Z" fill="var(--accent)" />
+        <path d="M33 32 C42 26.5 49.5 27.5 57 33 C47.5 33 40 34 33 34.4 Z" fill="var(--accent)" />
+        <circle cx="32" cy="32" r="7.5" fill="none" stroke="var(--accent)" strokeWidth="2.2" />
+        <circle cx="32" cy="32" r="2.6" fill="var(--accent)" />
       </svg>
       {/* Online indicator — a tiny pulse dot bottom-right, only for sm/md */}
       {size !== 'lg' && (

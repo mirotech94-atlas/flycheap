@@ -1,6 +1,6 @@
 import React from 'react';
 
-function FcSparkline({ data, color = '#1f8a5b', width = 64, height = 28 }: {
+function FcSparkline({ data, color = 'var(--green)', width = 64, height = 28 }: {
   data: number[]; color?: string; width?: number; height?: number;
 }) {
   if (!data || data.length < 2) return null;
@@ -45,7 +45,7 @@ export function FcKpiStrip({ items }: { items: FcKpi[] }) {
           <div className="fc-kpi-sub">{k.sub}</div>
           {k.trend && (
             <div className="fc-kpi-trend">
-              <FcSparkline data={k.trend} color={k.accent ? 'var(--nc-amber, #E8A33D)' : (k.trendColor || '#1f8a5b')} />
+              <FcSparkline data={k.trend} color={k.accent ? 'var(--amber)' : (k.trendColor || 'var(--green)')} />
             </div>
           )}
         </div>
