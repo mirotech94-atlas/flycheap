@@ -140,59 +140,59 @@ export default async function RoutePage({ params }: RouteParams) {
   };
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto motion-fade-in">
+    <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       {/* HERO */}
       <div>
-        <nav className="text-xs text-slate-500 mb-2">
-          <Link href="/routes" className="hover:underline">Routes</Link>
+        <nav style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+          <Link href="/routes" style={{ color: 'var(--muted)' }}>Routes</Link>
           {' / '}
           <span>{origin!.iata} → {destination!.iata}</span>
         </nav>
-        <div className="eyebrow mb-1">Route tracker</div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight font-display">
-          Cheap flights <span className="whitespace-nowrap">{origin!.iata} → {destination!.iata}</span>
+        <div className="ed-eyebrow">Route tracker</div>
+        <h1 className="ed-h1">
+          Cheap flights <span style={{ whiteSpace: 'nowrap' }}>{origin!.iata} → {destination!.iata}</span>
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">
+        <p className="ed-sub">
           {origin!.city}, {origin!.country} to {destination!.city}, {destination!.country}.
         </p>
         {refreshed_at && (
-          <p className="text-xs text-slate-400 mt-2">Cache last refreshed {new Date(refreshed_at).toISOString().slice(0, 16).replace('T', ' ')} UTC.</p>
+          <p className="ed-panel-note" style={{ marginTop: -12, marginBottom: 20 }}>Cache last refreshed {new Date(refreshed_at).toISOString().slice(0, 16).replace('T', ' ')} UTC.</p>
         )}
       </div>
 
       {/* KEY STATS */}
-      <section className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="card">
-          <div className="eyebrow">Cheapest cached</div>
-          <div className="text-2xl font-bold">{cheapest != null ? fmtUSD(cheapest) : '—'}</div>
-          <div className="text-xs text-slate-500 mt-1">per adult, round-trip</div>
+      <section className="ed-stats">
+        <div className="ed-stat">
+          <div className="ed-stat-label">Cheapest cached</div>
+          <div className="ed-stat-value ed-fare-text">{cheapest != null ? fmtUSD(cheapest) : '—'}</div>
+          <div className="ed-stat-note">per adult, round-trip</div>
         </div>
-        <div className="card">
-          <div className="eyebrow">Deals tracked</div>
-          <div className="text-2xl font-bold">{deals.length}</div>
-          <div className="text-xs text-slate-500 mt-1">on this exact route</div>
+        <div className="ed-stat">
+          <div className="ed-stat-label">Deals tracked</div>
+          <div className="ed-stat-value">{deals.length}</div>
+          <div className="ed-stat-note">on this exact route</div>
         </div>
-        <div className="card">
-          <div className="eyebrow">Best month</div>
-          <div className="text-2xl font-bold">{cheapestMonth ? cheapestMonth.month : '—'}</div>
-          <div className="text-xs text-slate-500 mt-1">{cheapestMonth ? `from ${fmtUSD(cheapestMonth.price)}` : 'add tracking to discover'}</div>
+        <div className="ed-stat">
+          <div className="ed-stat-label">Best month</div>
+          <div className="ed-stat-value">{cheapestMonth ? cheapestMonth.month : '—'}</div>
+          <div className="ed-stat-note">{cheapestMonth ? `from ${fmtUSD(cheapestMonth.price)}` : 'add tracking to discover'}</div>
         </div>
       </section>
 
       {/* DEALS TABLE */}
       {deals.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold mb-3">Current cheapest dates</h2>
-          <div className="overflow-x-auto">
-            <table className="fmt w-full">
+        <section style={{ marginBottom: 36 }}>
+          <h2 className="ed-h2">Current cheapest dates</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="ed-table">
               <thead>
                 <tr>
                   <th>Depart</th>
                   <th>Return</th>
                   <th>Stops out / back</th>
-                  <th className="text-right">Per adult</th>
+                  <th className="num">Per adult</th>
                   <th></th>
                 </tr>
               </thead>
@@ -202,11 +202,11 @@ export default async function RoutePage({ params }: RouteParams) {
                     <td>{d.outbound_date}</td>
                     <td>{d.return_date}</td>
                     <td>{d.outbound_transfers} / {d.return_transfers}</td>
-                    <td className="text-right font-mono">{fmtUSD(d.per_adult_usd)}</td>
-                    <td className="text-right">
+                    <td className="num">{fmtUSD(d.per_adult_usd)}</td>
+                    <td className="cta">
                       <Link
                         href={`/offers?origin=${origin!.iata}&destination=${destination!.iata}&depart=${d.outbound_date}&return=${d.return_date}&adults=2&surface=routes-page&route_id=${origin!.iata}-${destination!.iata}-${d.outbound_date}-${d.return_date}`}
-                        className="text-xs underline decoration-dotted text-blue-700 dark:text-blue-400"
+                        className="ed-btn ed-btn-tile"
                       >
                         Search →
                       </Link>
@@ -221,11 +221,11 @@ export default async function RoutePage({ params }: RouteParams) {
 
       {/* WHEN TO FLY (AI, grounded in route DNA) */}
       {aiContent && (
-        <section>
-          <h2 className="text-xl font-semibold mb-3">When to fly</h2>
-          <div className="space-y-3 text-slate-700 dark:text-slate-300 leading-relaxed">
+        <section style={{ marginBottom: 36 }}>
+          <h2 className="ed-h2">When to fly</h2>
+          <div style={{ color: 'var(--ink-soft)', lineHeight: 1.6 }}>
             {aiContent.when_to_fly_md.split(/\n{2,}/).map((para, i) => (
-              <p key={i}>{para.replace(/^#+\s*/, '')}</p>
+              <p key={i} style={{ margin: '0 0 12px' }}>{para.replace(/^#+\s*/, '')}</p>
             ))}
           </div>
         </section>
@@ -233,13 +233,13 @@ export default async function RoutePage({ params }: RouteParams) {
 
       {/* FAQ (AI, grounded) */}
       {aiFaqs.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold mb-3">Frequently asked</h2>
-          <div className="space-y-4">
+        <section style={{ marginBottom: 36 }}>
+          <h2 className="ed-h2">Frequently asked</h2>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
             {aiFaqs.map((f, i) => (
               <div key={i}>
-                <h3 className="font-semibold text-slate-900 dark:text-white">{f.q}</h3>
-                <p className="text-slate-700 dark:text-slate-300 leading-relaxed mt-1">{f.a}</p>
+                <h3 style={{ fontWeight: 600, color: 'var(--ink)', margin: 0 }}>{f.q}</h3>
+                <p style={{ color: 'var(--ink-soft)', lineHeight: 1.6, margin: '4px 0 0' }}>{f.a}</p>
               </div>
             ))}
           </div>
@@ -247,9 +247,9 @@ export default async function RoutePage({ params }: RouteParams) {
       )}
 
       {/* ROUTE BACKGROUND — hand-written fallback (always shown; complements AI) */}
-      <section>
-        <h2 className="text-xl font-semibold mb-3">About this route</h2>
-        <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+      <section style={{ marginBottom: 36 }}>
+        <h2 className="ed-h2">About this route</h2>
+        <p style={{ color: 'var(--ink-soft)', lineHeight: 1.6 }}>
           {origin!.iata} → {destination!.iata} connects {origin!.name} in {origin!.city}, {origin!.country}, to {destination!.name} in {destination!.city}, {destination!.country}.
           {origin!.iata === 'JFK' && destination!.iata === 'CAI' && ' EgyptAir operates the only scheduled nonstop on this route, typically five days a week on a Boeing 777-300ER.'}
           {origin!.iata === 'EWR' && destination!.iata === 'CAI' && ' No carrier flies this route nonstop — every itinerary connects, most commonly through Frankfurt, Istanbul, or Paris.'}
@@ -262,22 +262,19 @@ export default async function RoutePage({ params }: RouteParams) {
 
       {/* DESTINATION GUIDE LINK */}
       {guide && (
-        <section className="card bg-slate-50 dark:bg-slate-900/50">
-          <div className="eyebrow text-emerald-700 dark:text-emerald-400">Trip planning</div>
-          <h2 className="text-lg font-semibold mt-1 mb-2">Going to {guide.city}?</h2>
-          <p className="text-sm text-slate-600 dark:text-slate-300 mb-3">
+        <section className="ed-panel" style={{ marginBottom: 36 }}>
+          <div className="ed-eyebrow">Trip planning</div>
+          <h2 className="ed-h2" style={{ marginTop: 6 }}>Going to {guide.city}?</h2>
+          <p className="ed-panel-note" style={{ marginBottom: 14 }}>
             {guide.tagline} Visa rules, currency, best months, and what to see —
           </p>
-          <Link
-            href={`/destinations/${guide.iata.toLowerCase()}`}
-            className="text-sm font-semibold text-emerald-700 dark:text-emerald-400 hover:underline"
-          >
+          <Link href={`/destinations/${guide.iata.toLowerCase()}`} className="ed-btn ed-btn-secondary">
             Read the {guide.city} travel guide →
           </Link>
         </section>
       )}
 
-      <p className="text-xs text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <p className="ed-panel-note" style={{ paddingTop: 16, borderTop: '1px solid var(--rule)' }}>
         Prices shown are cached from our Travelpayouts feed and represent recent lowest fares; actual prices at booking time may differ.
         Booking links route through our affiliate redirector — we may earn a small commission at no extra cost to you.
       </p>
