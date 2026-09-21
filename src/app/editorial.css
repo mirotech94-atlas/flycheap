@@ -490,6 +490,42 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .pt-tier { color: var(--muted-2); }
 .pt-user { color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-menu { display: none; }
+
+/* ---- Portal left rail -------------------------------------------------
+   The signed-in portal navigates from a left rail, the same idea as the
+   admin console's `.ad-rail`, so the two portals read as one product. Same
+   214px width, same group headings, same 2px accent marker on the active
+   item. The difference is that the three named groups collapse: they were
+   dropdowns in the tab bar this replaced, so they stay openable here.
+   The page and the footer are pushed over by the rail's width with :has(),
+   which keeps the offset in CSS instead of threading a "signed in" flag
+   through the client chrome. */
+.pt-rail { position: fixed; top: 62px; bottom: 0; left: 0; width: 214px; z-index: 25; overflow: auto; background: var(--surface); border-right: 1px solid var(--rule); padding: 14px 0 24px; }
+.pt-rail-section + .pt-rail-section { margin-top: 2px; }
+.pt-rail-group { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 18px 20px 8px 24px; background: none; border: 0; cursor: pointer; font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-3); text-align: left; }
+.pt-rail-group:hover { color: var(--muted); }
+.pt-rail-chev { flex-shrink: 0; opacity: 0.7; transform: rotate(-90deg); transition: transform 140ms ease; }
+.pt-rail-chev.open { transform: rotate(0deg); }
+.pt-rail-item { display: block; padding: 8px 24px 8px 22px; font-size: 13.5px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.pt-rail-item:hover { color: var(--ink); }
+.pt-rail-item.active { color: var(--ink); background: var(--surface-2); border-left-color: var(--accent); }
+.pt-rail-item-inner { display: flex; align-items: center; gap: 8px; }
+.pt-rail-item-inner svg { opacity: 0.65; flex-shrink: 0; }
+.pt-rail-item.active .pt-rail-item-inner svg { opacity: 1; color: var(--accent); }
+
+@media (min-width: 901px) {
+  body:has(.pt-rail) main { margin-left: 214px; }
+  body:has(.pt-rail) .ed-footer { margin-left: 214px; }
+}
+
+/* Below the rail breakpoint the ☰ in the top bar owns it: closed by default
+   so a phone opens on content, and it pushes the page rather than floating
+   over it (same call the admin rail makes at this width). */
+@media (max-width: 900px) {
+  .pt-menu { display: inline-flex; }
+  .pt-rail { position: static; width: auto; max-height: 0; padding: 0; overflow: hidden; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .pt-rail.open { max-height: none; padding: 8px 0 16px; overflow: auto; }
+}
 @media (max-width: 960px) {
   .pt-bar { grid-template-columns: 1fr auto; }
   .pt-menu { display: inline-flex; grid-row: 1; grid-column: 2; }

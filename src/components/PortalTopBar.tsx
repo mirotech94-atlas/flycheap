@@ -1,51 +1,17 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useAppI18n } from '@/lib/i18n/client';
-import type { AppNavDict } from '@/lib/i18n/app.en';
 import { Logo } from '@/components/Logo';
 import { LanguageMenu } from '@/components/LanguageMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PUBLIC_ADMIN_HOST, PUBLIC_MARKETING_HOST } from '@/lib/hosts';
+import { PortalSidebar } from '@/components/PortalSidebar';
 
-// The 13-destination signed-in inventory (plus the 3 group separators),
-// reshaped into a single scannable tab row. The literal labels ("Your
-// board", "Support") are deliberate: a new i18n key would have to land in
-// every dictionary at once, so these stay hardcoded.
-type Entry =
-  | { kind: 'tab'; href: string; label: string }
-  | { kind: 'group'; label: string };
-
-function buildEntries(nav: AppNavDict): Entry[] {
-  return [
-    { kind: 'tab', href: '/board', label: 'Your board' },
-    { kind: 'tab', href: '/', label: nav.dashboard },
-    { kind: 'group', label: nav.groupFlights },
-    { kind: 'tab', href: '/explore', label: nav.explore },
-    { kind: 'tab', href: '/hotels', label: nav.hotels },
-    { kind: 'tab', href: '/airbnbs', label: nav.rentals },
-    { kind: 'tab', href: '/offers', label: nav.offers },
-    { kind: 'group', label: nav.groupServices },
-    { kind: 'tab', href: '/integrations', label: nav.integrations },
-    { kind: 'tab', href: '/pricing', label: nav.pricing },
-    { kind: 'group', label: nav.groupHelp },
-    { kind: 'tab', href: '/guides', label: nav.guides },
-    { kind: 'tab', href: '/routes', label: nav.routes },
-    { kind: 'tab', href: '/searches', label: nav.searches },
-    { kind: 'tab', href: '/support', label: 'Support' },
-    { kind: 'tab', href: '/settings', label: nav.settings },
-  ];
-}
-
-// '/' only matches exactly, everything else matches on prefix so a
-// sub-route (e.g. /settings/billing) still lights up its parent tab.
-function isItemActive(pathname: string, href: string): boolean {
-  if (href === '/') return pathname === '/';
-  return pathname === href || pathname.startsWith(href + '/');
-}
-
+// The signed-in inventory moved to the left rail (PortalSidebar), which
+// mirrors the admin console's. What is left here is the guest shell: the
+// marketing mini-nav a signed-out visitor sees in place of the rail.
 export function PortalTopBar({
   user,
   isAdmin = false,
@@ -56,13 +22,12 @@ export function PortalTopBar({
   /** Localized label for the language switcher (a11y title). */
   language?: string;
 }) {
-  const pathname = usePathname() || '/';
   const { locale, nav } = useAppI18n();
-  const entries = useMemo(() => buildEntries(nav), [nav]);
   const [open, setOpen] = useState(false);
 
   return (
-    <header className="pt-bar">
+    <>
+      <header className="pt-bar">
       <Link href="/" className="pt-brand" onClick={() => setOpen(false)}>
         <Logo size={24} />
         <span>
@@ -81,27 +46,9 @@ export function PortalTopBar({
         ☰
       </button>
 
-      {user ? (
-        <nav className={`pt-tabs${open ? ' open' : ''}`}>
-          {entries.map(e =>
-            e.kind === 'group' ? (
-              <span key={`group-${e.label}`} className="pt-group">{e.label}</span>
-            ) : (
-              <Link
-                key={e.href}
-                href={e.href}
-                className={`pt-tab${isItemActive(pathname, e.href) ? ' active' : ''}`}
-                onClick={() => setOpen(false)}
-              >
-                {e.label}
-              </Link>
-            )
-          )}
-        </nav>
-      ) : (
-        // Guest shell — a marketing mini-shell (instead of the operational
-        // tabs): the "what is this" blurb, the four marketing links, and
-        // the primary sign-in CTA.
+      {!user && (
+        // Guest shell — a marketing mini-shell (instead of the rail): the
+        // "what is this" blurb, the four marketing links, and the sign-in CTA.
         <div className={`pt-tabs pt-guest-nav${open ? ' open' : ''}`}>
           <p className="pt-guest">
             {nav.guestA}<strong>{nav.guestStrong}</strong>{nav.guestB}
@@ -142,6 +89,9 @@ export function PortalTopBar({
           <Link href="/login" className="ed-btn ed-btn-secondary ed-mono">{nav.signIn}</Link>
         )}
       </div>
-    </header>
+      </header>
+
+      {user && <PortalSidebar open={open} onNavigate={() => setOpen(false)} />}
+    </>
   );
 }
