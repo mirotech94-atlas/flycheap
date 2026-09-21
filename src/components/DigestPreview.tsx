@@ -58,7 +58,7 @@ export function DigestPreview() {
           {show ? 'Hide preview' : 'Show preview'}
         </button>
         <a href={src} target="_blank" rel="noopener noreferrer" className="ed-btn ed-btn-secondary">Open in new tab ↗</a>
-        <button onClick={sendNow} className="ed-btn ed-btn-secondary" disabled={sending}>
+        <button onClick={sendNow} className="ed-btn ed-btn-primary" disabled={sending}>
           {sending ? 'Sending…' : `Send ${kind} now`}
         </button>
         {msg && <span className="ed-panel-note" style={{ margin: 0 }}>{msg}</span>}

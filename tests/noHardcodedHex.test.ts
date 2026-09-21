@@ -44,10 +44,11 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/fc/SkyGradient.tsx': 5,
   'src/components/FcFareCalendar.tsx': 5,
   'src/app/admin/economics/page.tsx': 4,
-  // viewport.themeColor + the tenant house-blue default (out of scope for
-  // 2.11b — the tenant-ink DERIVATION this file does was converted; these
-  // two are unrelated literals it still carries).
-  'src/app/layout.tsx': 2,
+  // The tenant house-blue default (out of scope for 2.11b — the tenant-ink
+  // DERIVATION this file does was converted, and Round 1 also moved
+  // viewport.themeColor onto BRAND_GROUNDS.dark; this is the one unrelated
+  // literal left).
+  'src/app/layout.tsx': 1,
   'src/app/onboarding/page.tsx': 3,
   'src/components/AdminChip.tsx': 3,
   'src/components/BestDealsCard.tsx': 3,

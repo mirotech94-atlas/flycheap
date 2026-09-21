@@ -54,10 +54,9 @@ export const metadata: Metadata = {
 };
 
 export const viewport = {
-  // The browser/phone chrome tint. Still the retired navy while every surface
-  // behind it had moved to the cabin ground, so the status bar did not match
-  // the page under it.
-  themeColor: '#0B1220',
+  // The browser/phone chrome tint — now the editorial dark ground, matching
+  // the page under it instead of the retired navy.
+  themeColor: BRAND_GROUNDS.dark,
   width: 'device-width',
   initialScale: 1,
 };

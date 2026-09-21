@@ -5,7 +5,7 @@ import {
   PieChart, Pie, Cell, Legend, Tooltip,
   LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { PIE_COLORS, fmtUSD } from '@/lib/utils';
+import { fmtUSD } from '@/lib/utils';
 
 /**
  * The editorial tokens these charts draw with, read from the live cascade
@@ -14,7 +14,7 @@ import { PIE_COLORS, fmtUSD } from '@/lib/utils';
  * pattern RouteField.tsx uses for its canvas palette. Renders nothing until
  * the first read succeeds rather than falling back to a hardcoded hex.
  */
-type ChartTokens = { grid: string; tick: string; accent: string; green: string; muted: string };
+type ChartTokens = { grid: string; tick: string; accent: string; amber: string; green: string; muted: string; surface: string };
 
 function useChartTokens(): ChartTokens | null {
   const [tokens, setTokens] = useState<ChartTokens | null>(null);
@@ -25,10 +25,12 @@ function useChartTokens(): ChartTokens | null {
       const grid = css.getPropertyValue('--rule').trim();
       const tick = css.getPropertyValue('--muted-2').trim();
       const accent = css.getPropertyValue('--accent').trim();
+      const amber = css.getPropertyValue('--amber').trim();
       const green = css.getPropertyValue('--green').trim();
       const muted = css.getPropertyValue('--muted').trim();
-      if (!grid || !tick || !accent || !green || !muted) return;
-      setTokens({ grid, tick, accent, green, muted });
+      const surface = css.getPropertyValue('--surface').trim();
+      if (!grid || !tick || !accent || !amber || !green || !muted || !surface) return;
+      setTokens({ grid, tick, accent, amber, green, muted, surface });
     };
     read();
     const mo = new MutationObserver(read);
@@ -37,6 +39,25 @@ function useChartTokens(): ChartTokens | null {
   }, []);
 
   return tokens;
+}
+
+/** True when the browser can paint an SVG `fill` from a `color-mix()` value. */
+const supportsColorMix = typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
+  && CSS.supports('color', 'color-mix(in srgb, red 60%, blue)');
+
+/**
+ * Categorical pie palette, built from tokens at render time instead of a
+ * hardcoded hex list — the previous PIE_COLORS (src/lib/utils.ts) led with a
+ * retired teal literal, which is what recharts also paints the matching
+ * legend item's TEXT in, independent of any wrapper style. Six entries, same
+ * shape as the old palette: the four solid tokens, then two tints via
+ * `color-mix()` (guarded — falls back to the solid tokens
+ * on a browser that can't parse it).
+ */
+function pieColors(tokens: ChartTokens): string[] {
+  const mixAccent = supportsColorMix ? `color-mix(in srgb, ${tokens.accent} 60%, ${tokens.surface})` : tokens.accent;
+  const mixAmber = supportsColorMix ? `color-mix(in srgb, ${tokens.amber} 60%, ${tokens.surface})` : tokens.amber;
+  return [tokens.accent, tokens.amber, tokens.green, tokens.tick, mixAccent, mixAmber];
 }
 
 export function PieCard({
@@ -53,6 +74,7 @@ export function PieCard({
   const tokens = useChartTokens();
   const fmt = (n: number) => (format === 'usd' ? fmtUSD(n) : String(n));
   const empty = data.length === 0 || data.every(d => d.value === 0);
+  const colors = tokens ? pieColors(tokens) : [];
   return (
     <div className="ed-panel">
       <h2 className="ed-h2">{title}</h2>
@@ -71,7 +93,7 @@ export function PieCard({
               label={(entry) => entry.name}
             >
               {data.map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                <Cell key={i} fill={colors[i % colors.length]} />
               ))}
             </Pie>
             <Tooltip
@@ -80,7 +102,15 @@ export function PieCard({
               itemStyle={{ color: 'var(--ink)' }}
               labelStyle={{ color: 'var(--muted)' }}
             />
-            <Legend verticalAlign="bottom" height={24} wrapperStyle={{ color: tokens.muted }} />
+            {/* wrapperStyle colours the legend's container, not each item's
+                text (recharts paints that in the series colour) — the
+                formatter is what actually fixes the 2.34:1 legend. */}
+            <Legend
+              verticalAlign="bottom"
+              height={24}
+              wrapperStyle={{ color: tokens.muted }}
+              formatter={(value) => <span style={{ color: tokens.muted }}>{value}</span>}
+            />
           </PieChart>
         </ResponsiveContainer>
       )}

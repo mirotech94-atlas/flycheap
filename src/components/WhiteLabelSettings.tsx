@@ -41,6 +41,10 @@ export function WhiteLabelSettings() {
   // Which of the two editorial grounds the reader is actually looking at —
   // the preview has to judge the brand against THAT one, not a fixed guess.
   const [theme, setTheme] = useState<'light' | 'dark'>('light');
+  // The fixed-white ink token (--panel-fg), read live rather than hardcoded,
+  // for picking the CTA label's ink below — it needs a light AND a dark
+  // candidate to choose between, and this is the light one.
+  const [panelFg, setPanelFg] = useState<string | null>(null);
 
   useEffect(() => {
     fetch('/api/me').then(r => r.ok ? r.json() : null).then(j => {
@@ -64,7 +68,11 @@ export function WhiteLabelSettings() {
   // Track the live theme so the preview always judges against the ground the
   // reader is on, the same way layout.tsx picks --brand-ink per theme.
   useEffect(() => {
-    const read = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light');
+    const read = () => {
+      const root = document.documentElement;
+      setTheme(root.dataset.theme === 'dark' ? 'dark' : 'light');
+      setPanelFg(getComputedStyle(root).getPropertyValue('--panel-fg').trim() || null);
+    };
     read();
     const mo = new MutationObserver(read);
     mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
@@ -101,6 +109,15 @@ export function WhiteLabelSettings() {
   const ground = BRAND_GROUNDS[theme];
   const derivedInk = contrastSafe(color, ground);
   const ratio = contrastRatio(color, ground) ?? 0;
+
+  // The CTA label sits ON the brand FILL, not on the page ground — a
+  // different pairing from derivedInk above (which answers "is brand text
+  // legible on the page?"). Pick whichever of the two candidate inks —
+  // --panel-fg (light) or the page ground (which is near-black in dark
+  // theme) — contrasts more with the brand colour itself.
+  const ctaInk = panelFg && (contrastRatio(panelFg, color) ?? 0) >= (contrastRatio(ground, color) ?? 0)
+    ? panelFg
+    : ground;
 
   return (
     <div className="ed-panel" style={{ opacity: isFree ? 0.9 : 1 }}>
@@ -183,7 +200,7 @@ export function WhiteLabelSettings() {
                 derives --brand-ink against, read live via data-theme so the
                 preview never shows a ground the page isn't actually using. */}
             <div className="px-4 py-3 flex items-center gap-2" style={{ background: 'var(--bg)', borderTop: theme === 'dark' ? '1px solid var(--rule)' : undefined }}>
-              <button type="button" className="ed-btn" style={{ background: color, color: derivedInk }}>Primary CTA</button>
+              <button type="button" className="ed-btn" style={{ background: color, color: ctaInk }}>Primary CTA</button>
               <span className="text-xs font-semibold" style={{ color: derivedInk }}>Brand text</span>
               {derivedInk.toLowerCase() !== color.toLowerCase() && (
                 <span className="ed-mono" style={{ marginLeft: 'auto', color: 'var(--muted-2)' }} title={`Your ${color} is ${ratio.toFixed(2)}:1 on this ground — below the 4.5:1 needed to read. Lightened to ${derivedInk}, same hue.`}>

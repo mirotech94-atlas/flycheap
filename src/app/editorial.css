@@ -520,8 +520,14 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 /* Compact filter/toggle chip — trip-length, month, provider-origin pickers.
    Distinct from .ed-btn (which is sized for real actions): smaller, no gap,
    meant to sit in a dense row. */
-.ed-chip { display: inline-flex; align-items: center; padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); border-radius: 0; cursor: pointer; transition: opacity 120ms; }
-.ed-chip:hover { opacity: 0.8; }
+/* Base .ed-chip is a static status indicator (tier badge, provider status,
+   "N active" counts) — non-interactive by default. Chips used as real
+   controls (filter toggles in ExploreRankedList/HotelsFilterRail/etc.) are
+   always rendered as an actual button or link, so the pointer/hover affordance
+   is scoped to those tags rather than the class, which a plain <span> never gets. */
+.ed-chip { display: inline-flex; align-items: center; padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); border-radius: 0; cursor: default; transition: opacity 120ms; }
+button.ed-chip, a.ed-chip, select.ed-chip, .ed-chip[role="button"] { cursor: pointer; }
+button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="button"]:hover { opacity: 0.8; }
 .ed-chip.active { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
 
 /* Segmented view toggle (list / map). Accent for the active segment — a view
