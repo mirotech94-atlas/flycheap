@@ -28,76 +28,58 @@ export default function OnboardingPage() {
   return (
     <div className="-mx-6 -my-8 -mb-24 md:-mb-8">
       {/* Top bar — logo + login pill (uses dashboard for now) */}
-      <header className="sticky top-0 z-30 bg-white/80 dark:bg-slate-950/80 backdrop-blur border-b border-slate-200/60 dark:border-slate-800/60">
+      <header className="sticky top-0 z-30" style={{ background: 'var(--surface)', borderBottom: '1px solid var(--rule)' }}>
         <div className="max-w-6xl mx-auto px-6 py-3 flex items-center justify-between">
           <Link href="/onboarding" className="flex items-center gap-2">
             <Logo size={32} />
-            <span className="font-display font-bold text-slate-900 dark:text-white tracking-tight">
-              FlyCheap<span className="text-[var(--nc-teal)]">.</span>
+            <span className="font-display font-bold tracking-tight" style={{ color: 'var(--ink)' }}>
+              FlyCheap<span style={{ color: 'var(--accent)' }}>.</span>
             </span>
           </Link>
           <nav className="flex items-center gap-1">
-            <a href="#features"  className="hidden sm:inline-flex text-sm text-slate-600 dark:text-slate-300 hover:text-brand-700 px-3 py-1.5 rounded-md">Features</a>
-            <a href="#pricing"   className="hidden sm:inline-flex text-sm text-slate-600 dark:text-slate-300 hover:text-brand-700 px-3 py-1.5 rounded-md">Pricing</a>
-            <a href="#faq"       className="hidden sm:inline-flex text-sm text-slate-600 dark:text-slate-300 hover:text-brand-700 px-3 py-1.5 rounded-md">FAQ</a>
-            <Link href="/" className="btn btn-primary !text-sm !py-1.5">Open dashboard →</Link>
+            <a href="#features" className="hidden sm:inline-flex text-sm px-3 py-1.5" style={{ color: 'var(--muted)' }}>Features</a>
+            <a href="#pricing" className="hidden sm:inline-flex text-sm px-3 py-1.5" style={{ color: 'var(--muted)' }}>Pricing</a>
+            <a href="#faq" className="hidden sm:inline-flex text-sm px-3 py-1.5" style={{ color: 'var(--muted)' }}>FAQ</a>
+            <Link href="/" className="ed-btn ed-btn-primary" style={{ fontSize: 13, padding: '7px 14px' }}>Open dashboard →</Link>
           </nav>
         </div>
       </header>
 
       {/* HERO */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-brand-gradient" />
-        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full bg-[var(--nc-teal)]/15 blur-3xl pointer-events-none" />
-        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] rounded-full bg-brand-400/30 blur-3xl pointer-events-none" />
+      <section className="px-6 pt-16 pb-14" style={{ maxWidth: '72rem', margin: '0 auto' }}>
+        <span className="ed-eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+          <span className="ed-dot" /> Live · 1,000+ airlines tracked · refreshed continuously
+        </span>
 
-        <div className="relative max-w-6xl mx-auto px-6 pt-20 pb-28 text-white">
-          <div className="motion-fade-in">
-            <span className="inline-flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] font-semibold bg-white/10 text-white/90 px-3 py-1.5 rounded-full backdrop-blur border border-white/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 motion-pulse" />
-              Live · 1,000+ airlines tracked · refreshed continuously
-            </span>
-          </div>
+        <h1 className="ed-h1" style={{ fontSize: 'clamp(38px, 5.5vw, 64px)', maxWidth: '18ch' }}>
+          The cheapest fares, monitored for you.
+        </h1>
 
-          <h1 className="motion-slide-up motion-delay-1 font-display font-extrabold text-5xl md:text-7xl tracking-tight mt-6 max-w-4xl leading-[1.05]">
-            The cheapest fares,
-            <br />
-            <span className="text-[var(--nc-teal)]">monitored for you.</span>
-          </h1>
+        <p className="ed-sub" style={{ fontSize: 17, maxWidth: '60ch' }}>
+          FlyCheap watches every route you care about across 1,000+ airlines, 24/7. Get an email
+          the moment a fare drops below your target — or significantly under its 7-day median.
+          Built originally for executive families, now for everyone.
+        </p>
 
-          <p className="motion-slide-up motion-delay-2 text-lg md:text-xl text-white/80 mt-6 max-w-2xl leading-relaxed">
-            FlyCheap watches every route you care about across 1,000+ airlines, 24/7. Get an email
-            the moment a fare drops below your target — or significantly under its 7-day median.
-            Built originally for executive families, now for everyone.
-          </p>
-
-          <div className="motion-slide-up motion-delay-3 mt-8 flex items-center gap-3 flex-wrap">
-            <Link href="/" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-[var(--nc-amber)] hover:bg-[#F2B961] text-[var(--nc-dark)] font-bold shadow-lift hover:scale-105 transition">
-              Try it free →
-            </Link>
-            <Link href="/explore" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/20 backdrop-blur font-semibold transition">
-              Explore worldwide deals
-            </Link>
-          </div>
-
-          {/* Stat strip */}
-          <div className="motion-slide-up motion-delay-4 mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl">
-            {[
-              { v: '1,000+',   l: 'Airlines tracked' },
-              { v: '24/7',   l: 'Continuous polling' },
-              { v: '$0',     l: 'Free forever tier' },
-              { v: '4',  l: 'Live data providers' },
-            ].map(s => (
-              <div key={s.l} className="text-white">
-                <div className="font-display font-extrabold text-3xl text-[var(--nc-teal)]">{s.v}</div>
-                <div className="text-xs uppercase tracking-wide text-white/70 mt-1">{s.l}</div>
-              </div>
-            ))}
-          </div>
+        <div className="ed-actions">
+          <Link href="/" className="ed-btn ed-btn-primary ed-btn-hero">Try it free →</Link>
+          <Link href="/explore" className="ed-btn ed-btn-secondary ed-btn-hero">Explore worldwide deals</Link>
         </div>
 
-        {/* Soft fade into next section */}
-        <div className="absolute bottom-0 inset-x-0 h-12 bg-gradient-to-b from-transparent to-canvas" />
+        {/* Stat strip */}
+        <div className="ed-stats" style={{ maxWidth: 640, marginTop: 24 }}>
+          {[
+            { v: '1,000+', l: 'Airlines tracked' },
+            { v: '24/7', l: 'Continuous polling' },
+            { v: '$0', l: 'Free forever tier' },
+            { v: '4', l: 'Live data providers' },
+          ].map(s => (
+            <div className="ed-stat" key={s.l}>
+              <div className="ed-stat-label">{s.l}</div>
+              <div className="ed-stat-value" style={{ fontSize: 26 }}>{s.v}</div>
+            </div>
+          ))}
+        </div>
       </section>
 
       {/* LIVE DEMO CAROUSEL */}
@@ -105,18 +87,18 @@ export default function OnboardingPage() {
 
       {/* FEATURES GRID */}
       <section id="features" className="max-w-6xl mx-auto px-6 py-24">
-        <div className="text-center max-w-2xl mx-auto motion-slide-up">
-          <div className="eyebrow text-brand-700">Everything you need</div>
-          <h2 className="font-display font-bold text-4xl text-slate-900 dark:text-white mt-2">
+        <div className="text-center max-w-2xl mx-auto">
+          <div className="ed-eyebrow" style={{ textAlign: 'center' }}>Everything you need</div>
+          <h2 className="ed-h2" style={{ fontSize: 34 }}>
             Built like an executive dashboard.
           </h2>
-          <p className="text-slate-600 dark:text-slate-400 mt-4">
+          <p className="ed-sub" style={{ margin: '14px auto 0' }}>
             Not just an alert tool — a full intelligence platform. Trend analysis, recommendations,
             heatmaps, side-by-side comparison, family share links, and a Claude-powered concierge.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mt-12">
+        <div className="ed-tiles" style={{ marginTop: 40 }}>
           {[
             { icon: '🎯', title: 'Buy / wait recommendations', desc: 'Hopper-style verdict engine analyzes 30-day trend + percentile to tell you whether to lock in or hold.' },
             { icon: '🗺️', title: 'World map exploration', desc: 'See the cheapest fares to every reachable destination from your home city, color-coded on an interactive map.' },
@@ -127,78 +109,65 @@ export default function OnboardingPage() {
             { icon: '✈️', title: 'Cross-shop OTAs', desc: 'Every Book button is a split dropdown: Aviasales, Google Flights, Kayak, Skyscanner, Momondo, EgyptAir direct.' },
             { icon: '🤖', title: 'AI concierge', desc: 'Tool-equipped Claude assistant. Ask "find me the cheapest weekend trip from NYC under $400" and it answers with real data.' },
             { icon: '⚡', title: 'Command palette (⌘K)', desc: 'Power-user shortcuts: refresh, poll, send digest, export CSV, toggle theme — all one keystroke away.' },
-          ].map((f, i) => (
-            <div key={f.title} className="card lift motion-fade-in" style={{ animationDelay: `${i * 60}ms` }}>
+          ].map(f => (
+            <div key={f.title} className="ed-tile">
               <div className="text-3xl">{f.icon}</div>
-              <h3 className="font-display font-bold text-base mt-3">{f.title}</h3>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-1.5 leading-relaxed">{f.desc}</p>
+              <div className="ed-tile-value" style={{ fontSize: 15, marginTop: 6 }}>{f.title}</div>
+              <p className="ed-tile-meta" style={{ marginTop: 4 }}>{f.desc}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* PRICING */}
-      {/* `bg-canvas` is a fixed light hex (#f6f8fb) with no dark variant -- the
-          border beside it HAS one, so the dark variant was simply forgotten.
-          The result was a white band across the cabin page whose heading, which
-          does carry `dark:text-white`, rendered white-on-white at 1.06:1. The
-          config already defines canvas.dark, but that equals the page ground and
-          would erase the band, so this takes the cabin deck: still a distinct
-          band, and white ink on it clears AA at 15:1. */}
-      <section id="pricing" className="bg-canvas dark:bg-[var(--nc-deck)] py-24 border-y border-slate-200/60 dark:border-slate-800/60">
+      <section id="pricing" className="py-24" style={{ borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)', background: 'var(--surface-2)' }}>
         <div className="max-w-6xl mx-auto px-6">
-          <div className="text-center max-w-xl mx-auto motion-slide-up">
-            <div className="eyebrow text-brand-700">Pricing</div>
-            <h2 className="font-display font-bold text-4xl text-slate-900 dark:text-white mt-2">
+          <div className="text-center max-w-xl mx-auto">
+            <div className="ed-eyebrow" style={{ textAlign: 'center' }}>Pricing</div>
+            <h2 className="ed-h2" style={{ fontSize: 34 }}>
               Free for individuals. Priced per seat for teams.
             </h2>
-            <p className="text-slate-600 dark:text-slate-400 mt-4">No card required for the free tier. White-label and API access on Enterprise.</p>
+            <p className="ed-sub" style={{ margin: '14px auto 0' }}>No card required for the free tier. White-label and API access on Enterprise.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 mt-12 max-w-5xl mx-auto">
+          <div className="ed-plans" style={{ marginTop: 40, maxWidth: 960, marginLeft: 'auto', marginRight: 'auto' }}>
             {[
               {
                 name: 'Free', price: '$0', tag: 'forever', cta: 'Get started',
                 ctaHref: '/',
                 features: ['1 home airport', '5 tracked routes', 'Daily digest email', 'Worldwide explore', 'Family share link'],
-                accent: 'border-slate-200 dark:border-slate-700',
               },
               {
                 name: 'Pro', price: '$9', tag: '/mo', cta: 'Get Pro',
                 ctaHref: '/checkout?plan=pro',
                 features: ['100 tracked routes', 'Weekly anomaly digest', 'SMS and Telegram alerts', 'Buy/wait predictions', 'Flexible "any dates" tracking'],
-                accent: 'border-brand-500 ring-2 ring-brand-500/20 scale-105',
                 badge: 'Most popular',
+                featured: true,
               },
               {
                 name: 'Enterprise', price: 'Custom', tag: 'priced per seat', cta: 'Contact sales',
                 ctaHref: '/contact',
                 features: ['Unlimited tracked routes', 'White-label branding', 'Custom domain', 'REST API (/api/v1)', 'Audit log'],
-                accent: 'border-slate-200 dark:border-slate-700',
               },
             ].map(t => (
-              <div key={t.name} className={`card relative ${t.accent}`}>
-                {t.badge && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-[var(--nc-teal)] text-[var(--nc-dark)] text-[10px] uppercase tracking-wider font-bold px-3 py-1 rounded-full shadow">
-                    {t.badge}
-                  </div>
-                )}
-                <div className="text-sm font-semibold text-slate-500 uppercase tracking-wide">{t.name}</div>
-                <div className="mt-2 flex items-baseline gap-1">
-                  <span className="font-display font-extrabold text-4xl text-slate-900 dark:text-white">{t.price}</span>
-                  <span className="text-slate-500 text-sm">{t.tag}</span>
-                </div>
-                <ul className="mt-5 space-y-2">
+              <div key={t.name} className={`ed-plan${t.featured ? ' featured' : ''}`}>
+                {t.badge && <div className="ed-plan-badge">{t.badge}</div>}
+                <div className="ed-eyebrow">{t.name}</div>
+                <div className="ed-plan-price">{t.price}</div>
+                <p className="ed-plan-note">{t.tag}</p>
+                <ul className="ed-plan-list">
                   {t.features.map(f => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-slate-700 dark:text-slate-300">
-                      <span className="text-emerald-600 mt-0.5">✓</span>
+                    <li key={f} style={{ display: 'flex', alignItems: 'flex-start', gap: 8 }}>
+                      <span style={{ color: 'var(--green)' }}>✓</span>
                       <span>{f}</span>
                     </li>
                   ))}
                 </ul>
-                <Link href={t.ctaHref} className={`btn w-full justify-center mt-6 ${t.name === 'Pro' ? 'btn-primary' : ''}`}>
-                  {t.cta}
-                </Link>
+                <div className="ed-plan-cta">
+                  <Link href={t.ctaHref} className={`ed-btn ${t.featured ? 'ed-btn-primary' : 'ed-btn-secondary'}`} style={{ justifyContent: 'center' }}>
+                    {t.cta}
+                  </Link>
+                </div>
               </div>
             ))}
           </div>
@@ -207,9 +176,9 @@ export default function OnboardingPage() {
 
       {/* FAQ */}
       <section id="faq" className="max-w-3xl mx-auto px-6 py-24">
-        <div className="text-center motion-slide-up">
-          <div className="eyebrow text-brand-700">FAQ</div>
-          <h2 className="font-display font-bold text-4xl text-slate-900 dark:text-white mt-2">
+        <div className="text-center">
+          <div className="ed-eyebrow" style={{ textAlign: 'center' }}>FAQ</div>
+          <h2 className="ed-h2" style={{ fontSize: 34 }}>
             Frequently asked
           </h2>
         </div>
@@ -222,44 +191,43 @@ export default function OnboardingPage() {
             { q: 'Do I need credit-card-level data to book?', a: 'No — we never touch payments. Booking links route you to Aviasales / Kayak / Google Flights / the airline directly, where you complete the purchase.' },
             { q: 'Is the family share link secure?', a: 'Yes. It uses a cryptographically random token unique to your account. You can rotate or revoke it instantly from Settings — anyone holding the old URL loses access.' },
             { q: 'Can I white-label this for my team?', a: 'Yes — Enterprise plans get custom domain + custom branding (logo, colors, sender email). Contact sales for details.' },
-          ].map((f, i) => (
-            <details key={f.q} className="card group cursor-pointer motion-fade-in" style={{ animationDelay: `${i * 50}ms` }}>
-              <summary className="flex items-center justify-between gap-3 list-none">
-                <span className="font-semibold text-slate-900 dark:text-white">{f.q}</span>
-                <span className="text-slate-400 group-open:rotate-45 transition-transform">+</span>
+          ].map(f => (
+            <details key={f.q} className="ed-panel" style={{ cursor: 'pointer' }}>
+              <summary className="flex items-center justify-between gap-3" style={{ listStyle: 'none', fontWeight: 600, color: 'var(--ink)' }}>
+                <span>{f.q}</span>
+                <span style={{ color: 'var(--muted-2)' }}>+</span>
               </summary>
-              <p className="text-sm text-slate-600 dark:text-slate-400 mt-3 leading-relaxed">{f.a}</p>
+              <p style={{ fontSize: 13.5, color: 'var(--muted)', marginTop: 12, lineHeight: 1.6 }}>{f.a}</p>
             </details>
           ))}
         </div>
       </section>
 
       {/* FINAL CTA */}
-      <section className="relative bg-brand-gradient text-white py-20 overflow-hidden">
-        <div className="absolute -top-20 -right-20 w-72 h-72 rounded-full bg-[var(--nc-teal)]/15 blur-3xl" />
-        <div className="relative max-w-3xl mx-auto px-6 text-center">
-          <h2 className="font-display font-extrabold text-4xl md:text-5xl tracking-tight">
+      <section className="py-20 text-center" style={{ background: 'var(--panel-bg)', color: 'var(--panel-fg)' }}>
+        <div className="max-w-3xl mx-auto px-6">
+          <h2 className="ed-h2" style={{ fontSize: 40, color: 'var(--panel-fg)' }}>
             Stop refreshing flight sites.
           </h2>
-          <p className="text-white/80 mt-4 text-lg">
+          <p style={{ color: 'color-mix(in srgb, var(--panel-fg) 80%, var(--panel-bg))', marginTop: 16, fontSize: 17 }}>
             Set your routes once. We watch them forever. You get an email the moment they drop.
           </p>
-          <Link href="/" className="inline-flex items-center gap-2 mt-8 px-8 py-4 rounded-xl bg-[var(--nc-amber)] hover:bg-[#F2B961] text-[var(--nc-dark)] font-bold shadow-lift hover:scale-105 transition text-lg">
+          <Link href="/" className="ed-btn ed-btn-primary ed-btn-hero" style={{ marginTop: 28, display: 'inline-flex', background: 'var(--panel-fg)', color: 'var(--panel-bg)' }}>
             Open the dashboard →
           </Link>
         </div>
       </section>
 
-      <footer className="bg-slate-950 text-slate-400 py-10">
+      <footer className="py-10" style={{ background: 'var(--panel-bg)', color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>
         <div className="max-w-6xl mx-auto px-6 flex flex-col md:flex-row items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2">
             <Logo size={20} />
             <span>© 2026 FlyCheap · A flight intelligence platform</span>
           </div>
           <div className="flex items-center gap-4">
-            <Link href="/" className="hover:text-white">Dashboard</Link>
-            <Link href="/explore" className="hover:text-white">Explore</Link>
-            <a href="mailto:sales@fareintel.com" className="hover:text-white">Contact</a>
+            <Link href="/" style={{ color: 'var(--panel-fg)' }}>Dashboard</Link>
+            <Link href="/explore" style={{ color: 'var(--panel-fg)' }}>Explore</Link>
+            <a href="mailto:sales@fareintel.com" style={{ color: 'var(--panel-fg)' }}>Contact</a>
           </div>
         </div>
       </footer>
