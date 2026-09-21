@@ -22,10 +22,10 @@ export function RefreshDealsButton() {
 
   return (
     <div className="flex items-center gap-2">
-      <button className="btn btn-primary" disabled={pending} onClick={go}>
+      <button className="ed-btn ed-btn-primary" disabled={pending} onClick={go}>
         {pending ? 'Scanning…' : 'Scan 12 months'}
       </button>
-      {msg && <span className="text-xs text-slate-500">{msg}</span>}
+      {msg && <span className="text-xs" style={{ color: 'var(--muted)' }}>{msg}</span>}
     </div>
   );
 }

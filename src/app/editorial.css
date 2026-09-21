@@ -151,6 +151,24 @@ html[data-theme="dark"] {
 .ed-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
 .ed-dot.amber { background: var(--amber); } .ed-dot.red { background: var(--red); }
 
+/* Text input — light-surface form control. */
+.ed-input { display: block; width: 100%; padding: 9px 11px; font: 500 13px/1.3 var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ed-input::placeholder { color: var(--muted-2); }
+.ed-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Field chip — a compact input pill for controls placed over a dark panel
+   (e.g. the search bar over the dashboard hero). No glass, no blur: a flat
+   tint of the panel ink over the panel ground. */
+.ed-field { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)); border: 1px solid color-mix(in srgb, var(--panel-fg) 20%, var(--panel-bg)); border-radius: 0; color: var(--panel-fg); }
+.ed-field-input { flex: 1; min-width: 0; border: 0; background: transparent; font: 600 13px var(--font-ui); color: var(--panel-fg); padding: 0; }
+.ed-field-input:focus { outline: none; }
+.ed-field-input::placeholder { color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); }
+.ed-field-tag { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 50%, var(--panel-bg)); flex-shrink: 0; }
+.ed-field-drop { position: absolute; left: 0; right: 0; margin-top: 4px; max-height: 240px; overflow: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 0; }
+.ed-field-drop-row { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--rule-soft); color: var(--ink); background: transparent; }
+.ed-field-drop-row:last-child { border-bottom: none; }
+.ed-field-drop-row.hl { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+
 /* ---- Marketing (flycheap.live → /early-access) ------------------------- */
 .mk { background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
 .mk .mk-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }

@@ -155,60 +155,61 @@ export function OnboardingTour({ shouldShow = false }: { shouldShow?: boolean })
 
   return (
     <div className="fixed inset-0 z-[80] no-print" aria-modal="true" role="dialog">
-      {/* Dimmer with cut-out for the spotlight using a layered box-shadow trick. */}
-      {spotlight ? (
+      {/* Dimmer; the spotlight is marked with a ring rather than a box-shadow
+          cut-out, since the editorial system carries no shadows. */}
+      <div className="absolute inset-0" style={{ background: 'color-mix(in srgb, var(--ink) 65%, transparent)' }} />
+      {spotlight && (
         <div
           style={{
             position: 'absolute',
             top: spotlight.top, left: spotlight.left,
             width: spotlight.width, height: spotlight.height,
-            borderRadius: 14,
-            boxShadow: '0 0 0 9999px rgba(2,6,23,0.65)',
-            outline: '2px solid rgba(212,175,55,0.85)',
+            borderRadius: 0,
+            outline: '2px solid var(--accent)',
             outlineOffset: 4,
             transition: 'all 280ms cubic-bezier(.2,.7,.3,1)',
             pointerEvents: 'none',
           }}
         />
-      ) : (
-        <div className="absolute inset-0" style={{ background: 'rgba(2,6,23,0.65)' }} />
       )}
 
       <div
-        className="fc-glass absolute max-w-sm rounded-2xl shadow-lift border border-slate-200 dark:border-slate-700 p-4 text-sm motion-slide-up"
-        style={{ ...tooltipStyle, width: 'min(380px, calc(100vw - 32px))' }}
+        className="absolute max-w-sm p-4 text-sm motion-slide-up"
+        style={{ ...tooltipStyle, width: 'min(380px, calc(100vw - 32px))', background: 'var(--surface)', border: '1px solid var(--rule)', borderRadius: 0 }}
       >
         <div className="flex items-start justify-between gap-3 mb-2">
           <div>
-            <div className="eyebrow text-brand-700 dark:text-brand-300">Step {step + 1} of {STEPS.length}</div>
-            <h3 className="font-bold text-base text-slate-900 dark:text-slate-100 mt-0.5">{s.title}</h3>
+            <div className="ed-eyebrow">Step {step + 1} of {STEPS.length}</div>
+            <h3 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: '17px', color: 'var(--ink)' }} className="mt-0.5">{s.title}</h3>
           </div>
           <button
             onClick={complete}
-            className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-lg leading-none"
+            className="text-lg leading-none"
+            style={{ color: 'var(--muted-2)' }}
             aria-label="Skip tour"
           >×</button>
         </div>
-        <p className="text-slate-700 dark:text-slate-300 mb-3 leading-snug">{s.body}</p>
+        <p className="mb-3 leading-snug" style={{ color: 'var(--ink-soft)' }}>{s.body}</p>
 
         <div className="flex items-center justify-between">
           <div className="flex gap-1">
             {STEPS.map((_, i) => (
               <span
                 key={i}
-                className={`block w-1.5 h-1.5 rounded-full ${i === step ? 'bg-brand-600' : 'bg-slate-300 dark:bg-slate-600'}`}
+                className="block w-1.5 h-1.5"
+                style={{ borderRadius: '50%', background: i === step ? 'var(--accent)' : 'var(--rule-strong)' }}
               />
             ))}
           </div>
           <div className="flex gap-2">
             {step > 0 && (
-              <button onClick={() => setStep(s => s - 1)} className="btn btn-sm">
+              <button onClick={() => setStep(s => s - 1)} className="ed-btn ed-btn-secondary text-xs">
                 ← Back
               </button>
             )}
             <button
               onClick={() => isLast ? complete() : setStep(s => s + 1)}
-              className="btn btn-sm btn-primary"
+              className="ed-btn ed-btn-primary text-xs"
             >
               {isLast ? 'Finish' : 'Next →'}
             </button>
