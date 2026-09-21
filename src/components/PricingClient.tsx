@@ -2,30 +2,12 @@
 
 import { useState } from 'react';
 import type { PlanFeature } from '@/lib/tierCopy';
-
-type Plan = 'pro' | 'enterprise';
-type Period = 'month' | 'year';
-
-// Monthly prices and the per-month equivalent of the annual price (so users
-// see what the yearly saves them per month vs. the monthly rate).
-// MUST match the live Stripe prices exactly — these were advertising $5/$20
-// while Stripe charged $9/$39, i.e. users were quoted one price and billed
-// almost double. Verified against the live Stripe API 2026-09-12:
-//   pro monthly 900 · pro yearly 7900 · ent monthly 3900 · ent yearly 29900
-const PRICES: Record<Plan, Record<Period, number>> = {
-  pro:        { month: 9,  year: 79  }, // $79/yr · $29 off vs monthly · ~27% off
-  enterprise: { month: 39, year: 299 }, // $299/yr · $169 off vs monthly · ~36% off
-};
+import { PRICES, annualSavingsPct, type Plan, type Period } from '@/lib/prices';
 
 // The period switch's "save up to N%" chip, derived from the same formula
 // pricingLabel() uses for the per-plan yearly sub-line, not a second typed
 // number next to it. The larger of the two plans' savings (enterprise, 36%)
 // is what "up to" refers to.
-function annualSavingsPct(plan: Plan): number {
-  const monthly = PRICES[plan].month;
-  const perMonthOnYearly = PRICES[plan].year / 12;
-  return Math.round((1 - perMonthOnYearly / monthly) * 100);
-}
 const MAX_ANNUAL_SAVINGS_PCT = Math.max(
   ...(Object.keys(PRICES) as Plan[]).map(annualSavingsPct)
 );
@@ -124,7 +106,7 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
 
       <div className="ed-plans">
         {/* FREE */}
-        <div className={`ed-plan${currentTier === 'free' ? ' current' : ''}`}>
+        <div className={`ed-plan${signedIn && currentTier === 'free' ? ' current' : ''}`}>
           <div className="ed-eyebrow">Free</div>
           <div className="ed-plan-price">$0</div>
           <p className="ed-plan-note">forever — email alerts only</p>

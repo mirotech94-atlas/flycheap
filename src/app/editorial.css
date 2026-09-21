@@ -576,7 +576,7 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
    - `.featured` — the "Most popular" (Pro) tile's own subscribe CTA may be
      amber (ruling 5), but only paired with a foreground that does not flip:
      --panel-bg is dark in both themes (light #14181B, dark #0A0C0E), so
-     amber/panel-bg clears AA in both — light 6.29:1, dark 8.52:1. --ink
+     amber/panel-bg clears AA in both — light 6.11:1, dark 8.52:1. --ink
      would fail in dark (--ink is light there): amber/ink measures 1.99:1. */
 .ed-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
 .ed-plan { position: relative; background: var(--surface); padding: 24px 22px 22px; display: flex; flex-direction: column; }

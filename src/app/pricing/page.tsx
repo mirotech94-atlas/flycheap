@@ -4,12 +4,13 @@ import { PricingClient } from '@/components/PricingClient';
 import { deliverableChannels } from '@/lib/channelHealth';
 import { planFeatures, tierChannels, channelSentence, POLLING_PROMISE, plural } from '@/lib/tierCopy';
 import { TIER_LIMITS } from '@/lib/db';
+import { PRICES } from '@/lib/prices';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Pricing — FlyCheap',
-  description: 'A 3-month free trial for every new account, then Free, Pro ($9/mo), or Enterprise ($39/mo). Pay with card (Stripe) or PayPal.',
+  description: `A 3-month free trial for every new account, then Free, Pro ($${PRICES.pro.month}/mo), or Enterprise ($${PRICES.enterprise.month}/mo). Pay with card (Stripe) or PayPal.`,
 };
 
 export default async function PricingPage() {
