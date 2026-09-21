@@ -172,6 +172,10 @@ html[data-theme="dark"] {
 /* Ranked bars — name + meta / 8px bar on --track / mono value / optional CTA track. */
 .ed-ranked { display: grid; gap: 0; }
 .ed-ranked-row { display: grid; grid-template-columns: minmax(180px, 1.2fr) 2fr 90px auto; align-items: center; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--rule-soft); }
+/* Hover cue for a row/tile that is itself the whole link (e.g. the Support
+   ticket list, task 2.11c) — README "Interactions": opacity to ~0.72, no
+   transform. Anchor-scoped so a static (non-link) row or tile is unaffected. */
+a.ed-ranked-row:hover, a.ed-tile:hover { opacity: 0.72; }
 .ed-ranked-name { font-weight: 600; color: var(--ink); } .ed-ranked-meta { font-size: 12px; color: var(--muted); }
 .ed-bar { height: 8px; background: var(--track); } .ed-bar-fill { height: 100%; background: var(--accent); }
 .ed-bar-fill.amber { background: var(--amber); } .ed-bar-fill.green { background: var(--green); }
