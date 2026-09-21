@@ -78,9 +78,9 @@ export function HideOnFcRoutes({ children }: { children: React.ReactNode }) {
 
 /** Variant that swaps className when on /admin/* so the root <main> stops
  *  imposing its max-w-7xl + padding on the admin portal. On client routes,
- *  shifts content right by 220px to make room for the fixed client sidebar
- *  AND fills the entire viewport edge-to-edge — no centered max-width
- *  gutter (mirrors the admin shell). */
+ *  chrome now lives in the sticky PortalTopBar rather than a fixed-width
+ *  left rail, so <main> needs no sidebar gutter — content just gets the
+ *  editorial page padding (.ed-page) and fills the viewport edge-to-edge. */
 export function AdminAwareMain({ children, adminHost, marketingHost }: { children: React.ReactNode; adminHost?: boolean; marketingHost?: boolean }) {
   const pathname = usePathname();
   const embed = useIsEmbed();
@@ -90,8 +90,8 @@ export function AdminAwareMain({ children, adminHost, marketingHost }: { childre
     return <main className="min-h-screen">{children}</main>;
   }
   return (
-    <main className="md:pl-[220px] min-h-screen w-full">
-      <div className="px-6 md:px-10 py-8 pb-24 md:pb-8 w-full">{children}</div>
+    <main className="min-h-screen w-full">
+      <div className="ed-page">{children}</div>
     </main>
   );
 }

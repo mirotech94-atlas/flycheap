@@ -5,7 +5,7 @@ import { GlobeProvider } from '@/lib/globeStore';
 import { contrastSafe, hexToRgbTriple } from '@/lib/brandContrast';
 import { headers } from 'next/headers';
 import { ClientChrome, AdminAwareMain, HideOnEmbed } from '@/components/ClientChrome';
-import { ClientSidebar } from '@/components/ClientSidebar';
+import { PortalTopBar } from '@/components/PortalTopBar';
 import { FcTweaks } from '@/components/FcTweaks';
 import { DeferredAppWidgets } from '@/components/DeferredAppWidgets';
 import { UserTelemetry } from '@/components/UserTelemetry';
@@ -144,7 +144,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <UserTelemetry />
         <GlobeProvider>
         <ClientChrome adminHost={isAdminHost} marketingHost={isMarketingHost}>
-          <ClientSidebar
+          <PortalTopBar
             user={sessionUser ? { email: sessionUser.email, name: sessionUser.name, tier: sessionUser.tier } : null}
             isAdmin={showAdminLink}
             language={t.common.language}

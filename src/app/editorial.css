@@ -336,3 +336,33 @@ html[data-theme="dark"] {
 .mk-footer-langs a.on { color: var(--ink); font-weight: 600; }
 .mk-footer-legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; font-size: 11.5px; color: var(--muted-2); }
 .mk-footer-legal a:hover { color: var(--ink); }
+
+/* ---- Portal chrome (PortalTopBar.tsx) — replaces the client-portal left
+   sidebar with a sticky editorial top tab bar. 13 signed-in destinations +
+   3 mono-caps group separators (.pt-group), reproducing ClientSidebar's
+   buildNav()/isItemActive() exactly; a guest shell (.pt-guest inside the
+   same wrapping .pt-tabs row) for the signed-out marketing mini-nav.
+   `min-height` (not the brief's `height`) is the one deliberate deviation
+   from verbatim: with flex-wrap on and 16 entries at 1280px the row wraps
+   (ruling 8), and a fixed height would clip the wrapped line under the
+   header instead of growing to show it — see task-2.1-report.md. -------- */
+.pt-bar { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; padding: 0 24px; min-height: 62px; background: var(--surface); border-bottom: 1px solid var(--rule); font-family: var(--font-ui); }
+.pt-brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; }
+.pt-brand-name { display: block; font-family: var(--font-serif); font-size: 19px; line-height: 1; }
+.pt-brand-meta { display: block; font-family: var(--font-mono-ed); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-2); margin-top: 3px; }
+.pt-tabs { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; justify-self: center; }
+.pt-tab { padding: 16px 8px 14px; font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; }
+.pt-tab:hover { color: var(--ink); }
+.pt-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+.pt-group { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-3); padding: 0 6px 0 14px; align-self: center; }
+.pt-guest { font-size: 13px; color: var(--muted); }
+.pt-right { display: flex; align-items: center; gap: 8px; }
+.pt-tier { color: var(--muted-2); }
+.pt-menu { display: none; }
+@media (max-width: 960px) {
+  .pt-bar { grid-template-columns: auto auto 1fr; }
+  .pt-menu { display: inline-flex; }
+  .pt-tabs { display: none; grid-column: 1 / -1; flex-direction: column; gap: 0; border-top: 1px solid var(--rule); }
+  .pt-tabs.open { display: flex; }
+  .pt-tab { padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
+}
