@@ -18,17 +18,18 @@
  * bubbles — each in the right state at the right time.
  *
  * The mark is a pair of aviator wings — FarePilot is a pilot — that gently
- * breathe, faster while thinking/listening/speaking, with a per-mode ring
- * glow. Premium and on-name, rather than a generic chat bubble.
+ * breathe, faster while thinking/listening/speaking, with a per-mode token
+ * outline (not a glow — no shadows here). Premium and on-name, rather than
+ * a generic chat bubble.
  */
 
 type Mode = 'idle' | 'thinking' | 'listening' | 'speaking';
 type Size = 'sm' | 'md' | 'lg';
 
-const DIMENSIONS: Record<Size, { box: number; ring: string; pad: number }> = {
-  sm: { box: 28, ring: 'ring-1', pad: 0 },
-  md: { box: 44, ring: 'ring-1', pad: 0 },
-  lg: { box: 64, ring: 'ring-2', pad: 0 },
+const DIMENSIONS: Record<Size, { box: number; ring: number; pad: number }> = {
+  sm: { box: 28, ring: 1, pad: 0 },
+  md: { box: 44, ring: 1, pad: 0 },
+  lg: { box: 64, ring: 2, pad: 0 },
 };
 
 export function ConciergeAvatar({
@@ -44,19 +45,16 @@ export function ConciergeAvatar({
 }) {
   const d = DIMENSIONS[size];
 
-  // Per-mode ring tone — a token outline, not a glow. Tailwind classes
-  // resolved at build time, so we list them here rather than building
-  // strings dynamically (which would get purged). No opacity modifier on
-  // these: Tailwind 3.4 can't compose a `/NN` alpha onto an arbitrary
-  // `var()` colour (it needs an `<alpha-value>`-shaped triple), so
-  // `ring-[var(--x)]/70` silently emits no `--tw-ring-color` at all and the
-  // ring falls back to Tailwind's default blue reset — verified against the
-  // built CSS, which had zero `.ring-\[var` rules before this fix.
-  const ringTone =
-    mode === 'speaking' ? 'ring-[var(--accent)]'
-    : mode === 'listening' ? 'ring-[var(--red)]'
-    : mode === 'thinking' ? 'ring-[var(--green)]'
-    : 'ring-[var(--rule-strong)]';
+  // Per-mode ring tone — a token `outline`, not a Tailwind `ring-*` class.
+  // Tailwind's `ring-*` utilities compile to `box-shadow`, which the "no
+  // shadows" rule catches literally regardless of what put it there (fix
+  // round 1: the browser gate flagged the open chat widget for exactly
+  // this). `outline` draws the same 1px/2px token line without a shadow.
+  const ringColor =
+    mode === 'speaking' ? 'var(--accent)'
+    : mode === 'listening' ? 'var(--red)'
+    : mode === 'thinking' ? 'var(--green)'
+    : 'var(--rule-strong)';
 
   // Animation classes — defined in the inline <style> block below so we
   // don't depend on globals.css edits.
@@ -66,8 +64,8 @@ export function ConciergeAvatar({
     <div
       role="img"
       aria-label={ariaLabel}
-      className={`relative inline-grid place-items-center rounded-full ${d.ring} ${ringTone} bg-brand-gradient transition-colors duration-300 ${className}`}
-      style={{ width: d.box, height: d.box }}
+      className={`relative inline-grid place-items-center rounded-full bg-brand-gradient transition-colors duration-300 ${className}`}
+      style={{ width: d.box, height: d.box, outline: `${d.ring}px solid ${ringColor}`, outlineOffset: 0 }}
     >
       <svg viewBox="0 0 64 64" width="72%" height="72%" className={waveClass} aria-hidden="true">
         {/* Aviator wings — FarePilot, in the accent token. */}
@@ -76,15 +74,23 @@ export function ConciergeAvatar({
         <circle cx="32" cy="32" r="7.5" fill="none" stroke="var(--accent)" strokeWidth="2.2" />
         <circle cx="32" cy="32" r="2.6" fill="var(--accent)" />
       </svg>
-      {/* Online indicator — a tiny pulse dot bottom-right, only for sm/md */}
+      {/* Online indicator — a tiny pulse dot bottom-right, only for sm/md.
+          Its old `ring-2 ring-brand-700` was a literal navy (tailwind
+          .config.ts's brand.700 shade) that layout.tsx's brand override
+          never reaches (it covers .ring-brand-500, not -700) — so it never
+          followed the tenant colour or the theme, and (being a `ring-*`
+          class) compiled to a second box-shadow the gate caught. What that
+          border was actually doing was cutting the dot out from the disc
+          behind it, so it reads as a solid dot rather than overlapping
+          colour — `--surface` is the right token for that. */}
       {size !== 'lg' && (
         <span
-          className={`absolute -bottom-0.5 -right-0.5 rounded-full ring-2 ring-brand-700 ${
+          className={`absolute -bottom-0.5 -right-0.5 rounded-full ${
             mode === 'listening' ? 'bg-red-400 animate-pulse'
             : mode === 'speaking' ? 'bg-amber-300 animate-pulse'
             : 'bg-emerald-400'
           }`}
-          style={{ width: size === 'sm' ? 8 : 10, height: size === 'sm' ? 8 : 10 }}
+          style={{ width: size === 'sm' ? 8 : 10, height: size === 'sm' ? 8 : 10, border: '2px solid var(--surface)' }}
           aria-hidden
         />
       )}
