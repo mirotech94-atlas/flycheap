@@ -935,3 +935,33 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-heatmap-cell { border-radius: 0; }
 .ed-heatmap-axis { display: grid; margin-top: 6px; }
 .ed-heatmap-tick { font-family: var(--font-mono-ed); font-size: 9.5px; color: var(--muted-2); text-align: center; white-space: nowrap; overflow: hidden; }
+
+/* ---- Task 3.6 (queue / tickets) — underline filter tabs. No existing
+   primitive fit: .ed-seg is a bordered segmented box (wrong shape for a
+   nav that also carries a route — queue/tickets use <Link href>, not
+   buttons). Active state uses --accent for the rule, replacing the two
+   pages' literal border-[#E8A33D] (ruling: the amber filter-tab border
+   becomes the --accent active rule, not amber — amber stays reserved for
+   fares/primary actions). */
+.ad-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--rule); }
+.ad-tab { display: inline-block; margin-bottom: -1px; padding: 8px 14px; font-size: 13px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; transition: color 120ms; }
+.ad-tab:hover { color: var(--ink-soft); }
+.ad-tab.active { border-color: var(--accent); color: var(--ink); font-weight: 600; }
+
+/* ---- Task 3.6 (tickets/[ref]) — conversation thread bubbles. Distinct
+   from the client ChatWidget's .ed-chat-bubble (bg-swap) on purpose: a
+   support thread is a record, not a live back-and-forth, so "ours" reads
+   as a filed reply (left accent rule on its own tint) rather than a
+   filled chat pill. Replaces the literal #E8A33D/[0.06] tint. */
+.ad-thread-msg { padding: 12px 14px; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+.ad-thread-msg.ours { background: color-mix(in srgb, var(--accent) 6%, var(--surface-2)); border-left: 3px solid var(--accent); }
+.ad-thread-msg.theirs { background: var(--surface); border: 1px solid var(--rule); }
+
+/* ---- Task 3.6 (tickets/[ref]) — status-rail picker rows. Replaces the
+   literal #E8A33D/[0.08] "current" tint (amber-as-decoration) with
+   --surface-2 + an --accent border, per ruling 3 (amber reserved for
+   data/"wait", not a selection state). */
+.ad-statuspick { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-size: 13px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); text-align: left; cursor: pointer; transition: opacity 120ms, border-color 120ms; }
+.ad-statuspick:hover { opacity: 0.8; }
+.ad-statuspick.active { background: var(--surface-2); border-color: var(--accent); color: var(--ink); cursor: default; }
+.ad-statuspick:disabled { cursor: default; }
