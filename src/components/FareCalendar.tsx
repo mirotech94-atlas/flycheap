@@ -27,11 +27,13 @@ function colorBand(price: number, threshold: number, maxDisplay: number): CSSPro
     return { background: 'var(--green)', color: 'var(--on-accent)' };
   }
   if (price <= threshold) {
-    return { background: 'color-mix(in srgb, var(--green) 18%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' };
+    // Same 8%-tint/75%-ink-mix recipe as .ed-chip.status-ok (≥6.2:1 both themes).
+    return { background: 'color-mix(in srgb, var(--green) 8%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' };
   }
   const above = (price - threshold) / range;
   if (above <= 1.0) {
-    return { background: 'color-mix(in srgb, var(--amber) 18%, var(--surface))', color: 'color-mix(in srgb, var(--amber) 70%, var(--ink))' };
+    // Same 8%-tint/65%-ink-mix recipe as .ed-chip.status-waiting (≥5:1 both themes).
+    return { background: 'color-mix(in srgb, var(--amber) 8%, var(--surface))', color: 'color-mix(in srgb, var(--amber) 65%, var(--ink))' };
   }
   return { background: 'var(--red)', color: 'var(--on-accent)' };
 }
@@ -84,8 +86,8 @@ export function FareCalendar({
         <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 11 }}>
           <span style={{ color: 'var(--muted)', marginRight: 4 }}>Cheaper</span>
           <span style={{ width: 16, height: 16, background: 'var(--green)' }} title="≥ 20% below target" />
-          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--green) 18%, var(--surface))' }} title="At/below target" />
-          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--amber) 18%, var(--surface))' }} title="Above target" />
+          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--green) 8%, var(--surface))' }} title="At/below target" />
+          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--amber) 8%, var(--surface))' }} title="Above target" />
           <span style={{ width: 16, height: 16, background: 'var(--red)' }} title="Above cap" />
           <span style={{ color: 'var(--muted)', marginLeft: 4 }}>Pricier</span>
         </div>
