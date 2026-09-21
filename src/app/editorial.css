@@ -98,3 +98,68 @@ html[data-theme="dark"] {
   --font-serif: var(--font-newsreader, 'Newsreader'), Georgia, serif;
   --font-mono-ed: var(--font-plex-mono, 'IBM Plex Mono'), ui-monospace, monospace;
 }
+
+/* ---- Editorial primitives -------------------------------------------- */
+.ed-page { padding: 44px 48px 80px; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+@media (max-width: 720px) { .ed-page { padding: 28px 20px 64px; } }
+
+.ed-mono { font-family: var(--font-mono-ed); font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+.ed-eyebrow { font-family: var(--font-mono-ed); font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.ed-h1 { font-family: var(--font-serif); font-weight: 400; font-size: 42px; line-height: 1.02; letter-spacing: -0.025em; color: var(--ink); margin: 10px 0 12px; }
+.ed-h2 { font-family: var(--font-serif); font-weight: 400; font-size: 23px; letter-spacing: -0.015em; color: var(--ink); margin: 0 0 6px; }
+.ed-sub { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 64ch; margin: 0 0 22px; }
+.ed-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.ed-rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+/* Buttons — no radius, no shadow, opacity hover only. */
+.ed-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; font: 600 12.5px/1 var(--font-ui); border: 1px solid transparent; border-radius: 0; cursor: pointer; text-decoration: none; transition: opacity 120ms; }
+.ed-btn:hover { opacity: 0.72; }
+.ed-btn-primary { background: var(--btn-bg); color: var(--btn-fg); }
+.ed-btn-secondary { background: var(--surface); color: var(--ink-soft); border-color: var(--rule-strong); }
+.ed-btn-row { background: var(--btn-bg); color: var(--btn-fg); padding: 7px 13px; font-size: 11.5px; justify-self: end; }
+.ed-btn-tile { background: transparent; color: currentColor; border-color: currentColor; padding: 6px 11px; font-size: 11px; }
+.ed-btn-hero { padding: 13px 22px; font-size: 14px; }
+
+/* Stat strip — 2–4 KPIs in a ruled row. */
+.ed-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 0 0 36px; }
+.ed-stat { background: var(--surface); padding: 20px 22px 16px; }
+.ed-stat-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 10px; }
+.ed-stat-value { font-family: var(--font-serif); font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.02em; color: var(--ink); display: flex; align-items: baseline; gap: 10px; }
+.ed-stat-delta { font-family: var(--font-mono-ed); font-size: 11px; letter-spacing: 0.06em; }
+.ed-delta-up { color: var(--green); } .ed-delta-down { color: var(--red); } .ed-delta-flat { color: var(--muted-2); }
+.ed-spark { display: block; width: 100%; height: 20px; margin-top: 12px; }
+.ed-spark path { fill: none; stroke: var(--accent); stroke-width: 1.25; }
+
+/* Records — a ruled table. */
+.ed-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ed-table th { text-align: left; padding: 0 12px 10px 0; font-family: var(--font-mono-ed); font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); border-bottom: 1px solid var(--ink); }
+.ed-table td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: middle; color: var(--ink); }
+.ed-table td.num, .ed-table th.num { text-align: right; font-family: var(--font-mono-ed); font-size: 12px; letter-spacing: 0.02em; }
+.ed-table td.cta { text-align: right; width: 1%; white-space: nowrap; }
+
+/* Tile grid — 1px gaps over --rule so the background shows as the rule. */
+.ed-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-tile { background: var(--surface); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+.ed-tile.dim { background: var(--surface-2); }
+.ed-tile-kicker { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.ed-tile-value { font-family: var(--font-serif); font-size: 22px; letter-spacing: -0.015em; color: var(--ink); }
+.ed-tile-meta { font-size: 12.5px; color: var(--muted); }
+.ed-tile .ed-btn-tile { margin-top: auto; align-self: flex-start; }
+
+/* Ranked bars — name + meta / 8px bar on --track / mono value / optional CTA track. */
+.ed-ranked { display: grid; gap: 0; }
+.ed-ranked-row { display: grid; grid-template-columns: minmax(180px, 1.2fr) 2fr 90px auto; align-items: center; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--rule-soft); }
+.ed-ranked-name { font-weight: 600; color: var(--ink); } .ed-ranked-meta { font-size: 12px; color: var(--muted); }
+.ed-bar { height: 8px; background: var(--track); } .ed-bar-fill { height: 100%; background: var(--accent); }
+.ed-bar-fill.amber { background: var(--amber); } .ed-bar-fill.green { background: var(--green); }
+.ed-ranked-value { font-family: var(--font-mono-ed); font-size: 12px; text-align: right; color: var(--ink); }
+
+/* Toggle — 44×24, track --accent/--track, 18px knob, 160ms translate. */
+.ed-toggle { position: relative; width: 44px; height: 24px; background: var(--track); border: 0; padding: 0; cursor: pointer; }
+.ed-toggle[aria-checked="true"] { background: var(--accent); }
+.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--knob); border-radius: 0; transition: transform 160ms; }
+.ed-toggle[aria-checked="true"] .ed-knob { transform: translateX(20px); }
+
+/* Status dot — one of the three sanctioned radius exceptions. */
+.ed-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.ed-dot.amber { background: var(--amber); } .ed-dot.red { background: var(--red); }
