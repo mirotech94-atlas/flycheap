@@ -216,11 +216,28 @@ html[data-theme="dark"] {
    .ed-stat-label / .ed-tile-kicker caption treatment used everywhere else. */
 .ed-label { display: block; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
 
-/* Toggle — 44×24, track --accent/--track, 18px knob, 160ms translate. */
-.ed-toggle { position: relative; width: 44px; height: 24px; background: var(--track); border: 0; padding: 0; cursor: pointer; }
-.ed-toggle[aria-checked="true"] { background: var(--accent); }
-.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--knob); border-radius: 0; transition: transform 160ms; }
-.ed-toggle[aria-checked="true"] .ed-knob { transform: translateX(20px); }
+/* Toggle — 44×24 switch, track --accent/--track, 18px round knob, 160ms
+   transform. The real control is the visually-hidden .ed-toggle-input
+   (role="switch" + aria-checked, carrying every existing onChange/name/
+   checked prop byte-identical); .ed-toggle is a sibling the input's state
+   drives, so every handler in the seven Settings files keeps working. */
+/* Always bordered — like .ed-ranked-row, not position-dependent (:last-child
+   would never match a toggle row that isn't literally the panel's last
+   child, e.g. AlertPolicyCard's rows sit between other fields). */
+.ed-toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--rule-soft); }
+.ed-toggle-text { display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+.ed-toggle-name { font: 600 13.5px/1.4 var(--font-ui); color: var(--ink); }
+.ed-toggle-help { font-size: 12px; line-height: 1.5; color: var(--muted); max-width: 56ch; }
+.ed-toggle-aside { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
+.ed-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.ed-toggle-input { position: absolute; inset: 0; width: 44px; height: 24px; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.ed-toggle-input:disabled { cursor: not-allowed; }
+.ed-toggle { position: relative; display: block; width: 44px; height: 24px; background: var(--track); border: 0; padding: 0; pointer-events: none; }
+.ed-toggle-input:checked + .ed-toggle { background: var(--accent); }
+.ed-toggle-input:disabled + .ed-toggle { opacity: 0.45; }
+.ed-toggle-input:focus-visible + .ed-toggle { outline: 2px solid var(--accent); outline-offset: 2px; }
+.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--knob); border-radius: 50%; transition: transform 160ms; }
+.ed-toggle-input:checked + .ed-toggle .ed-knob { transform: translateX(20px); }
 
 /* Status dot — one of the three sanctioned radius exceptions. */
 .ed-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }

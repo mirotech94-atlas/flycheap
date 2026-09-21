@@ -131,21 +131,21 @@ export function AlertPolicyCard() {
   }
 
   return (
-    <div className="card" id="alert-policy">
-      <div className="card-head">
+    <section className="ed-panel" id="alert-policy">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow">Alerts</div>
-          <h2 className="!mb-0">When we’re allowed to interrupt you</h2>
+          <div className="ed-eyebrow">Alerts</div>
+          <h2 className="ed-panel-title">When we’re allowed to interrupt you</h2>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mb-4">
+      <p className="ed-panel-note" style={{ marginBottom: 18 }}>
         An alert that wakes you at 3am for a fare that was never going to move does not just
         annoy you — it teaches you to mute the channel the $400 mistake fare arrives on tomorrow.
       </p>
 
       {/* Quiet hours */}
       <div className="mb-4">
-        <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 block mb-1">
+        <label className="ed-label">
           Quiet hours
         </label>
         <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -153,21 +153,23 @@ export function AlertPolicyCard() {
             type="time"
             value={p.quiet_hours_start}
             onChange={e => setWindow('quiet_hours_start', e.target.value)}
-            className="font-mono text-xs"
+            className="ed-input"
+            style={{ width: 'auto' }}
             aria-label="Quiet hours start"
           />
-          <span className="text-slate-500">to</span>
+          <span style={{ color: 'var(--muted)' }}>to</span>
           <input
             type="time"
             value={p.quiet_hours_end}
             onChange={e => setWindow('quiet_hours_end', e.target.value)}
-            className="font-mono text-xs"
+            className="ed-input"
+            style={{ width: 'auto' }}
             aria-label="Quiet hours end"
           />
           {quietHoursOn && (
             <button
               type="button"
-              className="btn btn-sm"
+              className="ed-btn ed-btn-secondary"
               onClick={() => setP(prev => prev ? {
                 ...prev, quiet_hours_start: '', quiet_hours_end: '', quiet_hours_source: 'off',
               } : prev)}
@@ -176,7 +178,7 @@ export function AlertPolicyCard() {
             </button>
           )}
         </div>
-        <p className="text-[10px] text-slate-500 mt-1">
+        <p className="ed-panel-note" style={{ marginTop: 6 }}>
           {quietHoursOn ? (
             <>
               {p.quiet_hours_source === 'default'
@@ -194,27 +196,32 @@ export function AlertPolicyCard() {
       </div>
 
       {/* Mistake-fare exception */}
-      <label className="flex items-start gap-2 mb-4 text-sm">
-        <input
-          type="checkbox"
-          checked={p.wake_for_mistake_fares}
-          onChange={e => set('wake_for_mistake_fares', e.target.checked)}
-          className="mt-1"
-          disabled={!quietHoursOn}
-        />
-        <span>
-          Wake me for a mistake fare
-          <span className="block text-[10px] text-slate-500">
+      <div className="ed-toggle-row">
+        <div className="ed-toggle-text">
+          <span className="ed-toggle-name">Wake me for a mistake fare</span>
+          <span className="ed-toggle-help">
             A glitch fare at 3am is the one case where waking you is right — but only if you
             agreed to it. Nothing else ever breaks quiet hours.
             {!quietHoursOn && ' Set quiet hours above for this to mean anything.'}
           </span>
+        </div>
+        <span className="ed-toggle-switch">
+          <input
+            type="checkbox"
+            className="ed-toggle-input"
+            role="switch"
+            aria-checked={p.wake_for_mistake_fares}
+            checked={p.wake_for_mistake_fares}
+            onChange={e => set('wake_for_mistake_fares', e.target.checked)}
+            disabled={!quietHoursOn}
+          />
+          <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
         </span>
-      </label>
+      </div>
 
       {/* Frequency cap */}
-      <div className="mb-4">
-        <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 block mb-1">
+      <div className="my-4">
+        <label className="ed-label">
           Most alerts per day
         </label>
         <input
@@ -223,34 +230,40 @@ export function AlertPolicyCard() {
           max={50}
           value={p.daily_alert_cap ?? DEFAULT_CAP}
           onChange={e => set('daily_alert_cap', parseInt(e.target.value, 10) || DEFAULT_CAP)}
-          className="w-24 font-mono text-xs"
+          className="ed-input"
+          style={{ width: 96 }}
         />
-        <p className="text-[10px] text-slate-500 mt-1">
+        <p className="ed-panel-note" style={{ marginTop: 6 }}>
           Anything over this waits for your digest. A mistake fare is never capped — a cap that
           swallowed the one alert worth $400 would be the most expensive setting here.
         </p>
       </div>
 
       {/* Instant vs digest */}
-      <label className="flex items-start gap-2 mb-4 text-sm">
-        <input
-          type="checkbox"
-          checked={p.instant_alerts}
-          onChange={e => set('instant_alerts', e.target.checked)}
-          className="mt-1"
-        />
-        <span>
-          Send alerts the moment they happen
-          <span className="block text-[10px] text-slate-500">
+      <div className="ed-toggle-row">
+        <div className="ed-toggle-text">
+          <span className="ed-toggle-name">Send alerts the moment they happen</span>
+          <span className="ed-toggle-help">
             Off means everything except a closing booking window waits for your digest. Turning
             it off is the usual fix for feeling over-alerted — quieter than muting us entirely.
           </span>
+        </div>
+        <span className="ed-toggle-switch">
+          <input
+            type="checkbox"
+            className="ed-toggle-input"
+            role="switch"
+            aria-checked={p.instant_alerts}
+            checked={p.instant_alerts}
+            onChange={e => set('instant_alerts', e.target.checked)}
+          />
+          <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
         </span>
-      </label>
+      </div>
 
-      <button type="button" className="btn btn-primary" onClick={save} disabled={saving}>
+      <button type="button" className="ed-btn ed-btn-primary" style={{ marginTop: 18 }} onClick={save} disabled={saving}>
         {saving ? 'Saving…' : 'Save alert settings'}
       </button>
-    </div>
+    </section>
   );
 }

@@ -39,14 +39,14 @@ export function ShareLinkCard() {
   }
 
   return (
-    <div className="card">
-      <div className="card-head">
+    <section className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow">Family share</div>
-          <h2 className="!mb-0">Public read-only link</h2>
+          <div className="ed-eyebrow">Family share</div>
+          <h2 className="ed-panel-title">Public read-only link</h2>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="ed-panel-note" style={{ marginBottom: 16 }}>
         Send this link to family members. They get a live, read-only view of the dashboard with the best deals,
         fare heatmap, and tracked-date prices. They cannot change settings or trigger polls.
         Anyone with the URL has access — rotate or revoke if it leaks.
@@ -60,29 +60,30 @@ export function ShareLinkCard() {
               readOnly
               value={url}
               onClick={(e) => (e.currentTarget as HTMLInputElement).select()}
-              className="flex-1 font-mono text-xs"
+              className="ed-input flex-1"
+              style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 12 }}
             />
-            <button onClick={copy} className="btn btn-primary btn-sm whitespace-nowrap" disabled={busy}>
+            <button onClick={copy} className="ed-btn ed-btn-primary whitespace-nowrap" disabled={busy}>
               {copied ? '✓ Copied' : 'Copy link'}
             </button>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            <a href={url} target="_blank" rel="noopener noreferrer" className="btn btn-sm">
+            <a href={url} target="_blank" rel="noopener noreferrer" className="ed-btn ed-btn-secondary">
               Open in new tab ↗
             </a>
-            <button onClick={rotate} className="btn btn-sm" disabled={busy}>
+            <button onClick={rotate} className="ed-btn ed-btn-secondary" disabled={busy}>
               Rotate token
             </button>
-            <button onClick={revoke} className="btn btn-sm btn-danger" disabled={busy}>
+            <button onClick={revoke} className="ed-btn ed-btn-danger" disabled={busy}>
               Revoke
             </button>
           </div>
         </div>
       ) : (
-        <button onClick={rotate} className="btn btn-primary" disabled={busy}>
+        <button onClick={rotate} className="ed-btn ed-btn-primary" disabled={busy}>
           {busy ? 'Generating…' : 'Generate share link'}
         </button>
       )}
-    </div>
+    </section>
   );
 }

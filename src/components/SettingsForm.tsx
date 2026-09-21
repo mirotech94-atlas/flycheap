@@ -58,38 +58,38 @@ export function SettingsForm({
   }
 
   return (
-    <form onSubmit={save} className="card space-y-4">
+    <form onSubmit={save} className="ed-panel space-y-4">
       <div>
-        <h2 className="!mb-1">Alert &amp; display settings</h2>
-        <p className="text-xs text-slate-500">Two kinds of email alerts: <strong>threshold-cross</strong> (any fare below your target) and <strong>price-drop</strong> (fare dips meaningfully below the recent 7-day median, even if still above target).</p>
+        <h2 className="ed-h2" style={{ marginBottom: 4 }}>Alert &amp; display settings</h2>
+        <p className="ed-panel-note">Two kinds of email alerts: <strong>threshold-cross</strong> (any fare below your target) and <strong>price-drop</strong> (fare dips meaningfully below the recent 7-day median, even if still above target).</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
         <div>
-          <label>Alert target (per adult, USD) — emails fire below this</label>
+          <label className="ed-label">Alert target (per adult, USD) — emails fire below this</label>
           <input
             type="number" min="100" step="50"
             value={threshold}
             onChange={(e) => setThreshold(Number(e.target.value))}
-            className="w-full"
+            className="ed-input"
           />
         </div>
         <div>
-          <label>Max display price (per adult, USD) — hide fares above this</label>
+          <label className="ed-label">Max display price (per adult, USD) — hide fares above this</label>
           <input
             type="number" min="100" step="50"
             value={maxDisplay}
             onChange={(e) => setMaxDisplay(Number(e.target.value))}
-            className="w-full"
+            className="ed-input"
           />
         </div>
         <div>
-          <label>Alert email</label>
+          <label className="ed-label">Alert email</label>
           <input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="w-full"
+            className="ed-input"
           />
         </div>
         {/* The poll-interval field is gone: cadence is decided by the poll
@@ -97,25 +97,25 @@ export function SettingsForm({
             types, and the underlying setting is the scheduler tick — a
             service-wide, owner-only knob. See lib/pollBudget.ts. */}
         <div>
-          <label>Price-drop sensitivity (%)</label>
+          <label className="ed-label">Price-drop sensitivity (%)</label>
           <input
             type="number" min="1" max="80" step="1"
             value={dropPct}
             onChange={(e) => setDropPct(Number(e.target.value))}
-            className="w-full"
+            className="ed-input"
           />
-          <p className="text-[11px] text-slate-500 mt-1">
+          <p className="ed-panel-note" style={{ marginTop: 4 }}>
             Fire a price-drop email when the cheapest fare is at least this much below the search&apos;s 7-day median. Default 10%.
           </p>
         </div>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap pt-2 border-t border-slate-200/60 dark:border-slate-700">
-        <button type="submit" className="btn btn-primary" disabled={pending}>Save</button>
-        <button type="button" onClick={sendTest} className="btn" disabled={testing}>
+      <div className="flex items-center gap-3 flex-wrap pt-3" style={{ borderTop: '1px solid var(--rule-soft)' }}>
+        <button type="submit" className="ed-btn ed-btn-primary" disabled={pending}>Save</button>
+        <button type="button" onClick={sendTest} className="ed-btn ed-btn-secondary" disabled={testing}>
           {testing ? 'Sending…' : 'Send test email'}
         </button>
-        {msg && <span className="text-sm text-slate-500">{msg}</span>}
+        {msg && <span className="ed-panel-note" style={{ margin: 0 }}>{msg}</span>}
       </div>
     </form>
   );
