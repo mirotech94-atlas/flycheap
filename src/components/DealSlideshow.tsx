@@ -54,7 +54,7 @@ export function DealSlideshow({
       onTouchStart={() => setPaused(true)}
     >
       {/* Track */}
-      <div className={`overflow-hidden rounded-3xl ${heightClass}`}>
+      <div className={`overflow-hidden ${heightClass}`}>
         <div
           className="flex h-full transition-transform duration-700 ease-[cubic-bezier(.22,.61,.36,1)]"
           style={{ transform: `translateX(-${idx * 100}%)` }}
@@ -78,29 +78,27 @@ export function DealSlideshow({
             type="button"
             aria-label="Previous slide"
             onClick={() => go(idx - 1)}
-            className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-sm flex items-center justify-center text-xl transition opacity-0 group-hover/show:opacity-100 focus:opacity-100"
+            className="ed-show-arrow left-3 opacity-0 group-hover/show:opacity-100 focus:opacity-100"
           >‹</button>
           <button
             type="button"
             aria-label="Next slide"
             onClick={() => go(idx + 1)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-black/35 hover:bg-black/60 text-white backdrop-blur-sm flex items-center justify-center text-xl transition opacity-0 group-hover/show:opacity-100 focus:opacity-100"
+            className="ed-show-arrow right-3 opacity-0 group-hover/show:opacity-100 focus:opacity-100"
           >›</button>
         </>
       )}
 
       {/* Dots + progress */}
       {count > 1 && (
-        <div className="absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5">
+        <div className="ed-show-dots">
           {slides.map((_, i) => (
             <button
               key={i}
               type="button"
               aria-label={`Go to slide ${i + 1}`}
               onClick={() => go(i)}
-              className={`rounded-full transition-all duration-300 ${
-                i === idx ? 'w-6 h-2 bg-[#E8A33D]' : 'w-2 h-2 bg-white/50 hover:bg-white/80'
-              }`}
+              className={`ed-show-dot${i === idx ? ' active' : ''}`}
             />
           ))}
         </div>
@@ -108,7 +106,7 @@ export function DealSlideshow({
 
       {/* Slide counter */}
       {count > 1 && (
-        <div className="absolute top-3 right-3 text-[10px] font-mono font-semibold text-white/80 bg-black/35 backdrop-blur-sm rounded-full px-2.5 py-1">
+        <div className="ed-show-count">
           {idx + 1} / {count}
         </div>
       )}

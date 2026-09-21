@@ -35,12 +35,7 @@ function monthLabel(ym: string): string {
   return new Intl.DateTimeFormat('en-US', { month: 'short', year: 'numeric', timeZone: 'UTC' }).format(new Date(Date.UTC(y, m - 1, 1)));
 }
 
-const chip = (active: boolean) =>
-  `px-3 py-1.5 rounded-full text-xs font-medium transition border ${
-    active
-      ? 'bg-[#0B1220] text-white border-[#0B1220]'
-      : 'bg-white dark:bg-slate-900 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-[#E8A33D]'
-  }`;
+const chip = (active: boolean) => `ed-chip${active ? ' active' : ''}`;
 
 export function ExploreRankedList({
   origin,
@@ -79,11 +74,15 @@ export function ExploreRankedList({
   const cheapest = ranked[0]?.price ?? null;
 
   return (
-    <div className="card !p-0 overflow-hidden">
-      {/* Toolbar: filters + view toggle */}
-      <div className="px-4 md:px-5 py-3 border-b border-slate-200/60 dark:border-slate-700/60 flex flex-wrap items-center gap-x-4 gap-y-2">
+    <div>
+      {/* Toolbar: filters + view toggle. Bordered on its own; the list body
+          below sits flush against its bottom edge (no border-top, so the
+          rule isn't doubled), while the map slot (SatelliteExploreMap, which
+          carries its own `1px solid var(--rule)` box) renders separately
+          below with a gap instead of touching it. */}
+      <div style={{ border: '1px solid var(--rule)', padding: '12px 20px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '8px 16px' }}>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-400 mr-1">Trip</span>
+          <span className="ed-mono" style={{ color: 'var(--muted-2)', marginRight: 4 }}>Trip</span>
           {TRIP_LENGTHS.map(t => (
             <button key={t.id} type="button" className={chip(tripLen === t.id)} onClick={() => setTripLen(t.id)} aria-pressed={tripLen === t.id}>
               {t.label}
@@ -91,7 +90,7 @@ export function ExploreRankedList({
           ))}
         </div>
         <div className="flex items-center gap-1.5 flex-wrap">
-          <span className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-400 mr-1">Month</span>
+          <span className="ed-mono" style={{ color: 'var(--muted-2)', marginRight: 4 }}>Month</span>
           <button type="button" className={chip(month === 'any')} onClick={() => setMonth('any')} aria-pressed={month === 'any'}>Any</button>
           {months.slice(0, 8).map(m => (
             <button key={m} type="button" className={chip(month === m)} onClick={() => setMonth(m)} aria-pressed={month === m}>
@@ -102,7 +101,7 @@ export function ExploreRankedList({
             <select
               value={months.slice(0, 8).includes(month) ? 'more' : month}
               onChange={e => setMonth(e.target.value)}
-              className="text-xs rounded-full border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1.5"
+              className="ed-chip"
               aria-label="More months"
             >
               <option value="more">More…</option>
@@ -110,7 +109,7 @@ export function ExploreRankedList({
             </select>
           )}
         </div>
-        <div className="ml-auto inline-flex rounded-full border border-slate-200 dark:border-slate-700 p-0.5 bg-slate-50 dark:bg-slate-900" role="tablist" aria-label="View">
+        <div className="ed-seg" style={{ marginLeft: 'auto' }} role="tablist" aria-label="View">
           {(['list', 'map'] as const).map(v => (
             <button
               key={v}
@@ -118,7 +117,7 @@ export function ExploreRankedList({
               role="tab"
               aria-selected={view === v}
               onClick={() => setView(v)}
-              className={`px-3 py-1 rounded-full text-xs font-semibold transition ${view === v ? 'bg-[#E8A33D] text-[#0B1220]' : 'text-slate-500 hover:text-slate-800 dark:hover:text-slate-200'}`}
+              className={`ed-seg-btn${view === v ? ' active' : ''}`}
             >
               {v === 'list' ? '☰ List' : '◎ Map'}
             </button>
@@ -127,32 +126,32 @@ export function ExploreRankedList({
       </div>
 
       {view === 'map' ? (
-        <div>{mapSlot}</div>
+        <div style={{ marginTop: 16 }}>{mapSlot}</div>
       ) : (
-        <div className="overflow-x-auto">
-          <div className="px-4 md:px-5 pt-3 text-xs text-slate-500">
+        <div className="overflow-x-auto" style={{ border: '1px solid var(--rule)', borderTop: 'none', padding: '0 20px 8px' }}>
+          <div style={{ padding: '12px 0', fontSize: 12, color: 'var(--muted)' }}>
             {ranked.length} destination{ranked.length !== 1 ? 's' : ''} from {originCity}
-            {cheapest != null && <> · from <span className="font-semibold text-emerald-700 dark:text-emerald-400 tabular">{fmtUSD(cheapest)}</span></>}
+            {cheapest != null && <> · from <span className="ed-mono" style={{ fontWeight: 600, color: 'var(--ink)', textTransform: 'none', letterSpacing: 0 }}>{fmtUSD(cheapest)}</span></>}
             {(tripLen !== 'any' || month !== 'any') && (
-              <button type="button" className="ml-2 underline hover:text-slate-800 dark:hover:text-slate-200" onClick={() => { setTripLen('any'); setMonth('any'); }}>
+              <button type="button" style={{ marginLeft: 8, textDecoration: 'underline', color: 'var(--muted)' }} onClick={() => { setTripLen('any'); setMonth('any'); }}>
                 clear filters
               </button>
             )}
           </div>
           {ranked.length === 0 ? (
-            <div className="text-sm text-slate-500 text-center py-10">
+            <div style={{ fontSize: 13, color: 'var(--muted)', textAlign: 'center', padding: '40px 0' }}>
               Nothing cached for that trip length / month from {origin}. Try another filter.
             </div>
           ) : (
-            <table className="fmt">
+            <table className="ed-table">
               <thead>
                 <tr>
-                  <th className="w-8">#</th>
+                  <th style={{ width: 28 }}>#</th>
                   <th>Destination</th>
                   <th>Dates</th>
                   <th>Length</th>
                   <th>Stops</th>
-                  <th className="text-right">Round-trip</th>
+                  <th className="num">Round-trip</th>
                   <th></th>
                 </tr>
               </thead>
@@ -161,25 +160,25 @@ export function ExploreRankedList({
                   const ret = o.ret ?? new Date(new Date(o.depart).getTime() + 7 * 86400000).toISOString().slice(0, 10);
                   const hot = cheapest != null && o.price <= cheapest * 1.15;
                   return (
-                    <tr key={o.destination} className={hot ? 'row-hot' : undefined}>
-                      <td className="text-slate-400 font-mono">{i + 1}</td>
-                      <td className="whitespace-nowrap">
-                        <span className="font-semibold text-slate-900 dark:text-white">{o.city}</span>
-                        <span className="ml-1.5 text-[10px] font-mono uppercase tracking-wider text-slate-400">{o.destination}</span>
+                    <tr key={o.destination} className={hot ? 'hot' : undefined}>
+                      <td className="ed-mono" style={{ color: 'var(--muted-2)', textTransform: 'none', letterSpacing: 0 }}>{i + 1}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--ink)' }}>{o.city}</span>
+                        <span className="ed-mono" style={{ marginLeft: 6, fontSize: 10, color: 'var(--muted-2)' }}>{o.destination}</span>
                       </td>
-                      <td className="text-slate-600 dark:text-slate-300 whitespace-nowrap">
+                      <td style={{ whiteSpace: 'nowrap' }}>
                         {fmtDate(o.depart)}{o.ret ? ` → ${fmtDate(o.ret)}` : ''}
                       </td>
-                      <td className="whitespace-nowrap">{o.nights != null ? `${o.nights} nights` : <span className="text-slate-400">—</span>}</td>
+                      <td style={{ whiteSpace: 'nowrap' }}>{o.nights != null ? `${o.nights} nights` : <span style={{ color: 'var(--muted-2)' }}>—</span>}</td>
                       <td>
                         {o.stops === 0
-                          ? <span className="badge badge-ok text-[9px]">nonstop</span>
+                          ? <><span className="ed-dot" /> <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>nonstop</span></>
                           : o.stops != null
-                            ? <span className="badge badge-muted text-[9px]">{o.stops} stop{o.stops > 1 ? 's' : ''}</span>
-                            : <span className="text-slate-400">—</span>}
+                            ? <span style={{ fontSize: 11.5, color: 'var(--muted)' }}>{o.stops} stop{o.stops > 1 ? 's' : ''}</span>
+                            : <span style={{ color: 'var(--muted-2)' }}>—</span>}
                       </td>
-                      <td className="text-right font-bold tabular whitespace-nowrap text-emerald-700 dark:text-emerald-400">{fmtUSD(o.price)}</td>
-                      <td className="text-right">
+                      <td className="num" style={{ whiteSpace: 'nowrap', fontWeight: 600, color: 'var(--ink)' }}>{fmtUSD(o.price)}</td>
+                      <td className="cta">
                         <BookButton
                           origin={origin}
                           destination={o.destination}

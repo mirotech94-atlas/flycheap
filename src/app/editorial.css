@@ -418,6 +418,71 @@ html[data-theme="dark"] {
   .pt-tab { padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
 }
 
+/* ---- Explore (/explore) — tile grid + destination table + shared photo
+   primitives (DealSlideshow.tsx / StayHeroSlide.tsx are also used by the
+   Hotels/Airbnbs slideshows, Task 2.5). Tokens only, radius 0, no gradients,
+   no shadows, no blur — a translucent panel tint replaces glass/blur. ------ */
+
+.ed-explore > section:not(:last-child) { margin-bottom: 48px; }
+
+/* Tile active state — a filter/nav tile that reflects the current URL state.
+   An inset outline (not a border, which would fight the 1px grid-gap rule
+   lines) so the tile's box never shifts. Accent, not amber: this is a UI
+   state, not a fare. */
+.ed-tile.active { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Table row highlight — "this option is within range of the cheapest one
+   shown". An 8% amber wash per the tint ceiling, so body text stays legible
+   at full ink. */
+.ed-table tr.hot td { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); }
+
+/* Compact filter/toggle chip — trip-length, month, provider-origin pickers.
+   Distinct from .ed-btn (which is sized for real actions): smaller, no gap,
+   meant to sit in a dense row. */
+.ed-chip { display: inline-flex; align-items: center; padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); border-radius: 0; cursor: pointer; transition: opacity 120ms; }
+.ed-chip:hover { opacity: 0.8; }
+.ed-chip.active { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+
+/* Segmented view toggle (list / map). Accent for the active segment — a view
+   switch, not a fare or a primary action. */
+.ed-seg { display: inline-flex; border: 1px solid var(--rule-strong); }
+.ed-seg-btn { padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); background: var(--surface); color: var(--muted); border: 0; border-left: 1px solid var(--rule-strong); cursor: pointer; }
+.ed-seg-btn:first-child { border-left: 0; }
+.ed-seg-btn.active { background: var(--accent); color: var(--on-accent); }
+
+/* Slideshow chrome (DealSlideshow.tsx) — arrows/dots/counter over a
+   full-bleed photo. Solid --panel-bg (the same "no glass, no blur" call
+   ruling 3 makes for the caption band) rather than a translucent tint, so
+   contrast over a bright photo never depends on what's under it;
+   opacity-on-hover keeps using Tailwind's group utility. Dots use
+   --panel-fg, not --amber — pagination is not a fare or a primary action. */
+.ed-show-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--panel-bg); color: var(--panel-fg); font-size: 20px; line-height: 1; border: 0; border-radius: 0; cursor: pointer; transition: opacity 120ms; }
+.ed-show-arrow:hover { opacity: 0.8; }
+.ed-show-dots { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; }
+.ed-show-dot { width: 8px; height: 3px; background: color-mix(in srgb, var(--panel-fg) 45%, var(--panel-bg)); border: 0; border-radius: 0; padding: 0; cursor: pointer; transition: width 200ms, background 200ms; }
+.ed-show-dot.active { width: 20px; background: var(--panel-fg); }
+.ed-show-count { position: absolute; top: 12px; right: 12px; font-family: var(--font-mono-ed); font-size: 10px; font-weight: 600; color: var(--panel-fg); background: var(--panel-bg); padding: 4px 8px; }
+
+/* Photo hero slide (StayHeroSlide.tsx + the two HeroDeal/HeroDestination
+   slides in explore/page.tsx) — full-bleed photo (or a flat fallback tile
+   when no photo exists), radius 0, no gradient scrim: a solid --panel-bg/fg
+   caption band carries the text instead. */
+.ed-photo-hero { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.ed-photo-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ed-photo-hero-fallback { position: absolute; inset: 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ed-photo-hero-fallback-code { font-family: var(--font-mono-ed); font-weight: 700; font-size: clamp(96px, 16vw, 220px); line-height: 1; letter-spacing: -0.02em; color: var(--muted-2); user-select: none; }
+.ed-photo-hero-band { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; }
+.ed-photo-hero-tags { display: flex; gap: 8px; margin-bottom: 10px; }
+.ed-photo-hero-tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 80%, var(--panel-bg)); }
+.ed-photo-hero-tag.deal { color: var(--amber); }
+.ed-photo-hero-eyebrow { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); margin-bottom: 4px; }
+.ed-photo-hero-title { font-family: var(--font-serif); font-weight: 400; font-size: clamp(26px, 3.6vw, 40px); letter-spacing: -0.02em; line-height: 1.03; color: var(--panel-fg); margin: 0; }
+.ed-photo-hero-meta { font-size: 12.5px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); margin-top: 6px; }
+.ed-photo-hero-foot { display: flex; align-items: flex-end; gap: 16px; margin-top: 14px; }
+.ed-photo-hero-price-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-photo-hero-price { font-family: var(--font-serif); font-weight: 400; font-size: 34px; letter-spacing: -0.02em; line-height: 1; color: var(--amber); }
+@media (max-width: 640px) { .ed-photo-hero-band { padding: 14px 16px 16px; } }
+
 /* Editorial language menu (LanguageMenu.tsx variant="editorial") — same
    <details>/<summary>/menu structure as the 'sidebar' and 'topbar' variants,
    tokens only. Used by PortalTopBar; ClientSidebar stays on 'sidebar'. */

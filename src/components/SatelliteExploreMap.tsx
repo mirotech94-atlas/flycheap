@@ -172,21 +172,26 @@ export function SatelliteExploreMap({
       });
       map.addControl(new maplibregl.NavigationControl(), 'top-right');
       map.on('load', () => {
+        // Same runtime-token rule as the route/marker effect below — resolved
+        // once here since this layer is created before any deal data exists.
+        const accent = getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
         map.addSource('routes', {
           type: 'geojson',
           data: { type: 'FeatureCollection', features: [] },
         });
-        map.addLayer({
-          id: 'routes-line',
-          type: 'line',
-          source: 'routes',
-          paint: {
-            'line-color': '#fde047',
-            'line-width': 1.4,
-            'line-opacity': 0.85,
-            'line-blur': 0.5,
-          },
-        });
+        if (accent) {
+          map.addLayer({
+            id: 'routes-line',
+            type: 'line',
+            source: 'routes',
+            paint: {
+              'line-color': accent,
+              'line-width': 1.4,
+              'line-opacity': 0.85,
+              'line-blur': 0.5,
+            },
+          });
+        }
         setReady(true);
       });
       mapInst.current = map;
@@ -201,6 +206,17 @@ export function SatelliteExploreMap({
     const origin = selectedOrigin;
     const from = coords(origin);
     if (!from) return;
+
+    // Colours come from the token cascade at runtime (RouteField.tsx's
+    // pattern) — maplibre paint properties are resolved once when set, so a
+    // CSS custom property string can't be handed to them directly. If the
+    // layer is empty, draw nothing rather than fall back to a hardcoded hex.
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue('--accent').trim();
+    const amber = css.getPropertyValue('--amber').trim();
+    const panelFg = css.getPropertyValue('--panel-fg').trim();
+    const panelBg = css.getPropertyValue('--panel-bg').trim();
+    if (!accent || !amber || !panelFg || !panelBg) return;
 
     // Build geojson: one LineString per destination from this origin.
     const routeFeatures: any[] = [];
@@ -246,7 +262,9 @@ export function SatelliteExploreMap({
       id: 'origin-marker',
       type: 'circle',
       source: 'origin-src',
-      paint: { 'circle-radius': 7, 'circle-color': '#fbbf24', 'circle-stroke-color': '#fff', 'circle-stroke-width': 2 },
+      // Round is one of the sanctioned radius exceptions (chart/map-marker
+      // geometry) — the colour still comes from the token cascade.
+      paint: { 'circle-radius': 7, 'circle-color': accent, 'circle-stroke-color': panelFg, 'circle-stroke-width': 2 },
     });
     map.addSource('dest-src', {
       type: 'geojson',
@@ -256,7 +274,8 @@ export function SatelliteExploreMap({
       id: 'dest-marker',
       type: 'circle',
       source: 'dest-src',
-      paint: { 'circle-radius': 5, 'circle-color': '#22d3ee', 'circle-stroke-color': '#fff', 'circle-stroke-width': 1.5 },
+      // Destinations carry a fare (the label below prints its price) — amber.
+      paint: { 'circle-radius': 5, 'circle-color': amber, 'circle-stroke-color': panelFg, 'circle-stroke-width': 1.5 },
     });
     map.on('mouseenter', 'dest-marker', () => { map.getCanvas().style.cursor = 'pointer'; });
     map.on('mouseleave', 'dest-marker', () => { map.getCanvas().style.cursor = ''; });
@@ -279,19 +298,19 @@ export function SatelliteExploreMap({
         'text-font': ['Noto Sans Regular'],
       },
       paint: {
-        'text-color': '#fff',
-        'text-halo-color': 'rgba(0,0,0,0.7)',
+        'text-color': panelFg,
+        'text-halo-color': panelBg,
         'text-halo-width': 1.4,
       },
     });
   }, [selectedOrigin, deals, ready]);
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+    <div style={{ border: '1px solid var(--rule)' }}>
       <div className="px-5 pt-5 pb-3 flex items-start justify-between gap-3 flex-wrap">
         <div>
-          <div className="eyebrow text-brand-600">Explore by map · satellite</div>
-          <h2 className="!mb-0">Pick an origin · see every route we&rsquo;ve seen</h2>
+          <div className="ed-eyebrow">Explore by map · satellite</div>
+          <h2 className="ed-h2" style={{ marginTop: 6 }}>Pick an origin · see every route we&rsquo;ve seen</h2>
         </div>
         <div className="flex items-center gap-1 flex-wrap">
           {origins.slice(0, 8).map(o => {
@@ -301,11 +320,8 @@ export function SatelliteExploreMap({
                 key={o}
                 type="button"
                 onClick={() => setSelectedOrigin(o)}
-                className={`px-2 py-1 rounded text-xs font-mono border transition ${
-                  selectedOrigin === o
-                    ? 'bg-amber-400 text-slate-900 border-amber-400'
-                    : 'bg-transparent text-slate-500 border-slate-300 dark:border-slate-700 hover:border-slate-400'
-                }`}
+                className={`ed-chip${selectedOrigin === o ? ' active' : ''}`}
+                style={{ fontFamily: 'var(--font-mono-ed)' }}
                 title={a ? `${a.city}, ${a.country}` : o}
               >
                 {o}
@@ -318,20 +334,19 @@ export function SatelliteExploreMap({
         <div ref={mapRef} style={{ width: '100%', height: '100%' }} />
         {selectedDeal && (
           <div
-            className="absolute z-10 rounded-xl shadow-lift border"
+            className="absolute z-10"
             style={{
               right: 16, bottom: 16,
               maxWidth: 320,
-              background: 'rgba(11,18,32,0.92)',
-              color: '#e8ecf4',
-              borderColor: 'rgba(255,255,255,0.12)',
-              backdropFilter: 'blur(6px)',
+              background: 'var(--panel-bg)',
+              color: 'var(--panel-fg)',
+              border: '1px solid color-mix(in srgb, var(--panel-fg) 20%, var(--panel-bg))',
               padding: '14px 16px',
             }}
           >
             <div className="flex items-start justify-between gap-2 mb-2">
               <div>
-                <div className="text-[10px] uppercase tracking-[0.14em] font-semibold" style={{ color: 'rgba(232,236,244,0.6)' }}>
+                <div className="ed-mono" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>
                   {selectedDeal.origin} → {selectedDeal.destination}
                 </div>
                 <div className="font-display font-bold text-base mt-0.5">
@@ -342,14 +357,14 @@ export function SatelliteExploreMap({
                 onClick={() => setSelectedDeal(null)}
                 aria-label="Close"
                 className="text-xs"
-                style={{ color: 'rgba(232,236,244,0.6)', lineHeight: 1, padding: 4 }}
+                style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))', lineHeight: 1, padding: 4 }}
               >✕</button>
             </div>
             <div className="flex items-baseline gap-1.5 mb-2">
-              <span className="text-2xl font-bold tabular text-emerald-300">{fmtUSD(selectedDeal.price)}</span>
-              <span className="text-xs" style={{ color: 'rgba(232,236,244,0.55)' }}>per adult</span>
+              <span className="text-2xl font-bold tabular" style={{ color: 'var(--amber)' }}>{fmtUSD(selectedDeal.price)}</span>
+              <span className="text-xs" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>per adult</span>
             </div>
-            <div className="text-[11px] mb-3" style={{ color: 'rgba(232,236,244,0.7)' }}>
+            <div className="text-[11px] mb-3" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>
               {fmtDate(selectedDeal.depart_date.slice(0, 10))}
               {selectedDeal.return_date && ` → ${fmtDate(selectedDeal.return_date.slice(0, 10))}`}
             </div>
@@ -368,7 +383,7 @@ export function SatelliteExploreMap({
           </div>
         )}
       </div>
-      <div className="px-5 py-3 text-[11px] text-slate-500 border-t border-slate-200/60 dark:border-slate-700">
+      <div className="px-5 py-3" style={{ fontSize: 11, color: 'var(--muted)', borderTop: '1px solid var(--rule)' }}>
         {ready ? '' : 'Loading satellite tiles… '}
         Click any destination marker to see price + book direct.
       </div>
