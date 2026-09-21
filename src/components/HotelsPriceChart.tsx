@@ -66,7 +66,7 @@ export function HotelsPriceChart({
       )}
 
       {state === 'err' && (
-        <div className="py-2" style={{ fontSize: 12, color: 'var(--amber)' }}>
+        <div className="py-2" style={{ fontSize: 12, color: 'var(--red)' }}>
           Couldn&rsquo;t load month curve ({err}).
         </div>
       )}
