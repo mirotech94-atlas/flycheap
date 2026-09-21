@@ -196,7 +196,7 @@ export function AlertPolicyCard() {
       </div>
 
       {/* Mistake-fare exception */}
-      <div className="ed-toggle-row">
+      <label className="ed-toggle-row">
         <div className="ed-toggle-text">
           <span className="ed-toggle-name">Wake me for a mistake fare</span>
           <span className="ed-toggle-help">
@@ -217,7 +217,7 @@ export function AlertPolicyCard() {
           />
           <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
         </span>
-      </div>
+      </label>
 
       {/* Frequency cap */}
       <div className="my-4">
@@ -240,7 +240,7 @@ export function AlertPolicyCard() {
       </div>
 
       {/* Instant vs digest */}
-      <div className="ed-toggle-row">
+      <label className="ed-toggle-row">
         <div className="ed-toggle-text">
           <span className="ed-toggle-name">Send alerts the moment they happen</span>
           <span className="ed-toggle-help">
@@ -259,7 +259,7 @@ export function AlertPolicyCard() {
           />
           <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
         </span>
-      </div>
+      </label>
 
       <button type="button" className="ed-btn ed-btn-primary" style={{ marginTop: 18 }} onClick={save} disabled={saving}>
         {saving ? 'Saving…' : 'Save alert settings'}

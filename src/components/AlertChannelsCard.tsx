@@ -149,11 +149,11 @@ export function AlertChannelsCard() {
       <div className="mb-4">
         {CHANNELS.map(c => (
           <div key={c.id} className="ed-toggle-row">
-            <div className="ed-toggle-text">
-              <span className="ed-toggle-name">{c.label}</span>
-              <span className="ed-toggle-help">{c.hint}</span>
-            </div>
-            <div className="ed-toggle-aside">
+            <label className="ed-toggle-label">
+              <span className="ed-toggle-text">
+                <span className="ed-toggle-name">{c.label}</span>
+                <span className="ed-toggle-help">{c.hint}</span>
+              </span>
               <span className="ed-toggle-switch">
                 <input
                   type="checkbox"
@@ -165,16 +165,20 @@ export function AlertChannelsCard() {
                 />
                 <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
               </span>
-              <button
-                type="button"
-                onClick={e => { e.preventDefault(); test(c.id); }}
-                className="ed-btn ed-btn-secondary"
-                disabled={testing === c.id}
-                title="Send a test notification"
-              >
-                {testing === c.id ? '…' : 'Test'}
-              </button>
-            </div>
+            </label>
+            {/* Outside the label on purpose — a click on Test must not also
+                toggle the switch. (Kept the handler's own e.preventDefault()
+                byte-identical to the base file even though it's now
+                belt-and-suspenders, not load-bearing.) */}
+            <button
+              type="button"
+              onClick={e => { e.preventDefault(); test(c.id); }}
+              className="ed-btn ed-btn-secondary"
+              disabled={testing === c.id}
+              title="Send a test notification"
+            >
+              {testing === c.id ? '…' : 'Test'}
+            </button>
           </div>
         ))}
       </div>

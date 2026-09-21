@@ -220,15 +220,21 @@ html[data-theme="dark"] {
    transform. The real control is the visually-hidden .ed-toggle-input
    (role="switch" + aria-checked, carrying every existing onChange/name/
    checked prop byte-identical); .ed-toggle is a sibling the input's state
-   drives, so every handler in the seven Settings files keeps working. */
+   drives, so every handler in the seven Settings files keeps working.
+   Every row (or, where a sibling action must stay outside the label — see
+   AlertChannelsCard's Test button — its .ed-toggle-label wrapper) is
+   itself the <label>: implicit association, full row/label text is the
+   accessible name, click-anywhere-in-it toggles, exactly as the base
+   `<label>` wrapping checkbox+text did before this conversion. */
 /* Always bordered — like .ed-ranked-row, not position-dependent (:last-child
    would never match a toggle row that isn't literally the panel's last
    child, e.g. AlertPolicyCard's rows sit between other fields). */
 .ed-toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--rule-soft); }
+label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
+.ed-toggle-label { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex: 1; min-width: 0; }
 .ed-toggle-text { display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
 .ed-toggle-name { font: 600 13.5px/1.4 var(--font-ui); color: var(--ink); }
 .ed-toggle-help { font-size: 12px; line-height: 1.5; color: var(--muted); max-width: 56ch; }
-.ed-toggle-aside { display: flex; align-items: center; gap: 12px; flex-shrink: 0; }
 .ed-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
 .ed-toggle-input { position: absolute; inset: 0; width: 44px; height: 24px; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
 .ed-toggle-input:disabled { cursor: not-allowed; }
@@ -236,8 +242,13 @@ html[data-theme="dark"] {
 .ed-toggle-input:checked + .ed-toggle { background: var(--accent); }
 .ed-toggle-input:disabled + .ed-toggle { opacity: 0.45; }
 .ed-toggle-input:focus-visible + .ed-toggle { outline: 2px solid var(--accent); outline-offset: 2px; }
-.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--knob); border-radius: 50%; transition: transform 160ms; }
-.ed-toggle-input:checked + .ed-toggle .ed-knob { transform: translateX(20px); }
+/* Knob fill carries its own contrast against the track/accent ground —
+   --knob (near-white in both themes) measured 1.42:1 (light, off) and
+   2.05:1 (dark, on) against --track/--accent, under the 3:1 non-text
+   floor (WCAG 1.4.11). --ink-soft (off) / --on-accent (on) clear ≥7:1 in
+   both themes; see task-2.11a-report.md Round 1 for the four computed pairs. */
+.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--ink-soft); border-radius: 50%; transition: transform 160ms; }
+.ed-toggle-input:checked + .ed-toggle .ed-knob { background: var(--on-accent); transform: translateX(20px); }
 
 /* Status dot — one of the three sanctioned radius exceptions. */
 .ed-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
