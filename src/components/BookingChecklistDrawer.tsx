@@ -74,48 +74,56 @@ export function BookingChecklistDrawer({
 
   return (
     <div className="fixed inset-0 z-50 flex justify-end no-print" role="dialog">
-      <div className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm" onClick={onClose} />
-      <aside className="relative bg-white dark:bg-slate-900 w-full max-w-md h-full overflow-auto shadow-lift border-l border-slate-200 dark:border-slate-700">
-        <div className="sticky top-0 bg-gradient-to-r from-brand-700 to-brand-500 text-white px-5 py-4">
-          <div className="text-[10px] uppercase tracking-[0.14em] text-white/70 font-semibold">Pre-flight</div>
+      <div className="absolute inset-0" style={{ background: 'var(--ink)', opacity: 0.6 }} onClick={onClose} />
+      <aside
+        className="relative w-full max-w-md h-full overflow-auto"
+        style={{ background: 'var(--surface)', borderLeft: '1px solid var(--rule-strong)' }}
+      >
+        <div className="sticky top-0" style={{ background: 'var(--surface-2)', borderBottom: '1px solid var(--rule)', padding: '16px 20px' }}>
+          <div className="ed-eyebrow">Pre-flight</div>
           <div className="flex items-start justify-between gap-3 mt-1">
             <div>
-              <h3 className="font-display font-bold text-lg leading-tight">Booking checklist</h3>
-              <div className="text-xs text-white/80 mt-1">
+              <h3 className="ed-h2" style={{ fontSize: 19, marginBottom: 2 }}>Booking checklist</h3>
+              <div className="ed-panel-note" style={{ marginTop: 4 }}>
                 {itinerary.origin} → {itinerary.destination} · {fmtDate(itinerary.departDate)} → {fmtDate(itinerary.returnDate)}
               </div>
             </div>
-            <button onClick={onClose} className="text-2xl leading-none px-2 hover:text-white/80" aria-label="Close">×</button>
+            <button
+              onClick={onClose}
+              aria-label="Close"
+              style={{ fontSize: 22, lineHeight: 1, padding: '0 4px', color: 'var(--muted)', background: 'transparent', border: 0, cursor: 'pointer' }}
+            >×</button>
           </div>
           <div className="mt-3">
-            <div className="flex items-center justify-between text-[11px] text-white/80 mb-1">
+            <div className="flex items-center justify-between mb-1" style={{ fontSize: 11, color: 'var(--muted)' }}>
               <span>{doneCount} of {ITEMS.length} done</span>
               <span>{pct}%</span>
             </div>
-            <div className="h-1.5 rounded-full bg-white/20 overflow-hidden">
-              <div className="h-full bg-[var(--nc-teal)] transition-all" style={{ width: `${pct}%` }} />
+            <div style={{ height: 4, background: 'var(--rule)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', background: 'var(--accent)', width: `${pct}%`, transition: 'width 160ms' }} />
             </div>
           </div>
         </div>
 
-        <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+        <ul>
           {ITEMS.map(item => {
             const done = !!checked[item.id];
             return (
-              <li key={item.id} className={`px-5 py-3 ${done ? 'opacity-60' : ''}`}>
-                <label className="flex items-start gap-3 cursor-pointer">
+              <li key={item.id} style={{ padding: '12px 20px', borderTop: '1px solid var(--rule)', opacity: done ? 0.6 : 1 }}>
+                <label className="flex items-start gap-3" style={{ cursor: 'pointer' }}>
                   <input
                     type="checkbox"
                     checked={done}
                     onChange={() => toggle(item.id)}
-                    className="mt-1 w-4 h-4 shrink-0"
+                    className="mt-1 shrink-0"
+                    style={{ accentColor: 'var(--accent)', width: 15, height: 15 }}
                   />
                   <div className="flex-1">
-                    <div className={`text-sm ${done ? 'line-through text-slate-400' : 'text-slate-800 dark:text-slate-100 font-medium'}`}>
+                    <div style={{ fontSize: 13.5, textDecoration: done ? 'line-through' : 'none', color: done ? 'var(--muted)' : 'var(--ink)', fontWeight: done ? 400 : 500 }}>
                       {item.label}
                     </div>
                     {item.hint && (
-                      <div className="text-[11px] text-slate-500 mt-1 leading-relaxed">{item.hint}</div>
+                      <div className="ed-field-hint">{item.hint}</div>
                     )}
                   </div>
                 </label>
@@ -124,11 +132,11 @@ export function BookingChecklistDrawer({
           })}
         </ul>
 
-        <div className="px-5 py-4 border-t border-slate-200 dark:border-slate-700 flex items-center justify-between gap-3">
-          <button onClick={reset} className="btn btn-sm btn-ghost text-slate-500" title="Clear progress for this itinerary">
+        <div style={{ padding: '16px 20px', borderTop: '1px solid var(--rule)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+          <button onClick={reset} className="ed-btn ed-btn-secondary" title="Clear progress for this itinerary">
             Reset
           </button>
-          <span className="text-[11px] text-slate-400">Saved locally per itinerary</span>
+          <span className="ed-panel-note" style={{ marginTop: 0 }}>Saved locally per itinerary</span>
         </div>
       </aside>
     </div>

@@ -31,40 +31,40 @@ export function KpiStrip({
   const delta = cheapest ? cheapest.per_adult_usd - threshold : 0;
 
   return (
-    <section className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-      <div className="kpi kpi-brand">
-        <div className="kpi-label">Cheapest right now</div>
-        <div className="kpi-value">
-          {cheapest ? fmtUSD(cheapest.per_adult_usd) : '—'}
-          <span className="text-xs font-normal opacity-80"> /adult</span>
+    <section className="ed-stats">
+      <div className="ed-stat accent">
+        <div className="ed-stat-label">Cheapest right now</div>
+        <div className="ed-stat-value">
+          <span className="ed-fare-text">{cheapest ? fmtUSD(cheapest.per_adult_usd) : '—'}</span>
+          <span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)' }}> /adult</span>
         </div>
-        <div className="kpi-sub">
+        <div className="ed-stat-note">
           {cheapest
             ? <>{cheapest.origin} → CAI · party {fmtUSD(cheapest.party_total_usd)}{usdToEgp ? ` · ≈ ${fmtEGP(cheapest.party_total_usd, usdToEgp)}` : ''}</>
             : 'No deals scanned yet'}
         </div>
       </div>
 
-      <div className={`kpi ${delta < 0 ? 'kpi-accent' : 'kpi-warn'}`}>
-        <div className="kpi-label">vs. {fmtUSD(threshold)} target</div>
-        <div className="kpi-value">
+      <div className="ed-stat">
+        <div className="ed-stat-label">vs. {fmtUSD(threshold)} target</div>
+        <div className={`ed-stat-value ${cheapest ? (delta < 0 ? 'ed-delta-up' : 'ed-delta-down') : ''}`}>
           {cheapest ? (delta < 0 ? `−${fmtUSD(Math.abs(delta))}` : `+${fmtUSD(delta)}`) : '—'}
         </div>
-        <div className="kpi-sub">
+        <div className="ed-stat-note">
           {cheapest && delta < 0 ? 'Below target — consider booking' : 'Above target — keep watching'}
         </div>
       </div>
 
-      <div className="kpi">
-        <div className="kpi-label">Deals under target</div>
-        <div className="kpi-value">{underCount}<span className="text-xs font-normal text-slate-400"> / {deals.length}</span></div>
-        <div className="kpi-sub">Avg per-adult shown: {avg ? fmtUSD(avg) : '—'}</div>
+      <div className="ed-stat">
+        <div className="ed-stat-label">Deals under target</div>
+        <div className="ed-stat-value">{underCount}<span style={{ fontSize: 12, fontWeight: 400, color: 'var(--muted)' }}> / {deals.length}</span></div>
+        <div className="ed-stat-note">Avg per-adult shown: {avg ? fmtUSD(avg) : '—'}</div>
       </div>
 
-      <div className="kpi">
-        <div className="kpi-label">Tracked routes</div>
-        <div className="kpi-value">{trackedCount}</div>
-        <div className="kpi-sub">
+      <div className="ed-stat">
+        <div className="ed-stat-label">Tracked routes</div>
+        <div className="ed-stat-value">{trackedCount}</div>
+        <div className="ed-stat-note">
           Cap {fmtUSD(maxDisplay)}/adult · refreshed {refreshedAt ? fmtRelative(refreshedAt + 'Z') : '—'}
         </div>
       </div>

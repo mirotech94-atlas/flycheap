@@ -521,6 +521,11 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
    state, not a fare. */
 .ed-tile.active { outline: 2px solid var(--accent); outline-offset: -2px; }
 
+/* Fare heatmap cell (task 3.7b, FareCalendar) — square day cell with a
+   hover affordance that doesn't rely on a Tailwind ring/scale utility. */
+.ed-fare-cell { transition: outline-color 120ms; }
+.ed-fare-cell:hover { outline: 2px solid var(--accent); outline-offset: -1px; }
+
 /* Table row highlight — "this option is within range of the cheapest one
    shown". An 8% amber wash per the tint ceiling, so body text stays legible
    at full ink. */
@@ -548,6 +553,13 @@ button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="butt
 .ed-chip.status-open { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
 .ed-chip.status-waiting { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
 .ed-chip.status-closed { background: var(--surface-2); border-color: var(--rule-strong); color: var(--ink-soft); }
+
+/* Status-ok / status-fail (task 3.7b, /status page) — same 8%-tint/75%-ink-mix
+   recipe as status-open/status-waiting above, so the two health states read
+   consistently with the rest of the chip family instead of inventing a new
+   green/red treatment. */
+.ed-chip.status-ok { background: color-mix(in srgb, var(--green) 8%, var(--surface)); border-color: color-mix(in srgb, var(--green) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
+.ed-chip.status-fail { background: color-mix(in srgb, var(--red) 8%, var(--surface)); border-color: color-mix(in srgb, var(--red) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
 
 /* Segmented view toggle (list / map). Accent for the active segment — a view
    switch, not a fare or a primary action. */

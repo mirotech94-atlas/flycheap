@@ -46,59 +46,58 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
 
   if (status === 'sent') {
     return (
-      <div className="card text-center py-10">
-        <div className="text-4xl mb-2">✅</div>
-        <h2 className="!mb-1">Ticket opened</h2>
-        <p className="text-sm text-slate-500">
+      <div className="ed-panel" style={{ textAlign: 'center', padding: '40px 24px' }}>
+        <h2 className="ed-h2" style={{ marginBottom: 8 }}>Ticket opened</h2>
+        <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>
           Thanks — we&apos;ll reply to <strong>{email}</strong> within one business day.
-          {ref && <> Your ticket is <strong className="font-mono">{ref}</strong>; we&apos;ve emailed you a copy.</>}
+          {ref && <> Your ticket is <strong className="ed-mono" style={{ textTransform: 'none', letterSpacing: 0 }}>{ref}</strong>; we&apos;ve emailed you a copy.</>}
         </p>
-        <button onClick={() => setStatus('idle')} className="btn btn-sm mt-4">Send another</button>
+        <button onClick={() => setStatus('idle')} className="ed-btn ed-btn-secondary" style={{ marginTop: 16 }}>Send another</button>
       </div>
     );
   }
 
   return (
-    <form onSubmit={submit} className="card space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <label className="text-xs">
-          <span className="block mb-1 text-slate-500">Your name *</span>
+    <form onSubmit={submit} className="ed-panel" style={{ display: 'grid', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16 }}>
+        <div>
+          <label className="ed-label">Your name *</label>
           <input
             required
             value={name}
             onChange={e => setName(e.target.value)}
             maxLength={80}
-            className="w-full"
+            className="ed-input"
             placeholder="Jane Doe"
           />
-        </label>
-        <label className="text-xs">
-          <span className="block mb-1 text-slate-500">Your email *</span>
+        </div>
+        <div>
+          <label className="ed-label">Your email *</label>
           <input
             required
             type="email"
             value={email}
             onChange={e => setEmail(e.target.value)}
             maxLength={200}
-            className="w-full"
+            className="ed-input"
             placeholder="you@example.com"
           />
-        </label>
+        </div>
       </div>
 
-      <label className="text-xs block">
-        <span className="block mb-1 text-slate-500">Subject (optional)</span>
+      <div>
+        <label className="ed-label">Subject (optional)</label>
         <input
           value={subject}
           onChange={e => setSubject(e.target.value)}
           maxLength={120}
-          className="w-full"
+          className="ed-input"
           placeholder="e.g. Billing question, partnership idea, bug report…"
         />
-      </label>
+      </div>
 
-      <label className="text-xs block">
-        <span className="block mb-1 text-slate-500">Message * <span className="text-slate-400">(min 10 chars)</span></span>
+      <div>
+        <label className="ed-label">Message * (min 10 chars)</label>
         <textarea
           required
           value={message}
@@ -106,11 +105,12 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
           minLength={10}
           maxLength={4000}
           rows={7}
-          className="w-full font-sans"
+          className="ed-input"
+          style={{ resize: 'vertical' }}
           placeholder="Tell us what's on your mind…"
         />
-        <span className="block text-right text-[10px] text-slate-400 mt-1">{message.length} / 4000</span>
-      </label>
+        <span className="ed-field-hint" style={{ textAlign: 'right' }}>{message.length} / 4000</span>
+      </div>
 
       {/* Honeypot — invisible to real users, bots fill it in. */}
       <div aria-hidden="true" style={{ position: 'absolute', left: '-9999px', width: 1, height: 1, overflow: 'hidden' }}>
@@ -119,14 +119,14 @@ export function ContactForm({ initialEmail = '', initialName = '' }: { initialEm
         </label>
       </div>
 
-      <div className="flex items-center gap-3">
-        <button type="submit" disabled={status === 'sending'} className="btn btn-primary">
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+        <button type="submit" disabled={status === 'sending'} className="ed-btn ed-btn-primary">
           {status === 'sending' ? 'Sending…' : 'Send message'}
         </button>
-        {err && <span className="text-sm text-red-600">{err}</span>}
+        {err && <span style={{ fontSize: 13, color: 'var(--red)' }}>{err}</span>}
       </div>
 
-      <p className="text-[11px] text-slate-400">
+      <p className="ed-field-hint">
         Your message goes directly to our inbox. We don&apos;t add you to any list and never sell email addresses.
       </p>
     </form>

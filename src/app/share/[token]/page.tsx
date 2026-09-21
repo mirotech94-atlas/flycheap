@@ -71,11 +71,11 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
   const top = affordable.slice(0, 30);
 
   return (
-    <div className="space-y-6">
-      <div className="card card-feature">
-        <div className="eyebrow text-emerald-700">Family share view · read-only</div>
-        <h1 className="text-2xl font-bold tracking-tight mt-1">EgyptAir fare tracker</h1>
-        <p className="text-sm text-slate-500 mt-1">
+    <div style={{ display: 'grid', gap: 24 }}>
+      <div className="ed-panel">
+        <div className="ed-eyebrow">Family share view · read-only</div>
+        <h1 className="ed-h2" style={{ fontSize: 26, marginTop: 6 }}>EgyptAir fare tracker</h1>
+        <p className="ed-panel-note">
           Live snapshot of the cheapest EgyptAir round-trips JFK/EWR ↔ CAI for 4 adults + 1 infant.
           Updated automatically — bookmark this page; it stays in sync.
         </p>
@@ -91,40 +91,40 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
       />
 
       {top.length > 0 && (
-        <div className="card card-feature overflow-x-auto">
-          <div className="card-head">
+        <div className="ed-panel" style={{ overflowX: 'auto' }}>
+          <div className="ed-panel-head">
             <div>
-              <div className="eyebrow text-emerald-700">
+              <div className="ed-eyebrow">
                 Best deals — cheapest first
                 {refreshed_at && (
-                  <span className="ml-2 font-normal normal-case tracking-normal opacity-70">
+                  <span style={{ marginLeft: 8, fontWeight: 400, textTransform: 'none', letterSpacing: 0, opacity: 0.7 }}>
                     · {verifiedAgeLabel(refreshed_at)?.replace('Verified', 'Priced') ?? ''}
                   </span>
                 )}
               </div>
-              <h2 className="!mb-0">Top {top.length} EgyptAir nonstops ≤ {fmtUSD(maxDisplay)}/adult</h2>
+              <h2 className="ed-panel-title">Top {top.length} EgyptAir nonstops ≤ {fmtUSD(maxDisplay)}/adult</h2>
             </div>
-            <span className="badge badge-info">Refreshed {refreshed_at ? fmtRelative(refreshed_at + 'Z') : '—'}</span>
+            <span className="ed-chip status-open">Refreshed {refreshed_at ? fmtRelative(refreshed_at + 'Z') : '—'}</span>
           </div>
-          <table className="fmt">
+          <table className="ed-table">
             <thead>
               <tr>
                 <th>#</th><th>Origin</th><th>Outbound</th><th>Return</th>
-                <th>Trip</th><th className="text-right">Per adult</th>
-                <th className="text-right">Party total</th><th></th>
+                <th>Trip</th><th className="num">Per adult</th>
+                <th className="num">Party total</th><th></th>
               </tr>
             </thead>
             <tbody>
               {top.map((d, i) => (
                 <tr key={i}>
-                  <td className="text-slate-400 font-semibold">{i + 1}</td>
-                  <td className="font-semibold">{d.origin} → CAI</td>
-                  <td>{fmtDate(d.outbound_date)} <span className="text-xs text-slate-500">{DOW_NAMES[d.outbound_dow]}</span></td>
-                  <td>{fmtDate(d.return_date)} <span className="text-xs text-slate-500">{DOW_NAMES[d.return_dow]}</span></td>
-                  <td className="text-slate-500">{d.trip_length_days}d</td>
-                  <td className="text-right font-bold">{fmtUSD(d.per_adult_usd)}</td>
-                  <td className="text-right">{fmtUSD(d.party_total_usd)}</td>
-                  <td>
+                  <td style={{ color: 'var(--muted)', fontWeight: 600 }}>{i + 1}</td>
+                  <td style={{ fontWeight: 600 }}>{d.origin} → CAI</td>
+                  <td>{fmtDate(d.outbound_date)} <span style={{ fontSize: 12, color: 'var(--muted)' }}>{DOW_NAMES[d.outbound_dow]}</span></td>
+                  <td>{fmtDate(d.return_date)} <span style={{ fontSize: 12, color: 'var(--muted)' }}>{DOW_NAMES[d.return_dow]}</span></td>
+                  <td style={{ color: 'var(--muted)' }}>{d.trip_length_days}d</td>
+                  <td className="num ed-fare-text" style={{ fontWeight: 700 }}>{fmtUSD(d.per_adult_usd)}</td>
+                  <td className="num">{fmtUSD(d.party_total_usd)}</td>
+                  <td className="cta">
                     <BookingActions
                       origin={d.origin} destination="CAI"
                       departDate={d.outbound_date} returnDate={d.return_date}
@@ -144,35 +144,35 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
       )}
 
       {rows.length > 0 && (
-        <div className="card overflow-x-auto">
-          <h2>Tracked dates · current cheapest</h2>
-          <table className="fmt">
+        <div className="ed-panel" style={{ overflowX: 'auto' }}>
+          <h2 className="ed-panel-title" style={{ marginBottom: 14 }}>Tracked dates · current cheapest</h2>
+          <table className="ed-table">
             <thead>
               <tr>
                 <th>Origin</th><th>Depart</th><th>Return</th>
-                <th className="text-right">Per adult</th>
+                <th className="num">Per adult</th>
                 <th>Trend (30d)</th><th></th>
               </tr>
             </thead>
             <tbody>
               {rows.map(({ search, fare, history }) => (
                 <tr key={search.id}>
-                  <td className="font-semibold">{search.origin} → {search.destination}</td>
+                  <td style={{ fontWeight: 600 }}>{search.origin} → {search.destination}</td>
                   <td>{fmtDate(search.depart_date)}</td>
                   <td>{fmtDate(search.return_date)}</td>
-                  <td className="text-right font-semibold">
-                    {!showPrices ? '—' : fare ? fmtUSD(fare.price_per_adult_usd) : '—'}
+                  <td className="num" style={{ fontWeight: 600 }}>
+                    {!showPrices ? '—' : fare ? <span className="ed-fare-text">{fmtUSD(fare.price_per_adult_usd)}</span> : '—'}
                     {/* The age of the number, shown rather than implied. A share
                         board is seen by people who never set the alert and have
                         no idea how fresh this is — a bare price they later find
                         to be hours old is exactly the betrayal the fare-truth
                         rule exists to prevent. */}
                     {fare && ageLabel(fare) && (
-                      <div className="text-[11px] font-normal text-white/45 mt-0.5">{ageLabel(fare)}</div>
+                      <div style={{ fontSize: 11, fontWeight: 400, color: 'var(--muted)', marginTop: 2 }}>{ageLabel(fare)}</div>
                     )}
                   </td>
                   <td><Sparkline data={history} threshold={threshold} /></td>
-                  <td>
+                  <td className="cta">
                     {fare && (
                       <BookingActions
                         origin={search.origin} destination={search.destination}
@@ -189,7 +189,7 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
         </div>
       )}
 
-      <div className="text-[11px] text-slate-400 text-center pt-4">
+      <div className="ed-panel-note" style={{ textAlign: 'center', paddingTop: 16 }}>
         Share link · revoke or rotate at any time from Settings.
       </div>
     </div>

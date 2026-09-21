@@ -136,6 +136,8 @@ export function BookButton(opts: Opts) {
   }, [open]);
 
   const sizeClass = opts.size === 'sm' ? 'text-xs' : 'text-sm';
+  const item = 'ad-menu-item flex items-start gap-2.5 px-3 py-2';
+  const heading = 'ad-menu-heading px-3 py-2';
 
   return (
     <div ref={ref} className="relative inline-flex">
@@ -146,7 +148,7 @@ export function BookButton(opts: Opts) {
         ref={triggerRef}
         type="button"
         onClick={(e) => { e.preventDefault(); setOpen(o => !o); }}
-        className={`btn btn-primary ${sizeClass} inline-flex items-center gap-1.5`}
+        className={`ed-btn ed-btn-primary ${sizeClass} inline-flex items-center gap-1.5`}
         aria-label="Book — pick a provider"
         aria-expanded={open}
         title="Pick which company to book through"
@@ -160,22 +162,16 @@ export function BookButton(opts: Opts) {
       {open && mounted && menuPos && createPortal(
         <div
           ref={menuRef}
-          className="fc-book-menu fixed w-60 rounded-xl shadow-lift border border-slate-200/30 dark:border-white/15 overflow-hidden"
+          className="ad-menu fixed w-60"
           style={{
             top: menuPos.top,
             right: menuPos.right,
             // Sit above every other portal in the app (autocomplete z:9999,
-            // theme dropdown z:10001, etc.). The visual is a translucent
-            // glass-tinted card so siblings show through faintly — looks
-            // layered instead of like a hard overlay.
+            // theme dropdown z:10001, etc.).
             zIndex: 999999,
-            background: 'rgba(10, 20, 38, 0.78)',
-            backdropFilter: 'blur(18px) saturate(140%)',
-            WebkitBackdropFilter: 'blur(18px) saturate(140%)',
-            color: '#e8ecf4',
           }}
         >
-          <div className="px-3 py-2 text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-500 border-b border-slate-100 dark:border-slate-800">
+          <div className={heading}>
             Compare same itinerary on
           </div>
           {links.map(l => {
@@ -186,21 +182,21 @@ export function BookButton(opts: Opts) {
                 href={l.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-start gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                className={item}
                 onClick={() => setOpen(false)}
               >
-                <span className="w-1.5 h-1.5 rounded-full mt-1.5" style={{ background: l.color }} />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 6, flexShrink: 0, background: l.color }} />
                 <span className="flex-1">
                   <span className="block">
                     {isEgyptair ? '✈️ ' : ''}{l.name}
                   </span>
                   {isEgyptair && (
-                    <span className="block text-[10px] text-slate-500 leading-tight mt-0.5">
+                    <span className="block ed-field-hint" style={{ marginTop: 2 }}>
                       EgyptAir (MS) flights only — booked via Aviasales
                     </span>
                   )}
                 </span>
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-slate-400 mt-1">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--muted-2)', marginTop: 4 }}>
                   <path d="M7 17 17 7M7 7h10v10" />
                 </svg>
               </a>
@@ -208,14 +204,14 @@ export function BookButton(opts: Opts) {
           })}
           {opts.onChecklist && (
             <>
-              <div className="border-t border-slate-100 dark:border-slate-800" />
+              <div style={{ borderTop: '1px solid var(--rule)' }} />
               <button
                 onClick={() => { setOpen(false); opts.onChecklist?.(); }}
-                className="w-full text-left flex items-center gap-2.5 px-3 py-2 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                className={`${item} w-full text-left`}
               >
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span style={{ width: 6, height: 6, borderRadius: '50%', marginTop: 6, flexShrink: 0, background: 'var(--green)' }} />
                 <span className="flex-1">Pre-flight checklist</span>
-                <span className="text-slate-400 text-xs">↗</span>
+                <span style={{ color: 'var(--muted-2)', fontSize: 12 }}>↗</span>
               </button>
             </>
           )}

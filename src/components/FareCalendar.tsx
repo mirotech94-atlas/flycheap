@@ -1,3 +1,4 @@
+import type { CSSProperties } from 'react';
 import { fmtUSD } from '@/lib/utils';
 
 type Deal = {
@@ -12,16 +13,27 @@ function monthKey(year: number, month0: number) {
   return `${year}-${String(month0 + 1).padStart(2, '0')}`;
 }
 
-function colorBand(price: number, threshold: number, maxDisplay: number): string {
-  // 5 bands: deep green (well below) → green → amber → orange → red (above cap)
+/**
+ * 4 bands on tokens only (well-below/at-target read as --green, above-target
+ * as --amber — a fare signal, so amber is legitimate here per the "amber is
+ * for fares" rule — and above-cap as --red). The original Tailwind palette
+ * had 6 stops (a separate "orange" tier); the token set has green/amber/red
+ * only, so the two above-target tiers and the two red tiers each collapse
+ * into one — still communicates the same low→high gradient.
+ */
+function colorBand(price: number, threshold: number, maxDisplay: number): CSSProperties {
   const range = Math.max(1, maxDisplay - threshold);
-  if (price <= threshold - range * 0.20) return 'bg-emerald-500/90 text-white';
-  if (price <= threshold)               return 'bg-emerald-300 text-emerald-950';
+  if (price <= threshold - range * 0.20) {
+    return { background: 'var(--green)', color: 'var(--on-accent)' };
+  }
+  if (price <= threshold) {
+    return { background: 'color-mix(in srgb, var(--green) 18%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' };
+  }
   const above = (price - threshold) / range;
-  if (above <= 0.33) return 'bg-amber-200 text-amber-900';
-  if (above <= 0.66) return 'bg-orange-300 text-orange-950';
-  if (above <= 1.0)  return 'bg-red-300 text-red-950';
-  return 'bg-red-500/90 text-white';
+  if (above <= 1.0) {
+    return { background: 'color-mix(in srgb, var(--amber) 18%, var(--surface))', color: 'color-mix(in srgb, var(--amber) 70%, var(--ink))' };
+  }
+  return { background: 'var(--red)', color: 'var(--on-accent)' };
 }
 
 export function FareCalendar({
@@ -63,33 +75,31 @@ export function FareCalendar({
   const cheapest = allPrices.length ? Math.min(...allPrices) : null;
 
   return (
-    <div className="card overflow-x-auto">
-      <div className="card-head">
+    <div className="ed-panel" style={{ overflowX: 'auto' }}>
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-brand-600">Fare heatmap</div>
-          <h2 className="!mb-0">Cheapest departure-day fare · next {monthsAhead} months</h2>
+          <div className="ed-eyebrow">Fare heatmap</div>
+          <h2 className="ed-panel-title">Cheapest departure-day fare · next {monthsAhead} months</h2>
         </div>
-        <div className="flex items-center gap-2 flex-wrap text-[11px] tabular">
-          <span className="text-slate-500 mr-1">Cheaper</span>
-          <span className="w-4 h-4 rounded bg-emerald-500/90" title="≥ 20% below target" />
-          <span className="w-4 h-4 rounded bg-emerald-300" title="At/below target" />
-          <span className="w-4 h-4 rounded bg-amber-200" title="Slightly above" />
-          <span className="w-4 h-4 rounded bg-orange-300" title="Notably above" />
-          <span className="w-4 h-4 rounded bg-red-300" title="Near cap" />
-          <span className="w-4 h-4 rounded bg-red-500/90" title="Above cap" />
-          <span className="text-slate-500 ml-1">Pricier</span>
+        <div className="flex items-center gap-2 flex-wrap" style={{ fontSize: 11 }}>
+          <span style={{ color: 'var(--muted)', marginRight: 4 }}>Cheaper</span>
+          <span style={{ width: 16, height: 16, background: 'var(--green)' }} title="≥ 20% below target" />
+          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--green) 18%, var(--surface))' }} title="At/below target" />
+          <span style={{ width: 16, height: 16, background: 'color-mix(in srgb, var(--amber) 18%, var(--surface))' }} title="Above target" />
+          <span style={{ width: 16, height: 16, background: 'var(--red)' }} title="Above cap" />
+          <span style={{ color: 'var(--muted)', marginLeft: 4 }}>Pricier</span>
         </div>
       </div>
 
-      <div className="text-xs text-slate-500 mb-3">
+      <div className="ed-panel-note" style={{ marginBottom: 14 }}>
         Each cell = the cheapest cached EgyptAir per-adult fare departing that day from JFK or EWR.
         Empty = no fare cached for that date. Target {fmtUSD(threshold)} · cap {fmtUSD(maxDisplay)}
-        {cheapest != null && <> · <span className="font-semibold text-emerald-700">overall low {fmtUSD(cheapest)}</span></>}.
+        {cheapest != null && <> · <span style={{ fontWeight: 600, color: 'var(--green)' }}>overall low {fmtUSD(cheapest)}</span></>}.
       </div>
 
-      <div className="min-w-[860px]">
+      <div style={{ minWidth: 860 }}>
         {/* Day-of-month header */}
-        <div className="grid gap-1 mb-1 text-[10px] text-slate-400 tabular" style={{ gridTemplateColumns: '92px repeat(31, minmax(0, 1fr))' }}>
+        <div className="grid gap-1 mb-1" style={{ gridTemplateColumns: '92px repeat(31, minmax(0, 1fr))', fontSize: 10, color: 'var(--muted-2)' }}>
           <div></div>
           {Array.from({ length: 31 }, (_, i) => (
             <div key={i} className="text-center">{i + 1}</div>
@@ -102,7 +112,7 @@ export function FareCalendar({
             className="grid gap-1 mb-1 items-center"
             style={{ gridTemplateColumns: '92px repeat(31, minmax(0, 1fr))' }}
           >
-            <div className="text-xs font-semibold text-slate-600 dark:text-slate-300 pr-2 text-right">
+            <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink-soft)', paddingRight: 8, textAlign: 'right' }}>
               {r.label}
             </div>
             {Array.from({ length: 31 }, (_, i) => {
@@ -114,17 +124,19 @@ export function FareCalendar({
                 return (
                   <div
                     key={i}
-                    className="aspect-square rounded-[5px] bg-slate-100 dark:bg-slate-800/60 border border-transparent"
+                    className="aspect-square"
+                    style={{ background: 'var(--surface-2)' }}
                     title={`${dateKey} — no data`}
                   />
                 );
               }
-              const cls = colorBand(entry.price, threshold, maxDisplay);
+              const style = colorBand(entry.price, threshold, maxDisplay);
               return (
                 <a
                   key={i}
                   href={`/?outbound=${monthKey(r.year, r.month0)}&origin=${entry.origin}`}
-                  className={`aspect-square rounded-[5px] ${cls} flex items-center justify-center text-[9px] font-bold tabular hover:ring-2 hover:ring-brand/60 hover:scale-110 transition-transform`}
+                  className="ed-fare-cell aspect-square flex items-center justify-center"
+                  style={{ ...style, fontSize: 9, fontWeight: 700 }}
                   title={`${dateKey} · ${entry.origin} → CAI · ${fmtUSD(entry.price)}/adult`}
                 >
                   {Math.round(entry.price / 100)}
@@ -135,7 +147,7 @@ export function FareCalendar({
         ))}
       </div>
 
-      <div className="text-[10px] text-slate-400 mt-2">
+      <div className="ed-panel-note" style={{ marginTop: 8 }}>
         Numbers in cells are price ÷ 100 (e.g. "9" ≈ $900). Click any day → filter the deals table to that month + origin.
       </div>
     </div>
