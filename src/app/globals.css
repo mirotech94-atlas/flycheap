@@ -571,14 +571,13 @@ html.dark .flight-conversation-panel__stat {
   100% { transform: translateY(600px); opacity: 0; }
 }
 
-/* Faint grid background — 1px rule lines, no gradient. */
-.globe-hud__grid {
-  position: absolute; inset: 40px 12px 60px 12px;
-  background-image:
-    linear-gradient(color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px),
-    linear-gradient(90deg, color-mix(in srgb, var(--accent) 8%, transparent) 1px, transparent 1px);
-  background-size: 28px 28px;
-}
+/* Round 1 fix (F4): the faint grid overlay drew its hairlines with
+   linear-gradient() background-images — a literal gradient function, which
+   constraint 4 (no gradients) forbids absolutely regardless of what it
+   renders as. A single pseudo-element pair can only draw one crosshair, not
+   a repeating grid, and repeating-linear-gradient() is still a gradient —
+   so the grid is dropped rather than reimplemented; it was pure decoration
+   (.globe-hud__grid's sibling <div> in GlobeHUD.tsx is removed with it). */
 
 /* Header */
 .globe-hud__header {

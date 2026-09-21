@@ -19,7 +19,6 @@ const ALLOWLIST: Record<string, number> = {
   // ---- migration ledger: shrink to zero over Phases 1–3 ----
   // Counts below are the actual regex-matched baseline (run 2026-09-21), not the
   // grep -c estimate this file started from — see task-0.2-report.md for the RED evidence.
-  'src/components/DemoCarousel.tsx': 59,
   'src/app/admin/layout.tsx': 24,
   'src/components/WorldMap.tsx': 16,
   'src/app/admin/_components/AdminSidebar.tsx': 13,

@@ -715,10 +715,17 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ed-bottomnav-tab-icon { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: inherit; }
 .ed-bottomnav-tab-bar { position: absolute; top: 0; height: 2px; width: 40px; background: var(--accent); }
 
-/* ---- Root footer (src/app/layout.tsx, ruling 2). ---- */
-.ed-footer { border-top: 1px solid var(--rule); max-width: 80rem; margin: 48px auto 0; padding: 32px 24px; font-size: 12px; line-height: 1.6; color: var(--muted); font-family: var(--font-ui); }
+/* ---- Root footer (src/app/layout.tsx, ruling 2). Round 1 fix (F1): the
+   footer's real ground is --bg-app (globals.css, the legacy page background
+   var(--bg) never overrides), not editorial's own --bg — a hair darker in
+   light mode, enough that --muted/--muted-2 measured 4.36:1 there (below
+   4.5:1) with no headroom. Body copy and the brand span move to --ink-soft
+   (10.79:1 light / 12.30:1 dark against --bg-app); links move to --ink,
+   underlined, for their own higher-contrast affordance (16.51:1 light /
+   17.03:1 dark). See task-2.12-report.md Round 1 for the full pair table. */
+.ed-footer { border-top: 1px solid var(--rule); max-width: 80rem; margin: 48px auto 0; padding: 32px 24px; font-size: 12px; line-height: 1.6; color: var(--ink-soft); font-family: var(--font-ui); }
 .ed-footer-row { display: flex; flex-direction: column; gap: 8px; }
 @media (min-width: 768px) { .ed-footer-row { flex-direction: row; align-items: center; justify-content: space-between; } }
 .ed-footer-brand { font-weight: 600; color: var(--ink-soft); }
-.ed-footer-links { color: var(--muted-2); display: flex; flex-wrap: wrap; gap: 6px 12px; }
-.ed-footer a { color: inherit; text-decoration: underline; }
+.ed-footer-links { color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 6px 12px; }
+.ed-footer a { color: var(--ink); text-decoration: underline; }

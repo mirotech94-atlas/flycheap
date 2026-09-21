@@ -120,7 +120,11 @@ export default function OnboardingPage() {
       </section>
 
       {/* PRICING */}
-      <section id="pricing" className="py-24" style={{ borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)', background: 'var(--surface-2)' }}>
+      {/* Round 1 fix (F3): --surface-2 measured .ed-eyebrow/.ed-sub (--muted/
+          --muted-2) at 4.18:1 in light — below AA. --surface clears it
+          (same tokens measure 4.71:1+ there, matching the DemoCarousel body
+          text above the pricing section). */}
+      <section id="pricing" className="py-24" style={{ borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)', background: 'var(--surface)' }}>
         <div className="max-w-6xl mx-auto px-6">
           <div className="text-center max-w-xl mx-auto">
             <div className="ed-eyebrow" style={{ textAlign: 'center' }}>Pricing</div>

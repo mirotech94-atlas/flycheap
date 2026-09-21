@@ -148,7 +148,6 @@ export function GlobeHUD() {
         <span className="globe-hud__bracket globe-hud__bracket--bl" />
         <span className="globe-hud__bracket globe-hud__bracket--br" />
         <div className="globe-hud__scanline" />
-        <div className="globe-hud__grid" />
       </div>
 
       <header className="globe-hud__header">
