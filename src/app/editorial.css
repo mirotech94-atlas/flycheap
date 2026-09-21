@@ -586,11 +586,19 @@ button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="butt
    slides in explore/page.tsx) — full-bleed photo (or a flat fallback tile
    when no photo exists), radius 0, no gradient scrim: a solid --panel-bg/fg
    caption band carries the text instead. */
-.ed-photo-hero { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.ed-photo-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.ed-photo-hero-fallback { position: absolute; inset: 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* The photo and its caption are stacked, not overlaid. The band used to sit
+   absolutely on the bottom of the frame and ate 55% of it, and the frame was a
+   short 2.9:1 letterbox, so a 3:2 photo showed as a thin horizontal slice —
+   "half a picture". Now the image gets its own box at its natural size and
+   the caption sits underneath it, covering
+   nothing. The library is mixed (3:2, 4:3 and 16:9), so the image is never
+   cropped: it renders at its own ratio, and only on a short viewport does the
+   80vh cap letterbox it against the surface rather than cut it. */
+.ed-photo-hero { position: relative; width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.ed-photo-hero-img { display: block; width: 100%; height: auto; max-height: 80vh; object-fit: contain; background: var(--surface-2); }
+.ed-photo-hero-fallback { width: 100%; aspect-ratio: 3 / 2; max-height: 80vh; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .ed-photo-hero-fallback-code { font-family: var(--font-mono-ed); font-weight: 700; font-size: clamp(96px, 16vw, 220px); line-height: 1; letter-spacing: -0.02em; color: var(--muted-2); user-select: none; }
-.ed-photo-hero-band { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; }
+.ed-photo-hero-band { background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; flex: 1 1 auto; }
 .ed-photo-hero-tags { display: flex; gap: 8px; margin-bottom: 10px; }
 .ed-photo-hero-tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 80%, var(--panel-bg)); }
 .ed-photo-hero-tag.deal { color: var(--amber); }
