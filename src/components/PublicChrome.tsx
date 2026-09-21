@@ -5,8 +5,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 /**
  * Shared chrome for the six standalone public routes that are not part of
  * the signed-in portal shell (about, demo, terms, trial-terms, checkout,
- * credits) — the "fc-landing" + "fc-l-topbar"/"fc-l-footer" group Task 3.7a
- * moves onto the editorial marketing primitives (.mk-nav / .mk-footer).
+ * credits) — the legacy landing topbar/footer group Task 3.7a moved onto
+ * the editorial marketing primitives (.mk-nav / .mk-footer).
  *
  * None of the six original pages carried a language switcher — only
  * /early-access and /login resolve a locale (from cookies/headers) to drive

@@ -6,8 +6,7 @@ import { airportByCode } from '@/lib/airports';
 import { BookButton } from '@/components/BookButton';
 import { fmtUSD, fmtDate } from '@/lib/utils';
 
-// Coordinates table — mirrored from InteractiveGlobe. Kept local so the map
-// works even if the globe component is tree-shaken out.
+// Coordinates table, kept local to this map.
 const COORDS: Record<string, [number, number]> = {
   JFK: [40.6413, -73.7781], EWR: [40.6925, -74.1687], LGA: [40.7769, -73.8740],
   LAX: [33.9416, -118.4085], SFO: [37.6213, -122.3790], ORD: [41.9742, -87.9073],

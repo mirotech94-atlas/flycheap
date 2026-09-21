@@ -56,8 +56,7 @@ export function ClientChrome({ children, adminHost, marketingHost }: { children:
   return <>{children}</>;
 }
 
-/** Hides children only in mobile-app embed mode (e.g. the FcTweaks theme picker
- *  which renders outside ClientChrome). */
+/** Hides children only in mobile-app embed mode. */
 export function HideOnEmbed({ children }: { children: React.ReactNode }) {
   const embed = useIsEmbed();
   if (embed) return null;

@@ -86,8 +86,8 @@ type Ctx = GlobeState & {
 
 const GlobeContext = createContext<Ctx | null>(null);
 
-// IATA → [lng, lat]. A trimmed superset of WorldMap's table — enough for
-// the cities the chat tends to mention.
+// IATA → [lng, lat]. A trimmed table — enough for the cities the chat
+// tends to mention.
 const IATA: Record<string, [number, number]> = {
   NYC:[-74.0,40.7], JFK:[-73.78,40.64], EWR:[-74.17,40.69], LAX:[-118.41,33.94],
   MIA:[-80.29,25.79], ATL:[-84.43,33.64], SFO:[-122.37,37.62], SEA:[-122.31,47.45],

@@ -10,12 +10,10 @@ import { LanguageMenu } from '@/components/LanguageMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { PUBLIC_ADMIN_HOST, PUBLIC_MARKETING_HOST } from '@/lib/hosts';
 
-// Mirrors ClientSidebar.tsx's buildNav()/isItemActive() exactly — this is the
-// same 13-destination signed-in inventory (plus the 3 group separators),
-// reshaped from a collapsible left rail into a single scannable tab row. The
-// literal labels ("Your board", "Support") are the same deliberate choices
-// ClientSidebar documents: a new i18n key would have to land in every
-// dictionary at once, so these stay hardcoded like their sidebar originals.
+// The 13-destination signed-in inventory (plus the 3 group separators),
+// reshaped into a single scannable tab row. The literal labels ("Your
+// board", "Support") are deliberate: a new i18n key would have to land in
+// every dictionary at once, so these stay hardcoded.
 type Entry =
   | { kind: 'tab'; href: string; label: string }
   | { kind: 'group'; label: string };
@@ -41,9 +39,8 @@ function buildEntries(nav: AppNavDict): Entry[] {
   ];
 }
 
-// Same semantics as ClientSidebar.tsx's isItemActive(): '/' only matches
-// exactly, everything else matches on prefix so a sub-route (e.g. /settings/
-// billing) still lights up its parent tab.
+// '/' only matches exactly, everything else matches on prefix so a
+// sub-route (e.g. /settings/billing) still lights up its parent tab.
 function isItemActive(pathname: string, href: string): boolean {
   if (href === '/') return pathname === '/';
   return pathname === href || pathname.startsWith(href + '/');
@@ -102,9 +99,9 @@ export function PortalTopBar({
           )}
         </nav>
       ) : (
-        // Guest shell — mirrors ClientSidebar's guest nav (marketing mini-shell
-        // instead of the operational tabs): the "what is this" blurb, the four
-        // marketing links, and the primary sign-in CTA.
+        // Guest shell — a marketing mini-shell (instead of the operational
+        // tabs): the "what is this" blurb, the four marketing links, and
+        // the primary sign-in CTA.
         <div className={`pt-tabs pt-guest-nav${open ? ' open' : ''}`}>
           <p className="pt-guest">
             {nav.guestA}<strong>{nav.guestStrong}</strong>{nav.guestB}

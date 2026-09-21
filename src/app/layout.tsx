@@ -4,9 +4,8 @@ import './globals.css';
 import { GlobeProvider } from '@/lib/globeStore';
 import { contrastSafe, hexToRgbTriple, BRAND_GROUNDS } from '@/lib/brandContrast';
 import { headers } from 'next/headers';
-import { ClientChrome, AdminAwareMain, HideOnEmbed } from '@/components/ClientChrome';
+import { ClientChrome, AdminAwareMain } from '@/components/ClientChrome';
 import { PortalTopBar } from '@/components/PortalTopBar';
-import { FcTweaks } from '@/components/FcTweaks';
 import { DeferredAppWidgets } from '@/components/DeferredAppWidgets';
 import { UserTelemetry } from '@/components/UserTelemetry';
 import { getActiveTenant } from '@/lib/tenant';
@@ -165,12 +164,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         </footer>
         <DeferredAppWidgets />
         </ClientChrome>
-        {/* FcTweaks lives OUTSIDE ClientChrome so the theme toggle is also
-            available on admin routes — letting the user re-skin the whole
-            app from anywhere. Hidden in mobile-app embed mode. */}
-        <HideOnEmbed>
-          <FcTweaks />
-        </HideOnEmbed>
         </GlobeProvider>
         </AppI18nProvider>
       </body>
