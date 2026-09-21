@@ -9,9 +9,9 @@
   --surface-2: #F4F1EA;
   --ink: #14181B;
   --ink-soft: #3B3833;
-  --muted: #7A756C;
-  --muted-2: #9B958A;
-  --muted-3: #B0AAA0;
+  --muted: #78736A;
+  --muted-2: #78736A;
+  --muted-3: #78736A;
   --rule: #E6E2DA;
   --rule-soft: #EFECE5;
   --rule-strong: #D9D4CA;
@@ -37,7 +37,7 @@ html[data-theme="dark"] {
   --ink-soft: #C9CDD1;
   --muted: #9AA0A6;
   --muted-2: #868C92;
-  --muted-3: #6E747A;
+  --muted-3: #838B92;
   --rule: #2A2F33;
   --rule-soft: #23282B;
   --rule-strong: #384045;
@@ -114,10 +114,10 @@ html[data-theme="dark"] {
 /* Buttons — no radius, no shadow, opacity hover only. */
 .ed-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; font: 600 12.5px/1 var(--font-ui); border: 1px solid transparent; border-radius: 0; cursor: pointer; text-decoration: none; transition: opacity 120ms; }
 .ed-btn:hover { opacity: 0.72; }
-.ed-btn-primary { background: var(--btn-bg); color: var(--btn-fg); }
-.ed-btn-secondary { background: var(--surface); color: var(--ink-soft); border-color: var(--rule-strong); }
-.ed-btn-row { background: var(--btn-bg); color: var(--btn-fg); padding: 7px 13px; font-size: 11.5px; justify-self: end; }
-.ed-btn-tile { background: transparent; color: currentColor; border-color: currentColor; padding: 6px 11px; font-size: 11px; }
+.ed-btn.ed-btn-primary { background: var(--btn-bg); color: var(--btn-fg); }
+.ed-btn.ed-btn-secondary { background: var(--surface); color: var(--ink-soft); border-color: var(--rule-strong); }
+.ed-btn.ed-btn-row { background: var(--btn-bg); color: var(--btn-fg); padding: 7px 13px; font-size: 11.5px; justify-self: end; }
+.ed-btn.ed-btn-tile { background: transparent; color: currentColor; border-color: currentColor; padding: 6px 11px; font-size: 11px; }
 .ed-btn-hero { padding: 13px 22px; font-size: 14px; }
 
 /* Stat strip — 2–4 KPIs in a ruled row. */
@@ -224,8 +224,9 @@ html[data-theme="dark"] {
    gradient — every colour is a token. */
 .mk * { box-sizing: border-box; }
 .mk a { color: inherit; text-decoration: none; }
-.mk h1, .mk h2, .mk h3, .mk h4, .mk h5 { margin: 0; font-family: var(--font-ui); }
+.mk h1, .mk h2, .mk h3, .mk h4, .mk h5 { margin: 0; }
 .mk p { margin: 0; }
+.mk input, .mk select, .mk textarea { border-radius: 0; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); }
 
 /* Nav: language menu (details/summary), no equivalent in the brief's map. */
 .mk-lang { position: relative; }
@@ -302,7 +303,7 @@ html[data-theme="dark"] {
    light mode), so on this panel it can go near-invisible; panel-fg/panel-bg
    are the pair actually built to contrast against the panel itself. */
 .mk-band .ed-btn-primary { background: var(--panel-fg); color: var(--panel-bg); }
-.mk-band .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: rgba(255, 255, 255, 0.3); }
+.mk-band .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
 .mk-cta-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.06em; color: inherit; opacity: 0.7; }
 .mk-consent { margin: 20px auto 0; max-width: 480px; font-size: 11.5px; line-height: 1.6; opacity: 0.65; }
 .mk-consent a { text-decoration: underline; }
@@ -312,7 +313,7 @@ html[data-theme="dark"] {
    rest of the page uses. */
 .mk-form { margin-top: 24px; }
 .mk-form-row { display: flex; flex-wrap: wrap; gap: 8px; max-width: 460px; margin: 0 auto 8px; }
-.mk-form-row input { flex: 1; min-width: 140px; height: 44px; padding: 0 14px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: inherit; font-family: var(--font-ui); font-size: 14px; }
+.mk-form-row input { flex: 1; min-width: 140px; height: 44px; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--panel-fg) 25%, transparent); background: transparent; color: inherit; font-family: var(--font-ui); font-size: 14px; }
 .mk-form-row input::placeholder { color: inherit; opacity: 0.5; }
 .mk-form-row input:focus { outline: none; border-color: var(--accent); }
 .mk-form-terms a { text-decoration: underline; }
@@ -326,10 +327,10 @@ html[data-theme="dark"] {
 .mk-done-k { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.7; }
 .mk-done-v { font-family: var(--font-serif); font-size: 56px; letter-spacing: -0.02em; line-height: 1; margin: 8px 0 6px; }
 .mk-done-s { opacity: 0.7; font-size: 13.5px; }
-.mk-done-share { margin-top: 22px; padding-top: 18px; border-top: 1px solid rgba(255, 255, 255, 0.15); text-align: left; }
+.mk-done-share { margin-top: 22px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--panel-fg) 15%, transparent); text-align: left; }
 .mk-done-share-h { opacity: 0.7; font-size: 13px; margin-bottom: 8px; }
 .mk-done-row { display: flex; gap: 8px; }
-.mk-done-row input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid rgba(255, 255, 255, 0.25); background: transparent; color: inherit; font-family: var(--font-mono-ed); font-size: 12px; }
+.mk-done-row input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--panel-fg) 25%, transparent); background: transparent; color: inherit; font-family: var(--font-mono-ed); font-size: 12px; }
 .mk-done-links { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
 .mk-done-links a { font-size: 12px; font-weight: 600; text-decoration: underline; opacity: 0.75; }
 .mk-done-links a:hover { opacity: 1; }

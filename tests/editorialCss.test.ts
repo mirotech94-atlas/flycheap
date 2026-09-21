@@ -36,4 +36,8 @@ describe('editorial.css obeys the geometry constraints', () => {
       .replace(/html\[data-theme="dark"\]\s*\{[^}]*\}/g, '');
     expect(withoutDefs.match(/#[0-9a-fA-F]{3,8}\b/g) || []).toEqual([]);
   });
+
+  it('has no rgb()/rgba()/hsl()/hsla() literal — colours are tokens or color-mix of tokens', () => {
+    expect(code.match(/\b(rgba?|hsla?)\(/g) || []).toEqual([]);
+  });
 });

@@ -52,6 +52,17 @@ export function RouteField({ className, style }: { className?: string; style?: R
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // Read the palette from the cascade rather than hardcoding it, so the field
+    // follows the theme like everything else. The token layer always defines
+    // both — if either is somehow empty, draw nothing at all rather than fall
+    // back to a hardcoded hex. Checked before any observer is created, so this
+    // bail never skips the effect's cleanup closure (there is none registered
+    // yet at this point — a bare `return` here leaks nothing).
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue('--accent').trim();
+    const amber = css.getPropertyValue('--amber').trim();
+    if (!accent || !amber) return;
+
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
     let visible = true;
     const io = new IntersectionObserver(([e]) => { visible = e.isIntersecting; }, { threshold: 0 });
@@ -68,15 +79,6 @@ export function RouteField({ className, style }: { className?: string; style?: R
     resize();
     const ro = new ResizeObserver(resize);
     ro.observe(canvas);
-
-    // Read the palette from the cascade rather than hardcoding it, so the field
-    // follows the theme like everything else. The token layer always defines
-    // both — if either is somehow empty, draw nothing for this frame rather
-    // than fall back to a hardcoded hex.
-    const css = getComputedStyle(document.documentElement);
-    const accent = css.getPropertyValue('--accent').trim();
-    const amber = css.getPropertyValue('--amber').trim();
-    if (!accent || !amber) return;
 
     const arc = (r: (typeof ROUTES)[number]) => {
       const [x0, y0, x1, y1, lift] = r;
