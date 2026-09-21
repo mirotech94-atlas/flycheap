@@ -45,11 +45,11 @@ export default async function OffersPage({ searchParams }: PageProps) {
   const shouldSearchOnMount = Boolean(params?.origin || params?.destination || params?.departDate || params?.returnDate);
 
   return (
-    <div className="space-y-6">
+    <div>
       <FcPageHead
         title="Search live fares"
         lede={`A one-off search across every fare source we have switched on right now (${providerNames}). For a route you want watched over time, track it instead and we will tell you when it drops.`}
-        action={<Link href="/searches" className="btn btn-secondary inline-flex shrink-0">Track a route</Link>}
+        action={<Link href="/searches" className="ed-btn ed-btn-secondary">Track a route</Link>}
       />
 
       <OffersExplorer

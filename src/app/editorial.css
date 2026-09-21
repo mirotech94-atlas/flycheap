@@ -168,6 +168,41 @@ html[data-theme="dark"] {
 .ed-bar-fill.amber { background: var(--amber); } .ed-bar-fill.green { background: var(--green); }
 .ed-ranked-value { font-family: var(--font-mono-ed); font-size: 12px; text-align: right; color: var(--ink); }
 
+/* Panel — a ruled surface block (PageKit's FcPanel; also used directly by
+   pages composing their own feature blocks, e.g. OffersExplorer.tsx). 1px
+   --rule border, --surface ground, radius 0 — the "card" this replaces had
+   a radius, a shadow and a gradient hover; none of those survive here. */
+.ed-panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 22px 24px; }
+.ed-panel-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.ed-panel-title { font-family: var(--font-serif); font-weight: 400; font-size: 23px; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+.ed-panel-note { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+/* A sunken block inside a panel — a form's own fieldset ground, a status
+   banner, a diagnostics readout. Same --surface as its parent panel (a
+   --surface-2 fill pushed --muted text on the fallback --surface-2 below AA
+   at this component's small sizes) with a --rule border for definition,
+   consistent with .ed-input's flat-surface-plus-border treatment. */
+.ed-subpanel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 12px 14px; }
+.ed-subpanel.accent { border-color: var(--accent); }
+.ed-subpanel.green { border-color: var(--green); }
+.ed-subpanel.red { border-color: var(--red); }
+
+/* Stat accent modifier — an 8% amber wash per the tint ceiling, for the one
+   KPI in a row that is itself a fare (e.g. "cheapest right now"). The value
+   digits stay --ink regardless (amber digits measured under AA on a light
+   surface) — only the ground and border carry the amber signal. */
+.ed-stat.accent { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
+.ed-stat-note { font-size: 11.5px; line-height: 1.4; color: var(--muted); margin-top: 8px; }
+
+/* Empty state (PageKit's FcEmpty). */
+.ed-empty { padding: 56px 24px; text-align: center; }
+.ed-empty-head { font-family: var(--font-serif); font-weight: 400; font-size: 20px; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+.ed-empty-body { margin: 10px auto 0; max-width: 46ch; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+
+/* Form field label — small mono caps over an .ed-input, matching the
+   .ed-stat-label / .ed-tile-kicker caption treatment used everywhere else. */
+.ed-label { display: block; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
+
 /* Toggle — 44×24, track --accent/--track, 18px knob, 160ms translate. */
 .ed-toggle { position: relative; width: 44px; height: 24px; background: var(--track); border: 0; padding: 0; cursor: pointer; }
 .ed-toggle[aria-checked="true"] { background: var(--accent); }

@@ -59,7 +59,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/components/ExecutiveTopBar.tsx': 3,
   'src/components/FcKpiStrip.tsx': 3,
   'src/components/FcRouteDna.tsx': 3,
-  'src/components/OffersExplorer.tsx': 3,
   'src/app/admin/queue/page.tsx': 2,
   'src/app/admin/tickets/page.tsx': 2,
   'src/components/AdminFarePilotWidget.tsx': 2,
