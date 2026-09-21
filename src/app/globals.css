@@ -1629,6 +1629,100 @@ a.fc-radar-fare-link:hover { background: color-mix(in srgb, var(--amber) 10%, va
   font-family: var(--fc-font-display); font-size: 30px; letter-spacing: -.02em; color: var(--fc-cream);
 }
 .fc-login-stats .v.gold { color: var(--fc-gold); }
+
+/* ============================================================
+   Dashboard "cabin" overrides — restored (Task 3.9 fix round 1).
+
+   At base (03b1a69) the dashboard wrapper carried a static cabin-theme
+   attribute (src/app/page.tsx), so the rules below were live overrides
+   for the .fc-* dashboard widgets above, not dead theme machinery —
+   Task 3.9 deleted them along with the retired theme-attribute gate
+   itself, which regressed contrast on / (the accent KPI tile fell back
+   to .fc-kpi.fc-kpi-accent's own navy/ink, and .fc-ticker-route /
+   .fc-eyebrow lost their dashboard colour). Restored here unscoped —
+   the attribute selector is gone and .fc-shell is the only theme .fc-*
+   widgets render inside now, so it always applies — with every retired
+   night-cabin token name re-pointed to the editorial token its alias
+   used to resolve it to. The welcome-page half of each rule that used
+   to also be shared with the landing template stays deleted (that page
+   is fully editorial now). Placed after every base rule it overrides
+   so an equal-specificity tie (.fc-shell .fc-kpi and .fc-kpi.fc-kpi-accent
+   are both 0,2,0) still resolves in this rule's favor, the way the
+   attribute selector's higher specificity used to guarantee.
+   ============================================================ */
+.fc-shell {
+  background: var(--bg);
+  color: var(--ink);
+}
+.fc-shell .fc-card,
+.fc-shell .fc-kpi,
+.fc-shell .fc-panel {
+  background: var(--surface);
+  border-color: var(--rule);
+  color: var(--ink);
+}
+.fc-shell .fc-card-title,
+.fc-shell .fc-section-title,
+.fc-shell h1,
+.fc-shell h2,
+.fc-shell h3 { color: var(--ink); }
+
+.fc-shell .fc-eyebrow,
+.fc-shell .fc-hero-stat-label { color: var(--muted-2); }
+
+.fc-shell .fc-radar h1,
+.fc-shell .fc-radar h2,
+.fc-shell .fc-radar h3,
+.fc-shell .fc-radar-h { color: var(--panel-fg); }
+.fc-shell .fc-radar .fc-eyebrow { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+
+.fc-shell .fc-hero-stat-value,
+.fc-shell .fc-price { color: var(--amber); }
+
+.fc-shell table { font-variant-numeric: tabular-nums; }
+
+.fc-shell .fc-hero {
+  background: var(--surface);
+  border-color: var(--rule);
+  color: var(--ink);
+}
+.fc-shell .fc-ticker {
+  background: var(--surface);
+  color: var(--ink);
+  border-top: 1px solid var(--rule-strong);
+}
+.fc-shell .fc-ticker-route { color: var(--ink); }
+.fc-shell .fc-ticker-price { color: var(--amber); }
+.fc-shell .fc-ticker-sep { background: var(--rule-strong); }
+
+.fc-shell .fc-btn-ghost {
+  background: rgba(255,255,255,.06);
+  color: var(--ink);
+  border-color: var(--rule-strong);
+}
+.fc-shell .fc-btn-ghost:hover {
+  background: var(--surface-2);
+  border-color: var(--amber);
+  color: var(--ink);
+}
+
+.fc-shell .fc-hero h1 em { color: var(--ink); }
+
+.fc-shell .fc-btn-light {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--rule-strong);
+}
+.fc-shell .fc-btn-light:hover { background: var(--surface-2); }
+
+.fc-shell .fc-badge-ok {
+  background: color-mix(in srgb, var(--green) 8%, var(--bg));
+  color: color-mix(in srgb, var(--green) 75%, var(--ink));
+}
+
+.fc-shell .fc-login-stats .v { color: var(--ink); }
+.fc-shell .fc-login-stats .v.gold { color: var(--amber); }
+
 .fc-login-stats .k {
   margin-top: 3px; font-family: var(--fc-font-mono); font-size: 9.5px;
   letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.45);

@@ -43,16 +43,23 @@ describe('editorial.css obeys the geometry constraints', () => {
 });
 
 /**
- * Task 3.9: the night-cabin theme machinery (the [data-fc-theme] gate,
- * .fc-shell/.fc-landing scoping, and the --nc-* migration aliases) is
+ * Task 3.9: the night-cabin THEME GATE (the [data-fc-theme] attribute, the
+ * .fc-landing welcome-page scoping, and the --nc-* migration aliases) is
  * deleted from globals.css, not just unused. A regression here means the
  * retired machinery crept back in rather than every surface staying on
  * editorial tokens directly.
+ *
+ * .fc-shell itself is NOT part of this guard: fix round 1 restored it
+ * (unscoped, attribute-free) on the dashboard wrapper, because the
+ * .fc-shell[data-fc-theme="cabin"] rules it used to gate were live
+ * overrides for the dashboard's .fc-* widgets, not dead theme machinery —
+ * deleting them regressed contrast on /. See the "Dashboard cabin
+ * overrides — restored" block in globals.css.
  */
 describe('globals.css has no night-cabin theme machinery', () => {
   const globalsCss = readFileSync('src/app/globals.css', 'utf8');
 
-  it('has no data-fc-theme, fc-shell, fc-landing, or --nc- occurrence', () => {
-    expect(globalsCss.match(/data-fc-theme|fc-shell|fc-landing|--nc-/g) || []).toEqual([]);
+  it('has no data-fc-theme, fc-landing, or --nc- occurrence', () => {
+    expect(globalsCss.match(/data-fc-theme|fc-landing|--nc-/g) || []).toEqual([]);
   });
 });

@@ -627,7 +627,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   const cheapestSparkPoints = (cheapestRouteKey ? routeHistories[cheapestRouteKey] : undefined)?.map(h => h.price_per_adult_usd) ?? [];
 
   return (
-    <div className="ed-dashboard">
+    <div className="fc-shell ed-dashboard">
       {showWizard && <OnboardingWizard userEmail={sessionUser!.email} />}
       {/* First-run guided tour of every tab — self-triggers from the sign-up flag. */}
       <OnboardingTour />

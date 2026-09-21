@@ -454,8 +454,7 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 
 /* ---- Portal chrome (PortalTopBar.tsx) — replaces the client-portal left
    sidebar with a sticky editorial top tab bar. 13 signed-in destinations +
-   3 mono-caps group separators (.pt-group), reproducing ClientSidebar's
-   buildNav()/isItemActive() exactly; a guest shell (.pt-guest + .pt-guest-nav
+   3 mono-caps group separators (.pt-group); a guest shell (.pt-guest + .pt-guest-nav
    inside the same .pt-tabs grid slot) for the signed-out marketing mini-nav.
    Two-row grid (Round 1 fix, controller browser gate): row 1 is brand (left,
    1fr) + .pt-right (right, auto); row 2 is the tab row spanning both columns,
@@ -592,8 +591,8 @@ button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="butt
 @media (max-width: 640px) { .ed-photo-hero-band { padding: 14px 16px 16px; } }
 
 /* Editorial language menu (LanguageMenu.tsx variant="editorial") — same
-   <details>/<summary>/menu structure as the 'sidebar' and 'topbar' variants,
-   tokens only. Used by PortalTopBar; ClientSidebar stays on 'sidebar'. */
+   <details>/<summary>/menu structure as the 'topbar' variant, tokens only.
+   Used by PortalTopBar. */
 .ed-lang { position: relative; }
 .ed-lang summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); font-family: var(--font-mono-ed); font-size: 11px; letter-spacing: 0.08em; }
 .ed-lang summary::-webkit-details-marker { display: none; }
