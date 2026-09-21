@@ -490,6 +490,42 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .pt-tier { color: var(--muted-2); }
 .pt-user { color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pt-menu { display: none; }
+
+/* ---- Portal left rail -------------------------------------------------
+   The signed-in portal navigates from a left rail, the same idea as the
+   admin console's `.ad-rail`, so the two portals read as one product. Same
+   214px width, same group headings, same 2px accent marker on the active
+   item. The difference is that the three named groups collapse: they were
+   dropdowns in the tab bar this replaced, so they stay openable here.
+   The page and the footer are pushed over by the rail's width with :has(),
+   which keeps the offset in CSS instead of threading a "signed in" flag
+   through the client chrome. */
+.pt-rail { position: fixed; top: 62px; bottom: 0; left: 0; width: 214px; z-index: 25; overflow: auto; background: var(--surface); border-right: 1px solid var(--rule); padding: 14px 0 24px; }
+.pt-rail-section + .pt-rail-section { margin-top: 2px; }
+.pt-rail-group { display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%; padding: 18px 20px 8px 24px; background: none; border: 0; cursor: pointer; font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-3); text-align: left; }
+.pt-rail-group:hover { color: var(--muted); }
+.pt-rail-chev { flex-shrink: 0; opacity: 0.7; transform: rotate(-90deg); transition: transform 140ms ease; }
+.pt-rail-chev.open { transform: rotate(0deg); }
+.pt-rail-item { display: block; padding: 8px 24px 8px 22px; font-size: 13.5px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.pt-rail-item:hover { color: var(--ink); }
+.pt-rail-item.active { color: var(--ink); background: var(--surface-2); border-left-color: var(--accent); }
+.pt-rail-item-inner { display: flex; align-items: center; gap: 8px; }
+.pt-rail-item-inner svg { opacity: 0.65; flex-shrink: 0; }
+.pt-rail-item.active .pt-rail-item-inner svg { opacity: 1; color: var(--accent); }
+
+@media (min-width: 901px) {
+  body:has(.pt-rail) main { margin-left: 214px; }
+  body:has(.pt-rail) .ed-footer { margin-left: 214px; }
+}
+
+/* Below the rail breakpoint the ☰ in the top bar owns it: closed by default
+   so a phone opens on content, and it pushes the page rather than floating
+   over it (same call the admin rail makes at this width). */
+@media (max-width: 900px) {
+  .pt-menu { display: inline-flex; }
+  .pt-rail { position: static; width: auto; max-height: 0; padding: 0; overflow: hidden; border-right: 0; border-bottom: 1px solid var(--rule); }
+  .pt-rail.open { max-height: none; padding: 8px 0 16px; overflow: auto; }
+}
 @media (max-width: 960px) {
   .pt-bar { grid-template-columns: 1fr auto; }
   .pt-menu { display: inline-flex; grid-row: 1; grid-column: 2; }
@@ -586,11 +622,19 @@ button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="butt
    slides in explore/page.tsx) — full-bleed photo (or a flat fallback tile
    when no photo exists), radius 0, no gradient scrim: a solid --panel-bg/fg
    caption band carries the text instead. */
-.ed-photo-hero { position: relative; width: 100%; height: 100%; overflow: hidden; }
-.ed-photo-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-.ed-photo-hero-fallback { position: absolute; inset: 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+/* The photo and its caption are stacked, not overlaid. The band used to sit
+   absolutely on the bottom of the frame and ate 55% of it, and the frame was a
+   short 2.9:1 letterbox, so a 3:2 photo showed as a thin horizontal slice —
+   "half a picture". Now the image gets its own box at its natural size and
+   the caption sits underneath it, covering
+   nothing. The library is mixed (3:2, 4:3 and 16:9), so the image is never
+   cropped: it renders at its own ratio, and only on a short viewport does the
+   80vh cap letterbox it against the surface rather than cut it. */
+.ed-photo-hero { position: relative; width: 100%; display: flex; flex-direction: column; overflow: hidden; }
+.ed-photo-hero-img { display: block; width: 100%; height: auto; max-height: 80vh; object-fit: contain; background: var(--surface-2); }
+.ed-photo-hero-fallback { width: 100%; aspect-ratio: 3 / 2; max-height: 80vh; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
 .ed-photo-hero-fallback-code { font-family: var(--font-mono-ed); font-weight: 700; font-size: clamp(96px, 16vw, 220px); line-height: 1; letter-spacing: -0.02em; color: var(--muted-2); user-select: none; }
-.ed-photo-hero-band { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; }
+.ed-photo-hero-band { background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; flex: 1 1 auto; }
 .ed-photo-hero-tags { display: flex; gap: 8px; margin-bottom: 10px; }
 .ed-photo-hero-tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 80%, var(--panel-bg)); }
 .ed-photo-hero-tag.deal { color: var(--amber); }

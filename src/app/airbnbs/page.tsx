@@ -96,7 +96,7 @@ export default async function AirbnbsPage({ searchParams }: PageProps) {
       />
 
       {/* Animated worldwide showcase — Search Airbnb on every slide */}
-      <DealSlideshow label="Airbnb destinations worldwide" heightClass="h-[280px] md:h-[320px]">
+      <DealSlideshow label="Airbnb destinations worldwide" heightClass="">
         {slideDests.map(d => (
           <StayHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={adults} mode="airbnb" />
         ))}

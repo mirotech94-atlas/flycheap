@@ -94,7 +94,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
       {/* Animated worldwide showcase — real destination photos, same
           destinations/padding logic as the Hotels page slideshow. */}
       <section>
-        <DealSlideshow label="Explore destinations worldwide" heightClass="h-[280px] md:h-[320px]">
+        <DealSlideshow label="Explore destinations worldwide" heightClass="">
           {showcaseDests.map(d => (
             <StayHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={1} mode="explore" />
           ))}
@@ -287,7 +287,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
         ) : (
           <>
             {/* Photo slideshow — top 8 destinations */}
-            <DealSlideshow label={`Top destinations from ${originCity}`} heightClass="h-[300px] md:h-[340px]">
+            <DealSlideshow label={`Top destinations from ${originCity}`} heightClass="">
               {destinations.slice(0, 8).map(dest => (
                 <HeroDestinationSlide
                   key={dest.destination}

@@ -52,7 +52,7 @@ export default async function HotelsPage({ searchParams }: PageProps) {
       />
 
       {/* Animated worldwide showcase — Book now on every slide */}
-      <DealSlideshow label="Hotel destinations worldwide" heightClass="h-[280px] md:h-[320px]">
+      <DealSlideshow label="Hotel destinations worldwide" heightClass="">
         {slideDests.map(d => (
           <StayHeroSlide key={d.iata} iata={d.iata} checkIn={d.checkIn} checkOut={d.checkOut} adults={adults} mode="hotel" />
         ))}

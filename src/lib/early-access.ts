@@ -269,34 +269,60 @@ export type FeedItem = {
   airline: string; code: string; out: string; ret: string; trip: number; provider: string;
 };
 
+// getFeedPool's SELECT runs a per-row correlated AVG subquery over the whole
+// best_deals_cache table with no SQL LIMIT — not cheap. It now gets polled
+// every few seconds by two live surfaces (marketing + dashboard), so a short
+// in-process cache keeps a burst of concurrent clients from hammering SQLite;
+// the query result underneath is cached, and each call still reshuffles its
+// own copy so the feed doesn't lead with the same order every time.
+const FEED_POOL_CACHE_MS = 3000;
+const feedPoolCache = new Map<number, { at: number; items: FeedItem[] }>();
+
+function queryFeedPool(limit: number): FeedItem[] {
+  const rows = getDb().prepare(`
+    SELECT b.origin, b.destination, b.outbound_date, b.return_date, b.trip_length_days, b.per_adult_usd, b.provider,
+           substr(b.outbound_flight_no, 1, 2) AS code,
+           (SELECT AVG(per_adult_usd) FROM best_deals_cache m WHERE m.origin = b.origin AND m.destination = b.destination) AS avg
+    FROM best_deals_cache b
+    WHERE b.outbound_flight_no IS NOT NULL AND length(b.outbound_flight_no) >= 3
+    ORDER BY b.per_adult_usd ASC
+  `).all() as Array<{ origin: string; destination: string; outbound_date: string; return_date: string; trip_length_days: number; per_adult_usd: number; provider: string; code: string; avg: number }>;
+  const seen = new Set<string>();
+  const pool: FeedItem[] = [];
+  for (const r of rows) {
+    const code = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+    const airline = AIRLINES[code] ?? code;
+    const key = `${r.origin}${r.destination}${airline}`; // dedupe by airline name (N0/Z0 are both Norse)
+    if (!code || seen.has(key)) continue;
+    seen.add(key);
+    pool.push({
+      route: `${r.origin} → ${r.destination}`, origin: r.origin, dest: r.destination,
+      price: Math.round(r.per_adult_usd), delta: Math.round(r.per_adult_usd - r.avg),
+      airline, code, out: r.outbound_date, ret: r.return_date, trip: r.trip_length_days, provider: r.provider,
+    });
+    if (pool.length >= limit) break;
+  }
+  return pool;
+}
+
 /** Up to `limit` real best fares: cheapest per (route, airline), across every origin/destination we track. Shuffled. */
 export function getFeedPool(limit = 40): FeedItem[] {
-  try {
-    const rows = getDb().prepare(`
-      SELECT b.origin, b.destination, b.outbound_date, b.return_date, b.trip_length_days, b.per_adult_usd, b.provider,
-             substr(b.outbound_flight_no, 1, 2) AS code,
-             (SELECT AVG(per_adult_usd) FROM best_deals_cache m WHERE m.origin = b.origin AND m.destination = b.destination) AS avg
-      FROM best_deals_cache b
-      WHERE b.outbound_flight_no IS NOT NULL AND length(b.outbound_flight_no) >= 3
-      ORDER BY b.per_adult_usd ASC
-    `).all() as Array<{ origin: string; destination: string; outbound_date: string; return_date: string; trip_length_days: number; per_adult_usd: number; provider: string; code: string; avg: number }>;
-    const seen = new Set<string>();
-    const pool: FeedItem[] = [];
-    for (const r of rows) {
-      const code = (r.code || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-      const airline = AIRLINES[code] ?? code;
-      const key = `${r.origin}${r.destination}${airline}`; // dedupe by airline name (N0/Z0 are both Norse)
-      if (!code || seen.has(key)) continue;
-      seen.add(key);
-      pool.push({
-        route: `${r.origin} → ${r.destination}`, origin: r.origin, dest: r.destination,
-        price: Math.round(r.per_adult_usd), delta: Math.round(r.per_adult_usd - r.avg),
-        airline, code, out: r.outbound_date, ret: r.return_date, trip: r.trip_length_days, provider: r.provider,
-      });
-      if (pool.length >= limit) break;
+  const now = Date.now();
+  const cached = feedPoolCache.get(limit);
+  let pool: FeedItem[];
+  if (cached && now - cached.at < FEED_POOL_CACHE_MS) {
+    pool = cached.items;
+  } else {
+    try {
+      pool = queryFeedPool(limit);
+      feedPoolCache.set(limit, { at: now, items: pool });
+    } catch {
+      pool = cached?.items ?? [];
     }
-    // Fisher–Yates so every page load leads with a different mix of routes.
-    for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    return pool;
-  } catch { return []; }
+  }
+  // Fisher–Yates a copy so every call leads with a different mix of routes,
+  // without reshuffling (and thus invalidating) the cached order.
+  const shuffled = pool.slice();
+  for (let i = shuffled.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
+  return shuffled;
 }
