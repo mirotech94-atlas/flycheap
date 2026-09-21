@@ -1,0 +1,100 @@
+/* src/app/editorial.css
+   FlyCheap editorial design system — the 22 tokens from docs/design/handoff/README.md.
+   Light is the default on :root; dark is a pure swap on html[data-theme="dark"].
+   Every colour in the app resolves through this layer. */
+
+:root {
+  --bg: #FBFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F4F1EA;
+  --ink: #14181B;
+  --ink-soft: #3B3833;
+  --muted: #7A756C;
+  --muted-2: #9B958A;
+  --muted-3: #B0AAA0;
+  --rule: #E6E2DA;
+  --rule-soft: #EFECE5;
+  --rule-strong: #D9D4CA;
+  --track: #DCD8D0;
+  --accent: #1F615D;
+  --amber: #C98A3C;
+  --green: #3E7D5A;
+  --red: #B4453C;
+  --panel-bg: #14181B;
+  --panel-fg: #FFFFFF;
+  --btn-bg: #14181B;
+  --btn-fg: #FFFFFF;
+  --knob: #FFFFFF;
+  --on-accent: #FFFFFF;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --bg: #0E1113;
+  --surface: #171B1E;
+  --surface-2: #1F2427;
+  --ink: #ECEFF1;
+  --ink-soft: #C9CDD1;
+  --muted: #9AA0A6;
+  --muted-2: #868C92;
+  --muted-3: #6E747A;
+  --rule: #2A2F33;
+  --rule-soft: #23282B;
+  --rule-strong: #384045;
+  --track: #2E3438;
+  --accent: #55B8B1;
+  --amber: #D9A05B;
+  --green: #5FB183;
+  --red: #E0776D;
+  --panel-bg: #0A0C0E;
+  --panel-fg: #FFFFFF;
+  --btn-bg: #ECEFF1;
+  --btn-fg: #0E1113;
+  --knob: #ECEFF1;
+  --on-accent: #0B1211;
+  color-scheme: dark;
+}
+
+/* ---- Migration aliases ---------------------------------------------------
+   The three legacy token families are re-pointed at the new layer so the
+   app keeps rendering while each surface is converted. Each alias block is
+   deleted by the task that removes the last consumer of that family
+   (grep-gated). Do NOT add new consumers of any --nc-/--fc-/--dc- name. */
+
+:root {
+  /* night-cabin (--nc-*) → editorial */
+  --nc-dark: var(--bg);
+  --nc-deck: var(--surface);
+  --nc-deck-2: var(--surface-2);
+  --nc-rule: var(--rule);
+  --nc-rule-2: var(--rule-strong);
+  --nc-on-dark: var(--ink);
+  --nc-on-dark-mute: var(--muted);
+  --nc-on-dark-faint: var(--muted-2);
+  --nc-amber: var(--amber);
+  --nc-teal: var(--accent);
+  --nc-mint: var(--green);
+  --nc-signal: var(--red);
+  --nc-stock: var(--surface-2);
+
+  /* marketing (--dc-*) → editorial */
+  --dc-bg: var(--bg);
+  --dc-bg2: var(--surface-2);
+  --dc-bg3: var(--surface);
+  --dc-card: var(--surface);
+  --dc-line: var(--rule);
+  --dc-line2: var(--rule-strong);
+  --dc-text: var(--ink);
+  --dc-muted: var(--muted);
+  --dc-dim: var(--muted-2);
+  --dc-gold: var(--amber);
+  --dc-gold2: var(--amber);
+  --dc-teal: var(--accent);
+}
+
+/* Type faces — bound to next/font variables in layout.tsx (Task 0.5). */
+:root {
+  --font-ui: var(--font-public-sans), 'Public Sans', system-ui, sans-serif;
+  --font-serif: var(--font-newsreader), 'Newsreader', Georgia, serif;
+  --font-mono-ed: var(--font-plex-mono), 'IBM Plex Mono', ui-monospace, monospace;
+}

@@ -1,4 +1,5 @@
 @import 'react-day-picker/dist/style.css';
+@import './editorial.css';
 
 @tailwind base;
 @tailwind components;
@@ -3525,7 +3526,8 @@ html[dir="rtl"] .fc-ticker-track { direction: ltr; }
    primary actions; if it starts appearing on decoration, the one
    loud thing in the design stops being the price.
    ============================================================ */
-:root {
+/* RETIRED in editorial redesign — --nc-* now alias to editorial.css. Deleted in Task 3.9. */
+.legacy-nc-tokens-retired {
   --nc-dark:    #0B1220;   /* cabin at night — blue-biased, not tinted black */
   --nc-deck:    #131C2E;   /* panel sitting on the dark */
   --nc-deck-2:  #1B2740;   /* raised panel / hover */

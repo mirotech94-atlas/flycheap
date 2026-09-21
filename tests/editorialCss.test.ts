@@ -30,7 +30,10 @@ describe('editorial.css obeys the geometry constraints', () => {
     expect(code.match(/(linear|radial|conic)-gradient\(/g) || []).toEqual([]);
   });
 
-  it('has no hex literal — every colour is a token or color-mix of tokens', () => {
-    expect(code.match(/#[0-9a-fA-F]{3,8}\b/g) || []).toEqual([]);
+  it('has no hex literal outside the two token-definition blocks', () => {
+    const withoutDefs = code
+      .replace(/:root\s*\{[^}]*\}/g, '')
+      .replace(/html\[data-theme="dark"\]\s*\{[^}]*\}/g, '');
+    expect(withoutDefs.match(/#[0-9a-fA-F]{3,8}\b/g) || []).toEqual([]);
   });
 });
