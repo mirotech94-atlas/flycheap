@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { travelpayoutsReferralUrl } from '@/lib/affiliate';
 import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
+import { APP_VERSION_SHORT } from '@/lib/version';
 
 export const metadata: Metadata = {
   title: 'Privacy Policy · FlyCheap',
@@ -174,7 +175,10 @@ export default function PrivacyPage() {
         </div>
       </section>
 
-      <PublicFooter left={<span>© FlyCheap</span>} right={<Link href="/terms">Terms</Link>} />
+      <PublicFooter
+        left={<>© 2026 FlyCheap · Operated by Myron Mekhael, New York, USA · All rights reserved</>}
+        right={<><Link href="/terms">Terms</Link> · <Link href="/trial-terms">Trial terms</Link> · {APP_VERSION_SHORT}</>}
+      />
     </div>
   );
 }

@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { headers } from 'next/headers';
 import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
+import { APP_VERSION_SHORT } from '@/lib/version';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 60;
@@ -98,7 +99,10 @@ export default async function StatusPage() {
         </div>
       </section>
 
-      <PublicFooter left={<span>© FlyCheap</span>} right={<Link href="/terms">Terms</Link>} />
+      <PublicFooter
+        left={<>© 2026 FlyCheap · Operated by Myron Mekhael, New York, USA · All rights reserved</>}
+        right={<><Link href="/privacy">Privacy</Link> · <Link href="/terms">Terms</Link> · {APP_VERSION_SHORT}</>}
+      />
     </div>
   );
 }
