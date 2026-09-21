@@ -46,14 +46,6 @@ export const fmtRelative = (iso: string) => {
 };
 
 /**
- * Categorical chart palette. Every entry clears 4.5:1 on the night-cabin ground
- * (--nc-dark #0B1220); the previous set led with the old brand navy #0a3a6b at
- * 1.55:1, which made the first series of every chart invisible once the app
- * actually rendered dark. Ordered so adjacent series stay distinguishable.
- */
-export const PIE_COLORS = ['#6FB3C9', '#E8A33D', '#7BC49A', '#B08BD6', '#E2887F', '#8FA8D9'];
-
-/**
  * Build an Aviasales deep-link pre-filled with origin, destination, both dates, party,
  * EgyptAir filter, and direct-only filter. Lands on a review/pay page — user only needs to click "Buy".
  *

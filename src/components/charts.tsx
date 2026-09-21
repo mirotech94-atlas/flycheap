@@ -1,10 +1,92 @@
 'use client';
 
+import { useEffect, useState, type ReactNode } from 'react';
 import {
   PieChart, Pie, Cell, Legend, Tooltip,
   LineChart, Line, XAxis, YAxis, ResponsiveContainer, CartesianGrid,
 } from 'recharts';
-import { PIE_COLORS, fmtUSD } from '@/lib/utils';
+import { fmtUSD } from '@/lib/utils';
+
+/**
+ * The editorial tokens these charts draw with, read from the live cascade
+ * rather than hardcoded — so a chart follows the theme like everything else.
+ * Read once on mount and re-read whenever `data-theme` flips, the same
+ * pattern RouteField.tsx uses for its canvas palette. Renders nothing until
+ * the first read succeeds rather than falling back to a hardcoded hex.
+ */
+type ChartTokens = { grid: string; tick: string; accent: string; amber: string; green: string; muted: string; surface: string };
+
+function useChartTokens(): ChartTokens | null {
+  const [tokens, setTokens] = useState<ChartTokens | null>(null);
+
+  useEffect(() => {
+    const read = () => {
+      const css = getComputedStyle(document.documentElement);
+      const grid = css.getPropertyValue('--rule').trim();
+      const tick = css.getPropertyValue('--muted-2').trim();
+      const accent = css.getPropertyValue('--accent').trim();
+      const amber = css.getPropertyValue('--amber').trim();
+      const green = css.getPropertyValue('--green').trim();
+      const muted = css.getPropertyValue('--muted').trim();
+      const surface = css.getPropertyValue('--surface').trim();
+      if (!grid || !tick || !accent || !amber || !green || !muted || !surface) return;
+      setTokens({ grid, tick, accent, amber, green, muted, surface });
+    };
+    read();
+    const mo = new MutationObserver(read);
+    mo.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+    return () => mo.disconnect();
+  }, []);
+
+  return tokens;
+}
+
+/** True when the browser can paint an SVG `fill` from a `color-mix()` value. */
+const supportsColorMix = typeof CSS !== 'undefined' && typeof CSS.supports === 'function'
+  && CSS.supports('color', 'color-mix(in srgb, red 60%, blue)');
+
+/**
+ * Categorical pie palette, built from tokens at render time instead of a
+ * hardcoded hex list — the previous PIE_COLORS (src/lib/utils.ts) led with a
+ * retired teal literal, which is what recharts also paints the matching
+ * legend item's TEXT in, independent of any wrapper style. Six entries, same
+ * shape as the old palette: the four solid tokens, then two tints via
+ * `color-mix()` (guarded — falls back to the solid tokens
+ * on a browser that can't parse it).
+ */
+function pieColors(tokens: ChartTokens): string[] {
+  const mixAccent = supportsColorMix ? `color-mix(in srgb, ${tokens.accent} 60%, ${tokens.surface})` : tokens.accent;
+  const mixAmber = supportsColorMix ? `color-mix(in srgb, ${tokens.amber} 60%, ${tokens.surface})` : tokens.amber;
+  return [tokens.accent, tokens.amber, tokens.green, tokens.tick, mixAccent, mixAmber];
+}
+
+type LegendPayloadEntry = { value: ReactNode; color?: string };
+
+/**
+ * A `Legend` `content` render function — NOT a `formatter` — because
+ * `formatter`'s return value is rendered INSIDE the span recharts already
+ * hardcodes to the series colour, so nesting a differently-coloured span
+ * there fixes the pixels but not that outer span's own resolved `color`
+ * (what a computed-style contrast check reads). `content` replaces the
+ * renderer outright: the icon swatch keeps the series colour, the label
+ * text is the only element recharts would otherwise colour, and it is
+ * `muted`, full stop.
+ */
+function legendContent(muted: string) {
+  return function MutedLegend({ payload }: { payload?: LegendPayloadEntry[] }) {
+    if (!payload || payload.length === 0) return null;
+    return (
+      <ul style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 14, padding: 0, margin: '4px 0 0', listStyle: 'none' }}>
+        {payload.map((entry, i) => (
+          <li key={i} style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+            <span aria-hidden style={{ width: 10, height: 10, background: entry.color, display: 'inline-block', flexShrink: 0 }} />
+            <span style={{ color: muted, fontSize: 12 }}>{entry.value}</span>
+          </li>
+        ))}
+      </ul>
+    );
+  };
+}
 
 export function PieCard({
   title,
@@ -17,14 +99,16 @@ export function PieCard({
   valueLabel?: string;
   format?: 'usd' | 'count';
 }) {
+  const tokens = useChartTokens();
   const fmt = (n: number) => (format === 'usd' ? fmtUSD(n) : String(n));
   const empty = data.length === 0 || data.every(d => d.value === 0);
+  const colors = tokens ? pieColors(tokens) : [];
   return (
-    <div className="card">
-      <h2>{title}</h2>
+    <div className="ed-panel">
+      <h2 className="ed-h2">{title}</h2>
       {empty ? (
-        <div className="text-sm text-slate-400 py-8 text-center">No data yet — poll a search first.</div>
-      ) : (
+        <div className="ed-empty-body" style={{ margin: '32px auto' }}>No data yet — poll a search first.</div>
+      ) : !tokens ? null : (
         <ResponsiveContainer width="100%" height={220}>
           <PieChart>
             <Pie
@@ -37,11 +121,25 @@ export function PieCard({
               label={(entry) => entry.name}
             >
               {data.map((_, i) => (
-                <Cell key={i} fill={PIE_COLORS[i % PIE_COLORS.length]} />
+                <Cell key={i} fill={colors[i % colors.length]} />
               ))}
             </Pie>
-            <Tooltip formatter={(v: number) => [fmt(v), valueLabel]} />
-            <Legend verticalAlign="bottom" height={24} />
+            <Tooltip
+              formatter={(v: number) => [fmt(v), valueLabel]}
+              contentStyle={{ background: 'var(--surface)', border: '1px solid var(--rule)', borderRadius: 0, boxShadow: 'none', color: 'var(--ink)' }}
+              itemStyle={{ color: 'var(--ink)' }}
+              labelStyle={{ color: 'var(--muted)' }}
+            />
+            {/* DefaultLegendContent hardcodes the item TEXT span's colour to
+                the series colour (`style={{color: entry.color}}` on the very
+                span the text renders in — see recharts'
+                DefaultLegendContent.renderItems). A `formatter` renders
+                INSIDE that span, so nesting another coloured span there only
+                fixes the pixels, not that outer span's own resolved colour —
+                which is what a computed-style contrast check reads. `content`
+                replaces the renderer outright, so the only span that exists
+                is the one this file colours. */}
+            <Legend verticalAlign="bottom" height={24} content={legendContent(tokens.muted)} />
           </PieChart>
         </ResponsiveContainer>
       )}
@@ -56,9 +154,11 @@ export function PriceHistory({
   data: Array<{ polled_at: string; price_per_adult_usd: number }>;
   threshold?: number;
 }) {
+  const tokens = useChartTokens();
   if (data.length === 0) {
-    return <div className="text-sm text-slate-400 py-6 text-center">No price history yet.</div>;
+    return <div className="ed-empty-body" style={{ margin: '24px auto' }}>No price history yet.</div>;
   }
+  if (!tokens) return null;
   const formatted = data.map(d => ({
     t: new Date(d.polled_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
     price: Math.round(d.price_per_adult_usd),
@@ -67,20 +167,25 @@ export function PriceHistory({
   return (
     <ResponsiveContainer width="100%" height={180}>
       <LineChart data={formatted} margin={{ top: 8, right: 16, left: 0, bottom: 0 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-        <XAxis dataKey="t" tick={{ fontSize: 11, fill: '#64748b' }} />
+        <CartesianGrid strokeDasharray="3 3" stroke={tokens.grid} />
+        <XAxis dataKey="t" tick={{ fontSize: 11, fill: tokens.tick }} />
         <YAxis
-          tick={{ fontSize: 11, fill: '#64748b' }}
+          tick={{ fontSize: 11, fill: tokens.tick }}
           tickFormatter={(v) => fmtUSD(v)}
           domain={['auto', 'auto']}
         />
-        <Tooltip formatter={(v: number) => [fmtUSD(v), 'Per adult']} />
-        <Line type="monotone" dataKey="price" stroke="#0a3a6b" strokeWidth={2} dot={false} />
+        <Tooltip
+          formatter={(v: number) => [fmtUSD(v), 'Per adult']}
+          contentStyle={{ background: 'var(--surface)', border: '1px solid var(--rule)', borderRadius: 0, boxShadow: 'none', color: 'var(--ink)' }}
+          itemStyle={{ color: 'var(--ink)' }}
+          labelStyle={{ color: 'var(--muted)' }}
+        />
+        <Line type="monotone" dataKey="price" stroke={tokens.accent} strokeWidth={2} dot={false} />
         {threshold ? (
           <Line
             type="monotone"
             dataKey={() => threshold}
-            stroke="#16a34a"
+            stroke={tokens.green}
             strokeDasharray="4 4"
             strokeWidth={1.5}
             dot={false}

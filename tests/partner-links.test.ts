@@ -185,7 +185,6 @@ const ALLOWED: Record<string, string> = {
   'components/HotelsSearchPanel.tsx': 'hotel deeplink shapes, wrapped by /go',
   'components/HotelUpsell.tsx':       'hotel deeplink shapes, wrapped by /go',
   'components/BookButton.tsx':        'renders crossShopLinks output; no hostname of its own',
-  'components/BestDealsCard.tsx':     'renders bestDeals output',
   'components/FlightSearchForm.tsx':  'renders crossShopLinks output',
   'components/DraggableSearchList.tsx': 'renders crossShopLinks output',
   'components/StayHeroSlide.tsx':     'renders hotel deeplink output',

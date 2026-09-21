@@ -110,15 +110,15 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.outDay.split(' ')[0]}</span>
-                    {r.out} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
+                    {r.out} <span className="fc-mono" style={{ color: 'var(--muted-2)', fontSize: 11 }}>{r.outDay.split(' ')[1]}</span>
                   </td>
                   <td className="fc-col-date">
                     <span className="day">{r.retDay.split(' ')[0]}</span>
-                    {r.ret} <span className="fc-mono" style={{ color: 'var(--fc-faint)', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
+                    {r.ret} <span className="fc-mono" style={{ color: 'var(--muted-2)', fontSize: 11 }}>{r.retDay.split(' ')[1]}</span>
                   </td>
-                  <td style={{ color: 'var(--fc-muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.trip}d</td>
+                  <td style={{ color: 'var(--muted)', fontFamily: 'var(--font-mono)', fontSize: 12 }}>{r.trip}d</td>
                   <td className="fc-col-price"><span className="currency">$</span>{r.per}</td>
-                  <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--fc-muted)' }}>
+                  <td style={{ textAlign: 'right', fontFamily: 'var(--font-mono)', fontSize: 13, color: 'var(--muted)' }}>
                     ${r.party.toLocaleString()}
                   </td>
                   <td className={'fc-col-vs ' + (below ? 'fc-vs-below' : 'fc-vs-above')}>
@@ -126,13 +126,15 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <div style={{ width: 38, height: 4, background: '#eef2f7', borderRadius: 999, overflow: 'hidden' }}>
+                      <div style={{ width: 38, height: 4, background: 'var(--track)', borderRadius: 0, overflow: 'hidden' }}>
                         <div style={{
                           width: `${r.conf}%`, height: '100%',
-                          background: r.conf > 80 ? '#1f8a5b' : r.conf > 70 ? '#E8A33D' : '#c1426b',
+                          // Amber is reserved for fares/primary actions (CLAUDE.md) — this is a
+                          // confidence indicator, not a fare, so the middle tier reads as accent.
+                          background: r.conf > 80 ? 'var(--green)' : r.conf > 70 ? 'var(--accent)' : 'var(--red)',
                         }} />
                       </div>
-                      <span className="fc-mono" style={{ fontSize: 11, color: 'var(--fc-muted)' }}>{r.conf}%</span>
+                      <span className="fc-mono" style={{ fontSize: 11, color: 'var(--muted)' }}>{r.conf}%</span>
                     </div>
                   </td>
                   <td>

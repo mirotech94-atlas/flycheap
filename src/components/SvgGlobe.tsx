@@ -72,7 +72,7 @@ function project(lat: number, lon: number, rotLon: number, cx: number, cy: numbe
 export function SvgGlobe({
   arcs,
   hubCodes = ['CAI', 'JFK', 'EWR'],
-  accent = '#E8A33D',
+  accent = 'var(--accent)',
 }: {
   arcs: GlobeArc[];
   hubCodes?: string[];
@@ -137,28 +137,22 @@ export function SvgGlobe({
 
   return (
     <svg viewBox={`0 0 ${SIZE} ${SIZE}`} width="100%" height="100%" style={{ maxWidth: 520, display: 'block' }}>
-      <defs>
-        <radialGradient id="sphereGrad" cx="35%" cy="32%" r="70%">
-          <stop offset="0%"  stopColor="#1a3866" />
-          <stop offset="40%" stopColor="#0a2547" />
-          <stop offset="100%" stopColor="#020a1a" />
-        </radialGradient>
-        <radialGradient id="glowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%"  stopColor="#3fd6c8" stopOpacity=".18" />
-          <stop offset="60%" stopColor="#3fd6c8" stopOpacity=".04" />
-          <stop offset="100%" stopColor="#3fd6c8" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-
-      <circle cx={cx} cy={cy} r={R + 22} fill="url(#glowGrad)" />
-      <circle cx={cx} cy={cy} r={R} fill="url(#sphereGrad)" />
+      {/* Sphere + halo used to be two radialGradients (deep-navy sphere,
+          soft teal glow). No gradients in the editorial system — flat token
+          fills keep the same silhouette: `--surface-2` for the sphere body
+          (not `--panel-bg` — that stays dark in both themes, and the accent/
+          muted markers drawn on top are only AA-safe against the page's own
+          surface family) with a faint accent-tinted halo instead of a
+          blurred glow. */}
+      <circle cx={cx} cy={cy} r={R + 22} fill="color-mix(in srgb, var(--accent) 10%, transparent)" />
+      <circle cx={cx} cy={cy} r={R} fill="var(--surface-2)" />
 
       {[-60, -30, 0, 30, 60].map(off => {
         const phi = (off * Math.PI) / 180;
         return (
           <ellipse key={`m${off}`} cx={cx} cy={cy}
             rx={R * Math.abs(Math.cos(phi))} ry={R}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--rule)" strokeWidth="0.5" />
         );
       })}
       {[-60, -30, 0, 30, 60].map(lat => {
@@ -168,26 +162,29 @@ export function SvgGlobe({
         return (
           <ellipse key={`p${lat}`} cx={cx} cy={cy + ry}
             rx={rx} ry={rx * 0.0001 + 0.5}
-            fill="none" stroke="rgba(212,175,55,.10)" strokeWidth="0.5" />
+            fill="none" stroke="var(--rule)" strokeWidth="0.5" />
         );
       })}
       <line x1={cx - R} y1={cy} x2={cx + R} y2={cy}
-        stroke="rgba(212,175,55,.18)" strokeWidth="0.6" strokeDasharray="3 5" />
+        stroke="var(--rule-strong)" strokeWidth="0.6" strokeDasharray="3 5" />
 
+      {/* Landmass texture dots — the neutral base tone. Hub/hot highlights
+          use `accent`; everything else (land texture, regular arcs/cities)
+          uses `--muted` so amber/accent stay reserved for the featured
+          route, per the fares/primary-only token roles. */}
       {dots.map((p, i) => p && (
         <circle key={i} cx={p.x} cy={p.y} r={p.front ? 1.2 : 0.8}
-          fill={p.front ? 'rgba(63,214,200,.55)' : 'rgba(63,214,200,.18)'} />
+          fill={p.front ? 'color-mix(in srgb, var(--muted) 55%, transparent)' : 'color-mix(in srgb, var(--muted) 18%, transparent)'} />
       ))}
 
       {arcPaths.map(a => (
         <g key={a.i}>
           <path d={a.d} fill="none"
-            stroke={a.hot ? accent : 'rgba(63,214,200,.55)'}
+            stroke={a.hot ? accent : 'color-mix(in srgb, var(--muted) 55%, transparent)'}
             strokeWidth={a.hot ? 1.6 : 1}
             strokeLinecap="round"
-            style={{ filter: a.hot ? `drop-shadow(0 0 4px ${accent})` : 'none' }}
             opacity={a.hot ? 1 : 0.7} />
-          <circle r="3" fill={a.hot ? accent : '#3fd6c8'}>
+          <circle r="3" fill={a.hot ? accent : 'var(--muted)'}>
             <animateMotion dur={`${4 + a.i * 0.4}s`} repeatCount="indefinite" path={a.d} />
             <animate attributeName="opacity" dur={`${4 + a.i * 0.4}s`}
               repeatCount="indefinite" values="0;1;1;0" keyTimes="0;0.1;0.9;1" />
@@ -202,14 +199,13 @@ export function SvgGlobe({
           <g key={c.code}>
             <circle cx={c.proj.x} cy={c.proj.y}
               r={isHub ? 4 : 2.2}
-              fill={isHub ? accent : '#3fd6c8'}
-              stroke={isHub ? 'rgba(212,175,55,.4)' : 'rgba(63,214,200,.4)'}
-              strokeWidth={isHub ? 3 : 2}
-              style={{ filter: isHub ? `drop-shadow(0 0 6px ${accent})` : 'none' }} />
+              fill={isHub ? accent : 'var(--muted)'}
+              stroke={isHub ? 'color-mix(in srgb, var(--accent) 40%, transparent)' : 'color-mix(in srgb, var(--muted) 40%, transparent)'}
+              strokeWidth={isHub ? 3 : 2} />
             {isHub && (
               <text x={c.proj.x + 8} y={c.proj.y - 8}
                 fill={accent} fontSize="10"
-                fontFamily="JetBrains Mono, monospace"
+                style={{ fontFamily: 'var(--font-mono-ed)' }}
                 fontWeight="600" letterSpacing="0.1em">
                 {c.code}
               </text>
@@ -219,7 +215,7 @@ export function SvgGlobe({
       })}
 
       <circle cx={cx} cy={cy} r={R} fill="none"
-        stroke="rgba(63,214,200,.18)" strokeWidth="0.8" />
+        stroke="var(--rule)" strokeWidth="0.8" />
     </svg>
   );
 }

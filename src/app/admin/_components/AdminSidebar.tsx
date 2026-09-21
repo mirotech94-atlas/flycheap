@@ -2,8 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { Logo } from '@/components/Logo';
 
 type NavItem = { href: string; label: string; icon: IconKey; hint?: string };
 type NavGroup = { group: string; items: NavItem[] };
@@ -79,129 +77,53 @@ function Icon({ kind }: { kind: IconKey }) {
 
 export function AdminSidebar({ email }: { email: string }) {
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
 
   const isActive = (href: string) =>
     href === '/admin' ? pathname === '/admin' : !!pathname?.startsWith(href);
 
   return (
-    <>
-      <button
-        aria-label="Toggle admin nav"
-        onClick={() => setOpen(v => !v)}
-        className="md:hidden fixed top-3 left-3 z-50 w-9 h-9 rounded-md bg-[#1B2740] border border-white/10 text-white flex items-center justify-center"
-      >
-        <span className="block w-4 h-[2px] bg-white relative before:content-[''] before:absolute before:left-0 before:-top-1.5 before:w-4 before:h-[2px] before:bg-white after:content-[''] after:absolute after:left-0 after:top-1.5 after:w-4 after:h-[2px] after:bg-white" />
-      </button>
+    <aside className="ad-rail">
+      <div className="ad-rail-operator ed-mono" title={email}>{email}</div>
 
-      <aside
-        className={`
-          fixed top-0 left-0 z-40 h-screen w-[220px]
-          flex flex-col
-          border-r border-white/[0.06]
-          bg-gradient-to-b from-[#1B2740] via-[#0B1220] to-[#080D16]
-          transition-transform duration-200
-          ${open ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0
-        `}
-        style={{ boxShadow: 'inset -1px 0 0 rgba(232,163,61,0.07)' }}
-      >
-        {/* Brand */}
-        <div className="px-5 pt-5 pb-4 border-b border-white/[0.06]">
-          <Link href="/admin" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <div className="absolute inset-0 rounded-md bg-[#E8A33D] blur-md opacity-30 group-hover:opacity-50 transition" />
-              <Logo size={30} className="relative" />
-            </div>
-            <div className="leading-tight">
-              <div
-                className="text-white text-[16px]"
-                style={{ fontFamily: 'var(--fc-font-display, Fraunces, serif)', letterSpacing: '-0.01em' }}
-              >
-                FlyCheap
-              </div>
-              <div className="text-[9px] tracking-[0.24em] uppercase text-[#6FB3C9] font-mono">
-                Command Center
-              </div>
-            </div>
-          </Link>
-        </div>
-
-        {/* Operator */}
-        <div className="px-5 py-3 border-b border-white/[0.06]">
-          <div className="text-[11px] text-white/55 truncate" title={email}>{email}</div>
-          <div className="mt-1.5 inline-flex items-center gap-1.5 text-[9px] uppercase tracking-[0.18em] px-2 py-0.5 rounded-full bg-[#6FB3C9]/15 text-[#9ACBDB] border border-[#6FB3C9]/30 font-mono">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#7BC49A] shadow-[0_0_6px_#7BC49A]" />
-            Admin · Live
-          </div>
-        </div>
-
-        {/* Nav */}
-        <nav className="flex-1 overflow-y-auto py-3 px-2.5">
-          {NAV.map(section => (
-            <div key={section.group} className="mb-3">
-              <div className="px-3 pb-1.5 pt-1 text-[9.5px] font-mono uppercase tracking-[0.2em] text-white/28">
-                {section.group}
-              </div>
-              {section.items.map(item => {
-                const active = isActive(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setOpen(false)}
-                    title={item.hint}
-                    className={`
-                      relative flex items-center gap-3 px-3 py-[7px] rounded-lg text-[13px] mb-0.5
-                      transition
-                      ${active
-                        ? 'bg-white/[0.07] text-white font-semibold'
-                        : 'text-white/60 hover:text-white hover:bg-white/[0.04]'}
-                    `}
-                  >
-                    {active && (
-                      <span className="absolute left-0 top-2 bottom-2 w-[3px] rounded-r-full bg-[#E8A33D] shadow-[0_0_8px_rgba(232,163,61,0.6)]" />
-                    )}
-                    <span className={active ? 'text-[#6FB3C9]' : 'text-white/45'}>
-                      <Icon kind={item.icon} />
-                    </span>
+      <nav>
+        {NAV.map(section => (
+          <div key={section.group}>
+            <div className="ad-rail-group">{section.group}</div>
+            {section.items.map(item => {
+              const active = isActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  title={item.hint}
+                  className={`ad-rail-item${active ? ' active' : ''}`}
+                >
+                  <span className="ad-rail-item-inner">
+                    <Icon kind={item.icon} />
                     <span>{item.label}</span>
-                  </Link>
-                );
-              })}
-            </div>
-          ))}
+                  </span>
+                </Link>
+              );
+            })}
+          </div>
+        ))}
 
-          <div className="my-2 mx-3 border-t border-white/[0.06]" />
+        <hr className="ed-rule" style={{ margin: '10px 24px' }} />
 
-          <form action="/api/auth/logout" method="POST">
-            <button
-              type="submit"
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] text-white/60 hover:text-white hover:bg-white/[0.04] transition"
-            >
-              <span className="text-white/45"><Icon kind="logout" /></span>
+        <form action="/api/auth/logout" method="POST">
+          <button type="submit" className="ad-rail-item ad-rail-logout">
+            <span className="ad-rail-item-inner">
+              <Icon kind="logout" />
               <span>Logout</span>
-            </button>
-          </form>
-        </nav>
+            </span>
+          </button>
+        </form>
+      </nav>
 
-        {/* Footer */}
-        <div className="px-4 py-3 border-t border-white/[0.06]">
-          <Link
-            href="/"
-            className="flex items-center gap-2 text-[11px] text-white/55 hover:text-white transition"
-          >
-            <Icon kind="back" />
-            Back to client app
-          </Link>
-        </div>
-      </aside>
-
-      {open && (
-        <div
-          onClick={() => setOpen(false)}
-          className="md:hidden fixed inset-0 bg-black/60 z-30"
-        />
-      )}
-    </>
+      <Link href="/" className="ad-rail-foot">
+        <Icon kind="back" />
+        Back to client app
+      </Link>
+    </aside>
   );
 }

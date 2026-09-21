@@ -164,6 +164,7 @@ export const it: AppDict = {
     lede: 'FlyCheap sorveglia oltre 1.000 compagnie 24 ore su 24 e ti avvisa nell’istante in cui una tariffa sulla tua rotta scende sotto la soglia. Basta aggiornare Google Flights alle 2 di notte.',
     bookCheapest: 'Prenota il più economico → {price}', addFirst: 'Aggiungi la tua prima rotta →', addWatch: 'Aggiungi un monitoraggio',
     cheapestNow: 'Più economico ora', median: 'Mediana della cache', destinations: 'Destinazioni attive', cities: 'città',
+    rankedTitle: 'Dove si colloca ogni rotta nel suo intervallo di 30 giorni', bookArrow: 'Prenota →',
     globeTl: 'RETE LIVE · {n} ROTTE', globeBr: '{a} ARCHI ATTIVI · {t} MONITORATE',
     ticker: 'TARIFFE LIVE', polling: 'Polling…',
     quickEyebrow: 'Ricerca rapida', quickSub: 'Cerca voli o sfoglia offerte da qualsiasi città', fullExplore: 'Esplora tutto →',

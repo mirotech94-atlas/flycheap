@@ -29,11 +29,15 @@ export function DemoPlayer({ src, poster, chapters }: { src: string; poster: str
   }
 
   return (
-    <div className="fc-demo-layout">
-      <div className="fc-demo-stage">
-        <div className="fc-l-preview-chrome">
-          <div className="dots"><div className="dot" /><div className="dot" /><div className="dot" /></div>
-          <div className="url">flycheap.live / <strong>live demo</strong></div>
+    <div className="ed-demo-layout">
+      <div className="ed-demo-stage">
+        <div className="ed-demo-browser-bar">
+          <div className="ed-demo-browser-dots">
+            <span className="ed-dot muted" />
+            <span className="ed-dot muted" />
+            <span className="ed-dot muted" />
+          </div>
+          <div className="ed-demo-browser-url">flycheap.live / <strong>live demo</strong></div>
         </div>
         <video
           ref={ref}
@@ -45,13 +49,13 @@ export function DemoPlayer({ src, poster, chapters }: { src: string; poster: str
           onTimeUpdate={onTime}
         />
       </div>
-      <div className="fc-demo-chapters">
-        <div className="fc-demo-chapters-head">Chapters · click to jump</div>
+      <div className="ed-demo-chapters">
+        <div className="ed-demo-chapters-head">Chapters · click to jump</div>
         {chapters.map((c, i) => (
           <button
             key={c.t}
             type="button"
-            className={`fc-demo-chapter${i === active ? ' active' : ''}`}
+            className={`ed-demo-chapter${i === active ? ' active' : ''}`}
             onClick={() => seek(c.t, i)}
           >
             <span className="ts">{fmt(c.t)}</span>

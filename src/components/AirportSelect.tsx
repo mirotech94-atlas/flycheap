@@ -104,7 +104,7 @@ export function AirportSelect({
         onFocus={() => { setOpen(true); inputRef.current?.select(); }}
         onKeyDown={onKeyDown}
         placeholder={placeholder}
-        className="w-full rounded border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 px-2 py-1 text-xs text-slate-700 dark:text-slate-200"
+        className="ed-input"
         aria-autocomplete="list"
         aria-expanded={open}
       />
@@ -112,9 +112,9 @@ export function AirportSelect({
       {name && <input type="hidden" name={name} value={value} required={required} />}
 
       {open && (
-        <div className="absolute z-30 left-0 right-0 mt-1 max-h-72 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lift">
+        <div className="ed-field-drop" style={{ zIndex: 30 }}>
           {results.length === 0 ? (
-            <div className="px-3 py-3 text-xs text-slate-500">
+            <div className="px-3 py-3" style={{ fontSize: 12, color: 'var(--muted)' }}>
               No airports match &quot;{query}&quot;. Searched across {AIRPORTS.length} commercial airports.
             </div>
           ) : results.map((a, i) => (
@@ -124,15 +124,13 @@ export function AirportSelect({
               onMouseDown={e => e.preventDefault() /* keep focus on input */}
               onClick={() => pick(a)}
               onMouseEnter={() => setHighlight(i)}
-              className={`w-full text-left px-3 py-2 text-xs border-b border-slate-100 dark:border-slate-800 last:border-b-0 ${
-                i === highlight ? 'bg-brand/10 dark:bg-brand-900/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'
-              }`}
+              className={`ed-field-drop-row${i === highlight ? ' hl' : ''}`}
             >
               <div className="flex items-center gap-2">
-                <span className="font-mono font-semibold text-brand-700 dark:text-brand-300 w-12 shrink-0">{a.iata}</span>
+                <span className="ed-mono w-12 shrink-0" style={{ color: 'var(--accent)' }}>{a.iata}</span>
                 <span className="flex-1 min-w-0">
-                  <span className="text-slate-800 dark:text-slate-100 truncate block">{a.name}</span>
-                  <span className="text-[10px] text-slate-500 truncate block">{a.city} · {a.country}</span>
+                  <span className="truncate block" style={{ color: 'var(--ink)' }}>{a.name}</span>
+                  <span className="text-[10px] truncate block" style={{ color: 'var(--muted-2)' }}>{a.city} · {a.country}</span>
                 </span>
               </div>
             </button>

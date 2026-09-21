@@ -22,27 +22,27 @@ export function LiveFeed({ initial, labels: t, lastPollText, footRight, visible 
     return () => { if (timer.current) clearInterval(timer.current); clearInterval(refresh); };
   }, []);
 
-  if (pool.length === 0) return <div className="dc-feed"><div className="dc-feed-empty">{t.empty}</div></div>;
+  if (pool.length === 0) return <div className="mk-feed"><div className="mk-feed-empty">{t.empty}</div></div>;
   const rows = Array.from({ length: Math.min(visible, pool.length) }, (_, k) => pool[(idx + k) % pool.length]);
 
   return (
-    <div className="dc-feed" aria-live="polite">
-      <div className="dc-feed-head">
-        <span><span className="dot" />{t.title}</span>
-        <span className="mono">{lastPollText}</span>
+    <div className="mk-feed" aria-live="polite">
+      <div className="mk-feed-head">
+        <span><span className="ed-dot" /> {t.title}</span>
+        <span className="mk-feed-time">{lastPollText}</span>
       </div>
       {rows.map((f, i) => (
-        <div className={`dc-feed-row${i === 0 ? ' fresh' : ''}`} key={`${f.route}-${f.code}-${tick}-${i}`}>
-          <span className={`dc-tag ${f.delta < 0 ? 'drop' : 'low'}`}>{f.delta < 0 ? t.tagDrop : t.tagLow}</span>
-          <div className="dc-feed-main">
-            <div className="r">{f.route} <span className="al">· {f.airline}</span></div>
-            <div className="s">{f.provider} · {fmtD(f.out)} → {fmtD(f.ret)} · {f.trip}d</div>
+        <div className={`mk-feed-row${i === 0 ? ' fresh' : ''}`} key={`${f.route}-${f.code}-${tick}-${i}`}>
+          <div className="mk-feed-route-wrap">
+            <div className="mk-feed-route">{f.route} <span className="mk-feed-al">· {f.airline}</span></div>
+            <div className="mk-feed-meta">{f.provider} · {fmtD(f.out)} → {fmtD(f.ret)} · {f.trip}d</div>
           </div>
-          <div className="dc-feed-price">${f.price}</div>
-          <div className={`dc-feed-delta ${f.delta < 0 ? 'down' : ''}`}>{f.delta < 0 ? `▼ $${Math.abs(f.delta)} ${t.typical}` : t.at}</div>
+          <div className={`mk-feed-delta ${f.delta < 0 ? 'down' : ''}`}>{f.delta < 0 ? `▼ $${Math.abs(f.delta)} ${t.typical}` : t.at}</div>
+          <div className="mk-feed-price">${f.price}</div>
+          <span className={`mk-tag ${f.delta < 0 ? 'drop' : 'low'}`}>{f.delta < 0 ? t.tagDrop : t.tagLow}</span>
         </div>
       ))}
-      <div className="dc-feed-foot"><span>{t.foot}</span><span className="mono">{footRight}</span></div>
+      <div className="mk-feed-foot"><span>{t.foot}</span><span className="mk-feed-time">{footRight}</span></div>
     </div>
   );
 }

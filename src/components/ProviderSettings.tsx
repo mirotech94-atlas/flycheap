@@ -173,52 +173,65 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
   }
 
   return (
-    <div className="card">
-      <div className="card-head">
+    <div className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow">Data sources</div>
-          <h2 className="!mb-0">Flight providers</h2>
+          <div className="ed-eyebrow">Data sources</div>
+          <h2 className="ed-panel-title">Flight providers</h2>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="ed-panel-note" style={{ marginBottom: 12 }}>
         When multiple providers are enabled, every poll fans out to all of them in parallel and the cheapest price wins.
         Each fare is tagged with its source. Click <em>Sign up &amp; configure</em> on any unconfigured provider for a guided wizard.
       </p>
 
-      <div className="space-y-2">
+      <div>
         {providers.map(p => {
           const wizard = WIZARD[p.id];
           const drawerOpen = drawer === p.id;
           return (
             <div key={p.id}>
-              <div className={`flex items-start gap-3 p-3 rounded-lg border ${p.isConfigured ? 'border-slate-200 dark:border-slate-700' : 'border-amber-200 bg-amber-50/40 dark:bg-amber-900/10 dark:border-amber-800/50'}`}>
-                <label className="flex items-center pt-1">
-                  <input
-                    type="checkbox"
-                    checked={p.isEnabled}
-                    disabled={!p.isConfigured}
-                    onChange={() => toggle(p.id)}
-                    className="w-4 h-4"
-                    title={p.isConfigured ? 'Enable this provider' : 'Add API credentials first'}
-                  />
+              <div className="ed-toggle-row">
+                <label className="ed-toggle-label">
+                  <span className="ed-toggle-text">
+                    <span className="ed-toggle-name" style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+                      {p.label}
+                      {p.isConfigured ? (
+                        <span className="ed-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <span className="ed-dot" aria-hidden />configured
+                        </span>
+                      ) : (
+                        <span className="ed-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                          <span className="ed-dot amber" aria-hidden />needs API key
+                        </span>
+                      )}
+                      {p.isEnabled && p.isConfigured && <span className="ed-chip">enabled</span>}
+                      {wizard && <span className="ed-mono" style={{ color: 'var(--muted-2)' }}>{wizard.freeTier}</span>}
+                    </span>
+                    <span className="ed-toggle-help">{p.configHint}</span>
+                  </span>
+                  <span className="ed-toggle-switch">
+                    <input
+                      type="checkbox"
+                      className="ed-toggle-input"
+                      role="switch"
+                      aria-checked={p.isEnabled}
+                      checked={p.isEnabled}
+                      disabled={!p.isConfigured}
+                      onChange={() => toggle(p.id)}
+                      title={p.isConfigured ? 'Enable this provider' : 'Add API credentials first'}
+                    />
+                    <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
+                  </span>
                 </label>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <strong className="text-sm">{p.label}</strong>
-                    {p.isConfigured
-                      ? <span className="badge badge-ok">configured</span>
-                      : <span className="badge badge-warn">needs API key</span>}
-                    {p.isEnabled && p.isConfigured && <span className="badge badge-info">enabled</span>}
-                    {wizard && <span className="badge badge-muted">{wizard.freeTier}</span>}
-                  </div>
-                  <div className="text-[11px] text-slate-500 mt-1">{p.configHint}</div>
-                </div>
-                <div className="flex flex-col gap-1 shrink-0">
+                {/* Outside the label, same reasoning as AlertChannelsCard's Test
+                    button — a click here must not also flip the switch. */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 4, flexShrink: 0 }}>
                   <button
                     type="button"
                     onClick={() => test(p.id)}
                     disabled={!p.isConfigured || testing === p.id}
-                    className="btn btn-sm"
+                    className="ed-btn ed-btn-secondary"
                   >
                     {testing === p.id ? 'Testing…' : 'Test'}
                   </button>
@@ -226,7 +239,7 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
                     <button
                       type="button"
                       onClick={() => { setDrawer(drawerOpen ? null : p.id); setDrawerInputs({}); }}
-                      className="btn btn-sm"
+                      className="ed-btn ed-btn-secondary"
                     >
                       {drawerOpen ? 'Close' : (p.isConfigured ? 'Update key' : 'Sign up & configure')}
                     </button>
@@ -235,29 +248,30 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
               </div>
 
               {drawerOpen && wizard && (
-                <div className="ml-7 mt-1 mb-3 p-4 rounded-lg border border-brand/30 bg-brand/5 dark:bg-brand-900/20">
+                <div className="ed-subpanel mb-3" style={{ marginTop: 4 }}>
                   <div className="flex items-start justify-between gap-3 mb-3">
                     <div>
-                      <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Setup wizard · {p.label}</div>
-                      <div className="text-[11px] text-slate-500">{wizard.freeTier}</div>
+                      <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Setup wizard · {p.label}</div>
+                      <div className="ed-mono" style={{ color: 'var(--muted-2)', marginTop: 2 }}>{wizard.freeTier}</div>
                     </div>
                     <a
                       href={wizard.signupUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="btn btn-primary btn-sm shrink-0"
+                      className="ed-btn ed-btn-primary"
+                      style={{ flexShrink: 0 }}
                     >
                       Open signup ↗
                     </a>
                   </div>
-                  <ol className="list-decimal pl-5 text-xs text-slate-600 dark:text-slate-300 space-y-1 mb-3">
+                  <ol style={{ paddingLeft: 20, listStyleType: 'decimal', marginBottom: 12, fontSize: 12, color: 'var(--muted)', lineHeight: 1.6 }}>
                     {wizard.steps.map((s, i) => <li key={i}>{s}</li>)}
                   </ol>
                   <div className="space-y-2">
                     {wizard.envKeys.map(k => (
                       <div key={k.key}>
-                        <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 mb-1 block">
-                          {k.key} {keyStatus[k.key] && <span className="text-emerald-600 normal-case font-normal lowercase tracking-normal">· already set</span>}
+                        <label className="ed-label">
+                          {k.key} {keyStatus[k.key] && <span style={{ textTransform: 'none', letterSpacing: 0, fontWeight: 500, color: 'var(--green)' }}>· already set</span>}
                         </label>
                         <input
                           type="password"
@@ -265,21 +279,22 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
                           placeholder={k.placeholder}
                           value={drawerInputs[k.key] ?? ''}
                           onChange={e => setDrawerInputs({ ...drawerInputs, [k.key]: e.target.value })}
-                          className="w-full font-mono text-xs"
+                          className="ed-input"
+                          style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 12 }}
                         />
-                        {k.help && <div className="text-[10px] text-slate-500 mt-0.5">{k.help}</div>}
+                        {k.help && <div className="ed-panel-note" style={{ marginTop: 4, fontSize: 11 }}>{k.help}</div>}
                       </div>
                     ))}
                   </div>
                   <div className="flex items-center gap-2 mt-3">
                     <button
                       onClick={() => saveKeys(p.id)}
-                      className="btn btn-primary btn-sm"
+                      className="ed-btn ed-btn-primary"
                       disabled={savingKeys}
                     >
                       {savingKeys ? 'Saving…' : 'Save key & test'}
                     </button>
-                    <span className="text-[10px] text-slate-500">
+                    <span className="ed-mono" style={{ color: 'var(--muted-2)' }}>
                       Saved to .env.local with file mode 0600 · injected into the running process so it&apos;s active immediately.
                     </span>
                   </div>
@@ -290,9 +305,9 @@ export function ProviderSettings({ initial }: { initial: ProviderStatus[] }) {
         })}
       </div>
 
-      <div className="mt-4 flex items-center gap-3 pt-3 border-t border-slate-200/60 dark:border-slate-700">
-        <button onClick={save} className="btn btn-primary" disabled={pending}>Save provider toggles</button>
-        {msg && <span className="text-xs text-slate-500">{msg}</span>}
+      <div className="mt-4 flex items-center gap-3 pt-3" style={{ borderTop: '1px solid var(--rule)' }}>
+        <button onClick={save} className="ed-btn ed-btn-primary" disabled={pending}>Save provider toggles</button>
+        {msg && <span className="ed-panel-note" style={{ margin: 0 }}>{msg}</span>}
       </div>
     </div>
   );

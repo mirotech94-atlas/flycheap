@@ -59,54 +59,54 @@ export default async function DestinationPage({ params }: DestinationParams) {
   };
 
   return (
-    <div className="space-y-8 max-w-3xl mx-auto motion-fade-in">
+    <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div>
-        <nav className="text-xs text-slate-500 mb-2">
-          <Link href="/destinations" className="hover:underline">Destinations</Link>
+        <nav style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+          <Link href="/destinations" style={{ color: 'var(--muted)' }}>Destinations</Link>
           {' / '}
           <span>{guide!.city}</span>
         </nav>
-        <div className="eyebrow mb-1">Destination guide</div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight font-display">
+        <div className="ed-eyebrow">Destination guide</div>
+        <h1 className="ed-h1">
           {guide!.city}, {guide!.country}
         </h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">{guide!.tagline}</p>
+        <p className="ed-sub">{guide!.tagline}</p>
       </div>
 
       {/* Quick facts strip */}
-      <section className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <section className="ed-stats">
         {guide!.quickFacts.map(f => (
-          <div key={f.label} className="card">
-            <div className="eyebrow">{f.label}</div>
-            <div className="text-sm mt-1">{f.value}</div>
+          <div key={f.label} className="ed-stat">
+            <div className="ed-stat-label">{f.label}</div>
+            <div className="ed-stat-value" style={{ fontSize: 18 }}>{f.value}</div>
           </div>
         ))}
       </section>
 
       {/* Long-form guide sections */}
-      <article className="prose prose-slate dark:prose-invert max-w-none">
+      <article>
         {guide!.sections.map(s => (
-          <section key={s.heading} className="mt-6">
-            <h2 className="text-xl font-semibold !mb-2">{s.heading}</h2>
-            <p className="leading-relaxed text-slate-700 dark:text-slate-300">{s.body}</p>
+          <section key={s.heading} style={{ marginBottom: 28 }}>
+            <h2 className="ed-h2">{s.heading}</h2>
+            <p style={{ color: 'var(--ink-soft)', lineHeight: 1.6 }}>{s.body}</p>
           </section>
         ))}
       </article>
 
       {/* Live deals to this destination */}
       {top5.length > 0 && (
-        <section>
-          <h2 className="text-xl font-semibold mb-3">Current cheapest flights to {guide!.city}</h2>
-          <div className="overflow-x-auto">
-            <table className="fmt w-full">
+        <section style={{ marginBottom: 36 }}>
+          <h2 className="ed-h2">Current cheapest flights to {guide!.city}</h2>
+          <div style={{ overflowX: 'auto' }}>
+            <table className="ed-table">
               <thead>
                 <tr>
                   <th>From</th>
                   <th>Depart</th>
                   <th>Return</th>
-                  <th className="text-right">Per adult</th>
+                  <th className="num">Per adult</th>
                   <th></th>
                 </tr>
               </thead>
@@ -115,14 +115,14 @@ export default async function DestinationPage({ params }: DestinationParams) {
                   const oA = airportByCode(d.origin);
                   return (
                     <tr key={i}>
-                      <td>{d.origin} <span className="text-slate-400 text-xs">({oA?.city ?? '—'})</span></td>
+                      <td>{d.origin} <span style={{ color: 'var(--muted)', fontSize: 12 }}>({oA?.city ?? '—'})</span></td>
                       <td>{d.outbound_date}</td>
                       <td>{d.return_date}</td>
-                      <td className="text-right font-mono">{fmtUSD(d.per_adult_usd)}</td>
-                      <td className="text-right">
+                      <td className="num">{fmtUSD(d.per_adult_usd)}</td>
+                      <td className="cta">
                         <Link
                           href={`/routes/${d.origin.toLowerCase()}-${guide!.iata.toLowerCase()}`}
-                          className="text-xs underline decoration-dotted text-blue-700 dark:text-blue-400"
+                          className="ed-btn ed-btn-tile"
                         >
                           Track →
                         </Link>
@@ -136,7 +136,7 @@ export default async function DestinationPage({ params }: DestinationParams) {
         </section>
       )}
 
-      <p className="text-xs text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <p className="ed-panel-note" style={{ paddingTop: 16, borderTop: '1px solid var(--rule)' }}>
         Guide last reviewed by our editorial team. Prices are cached and refresh hourly from our Travelpayouts feed.
       </p>
     </div>

@@ -35,7 +35,7 @@ export function Logo({ size = 36, className = '' }: { size?: number; className?:
         </linearGradient>
       </defs>
       <rect width="64" height="64" rx="14" fill="url(#logo-bg)" />
-      {/* --nc-rule-2 weight, not --nc-rule: at the 28-30px the chrome renders
+      {/* --rule-strong weight, not --rule: at the 28-30px the chrome renders
           this at, a .10 hairline disappears and the tile loses its edge. */}
       <rect x="0.75" y="0.75" width="62.5" height="62.5" rx="13.5" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.5" />
       {/* Fare-drop: a plane descending a dotted price line — fares falling to target. */}

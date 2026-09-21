@@ -77,30 +77,32 @@ export function SmsOptIn({ phone, optIn, verified }: Props) {
   }
 
   return (
-    <div className="card">
-      <div className="eyebrow mb-1">Notifications</div>
-      <h2 className="!mb-1">SMS fare alerts</h2>
-      <p className="text-sm text-slate-500 mb-4">
+    <section className="ed-panel">
+      <div className="ed-eyebrow" style={{ marginBottom: 4 }}>Notifications</div>
+      <h2 className="ed-h2" style={{ marginBottom: 6 }}>SMS fare alerts</h2>
+      <p className="ed-panel-note" style={{ marginBottom: 18 }}>
         Get price-drop notifications by text. US/Canada toll-free number from FlyCheap.
       </p>
 
       {isActive ? (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
-            <span className="badge badge-ok">✓ Active</span>
-            <span className="text-sm font-mono">{phone}</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 12, fontWeight: 600, color: 'var(--green)' }}>
+              <span className="ed-dot" aria-hidden />✓ Active
+            </span>
+            <span className="ed-mono" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--ink-soft)' }}>{phone}</span>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="ed-panel-note" style={{ margin: 0 }}>
             You can also reply STOP from your phone to cancel anytime.
           </p>
-          <button onClick={optOut} disabled={busy} className="btn">
+          <button onClick={optOut} disabled={busy} className="ed-btn ed-btn-secondary">
             {busy ? 'Disabling…' : 'Disable SMS alerts'}
           </button>
         </div>
       ) : stage === 'idle' ? (
         <div className="space-y-3">
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <span className="ed-label">
               Mobile number (E.164)
             </span>
             <input
@@ -108,11 +110,12 @@ export function SmsOptIn({ phone, optIn, verified }: Props) {
               value={phoneInput}
               onChange={e => setPhoneInput(e.target.value.trim())}
               placeholder="+15551234567"
-              className="w-full mt-1 font-mono"
+              className="ed-input"
+              style={{ fontFamily: 'var(--font-mono-ed)' }}
               autoComplete="tel"
             />
           </label>
-          <label className="flex items-start gap-2 text-xs text-slate-600">
+          <label className="flex items-start gap-2 text-xs" style={{ color: 'var(--muted)' }}>
             <input
               type="checkbox"
               checked={consent}
@@ -124,17 +127,17 @@ export function SmsOptIn({ phone, optIn, verified }: Props) {
               Up to 5 messages per week. Msg &amp; data rates may apply. Reply STOP to cancel, HELP for help.
             </span>
           </label>
-          <button onClick={sendCode} disabled={busy} className="btn btn-primary">
+          <button onClick={sendCode} disabled={busy} className="ed-btn ed-btn-primary">
             {busy ? 'Sending…' : 'Send verification code'}
           </button>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-sm text-slate-600">
-            We sent a 6-digit code to <span className="font-mono">{phoneInput}</span>.
+          <p className="ed-panel-note" style={{ margin: 0 }}>
+            We sent a 6-digit code to <span className="ed-mono" style={{ textTransform: 'none', letterSpacing: 0 }}>{phoneInput}</span>.
           </p>
           <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wider text-slate-600">
+            <span className="ed-label">
               Verification code
             </span>
             <input
@@ -144,23 +147,24 @@ export function SmsOptIn({ phone, optIn, verified }: Props) {
               value={code}
               onChange={e => setCode(e.target.value.replace(/\D/g, ''))}
               placeholder="123456"
-              className="w-full mt-1 font-mono tracking-widest"
+              className="ed-input"
+              style={{ fontFamily: 'var(--font-mono-ed)', letterSpacing: '0.1em' }}
               autoComplete="one-time-code"
             />
           </label>
           <div className="flex gap-2">
-            <button onClick={verify} disabled={busy} className="btn btn-primary">
+            <button onClick={verify} disabled={busy} className="ed-btn ed-btn-primary">
               {busy ? 'Verifying…' : 'Verify'}
             </button>
-            <button onClick={() => { setStage('idle'); setCode(''); }} disabled={busy} className="btn">
+            <button onClick={() => { setStage('idle'); setCode(''); }} disabled={busy} className="ed-btn ed-btn-secondary">
               Change number
             </button>
           </div>
         </div>
       )}
 
-      {err && <div className="text-sm text-red-600 mt-3">{err}</div>}
-      {msg && <div className="text-sm text-emerald-600 mt-3">{msg}</div>}
-    </div>
+      {err && <div className="text-sm mt-3" style={{ color: 'var(--red)' }}>{err}</div>}
+      {msg && <div className="text-sm mt-3" style={{ color: 'var(--green)' }}>{msg}</div>}
+    </section>
   );
 }

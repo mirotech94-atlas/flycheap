@@ -27,10 +27,10 @@ export function DangerZone({ email }: { email: string }) {
   }
 
   return (
-    <div className="card border-red-200 bg-red-50/40 dark:bg-red-900/10 dark:border-red-800/40">
-      <div className="eyebrow text-red-700 dark:text-red-400">Danger zone</div>
-      <h2 className="!mb-2 text-red-900 dark:text-red-300">Delete account</h2>
-      <p className="text-xs text-slate-600 dark:text-slate-400 mb-3">
+    <section className="ed-panel" style={{ borderColor: 'var(--red)' }}>
+      <div className="ed-eyebrow" style={{ color: 'var(--red)' }}>Danger zone</div>
+      <h2 className="ed-h2" style={{ marginBottom: 8, color: 'var(--red)' }}>Delete account</h2>
+      <p className="ed-panel-note" style={{ marginBottom: 14 }}>
         This permanently deletes your account, all tracked routes, fare history, and alert log.
         Cannot be undone. To confirm, type your email below.
       </p>
@@ -40,17 +40,18 @@ export function DangerZone({ email }: { email: string }) {
           value={confirm}
           onChange={e => setConfirm(e.target.value)}
           placeholder={email}
-          className="flex-1 font-mono text-sm"
+          className="ed-input flex-1"
+          style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 13 }}
         />
         <button
           onClick={deleteAccount}
           disabled={busy || confirm.trim().toLowerCase() !== email.trim().toLowerCase()}
-          className="btn btn-danger"
+          className="ed-btn ed-btn-danger"
         >
           {busy ? 'Deleting…' : 'Delete forever'}
         </button>
       </div>
-      {err && <div className="mt-2 text-xs text-red-700 bg-red-100 border border-red-200 rounded px-2 py-1.5">{err}</div>}
-    </div>
+      {err && <div className="mt-2 text-xs" style={{ color: 'var(--red)', border: '1px solid var(--red)', padding: '6px 8px' }}>{err}</div>}
+    </section>
   );
 }

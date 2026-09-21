@@ -3,18 +3,20 @@ import { redirect, notFound } from 'next/navigation';
 import { getCurrentUser } from '@/lib/auth';
 import { queries, type TicketStatus } from '@/lib/db';
 import { clientReply } from '../actions';
+import { FcPageHead } from '@/components/fc/PageKit';
 
 export const dynamic = 'force-dynamic';
 
 const STATUS_LABEL: Record<TicketStatus, string> = {
   open: 'Open', in_progress: 'In progress', waiting: 'Waiting on you', resolved: 'Resolved',
 };
-function statusClasses(s: TicketStatus): string {
+/** Same fold as support/page.tsx (task 2.11c): four backend statuses read as
+ *  the three editorial.css chip variants. */
+function statusVariant(s: TicketStatus): 'open' | 'waiting' | 'closed' {
   switch (s) {
-    case 'resolved':    return 'text-emerald-700 bg-emerald-50 border-emerald-200 dark:text-emerald-300 dark:bg-emerald-500/10 dark:border-emerald-500/20';
-    case 'waiting':     return 'text-amber-700 bg-amber-50 border-amber-200 dark:text-amber-300 dark:bg-amber-500/10 dark:border-amber-500/20';
-    case 'in_progress': return 'text-sky-700 bg-sky-50 border-sky-200 dark:text-sky-300 dark:bg-sky-500/10 dark:border-sky-500/20';
-    default:            return 'text-[#8a6d1a] bg-[#faf3dc] border-[#e6d9a8] dark:text-[#F2C67A] dark:bg-[#E8A33D]/10 dark:border-[#E8A33D]/25';
+    case 'resolved': return 'closed';
+    case 'waiting':  return 'waiting';
+    default:         return 'open'; // open, in_progress
   }
 }
 function fmtWhen(ts: string): string {
@@ -33,21 +35,15 @@ export default async function ClientTicketThread({ params }: { params: Promise<{
   const resolved = ticket.status === 'resolved';
 
   return (
-    <div className="space-y-6 motion-fade-in max-w-2xl mx-auto">
+    <div className="space-y-6 motion-fade-in" style={{ maxWidth: '64ch', margin: '0 auto' }}>
       <div>
-        <Link href="/support" className="text-xs text-slate-400 hover:text-slate-600 dark:hover:text-white/80 transition">← All tickets</Link>
+        <Link href="/support" style={{ fontSize: 12, color: 'var(--muted-2)' }}>← All tickets</Link>
       </div>
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="font-mono text-[11px] text-slate-400">{ticket.ref}</span>
-            <span className={`text-[10.5px] font-medium px-1.5 py-0.5 rounded-full border ${statusClasses(ticket.status)}`}>
-              {STATUS_LABEL[ticket.status]}
-            </span>
-          </div>
-          <h1 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight font-display">{ticket.subject}</h1>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+        <span className="ed-mono" style={{ letterSpacing: 0, textTransform: 'none', color: 'var(--muted-2)' }}>{ticket.ref}</span>
+        <span className={`ed-chip status-${statusVariant(ticket.status)}`}>{STATUS_LABEL[ticket.status]}</span>
       </div>
+      <FcPageHead title={ticket.subject} />
 
       <div className="space-y-3">
         {messages.map(m => {
@@ -55,41 +51,39 @@ export default async function ClientTicketThread({ params }: { params: Promise<{
           return (
             <div
               key={m.id}
-              className={`rounded-xl border p-4 ${
-                fromUs
-                  ? 'border-[#E8A33D]/30 bg-[#faf7ef] dark:bg-[#E8A33D]/[0.07] dark:border-[#E8A33D]/25'
-                  : 'border-slate-200 bg-white dark:border-white/10 dark:bg-white/[0.02] ml-6'
-              }`}
+              className="ed-subpanel"
+              style={fromUs ? { marginLeft: 0, borderColor: 'var(--accent)' } : { marginLeft: 24 }}
             >
               <div className="flex items-center justify-between gap-2 mb-1.5">
-                <span className={`text-[11px] font-semibold ${fromUs ? 'text-[#8a6d1a] dark:text-[#F2C67A]' : 'text-slate-500'}`}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: fromUs ? 'var(--accent)' : 'var(--muted)' }}>
                   {fromUs ? 'FlyCheap Support' : 'You'}
                 </span>
-                <span className="text-[11px] text-slate-400">{fmtWhen(m.created_at)}</span>
+                <span style={{ fontSize: 11, color: 'var(--muted-2)' }}>{fmtWhen(m.created_at)}</span>
               </div>
-              <div className="text-sm text-slate-800 dark:text-white/85 leading-relaxed whitespace-pre-wrap">{m.body}</div>
+              <div style={{ fontSize: 13.5, color: 'var(--ink)', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{m.body}</div>
             </div>
           );
         })}
       </div>
 
-      <div className="card">
+      <div className="ed-panel">
         {resolved ? (
-          <p className="text-sm text-slate-500">
+          <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>
             This ticket is resolved. If it&apos;s still not right, reply below and it&apos;ll reopen for us.
           </p>
         ) : (
-          <p className="text-sm text-slate-500 mb-3">Add to the conversation — we&apos;ll get an email and get back to you.</p>
+          <p style={{ fontSize: 13.5, color: 'var(--muted)', marginBottom: 12 }}>Add to the conversation — we&apos;ll get an email and get back to you.</p>
         )}
         <form action={clientReply} className="space-y-3 mt-3">
           <input type="hidden" name="ref" value={ticket.ref} />
           <textarea
             name="body" required rows={4}
             placeholder="Type your reply…"
-            className="w-full rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-white/[0.03] px-3.5 py-3 text-sm text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#E8A33D]/40 resize-y"
+            className="ed-input"
+            style={{ resize: 'vertical' }}
           />
           <div className="flex justify-end">
-            <button type="submit" className="btn btn-primary">{resolved ? 'Reopen with a reply' : 'Send reply'}</button>
+            <button type="submit" className="ed-btn ed-btn-primary">{resolved ? 'Reopen with a reply' : 'Send reply'}</button>
           </div>
         </form>
       </div>

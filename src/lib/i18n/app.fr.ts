@@ -164,6 +164,7 @@ export const fr: AppDict = {
     lede: 'FlyCheap surveille plus de 1 000 compagnies 24h/24 et vous prévient dès qu’un tarif sur votre trajet passe sous le seuil. Fini de rafraîchir Google Flights à 2 h du matin.',
     bookCheapest: 'Réserver le moins cher → {price}', addFirst: 'Ajoutez votre premier trajet →', addWatch: 'Ajouter une veille',
     cheapestNow: 'Le moins cher maintenant', median: 'Médiane du cache', destinations: 'Destinations actives', cities: 'villes',
+    rankedTitle: 'Où se situe chaque trajet dans sa fourchette de 30 jours', bookArrow: 'Réserver →',
     globeTl: 'RÉSEAU EN DIRECT · {n} TRAJETS', globeBr: '{a} ARCS ACTIFS · {t} SUIVIS',
     ticker: 'TARIFS EN DIRECT', polling: 'Sondage…',
     quickEyebrow: 'Recherche rapide', quickSub: 'Cherchez des vols ou parcourez les offres depuis n’importe quelle ville', fullExplore: 'Exploration complète →',

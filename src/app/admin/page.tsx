@@ -1,12 +1,22 @@
 import Link from 'next/link';
 import { getDb, queries } from '@/lib/db';
 import { providerStatuses } from '@/lib/providers';
+import { PRICES } from '@/lib/prices';
 import {
   PageHead, SectionHead, Panel, Kpi, Status, BarRow, ActionRow, Table,
   fmtInt, fmtMoney, ago, minutesSince, type Tone,
 } from './_components/ui';
+import { StackedBars } from './_components/StackedBars';
 
 export const dynamic = 'force-dynamic';
+
+// Single source for the two "founding trial" copy/query numbers below — was
+// typed separately in the SQL literal and the "within N days" sentence.
+const FOUNDING_ENDING_WINDOW_DAYS = 14;
+// Travelpayouts' own payout floor — no canonical source elsewhere in the repo
+// (it isn't a TIER_LIMITS/public-metrics number), so this is the one place
+// it's typed; both the comparison and the copy below derive from it.
+const TP_WITHDRAWAL_MINIMUM_USD = 50;
 
 /** Everything the command centre shows, read in one pass. */
 function brief() {
@@ -59,7 +69,7 @@ function brief() {
   const billedPro = billing.pro ?? 0;
   const billedEnt = billing.ent ?? 0;
   const paidUsers = billedPro + billedEnt;
-  const mrr = billedPro * 9 + billedEnt * 39;
+  const mrr = billedPro * PRICES.pro.month + billedEnt * PRICES.enterprise.month;
   const compAccounts = (m.users.pro + m.users.enterprise) - paidUsers;
   // Every account on the platform, founder included. Revenue metrics stay
   // client-only (the founder is a comp, not a customer, and counting him
@@ -72,7 +82,7 @@ function brief() {
     `SELECT COUNT(*) AS n FROM users WHERE subscription_status = 'founding_free' AND id <> ?`, ownerId).n;
   const foundingEnding = one<{ n: number }>(
     `SELECT COUNT(*) AS n FROM users WHERE subscription_status = 'founding_free' AND id <> ?
-       AND trial_ends_at IS NOT NULL AND trial_ends_at < datetime('now','+14 days')`, ownerId).n;
+       AND trial_ends_at IS NOT NULL AND trial_ends_at < datetime('now','+${FOUNDING_ENDING_WINDOW_DAYS} days')`, ownerId).n;
   const upgradeDue = one<{ n: number }>(
     `SELECT COUNT(*) AS n FROM users WHERE subscription_status = 'upgrade_due' AND id <> ?`, ownerId).n;
   const pastDue = one<{ n: number }>(
@@ -148,7 +158,7 @@ export default async function CommandCenter() {
   if (pollTone === 'bad') actions.push({ tone: 'bad', title: 'Fare poller is stale', detail: `No poll has run in ${ago(b.lastAttempt)}. Alerts cannot fire while the poller is down.`, href: '/admin/health', cta: 'Health' });
   if (b.pastDue > 0) actions.push({ tone: 'bad', title: `${b.pastDue} subscription${b.pastDue === 1 ? '' : 's'} past due`, detail: 'Payment failed and Stripe is retrying. The account drops to Free if it cannot collect.', href: '/admin/users', cta: 'Users' });
   if (b.waitlist.pending > 0) actions.push({ tone: 'gold', title: `${b.waitlist.pending} access request${b.waitlist.pending === 1 ? '' : 's'} waiting`, detail: 'Approve from the request email to send the invite, or review the full waitlist.', href: '/admin/signups#waitlist', cta: 'Review' });
-  if (b.foundingEnding > 0) actions.push({ tone: 'warn', title: `${b.foundingEnding} founding trial${b.foundingEnding === 1 ? '' : 's'} end within 14 days`, detail: 'Upgrade nudges send automatically when each trial completes.', href: '/admin/users', cta: 'Users' });
+  if (b.foundingEnding > 0) actions.push({ tone: 'warn', title: `${b.foundingEnding} founding trial${b.foundingEnding === 1 ? '' : 's'} end within ${FOUNDING_ENDING_WINDOW_DAYS} days`, detail: 'Upgrade nudges send automatically when each trial completes.', href: '/admin/users', cta: 'Users' });
   if (b.upgradeDue > 0) actions.push({ tone: 'gold', title: `${b.upgradeDue} account${b.upgradeDue === 1 ? '' : 's'} finished the founding trial`, detail: 'Prime upgrade candidates — they used the product free for three months.', href: '/admin/users', cta: 'Users' });
   if (b.routesExpired > 0) actions.push({ tone: 'warn', title: `${b.routesExpired} tracked route${b.routesExpired === 1 ? '' : 's'} already departed`, detail: 'These burn polling quota without any chance of an alert. Archive them from the route-coverage grid.', href: '/admin/health#coverage', cta: 'Archive' });
   if (b.routesNoTarget > 0) actions.push({ tone: 'warn', title: `${b.routesNoTarget} active route${b.routesNoTarget === 1 ? '' : 's'} without a target price`, detail: `Threshold alerts fall back to the global default instead of the traveller’s own number. Tune that default in Settings.`, href: '/admin/settings', cta: 'Settings' });
@@ -199,8 +209,8 @@ export default async function CommandCenter() {
         />
         <Kpi
           label="Payable balance" value={b.tpBalance != null ? fmtMoney(b.tpBalance, 2) : '—'}
-          tone={b.tpBalance && b.tpBalance >= 50 ? 'good' : 'neutral'}
-          foot={b.tpBalance != null ? (b.tpBalance >= 50 ? 'Above the $50 withdrawal minimum' : 'Travelpayouts · $50 minimum to withdraw') : 'Awaiting first sync from Travelpayouts'}
+          tone={b.tpBalance && b.tpBalance >= TP_WITHDRAWAL_MINIMUM_USD ? 'good' : 'neutral'}
+          foot={b.tpBalance != null ? (b.tpBalance >= TP_WITHDRAWAL_MINIMUM_USD ? `Above the ${fmtMoney(TP_WITHDRAWAL_MINIMUM_USD)} withdrawal minimum` : `Travelpayouts · ${fmtMoney(TP_WITHDRAWAL_MINIMUM_USD)} minimum to withdraw`) : 'Awaiting first sync from Travelpayouts'}
           href="/admin/revenue"
         />
       </div>
@@ -216,7 +226,7 @@ export default async function CommandCenter() {
         />
         <Kpi
           label="Founding trials" value={fmtInt(b.founding)}
-          foot={b.foundingEnding > 0 ? `${b.foundingEnding} ending within 14 days` : 'Three months free, then an upgrade nudge'}
+          foot={b.foundingEnding > 0 ? `${b.foundingEnding} ending within ${FOUNDING_ENDING_WINDOW_DAYS} days` : 'Three months free, then an upgrade nudge'}
           href="/admin/users"
         />
         <Kpi
@@ -231,6 +241,10 @@ export default async function CommandCenter() {
           href="/admin/signups"
         />
       </div>
+
+      <Panel title="New client accounts" sub={`Daily, over the ${b.signupSeries.length}-day window this data spans`}>
+        <StackedBars series={b.signupSeries.map(d => ({ a: d.n ?? 0, label: d.day.slice(5) }))} />
+      </Panel>
 
       {/* ── Operations + attention ─────────────────────────── */}
       <SectionHead title="Operations" sub="The fare engine behind every alert" />
@@ -252,8 +266,8 @@ export default async function CommandCenter() {
         <Panel title="Attention required" sub={actions.length === 0 ? undefined : `${actions.length} item${actions.length === 1 ? '' : 's'}`} tone={actions.length > 0 ? 'gold' : undefined}>
           {actions.length === 0 ? (
             <div className="py-6 text-center">
-              <div className="text-emerald-300 text-sm font-medium">All clear</div>
-              <div className="text-[11.5px] text-white/40 mt-1">Poller healthy, no failed payments, no pending requests.</div>
+              <div className="ad-tone-good text-sm font-medium">All clear</div>
+              <div className="ad-note mt-1">Poller healthy, no failed payments, no pending requests.</div>
             </div>
           ) : (
             <div>{actions.slice(0, 6).map((a, i) => <ActionRow key={i} {...a} />)}</div>
@@ -265,16 +279,16 @@ export default async function CommandCenter() {
       <div className="grid lg:grid-cols-2 gap-3">
         <Panel title="Client plan mix" sub="Your clients only — your own account is excluded" right={<Link href="/admin/signups" className="ad-btn">Funnel →</Link>}>
           <BarRow label="Free" value={b.m.users.free} max={b.m.users.total || 1} />
-          <BarRow label="Pro · $9/mo" value={b.m.users.pro} max={b.m.users.total || 1} tone="good"
+          <BarRow label={`Pro · $${PRICES.pro.month}/mo`} value={b.m.users.pro} max={b.m.users.total || 1} tone="good"
             right={`${b.m.users.pro} · ${b.billedPro} billed`} />
-          <BarRow label="Enterprise · $39/mo" value={b.m.users.enterprise} max={b.m.users.total || 1}
+          <BarRow label={`Enterprise · $${PRICES.enterprise.month}/mo`} value={b.m.users.enterprise} max={b.m.users.total || 1}
             right={`${b.m.users.enterprise} · ${b.billedEnt} billed`} />
-          <div className="mt-3 pt-3 border-t border-white/[0.06] flex items-baseline justify-between">
-            <span className="text-[11.5px] text-white/45">Committed monthly revenue</span>
-            <span className="font-mono text-[#F2C67A] text-sm tabular-nums">{fmtMoney(b.mrr)}</span>
+          <div className="ad-rule-top mt-3 pt-3 flex items-baseline justify-between">
+            <span className="ad-note">Committed monthly revenue</span>
+            <span className="text-sm tabular-nums" style={{ fontFamily: 'var(--font-mono-ed)', color: 'var(--ink)' }}>{fmtMoney(b.mrr)}</span>
           </div>
           {b.compAccounts > 0 && (
-            <div className="text-[11px] text-white/35 mt-1.5 leading-snug">
+            <div className="ad-note mt-1.5 leading-snug">
               {b.compAccounts} account{b.compAccounts === 1 ? '' : 's'} hold{b.compAccounts === 1 ? 's' : ''} a paid tier without a
               billed subscription (founder / comp) and {b.compAccounts === 1 ? 'is' : 'are'} excluded from revenue.
             </div>
@@ -285,9 +299,9 @@ export default async function CommandCenter() {
           <Table head={['Provider', 'Status', 'Role']}>
             {b.provs.map(p => (
               <tr key={p.id}>
-                <td className="font-medium text-white/85">{p.label ?? p.id}</td>
+                <td className="font-medium" style={{ color: 'var(--ink)' }}>{p.label ?? p.id}</td>
                 <td><Status tone={p.isConfigured ? 'good' : 'neutral'}>{p.isConfigured ? 'Live' : 'Not configured'}</Status></td>
-                <td className="text-white/45 text-[11.5px]">{p.isConfigured ? (p.isEnabled ? 'In the polling fan-out' : 'Configured, disabled') : 'Add a key to enable'}</td>
+                <td className="ad-note">{p.isConfigured ? (p.isEnabled ? 'In the polling fan-out' : 'Configured, disabled') : 'Add a key to enable'}</td>
               </tr>
             ))}
           </Table>

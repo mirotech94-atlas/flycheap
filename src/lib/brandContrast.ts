@@ -16,13 +16,50 @@
  * than rescue it.
  */
 
-const HEX = /^#?([\da-f]{6})$/i;
+// Accepts 3/4-digit shorthand (#fff, #abcd) alongside the full 6/8-digit
+// forms. Round 3 of task 2.11b: Lightning CSS (Turbopack's production CSS
+// minifier) folds `#FFFFFF` down to `#fff` in the served bundle, so a
+// 6-digit-only parser silently rejects every live read of a token that was
+// spelled in full in the source — `relativeLuminance` returned null,
+// `pickCtaInk` discarded the white candidate, and the ground candidate won
+// (or lost) by whatever it happened to be, not by an actual contrast check.
+// Verify against the LIVE bundle when touching this, not the source CSS —
+// see docs/design's contrast-audit notes.
+const HEX = /^#?([\da-f]{3,4}|[\da-f]{6}|[\da-f]{8})$/i;
+
+/**
+ * Normalize any accepted hex spelling to a plain 6-digit `#rrggbb`:
+ * expands 3/4-digit shorthand by doubling each nibble, then drops alpha
+ * (the last 2 of an 8-digit value) — this module works in opaque sRGB only.
+ * Returns null for anything `HEX` doesn't match, including genuinely
+ * malformed input like `#12` or `#12345` (neither length is accepted).
+ */
+function normalizeHex(hex: string): string | null {
+  const m = HEX.exec(hex.trim());
+  if (!m) return null;
+  let digits = m[1];
+  if (digits.length === 3 || digits.length === 4) {
+    digits = digits.split('').map((d) => d + d).join('');
+  }
+  return `#${digits.slice(0, 6).toLowerCase()}`;
+}
+
+/**
+ * The two grounds tenant ink is derived against — the editorial system's
+ * `--bg` in each theme (`src/app/editorial.css`). A tenant's brand colour is
+ * never drawn as ink directly; it is always checked against whichever of
+ * these the page is actually sitting on, via `contrastSafe`.
+ */
+export const BRAND_GROUNDS = {
+  light: '#FBFAF7',
+  dark: '#0E1113',
+} as const;
 
 /** sRGB relative luminance, per WCAG 2.1. */
 export function relativeLuminance(hex: string): number | null {
-  const m = HEX.exec(hex.trim());
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
+  const norm = normalizeHex(hex);
+  if (!norm) return null;
+  const n = parseInt(norm.slice(1), 16);
   const ch = [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => {
     const c = v / 255;
     return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
@@ -39,9 +76,9 @@ export function contrastRatio(a: string, b: string): number | null {
 }
 
 function toRgb(hex: string): [number, number, number] | null {
-  const m = HEX.exec(hex.trim());
-  if (!m) return null;
-  const n = parseInt(m[1], 16);
+  const norm = normalizeHex(hex);
+  if (!norm) return null;
+  const n = parseInt(norm.slice(1), 16);
   return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
 }
 
@@ -100,4 +137,40 @@ export function contrastSafe(
 export function hexToRgbTriple(hex: string, fallback = '26,68,89'): string {
   const rgb = toRgb(hex);
   return rgb ? rgb.join(',') : fallback;
+}
+
+/**
+ * Pick whichever of two candidate inks reads better as a LABEL painted ON a
+ * brand-coloured FILL (not on a page ground — a caller previewing a
+ * brand-filled button, for instance, has a light candidate like the fixed
+ * `--panel-fg` white and a dark candidate like the current theme's `--bg`,
+ * and needs to know which one is actually legible against that specific
+ * fill colour).
+ *
+ * Deliberately does not fall back to whichever candidate happens to be
+ * non-null: a candidate that failed to load (an empty token read, typically)
+ * is untrustworthy and is only used if it *independently* clears `min`
+ * against `brand` — otherwise the caller gets `onAccent`, a token meant to
+ * always be legible regardless of what did or didn't load. This is the
+ * WhiteLabelSettings preview bug from task 2.11b round 2: a `candidate &&
+ * pickHigherRatio : otherCandidate` ternary silently used the other
+ * candidate whenever the first read as null, which is exactly wrong when
+ * that other candidate is the thing failing AA.
+ */
+export function pickCtaInk(
+  brand: string,
+  panelFg: string | null,
+  ground: string | null,
+  onAccent = '#FFFFFF',
+  min = 4.5,
+): string {
+  const rPanelFg = panelFg ? contrastRatio(panelFg, brand) : null;
+  const rGround = ground ? contrastRatio(ground, brand) : null;
+
+  if (rPanelFg !== null && rGround !== null) {
+    return rPanelFg >= rGround ? panelFg! : ground!;
+  }
+  if (rPanelFg !== null) return rPanelFg >= min ? panelFg! : onAccent;
+  if (rGround !== null) return rGround >= min ? ground! : onAccent;
+  return onAccent;
 }

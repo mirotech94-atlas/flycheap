@@ -25,9 +25,5 @@ export function AdminBreadcrumb() {
     .sort((a, b) => b.length - a.length)
     .find(prefix => pathname === prefix || pathname.startsWith(prefix + '/'));
   const label = match ? SECTION_LABEL[match] : 'Command centre';
-  return (
-    <span className="text-[12px] font-semibold tracking-tight text-white">
-      {label}
-    </span>
-  );
+  return <span className="ad-crumb-label">{label}</span>;
 }

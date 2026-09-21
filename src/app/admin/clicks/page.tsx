@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { queries } from '@/lib/db';
 import { fmtRelative } from '@/lib/utils';
 import { PageHead, Panel, Kpi, BarRow, Table, fmtInt } from '../_components/ui';
+import { StackedBars } from '../_components/StackedBars';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,6 +58,10 @@ export default async function ClickStreamPage() {
         />
       </div>
 
+      <Panel title="Clicks by day" sub={`Daily outbound clicks over the ${daily.length}-day window this data spans`}>
+        <StackedBars series={daily.map(d => ({ a: d.clicks, label: d.day.slice(5) }))} />
+      </Panel>
+
       <div className="grid lg:grid-cols-2 gap-3 items-start">
         <Panel title="Clicks by surface · 30d" sub="Where in the product the click happened">
           {bySurface.length === 0
@@ -98,11 +103,11 @@ export default async function ClickStreamPage() {
               const surface = (r as { surface?: string | null }).surface ?? null;
               return (
                 <tr key={r.id}>
-                  <td className="text-white/50 whitespace-nowrap">{fmtRelative(r.occurred_at + 'Z')}</td>
-                  <td>{surface ? (SURFACE_LABELS[surface] ?? surface) : <span className="text-white/30">—</span>}</td>
-                  <td>{r.provider ?? <span className="text-white/30">—</span>}</td>
+                  <td className="ad-note whitespace-nowrap">{fmtRelative(r.occurred_at + 'Z')}</td>
+                  <td>{surface ? (SURFACE_LABELS[surface] ?? surface) : <span style={{ color: 'var(--muted-3)' }}>—</span>}</td>
+                  <td>{r.provider ?? <span style={{ color: 'var(--muted-3)' }}>—</span>}</td>
                   <td className="font-mono text-[11.5px]">{r.origin && r.destination ? `${r.origin} → ${r.destination}` : '—'}</td>
-                  <td className="font-mono text-[10.5px] text-white/40">{r.marker ?? '—'}</td>
+                  <td className="font-mono text-[10.5px]" style={{ color: 'var(--muted-2)' }}>{r.marker ?? '—'}</td>
                 </tr>
               );
             })}
@@ -110,14 +115,14 @@ export default async function ClickStreamPage() {
         )}
       </Panel>
 
-      <p className="text-[11.5px] text-white/35 leading-relaxed">
+      <p className="ad-note leading-relaxed">
         Clicks are recorded server-side by <code>/go</code> before the redirect, so ad-blockers cannot skew them.
-        Commission and earnings figures live on the <Link href="/admin/revenue" className="text-white/60 underline">Revenue</Link> page.
+        Commission and earnings figures live on the <Link href="/admin/revenue" className="underline" style={{ color: 'var(--accent)' }}>Revenue</Link> page.
       </p>
     </div>
   );
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <div className="py-6 text-center text-[12.5px] text-white/35">{children}</div>;
+  return <div className="ad-note py-6 text-center">{children}</div>;
 }

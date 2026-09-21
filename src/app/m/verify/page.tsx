@@ -24,23 +24,24 @@ export default function MobileVerifyPage() {
   }, []);
 
   return (
-    <main style={{ fontFamily: '-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif', maxWidth: 480, margin: '0 auto', padding: 32, color: '#0f172a', textAlign: 'center' }}>
-      <div style={{ display: 'inline-block', background: '#eef4fb', color: '#0a3a6b', fontWeight: 700, fontSize: 11, letterSpacing: '.14em', textTransform: 'uppercase', padding: '6px 12px', borderRadius: 999, marginBottom: 16 }}>FlyCheap</div>
-      <h1 style={{ fontSize: 26, margin: '0 0 8px', color: '#0a3a6b' }}>Opening the app…</h1>
-      <p style={{ color: '#475569', margin: '0 0 24px' }}>
+    <main style={{ fontFamily: 'var(--font-ui)', maxWidth: 480, margin: '0 auto', padding: 32, color: 'var(--ink)', textAlign: 'center' }}>
+      <div className="ed-eyebrow" style={{ display: 'inline-block', background: 'var(--surface-2)', color: 'var(--accent)', padding: '6px 12px', marginBottom: 16 }}>FlyCheap</div>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: 26, margin: '0 0 8px', color: 'var(--ink)' }}>Opening the app…</h1>
+      <p style={{ color: 'var(--ink-soft)', margin: '0 0 24px' }}>
         If the FlyCheap app is installed, it should open automatically and sign you in.
       </p>
       {token && (
         <a
           href={`flycheap://verify?token=${encodeURIComponent(token)}`}
-          style={{ display: 'inline-block', background: '#0a3a6b', color: '#fff', padding: '14px 28px', borderRadius: 10, textDecoration: 'none', fontWeight: 700 }}
+          className="ed-btn ed-btn-primary"
+          style={{ padding: '14px 28px' }}
         >
           Open in the FlyCheap app
         </a>
       )}
-      <p style={{ color: '#94a3b8', margin: '24px 0 0', fontSize: 13 }}>
+      <p style={{ color: 'var(--muted)', margin: '24px 0 0', fontSize: 13 }}>
         Don&apos;t have the app yet? You can also{' '}
-        <a href="/login" style={{ color: '#0a3a6b', fontWeight: 600 }}>sign in on the web</a>.
+        <a href="/login" style={{ color: 'var(--accent)', fontWeight: 600 }}>sign in on the web</a>.
       </p>
     </main>
   );

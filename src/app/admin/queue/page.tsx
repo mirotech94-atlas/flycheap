@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { queries } from '@/lib/db';
 import { fmtDate } from '@/lib/utils';
 import { approvePost, skipPost } from './actions';
-import { Panel, Table, Status, ago, fmtInt, type Tone } from '../_components/ui';
+import { Panel, Table, Status, Kpi, ago, fmtInt, type Tone } from '../_components/ui';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Approval queue — Admin' };
@@ -34,35 +34,33 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
   return (
     <div className="space-y-6">
       <div>
-        <div className="eyebrow mb-1">Admin · Queue</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight font-display">
+        <div className="ad-eyebrow accent mb-1">Admin · Queue</div>
+        <h1 className="ed-h1">
           Approval queue
         </h1>
-        <p className="text-sm text-white/55 mt-1 max-w-3xl leading-relaxed">
+        <p className="ed-sub max-w-3xl">
           Nothing in this queue was written by a person. Scheduled agents draft each item, then it waits for
-          your approval: <strong className="text-white/80">curator</strong> picks the fare →{' '}
-          <strong className="text-white/80">verifier</strong> checks it is still live →{' '}
-          <strong className="text-white/80">social-poster</strong> drafts the copy →{' '}
-          <strong className="text-white/80">you approve</strong> → it posts to the channels. Nothing reaches a
+          your approval: <strong className="ad-tone-neutral">curator</strong> picks the fare →{' '}
+          <strong className="ad-tone-neutral">verifier</strong> checks it is still live →{' '}
+          <strong className="ad-tone-neutral">social-poster</strong> drafts the copy →{' '}
+          <strong className="ad-tone-neutral">you approve</strong> → it posts to the channels. Nothing reaches a
           channel until you approve it.
         </p>
       </div>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Kpi label="Queued" value={counts.queued} sub="awaiting your review" brand />
-        <Kpi label="Approved" value={counts.approved} sub="cleared to post" />
-        <Kpi label="Posted" value={counts.posted} sub="live on channels" />
-        <Kpi label="Skipped" value={counts.skipped + counts.failed} sub="skipped or failed" />
+        <Kpi label="Queued" value={counts.queued} foot="awaiting your review" tone="warn" />
+        <Kpi label="Approved" value={counts.approved} foot="cleared to post" />
+        <Kpi label="Posted" value={counts.posted} foot="live on channels" />
+        <Kpi label="Skipped" value={counts.skipped + counts.failed} foot="skipped or failed" />
       </section>
 
-      <nav className="flex gap-1 border-b border-white/8">
+      <nav className="ad-tabs">
         {FILTERS.map(f => (
           <Link
             key={f}
             href={`/admin/queue?filter=${f}`}
-            className={`-mb-px border-b-2 px-4 py-2 text-sm capitalize transition ${
-              filter === f ? 'border-[#E8A33D] font-semibold text-white' : 'border-transparent text-white/55 hover:text-white/80'
-            }`}
+            className={`ad-tab capitalize${filter === f ? ' active' : ''}`}
           >
             {f} · {f === 'skipped' ? counts.skipped + counts.failed : counts[f]}
           </Link>
@@ -70,7 +68,7 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
       </nav>
 
       {items.length === 0 ? (
-        <div className="card text-center text-sm text-white/45 py-12">
+        <div className="ad-panel text-center text-sm py-12 ad-note">
           Nothing in <span className="capitalize">{filter}</span>. The social-poster agent runs after each curator pass.
         </div>
       ) : (
@@ -78,26 +76,26 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
           {items.map(item => {
             const pctNote = item.verifier_flag ? ` · ⚠ ${item.verifier_flag}` : '';
             return (
-              <div key={item.id} className="card">
+              <div key={item.id} className="ad-panel">
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <span className={`badge ${item.channel === 'x' ? 'badge-muted' : 'badge-success'}`}>
+                      <span className="ad-chip">
                         {item.channel === 'x' ? 'X' : 'Telegram'}
                       </span>
-                      <span className="text-sm font-semibold text-white">
+                      <span className="text-sm font-semibold ad-tone-neutral">
                         {item.origin} → {item.destination}
                       </span>
-                      <span className="text-xs text-white/50">
+                      <span className="text-xs ad-note">
                         ${Math.round(item.per_adult_usd)}/adult · {fmtDate(item.outbound_date)}–{fmtDate(item.return_date)}
                         {item.trip_length_days ? ` · ${item.trip_length_days}d` : ''}
                       </span>
                       {item.score != null && (
-                        <span className="text-[11px] font-bold text-[#F2C67A]">score {Math.round(item.score)}</span>
+                        <span className="text-[11px] font-bold ad-tone-neutral">score {Math.round(item.score)}</span>
                       )}
                     </div>
-                    <pre className="text-sm text-white/80 whitespace-pre-wrap font-sans bg-black/20 rounded-md p-3 border border-white/5">{item.body}</pre>
-                    <div className="text-[11px] text-white/40 mt-1.5">
+                    <pre className="text-sm whitespace-pre-wrap font-sans ed-subpanel ad-tone-neutral">{item.body}</pre>
+                    <div className="text-[11px] ad-note mt-1.5">
                       queued {item.created_at}{pctNote}
                       {item.error ? ` · ${item.error}` : ''}
                     </div>
@@ -107,13 +105,13 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
                     <div className="flex flex-col gap-2 shrink-0">
                       <form action={approvePost}>
                         <input type="hidden" name="id" value={item.id} />
-                        <button className="text-xs px-3 py-1.5 rounded-md border border-emerald-400/40 bg-emerald-400/10 hover:bg-emerald-400/20 transition text-emerald-300 font-semibold w-full">
+                        <button className="ad-btn ad-btn-gold w-full">
                           Approve
                         </button>
                       </form>
                       <form action={skipPost}>
                         <input type="hidden" name="id" value={item.id} />
-                        <button className="text-xs px-3 py-1.5 rounded-md border border-white/15 bg-white/5 hover:bg-white/10 transition text-white/70 w-full">
+                        <button className="ad-btn w-full">
                           Skip
                         </button>
                       </form>
@@ -135,30 +133,19 @@ export default async function AdminQueuePage({ searchParams }: { searchParams: P
             const tone: Tone = r.err > 0 ? 'bad' : r.last ? 'good' : 'neutral';
             return (
               <tr key={r.name}>
-                <td className="font-mono text-[11.5px] text-white/90">{r.name}</td>
-                <td className="text-white/55 text-[11.5px]">{r.hint}</td>
-                <td className="text-white/50 whitespace-nowrap">{r.last ? ago(r.last) : <span className="text-white/25">never</span>}</td>
+                <td className="font-mono text-[11.5px] ad-tone-neutral">{r.name}</td>
+                <td className="ad-note text-[11.5px]">{r.hint}</td>
+                <td className="ad-note whitespace-nowrap">{r.last ? ago(r.last) : <span style={{ color: 'var(--muted-2)' }}>never</span>}</td>
                 <td><Status tone={tone}>{r.err > 0 ? `${fmtInt(r.err)} failed` : r.last ? `${fmtInt(r.ok)} ok` : 'idle'}</Status></td>
               </tr>
             );
           })}
         </Table>
-        <p className="text-[11.5px] text-white/35 mt-3 leading-relaxed">
+        <p className="text-[11.5px] ad-note mt-3 leading-relaxed">
           Fare polling, digests and compaction are handled separately by the in-app scheduler — see{' '}
-          <Link href="/admin/health" className="text-white/60 underline">Fare engine</Link>.
+          <Link href="/admin/health" style={{ color: 'var(--ink)' }} className="underline">Fare engine</Link>.
         </p>
       </Panel>
-    </div>
-  );
-}
-
-function Kpi({ label, value, sub, brand }: { label: string; value: number; sub: string; brand?: boolean }) {
-  return (
-    <div className={`kpi${brand ? ' kpi-brand' : ''}`}>
-      <div className="kpi-label">{label}</div>
-      <div className="kpi-value">{value}</div>
-      <div className="kpi-sub">{sub}</div>
-
     </div>
   );
 }

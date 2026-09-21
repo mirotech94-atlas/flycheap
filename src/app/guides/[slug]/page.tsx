@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: GuideParams) {
 function renderParagraph(text: string, key: number) {
   const parts = text.split(/(\*\*[^*]+\*\*)/g);
   return (
-    <p key={key} className="leading-relaxed text-slate-700 dark:text-slate-300 mb-4">
+    <p key={key} style={{ color: 'var(--ink-soft)', lineHeight: 1.6, marginBottom: 16 }}>
       {parts.map((p, i) =>
         p.startsWith('**') && p.endsWith('**')
           ? <strong key={i}>{p.slice(2, -2)}</strong>
@@ -67,35 +67,35 @@ export default async function GuidePage({ params }: GuideParams) {
   };
 
   return (
-    <div className="space-y-6 max-w-3xl mx-auto motion-fade-in">
+    <div style={{ maxWidth: '48rem', margin: '0 auto' }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
 
       <div>
-        <nav className="text-xs text-slate-500 mb-2">
-          <Link href="/guides" className="hover:underline">Guides</Link>
+        <nav style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 8 }}>
+          <Link href="/guides" style={{ color: 'var(--muted)' }}>Guides</Link>
           {' / '}
           <span>{g!.title}</span>
         </nav>
-        <div className="eyebrow mb-1">Guide · {g!.readMinutes} min read</div>
-        <h1 className="text-3xl md:text-4xl font-bold tracking-tight font-display">{g!.title}</h1>
-        <p className="text-lg text-slate-600 dark:text-slate-300 mt-2">{g!.dek}</p>
-        <p className="text-xs text-slate-400 mt-3">Published {g!.publishedAt}{g!.updatedAt && g!.updatedAt !== g!.publishedAt ? ` · Updated ${g!.updatedAt}` : ''}</p>
+        <div className="ed-eyebrow">Guide · {g!.readMinutes} min read</div>
+        <h1 className="ed-h1">{g!.title}</h1>
+        <p className="ed-sub">{g!.dek}</p>
+        <p className="ed-panel-note" style={{ marginTop: -6 }}>Published {g!.publishedAt}{g!.updatedAt && g!.updatedAt !== g!.publishedAt ? ` · Updated ${g!.updatedAt}` : ''}</p>
       </div>
 
-      <article className="prose prose-slate dark:prose-invert max-w-none">
+      <article>
         {g!.sections.map((s, i) => (
-          <section key={i} className="mt-8">
-            <h2 className="text-xl font-semibold !mb-3">{s.heading}</h2>
+          <section key={i} style={{ marginTop: 32 }}>
+            <h2 className="ed-h2" style={{ marginBottom: 12 }}>{s.heading}</h2>
             {s.paragraphs.map((p, j) => renderParagraph(p, j))}
           </section>
         ))}
       </article>
 
-      <div className="border-t border-slate-200 dark:border-slate-800 pt-6 mt-12 space-y-3">
-        <p className="text-sm font-semibold">More from our team</p>
-        <div className="space-y-2">
+      <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 24, marginTop: 48 }}>
+        <p style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)', margin: '0 0 10px' }}>More from our team</p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {GUIDES.filter(other => other.slug !== g!.slug).slice(0, 3).map(other => (
-            <Link key={other.slug} href={`/guides/${other.slug}`} className="block text-sm text-blue-700 dark:text-blue-400 hover:underline">
+            <Link key={other.slug} href={`/guides/${other.slug}`} style={{ fontSize: 13, color: 'var(--accent)' }}>
               → {other.title}
             </Link>
           ))}

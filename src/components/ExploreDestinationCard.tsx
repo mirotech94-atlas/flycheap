@@ -38,29 +38,22 @@ export function ExploreDestinationCard({
     : new Date(new Date(dep).getTime() + 7 * 86400000).toISOString().slice(0, 10);
 
   return (
-    <div
-      className="card !p-3 hover:!shadow-lift hover:-translate-y-0.5 transition-all motion-fade-in flex flex-col gap-2"
-      style={{ animationDelay: `${index * 30}ms` }}
-    >
-      <div className="text-[10px] uppercase tracking-[0.14em] font-semibold text-slate-400">
-        {origin} → {destination}
-      </div>
-      <div className="font-display font-bold text-base text-slate-900 dark:text-white truncate">
-        {destinationName}
-      </div>
-      <div className="flex items-baseline gap-1">
-        <span className="text-lg font-bold tabular text-emerald-700 dark:text-emerald-400">
+    <div className="ed-tile motion-fade-in" style={{ animationDelay: `${index * 30}ms` }}>
+      <div className="ed-tile-kicker">{origin} → {destination}</div>
+      <div className="ed-tile-value" style={{ fontSize: 16 }}>{destinationName}</div>
+      <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+        <span style={{ fontFamily: 'var(--font-mono-ed)', fontWeight: 600, fontSize: 16, color: 'var(--ink)' }}>
           {fmtUSD(price)}
         </span>
-        <span className="text-[10px] text-slate-500">from</span>
+        <span className="ed-tile-meta" style={{ fontSize: 10.5 }}>from</span>
       </div>
       {departAt && (
-        <div className="text-[10px] text-slate-500 truncate">
+        <div className="ed-tile-meta">
           {fmtDate(dep)}
           {returnAt && ` → ${fmtDate(returnAt.slice(0, 10))}`}
         </div>
       )}
-      <div className="mt-1">
+      <div style={{ marginTop: 'auto' }}>
         <BookButton
           origin={origin}
           destination={destination}

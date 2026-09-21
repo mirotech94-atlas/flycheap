@@ -164,6 +164,7 @@ export const de: AppDict = {
     lede: 'FlyCheap überwacht über 1.000 Airlines rund um die Uhr – und meldet sich, sobald ein Tarif auf deiner Strecke unter die Schwelle fällt. Kein Aktualisieren von Google Flights um 2 Uhr nachts mehr.',
     bookCheapest: 'Günstigsten buchen → {price}', addFirst: 'Erste Strecke hinzufügen →', addWatch: 'Neue Beobachtung anlegen',
     cheapestNow: 'Jetzt am günstigsten', median: 'Median im Cache', destinations: 'Aktive Ziele', cities: 'Städte',
+    rankedTitle: 'Wo jede Strecke in ihrer 30-Tage-Spanne liegt', bookArrow: 'Buchen →',
     globeTl: 'LIVE-NETZWERK · {n} STRECKEN', globeBr: '{a} AKTIVE BÖGEN · {t} ÜBERWACHT',
     ticker: 'LIVE-TARIFE', polling: 'Abfrage läuft…',
     quickEyebrow: 'Schnellsuche', quickSub: 'Flüge suchen oder Angebote aus jeder Stadt durchstöbern', fullExplore: 'Alles entdecken →',

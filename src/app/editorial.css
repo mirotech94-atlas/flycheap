@@ -1,0 +1,1148 @@
+/* src/app/editorial.css
+   FlyCheap editorial design system — the 22 tokens from docs/design/handoff/README.md.
+   Light is the default on :root; dark is a pure swap on html[data-theme="dark"].
+   Every colour in the app resolves through this layer. */
+
+:root {
+  --bg: #FBFAF7;
+  --surface: #FFFFFF;
+  --surface-2: #F4F1EA;
+  --ink: #14181B;
+  --ink-soft: #3B3833;
+  --muted: #78736A;
+  --muted-2: #78736A;
+  --muted-3: #78736A;
+  --rule: #E6E2DA;
+  --rule-soft: #EFECE5;
+  --rule-strong: #D9D4CA;
+  --track: #DCD8D0;
+  --accent: #1F615D;
+  --amber: #C98A3C;
+  --green: #3E7D5A;
+  --red: #B4453C;
+  --panel-bg: #14181B;
+  --panel-fg: #FFFFFF;
+  --btn-bg: #14181B;
+  --btn-fg: #FFFFFF;
+  --knob: #FFFFFF;
+  --on-accent: #FFFFFF;
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  --bg: #0E1113;
+  --surface: #171B1E;
+  --surface-2: #1F2427;
+  --ink: #ECEFF1;
+  --ink-soft: #C9CDD1;
+  --muted: #9AA0A6;
+  --muted-2: #868C92;
+  --muted-3: #838B92;
+  --rule: #2A2F33;
+  --rule-soft: #23282B;
+  --rule-strong: #384045;
+  --track: #2E3438;
+  --accent: #55B8B1;
+  --amber: #D9A05B;
+  --green: #5FB183;
+  --red: #E0776D;
+  --panel-bg: #0A0C0E;
+  --panel-fg: #FFFFFF;
+  --btn-bg: #ECEFF1;
+  --btn-fg: #0E1113;
+  --knob: #ECEFF1;
+  --on-accent: #0B1211;
+  color-scheme: dark;
+}
+
+/* ---- Migration aliases ---------------------------------------------------
+   The night-cabin token family was re-pointed here the same way and was
+   deleted in Task 3.9 once its last consumer went. The block below is not
+   a migration shim any more (see its own comment) — do NOT add new
+   consumers of any other retired token name. */
+
+:root {
+  /* dashboard-widget token aliases (consumed by the .fc-* rules in
+     globals.css). */
+  --fc-ink: var(--ink);
+  --fc-navy: var(--accent);
+  --fc-navy-2: var(--accent);
+  --fc-navy-3: var(--accent);
+  --fc-gold: var(--amber);
+  --fc-gold-soft: color-mix(in srgb, var(--amber) 70%, var(--surface));
+  --fc-accent: var(--accent);
+  --fc-accent-soft: color-mix(in srgb, var(--accent) 65%, var(--surface));
+  --fc-emerald: var(--green);
+  --fc-crimson: var(--red);
+  --fc-paper: var(--bg);
+  --fc-paper-2: var(--surface-2);
+  --fc-cream: var(--surface);
+  --fc-line: var(--rule);
+  --fc-line-strong: var(--rule-strong);
+  --fc-muted: var(--muted);
+  --fc-faint: var(--muted-2);
+  --fc-font-display: var(--font-serif);
+  --fc-font-sans: var(--font-ui);
+  --fc-font-mono: var(--font-mono-ed);
+}
+
+/* Type faces — bound to next/font variables in layout.tsx (Task 0.5). */
+:root {
+  --font-ui: var(--font-public-sans, 'Public Sans'), system-ui, sans-serif;
+  --font-serif: var(--font-newsreader, 'Newsreader'), Georgia, serif;
+  --font-mono-ed: var(--font-plex-mono, 'IBM Plex Mono'), ui-monospace, monospace;
+}
+
+/* Legacy font-variable names still read by the .fc-* dashboard rules in
+   globals.css (same shape as the --fc-* colour aliases above — re-point the
+   name, do not touch the call sites). */
+:root {
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-serif);
+  --font-mono: var(--font-mono-ed);
+  --font-fc-display: var(--font-serif);
+  --font-fc-sans: var(--font-ui);
+  --font-cabin: var(--font-serif);
+}
+
+/* ---- Editorial primitives -------------------------------------------- */
+.ed-page { padding: 44px 48px 80px; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
+@media (max-width: 720px) { .ed-page { padding: 28px 20px 64px; } }
+
+.ed-mono { font-family: var(--font-mono-ed); font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; }
+.ed-eyebrow { font-family: var(--font-mono-ed); font-size: 10.5px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.ed-h1 { font-family: var(--font-serif); font-weight: 400; font-size: 42px; line-height: 1.02; letter-spacing: -0.025em; color: var(--ink); margin: 10px 0 12px; }
+.ed-h2 { font-family: var(--font-serif); font-weight: 400; font-size: 23px; letter-spacing: -0.015em; color: var(--ink); margin: 0 0 6px; }
+.ed-sub { color: var(--muted); font-size: 14px; line-height: 1.5; max-width: 64ch; margin: 0 0 22px; }
+.ed-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 28px; }
+.ed-rule { border: 0; border-top: 1px solid var(--rule); margin: 0; }
+
+/* Buttons — no radius, no shadow, opacity hover only. */
+.ed-btn { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; font: 600 12.5px/1 var(--font-ui); border: 1px solid transparent; border-radius: 0; cursor: pointer; text-decoration: none; transition: opacity 120ms; }
+.ed-btn:hover { opacity: 0.72; }
+.ed-btn.ed-btn-primary { background: var(--btn-bg); color: var(--btn-fg); }
+.ed-btn.ed-btn-secondary { background: var(--surface); color: var(--ink-soft); border-color: var(--rule-strong); }
+.ed-btn.ed-btn-row { background: var(--btn-bg); color: var(--btn-fg); padding: 7px 13px; font-size: 11.5px; justify-self: end; }
+.ed-btn.ed-btn-tile { background: transparent; color: currentColor; border-color: currentColor; padding: 6px 11px; font-size: 11px; }
+.ed-btn-hero { padding: 13px 22px; font-size: 14px; }
+/* Destructive action (downgrade/cancel/revoke) — an outline, not a fill: a
+   filled --red with white text measures 2.99:1 in dark, below AA. --red
+   text + --red border on --surface clears AA in both themes (see
+   task-2.8-report.md for the computed ratios). */
+.ed-btn.ed-btn-danger { background: transparent; color: var(--red); border-color: var(--red); }
+
+/* Stat strip — 2–4 KPIs in a ruled row. */
+.ed-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin: 0 0 36px; }
+.ed-stat { background: var(--surface); padding: 20px 22px 16px; }
+.ed-stat-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); margin-bottom: 10px; }
+.ed-stat-value { font-family: var(--font-serif); font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.02em; color: var(--ink); display: flex; align-items: baseline; gap: 10px; }
+.ed-stat-delta { font-family: var(--font-mono-ed); font-size: 11px; letter-spacing: 0.06em; }
+.ed-delta-up { color: var(--green); } .ed-delta-down { color: var(--red); } .ed-delta-flat { color: var(--muted-2); }
+.ed-spark { display: block; width: 100%; height: 20px; margin-top: 12px; }
+.ed-spark path { fill: none; stroke: var(--accent); stroke-width: 1.25; }
+
+/* Records — a ruled table. */
+.ed-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ed-table th { text-align: left; padding: 0 12px 10px 0; font-family: var(--font-mono-ed); font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); border-bottom: 1px solid var(--ink); }
+.ed-table td { padding: 12px 12px 12px 0; border-bottom: 1px solid var(--rule-soft); vertical-align: middle; color: var(--ink); }
+.ed-table td.num, .ed-table th.num { text-align: right; font-family: var(--font-mono-ed); font-size: 12px; letter-spacing: 0.02em; }
+.ed-table td.cta { text-align: right; width: 1%; white-space: nowrap; }
+
+/* Tile grid — 1px gaps over --rule so the background shows as the rule. */
+.ed-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-tile { background: var(--surface); padding: 18px 18px 16px; display: flex; flex-direction: column; gap: 6px; min-height: 120px; }
+.ed-tile.dim { background: var(--surface-2); }
+/* --muted/--muted-2 measure under 4.5:1 on the --surface-2 ground the dim
+   modifier sits on in light mode (task-2.10) — lift both to --ink-soft on
+   this modifier only, which clears AA in both themes. */
+.ed-tile.dim .ed-tile-kicker, .ed-tile.dim .ed-tile-meta { color: var(--ink-soft); }
+.ed-tile-kicker { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.ed-tile-value { font-family: var(--font-serif); font-size: 22px; letter-spacing: -0.015em; color: var(--ink); }
+.ed-tile-meta { font-size: 12.5px; color: var(--muted); }
+.ed-tile .ed-btn-tile { margin-top: auto; align-self: flex-start; }
+
+/* Ranked bars — name + meta / 8px bar on --track / mono value / optional CTA track. */
+.ed-ranked { display: grid; gap: 0; }
+.ed-ranked-row { display: grid; grid-template-columns: minmax(180px, 1.2fr) 2fr 90px auto; align-items: center; gap: 18px; padding: 14px 0; border-bottom: 1px solid var(--rule-soft); }
+/* Hover cue for a row/tile that is itself the whole link (e.g. the Support
+   ticket list, task 2.11c) — README "Interactions": opacity to ~0.72, no
+   transform. Anchor-scoped so a static (non-link) row or tile is unaffected. */
+a.ed-ranked-row:hover, a.ed-tile:hover { opacity: 0.72; }
+.ed-ranked-name { font-weight: 600; color: var(--ink); } .ed-ranked-meta { font-size: 12px; color: var(--muted); }
+.ed-bar { height: 8px; background: var(--track); } .ed-bar-fill { height: 100%; background: var(--accent); }
+.ed-bar-fill.amber { background: var(--amber); } .ed-bar-fill.green { background: var(--green); }
+.ed-ranked-value { font-family: var(--font-mono-ed); font-size: 12px; text-align: right; color: var(--ink); }
+
+/* Panel — a ruled surface block (PageKit's FcPanel; also used directly by
+   pages composing their own feature blocks, e.g. OffersExplorer.tsx). 1px
+   --rule border, --surface ground, radius 0 — the "card" this replaces had
+   a radius, a shadow and a gradient hover; none of those survive here. */
+.ed-panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 22px 24px; }
+.ed-panel-head { display: flex; flex-wrap: wrap; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 18px; }
+.ed-panel-title { font-family: var(--font-serif); font-weight: 400; font-size: 23px; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+.ed-panel-note { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+
+/* A sunken block inside a panel — a form's own fieldset ground, a status
+   banner, a diagnostics readout. Same --surface as its parent panel (a
+   --surface-2 fill pushed --muted text on the fallback --surface-2 below AA
+   at this component's small sizes) with a --rule border for definition,
+   consistent with .ed-input's flat-surface-plus-border treatment. */
+.ed-subpanel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 12px 14px; }
+.ed-subpanel.accent { border-color: var(--accent); }
+.ed-subpanel.green { border-color: var(--green); }
+.ed-subpanel.red { border-color: var(--red); }
+
+/* Stat accent modifier — a 4% amber wash, for the one KPI in a row that is
+   itself a fare (e.g. "cheapest right now"). The value digits stay --ink
+   regardless (amber digits measured under AA on a light surface) — only the
+   ground and border carry the amber signal. At 8% the label/note in --muted
+   measured under 4.5:1 in both themes; dropping the tint to 4% and lifting
+   the label/note to --ink-soft on this modifier only clears it (see
+   tests/brandContrast.test.ts / task-2.9-report.md for the computed pairs). */
+.ed-stat.accent { background: color-mix(in srgb, var(--amber) 4%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
+.ed-stat.accent .ed-stat-label, .ed-stat.accent .ed-stat-note { color: var(--ink-soft); }
+.ed-stat-note { font-size: 11.5px; line-height: 1.4; color: var(--muted); margin-top: 8px; }
+
+/* Empty state (PageKit's FcEmpty). */
+.ed-empty { padding: 56px 24px; text-align: center; }
+.ed-empty-head { font-family: var(--font-serif); font-weight: 400; font-size: 20px; letter-spacing: -0.015em; color: var(--ink); margin: 0; }
+.ed-empty-body { margin: 10px auto 0; max-width: 46ch; font-size: 13.5px; line-height: 1.6; color: var(--muted); }
+
+/* Form field label — small mono caps over an .ed-input, matching the
+   .ed-stat-label / .ed-tile-kicker caption treatment used everywhere else. */
+.ed-label { display: block; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 5px; }
+
+/* Toggle — 44×24 switch, track --accent/--track, 18px round knob, 160ms
+   transform. The real control is the visually-hidden .ed-toggle-input
+   (role="switch" + aria-checked, carrying every existing onChange/name/
+   checked prop byte-identical); .ed-toggle is a sibling the input's state
+   drives, so every handler in the seven Settings files keeps working.
+   Every row (or, where a sibling action must stay outside the label — see
+   AlertChannelsCard's Test button — its .ed-toggle-label wrapper) is
+   itself the <label>: implicit association, full row/label text is the
+   accessible name, click-anywhere-in-it toggles, exactly as the base
+   `<label>` wrapping checkbox+text did before this conversion. */
+/* Always bordered — like .ed-ranked-row, not position-dependent (:last-child
+   would never match a toggle row that isn't literally the panel's last
+   child, e.g. AlertPolicyCard's rows sit between other fields). */
+.ed-toggle-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding: 16px 0; border-bottom: 1px solid var(--rule-soft); }
+label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
+.ed-toggle-label { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; flex: 1; min-width: 0; }
+.ed-toggle-text { display: flex; flex-direction: column; gap: 3px; padding-top: 2px; }
+.ed-toggle-name { font: 600 13.5px/1.4 var(--font-ui); color: var(--ink); }
+.ed-toggle-help { font-size: 12px; line-height: 1.5; color: var(--muted); max-width: 56ch; }
+.ed-toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; flex-shrink: 0; }
+.ed-toggle-input { position: absolute; inset: 0; width: 44px; height: 24px; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.ed-toggle-input:disabled { cursor: not-allowed; }
+.ed-toggle { position: relative; display: block; width: 44px; height: 24px; background: var(--track); border: 0; padding: 0; pointer-events: none; }
+.ed-toggle-input:checked + .ed-toggle { background: var(--accent); }
+.ed-toggle-input:disabled + .ed-toggle { opacity: 0.45; }
+.ed-toggle-input:focus-visible + .ed-toggle { outline: 2px solid var(--accent); outline-offset: 2px; }
+/* Knob fill carries its own contrast against the track/accent ground —
+   --knob (near-white in both themes) measured 1.42:1 (light, off) and
+   2.05:1 (dark, on) against --track/--accent, under the 3:1 non-text
+   floor (WCAG 1.4.11). --ink-soft (off) / --on-accent (on) clear ≥7:1 in
+   both themes; see task-2.11a-report.md Round 1 for the four computed pairs. */
+.ed-knob { position: absolute; top: 3px; left: 3px; width: 18px; height: 18px; background: var(--ink-soft); border-radius: 50%; transition: transform 160ms; }
+.ed-toggle-input:checked + .ed-toggle .ed-knob { background: var(--on-accent); transform: translateX(20px); }
+
+/* Status dot — one of the three sanctioned radius exceptions. */
+.ed-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--green); }
+.ed-dot.amber { background: var(--amber); } .ed-dot.red { background: var(--red); } .ed-dot.muted { background: var(--muted-2); }
+
+/* Inline code / command snippet — mono on a raised surface, ruled, radius 0.
+   Used for the CLI-style commands on /integrations (Slack slash-commands,
+   Telegram bot commands) and the AI provider chain's model ids. */
+.ed-code { font-family: var(--font-mono-ed); font-size: 11.5px; padding: 2px 6px; background: var(--surface-2); border: 1px solid var(--rule); border-radius: 0; color: var(--ink-soft); }
+
+/* Text input — light-surface form control. */
+.ed-input { display: block; width: 100%; padding: 9px 11px; font: 500 13px/1.3 var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ed-input::placeholder { color: var(--muted-2); }
+.ed-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Field chip — a compact input pill for controls placed over a dark panel
+   (e.g. the search bar over the dashboard hero). No glass, no blur: a flat
+   tint of the panel ink over the panel ground. */
+.ed-field { display: flex; align-items: center; gap: 6px; padding: 8px 12px; background: color-mix(in srgb, var(--panel-fg) 10%, var(--panel-bg)); border: 1px solid color-mix(in srgb, var(--panel-fg) 20%, var(--panel-bg)); border-radius: 0; color: var(--panel-fg); }
+.ed-field-input { flex: 1; min-width: 0; border: 0; background: transparent; font: 600 13px var(--font-ui); color: var(--panel-fg); padding: 0; }
+.ed-field-input:focus { outline: none; }
+.ed-field-input::placeholder { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-field-tag { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); flex-shrink: 0; }
+.ed-field-drop { position: absolute; left: 0; right: 0; margin-top: 4px; max-height: 240px; overflow: auto; background: var(--surface); border: 1px solid var(--rule); border-radius: 0; }
+.ed-field-drop-row { display: block; width: 100%; text-align: left; padding: 8px 12px; font-size: 12px; border-bottom: 1px solid var(--rule-soft); color: var(--ink); background: transparent; }
+.ed-field-drop-row:last-child { border-bottom: none; }
+.ed-field-drop-row.hl { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); }
+
+/* ---- Marketing (flycheap.live → /early-access) ------------------------- */
+.mk { background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
+.mk .mk-wrap { max-width: 1200px; margin: 0 auto; padding: 0 32px; }
+.mk-nav { position: sticky; top: 0; z-index: 20; background: var(--surface); border-bottom: 1px solid var(--rule); }
+/* flex-wrap + row-gap (task 3.7a fix round 1, F2): at phone width the
+   right-hand link/button group no longer fits one row next to the brand —
+   min-height (not the prior fixed height: 62px) lets the row grow instead
+   of clipping the wrapped line; every label stays visible, just on two
+   lines. Shared by every .mk-nav consumer (Phase 1 /early-access too). */
+.mk-nav .mk-wrap { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; min-height: 62px; gap: 24px; row-gap: 8px; padding-top: 10px; padding-bottom: 10px; }
+.mk-brand { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--ink); }
+.mk-brand-name { font-family: var(--font-serif); font-size: 20px; letter-spacing: -0.01em; }
+.mk-brand-meta { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-2); }
+.mk-nav-links { display: flex; gap: 22px; font-size: 14px; color: var(--muted); }
+.mk-nav-links a:hover { color: var(--ink); }
+.mk-nav-right { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; align-items: center; }
+
+.mk-hero { padding: 72px 0 56px; }
+.mk-hero .mk-wrap { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+@media (max-width: 900px) { .mk-hero .mk-wrap { grid-template-columns: 1fr; } }
+.mk-hero-status { display: flex; align-items: center; gap: 8px; margin-bottom: 22px; }
+.mk-h1 { font-family: var(--font-serif); font-weight: 400; font-size: clamp(40px, 5.2vw, 68px); line-height: 1.02; letter-spacing: -0.03em; margin: 0 0 22px; }
+.mk-lede { font-size: 17px; line-height: 1.6; color: var(--muted); max-width: 46ch; margin: 0 0 28px; }
+.mk-hero-cta { display: flex; gap: 10px; flex-wrap: wrap; }
+
+.mk-feed { background: var(--surface); border: 1px solid var(--rule); }
+.mk-feed-head { display: flex; justify-content: space-between; padding: 14px 18px; border-bottom: 1px solid var(--rule); }
+.mk-feed-row { display: grid; grid-template-columns: 1fr 90px 70px 60px; align-items: center; gap: 14px; padding: 16px 18px; border-bottom: 1px solid var(--rule-soft); }
+.mk-feed-route { font-weight: 600; } .mk-feed-meta { font-size: 12px; color: var(--muted); }
+.mk-feed-price { font-family: var(--font-mono-ed); font-size: 13px; text-align: right; }
+.mk-tag { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; padding: 4px 8px; text-align: center; background: var(--surface-2); color: var(--ink-soft); }
+.mk-tag.buy { color: var(--on-accent); background: var(--accent); } .mk-tag.wait { color: var(--ink); background: var(--amber); }
+
+.mk-section { padding: 64px 0; border-top: 1px solid var(--rule); }
+.mk-strip { display: flex; flex-wrap: wrap; gap: 28px; padding: 22px 0; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.mk-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.mk-tile { background: var(--surface); padding: 26px 24px; }
+.mk-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 32px; }
+.mk-step { border-top: 2px solid var(--ink); padding-top: 18px; }
+.mk-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 32px 40px; }
+.mk-feature { border-top: 1px solid var(--rule); padding-top: 16px; }
+.mk-band { background: var(--panel-bg); color: var(--panel-fg); padding: 56px 0; }
+.mk-band .mk-metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 32px; }
+.mk-metric-value { font-family: var(--font-serif); font-size: 46px; letter-spacing: -0.02em; line-height: 1; }
+.mk-pricing { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.mk-plan { background: var(--surface); padding: 28px 26px; display: flex; flex-direction: column; gap: 14px; }
+.mk-plan.featured { background: var(--panel-bg); color: var(--panel-fg); }
+.mk-plan.featured .ed-btn-primary { background: var(--amber); color: var(--ink); }
+.mk-price { font-family: var(--font-serif); font-size: 38px; letter-spacing: -0.02em; }
+.mk-faq details { border-top: 1px solid var(--rule); padding: 18px 0; }
+.mk-faq summary { cursor: pointer; font-weight: 600; list-style: none; }
+.mk-cta { text-align: center; padding: 72px 0; border-top: 1px solid var(--rule); }
+.mk-footer { border-top: 1px solid var(--rule); padding: 40px 0; font-size: 13px; color: var(--muted); }
+
+/* ---- additions: classes the brief's map does not name -------------------
+   The brief's Step 2 block above covers 13 named classes. The live page has
+   ~70 dc-* classes across page.tsx, EarlyAccessForm.tsx and LiveFeed.tsx (the
+   feed widget — not in the brief's file list, but it renders inside the hero
+   and dc- classes with no CSS backing after this task would leave it either
+   unstyled or stuck on the retired look; converted per "restyle with the
+   nearest primitive, never drop a section" — see task-1.1-report.md).
+   Same geometry constraints as above: no hex, no radius, no shadow, no
+   gradient — every colour is a token. */
+.mk * { box-sizing: border-box; }
+.mk a { color: inherit; text-decoration: none; }
+.mk h1, .mk h2, .mk h3, .mk h4, .mk h5 { margin: 0; }
+.mk p { margin: 0; }
+.mk input, .mk select, .mk textarea { border-radius: 0; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink); }
+.mk label { color: inherit; }
+
+/* Nav: language menu (details/summary), no equivalent in the brief's map. */
+.mk-lang { position: relative; }
+.mk-lang summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 12px; border: 1px solid var(--rule-strong); font-family: var(--font-ui); font-size: 12.5px; font-weight: 600; color: var(--ink-soft); background: var(--surface); }
+.mk-lang summary::-webkit-details-marker { display: none; }
+.mk-lang .chev { font-size: 10px; opacity: 0.7; }
+.mk-lang-menu { position: absolute; inset-inline-end: 0; top: 42px; min-width: 180px; background: var(--surface); border: 1px solid var(--rule-strong); padding: 6px; z-index: 40; }
+.mk-lang-menu a { display: flex; align-items: center; gap: 10px; padding: 8px 10px; font-size: 13.5px; color: var(--muted); }
+.mk-lang-menu a:hover, .mk-lang-menu a.on { background: var(--surface-2); color: var(--ink); }
+
+/* Hero: RouteField backdrop needs positioning; brief's block styles only the
+   two-column grid, not the stacking context the canvas relies on. */
+.mk-hero { position: relative; overflow: hidden; }
+.mk-hero-sky { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.mk-hero .mk-wrap { position: relative; z-index: 1; }
+.mk-hero-copy { min-width: 0; }
+
+/* Live fare feed (LiveFeed.tsx) — the widget the brief's .mk-feed-* rules
+   describe, plus the parts its map doesn't cover (empty state, footer,
+   the delta column, the airline suffix). */
+.mk-feed-empty { padding: 24px 18px; text-align: center; color: var(--muted); font-size: 13px; }
+.mk-feed-route-wrap { min-width: 0; }
+.mk-feed-foot { display: flex; justify-content: space-between; padding: 10px 18px; border-top: 1px solid var(--rule-soft); font-size: 11.5px; color: var(--muted-2); }
+.mk-feed-time { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted-2); }
+.mk-feed-delta { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted-2); text-align: right; }
+.mk-feed-delta.down { color: var(--green); }
+.mk-feed-al { color: var(--muted); font-weight: 500; font-size: 12.5px; }
+/* The live component's tag modifiers are semantic (`low`/`drop`, bound to
+   tagLow/tagDrop labels) — not the brief's buy/wait vocabulary. Its rules
+   above are kept verbatim (dead: nothing renders .buy/.wait) and this rule
+   is added for the modifiers that actually render. amber stays off this
+   tag; drop gets the accent so amber is only the featured plan CTA + WAIT. */
+.mk-tag.drop { color: var(--on-accent); background: var(--accent); }
+
+/* Section headings/body copy the brief's map doesn't give a class — every
+   .mk-section uses these. */
+.mk-h2 { font-family: var(--font-serif); font-weight: 400; font-size: clamp(26px, 3.2vw, 38px); line-height: 1.1; letter-spacing: -0.02em; margin: 14px 0 14px; max-width: 20ch; }
+.mk-h2.big { font-size: clamp(32px, 4.2vw, 50px); }
+.mk-sub { font-size: 16px; line-height: 1.6; color: var(--muted); max-width: 60ch; margin: 0; }
+.mk-close { color: var(--muted); font-size: 15px; line-height: 1.6; max-width: 56ch; margin: 28px 0 0; }
+
+/* Feature grids (difference / wrong-call / modes / why) — icon, optional
+   mono tag, heading, body — all share the same borderless three-up shape. */
+.mk-feature-icon { color: var(--accent); margin-bottom: 10px; }
+.mk-feature-tag { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); margin: 2px 0 4px; }
+.mk-feature h4 { font-weight: 600; font-size: 15.5px; letter-spacing: -0.005em; color: var(--ink); margin: 0 0 6px; }
+.mk-feature p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+
+/* Numbered steps (how-it-works / fit) — .mk-step is in the brief's block;
+   these give the bare h3/h4/p/who/list inside it real typography. */
+.mk-step-n { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); }
+.mk-step h3, .mk-step h4 { font-family: var(--font-serif); font-weight: 400; font-size: 21px; letter-spacing: -0.015em; margin: 10px 0 8px; color: var(--ink); }
+.mk-step p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+.mk-step p.who { color: var(--ink-soft); font-weight: 600; font-size: 13.5px; margin: 0 0 10px; }
+.mk-step ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 6px; }
+.mk-step li { position: relative; padding-left: 16px; color: var(--muted); font-size: 13px; line-height: 1.5; }
+.mk-step li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); }
+
+/* Bordered tile grid (coverage chips / problem quotes) — reuses the brief's
+   .mk-tiles/.mk-tile, which it left without inner typography. */
+.mk-tile-h { font-weight: 600; font-size: 13.5px; color: var(--ink); margin: 0 0 6px; }
+.mk-tile-d { color: var(--muted); font-size: 12.5px; line-height: 1.5; }
+.mk-quote { font-weight: 600; font-size: 14px; line-height: 1.5; color: var(--ink); }
+
+/* Provider strip under the hero (dc-logos — no brief class fits the two
+   stacked label+row groups, so this is a light variant of .mk-section). */
+.mk-logos { padding: 40px 0; border-top: 1px solid var(--rule); text-align: center; }
+.mk-logos-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted-2); }
+.mk-logos-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px 32px; margin-top: 14px; font-size: 14px; color: var(--muted); }
+.mk-logos-row.dim { color: var(--muted-2); font-size: 12.5px; }
+
+/* CTA band (mk-band + mk-cta together) — a primary/secondary button pair
+   sitting on the always-dark panel. --btn-bg is theme-dependent (dark in
+   light mode), so on this panel it can go near-invisible; panel-fg/panel-bg
+   are the pair actually built to contrast against the panel itself. */
+.mk-band .ed-btn-primary { background: var(--panel-fg); color: var(--panel-bg); }
+.mk-band .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
+.mk-band .ed-eyebrow, .mk-band .mk-sub { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.mk-cta-chips { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 18px; margin-top: 22px; font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.06em; color: inherit; opacity: 0.7; }
+.mk-consent { margin: 20px auto 0; max-width: 480px; font-size: 11.5px; line-height: 1.6; opacity: 0.65; }
+.mk-consent a { text-decoration: underline; }
+
+/* Sign-up form (EarlyAccessForm.tsx) — lives inside the CTA band, so inputs
+   and text use `inherit`/opacity rather than the light-surface tokens the
+   rest of the page uses. */
+.mk-form { margin-top: 24px; }
+.mk-form-row { display: flex; flex-wrap: wrap; gap: 8px; max-width: 460px; margin: 0 auto 8px; }
+.mk-form-row input { flex: 1; min-width: 140px; height: 44px; padding: 0 14px; border: 1px solid color-mix(in srgb, var(--panel-fg) 25%, transparent); background: transparent; color: inherit; font-family: var(--font-ui); font-size: 14px; }
+.mk-form-row input::placeholder { color: inherit; opacity: 0.5; }
+.mk-form-row input:focus { outline: none; border-color: var(--accent); }
+.mk-form-terms a { text-decoration: underline; }
+.mk-form-fine { margin-top: 10px; font-size: 12px; opacity: 0.6; text-align: center; }
+.mk-form-err { margin: 10px auto 0; max-width: 460px; padding: 8px 12px; border: 1px solid var(--red); color: var(--red); font-size: 13px; text-align: center; }
+.mk-link-muted { margin-top: 16px; background: none; border: 0; cursor: pointer; font: inherit; font-size: 12px; color: inherit; opacity: 0.6; text-decoration: underline; }
+.mk-link-muted:hover { opacity: 1; }
+
+/* Sign-up success state (EarlyAccessForm.tsx). */
+.mk-done { margin-top: 28px; }
+.mk-done-k { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.7; }
+.mk-done-v { font-family: var(--font-serif); font-size: 56px; letter-spacing: -0.02em; line-height: 1; margin: 8px 0 6px; }
+.mk-done-s { opacity: 0.7; font-size: 13.5px; }
+.mk-done-share { margin-top: 22px; padding-top: 18px; border-top: 1px solid color-mix(in srgb, var(--panel-fg) 15%, transparent); text-align: left; }
+.mk-done-share-h { opacity: 0.7; font-size: 13px; margin-bottom: 8px; }
+.mk-done-row { display: flex; gap: 8px; }
+.mk-done-row input { flex: 1; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid color-mix(in srgb, var(--panel-fg) 25%, transparent); background: transparent; color: inherit; font-family: var(--font-mono-ed); font-size: 12px; }
+.mk-done-links { display: flex; gap: 16px; margin-top: 12px; flex-wrap: wrap; }
+.mk-done-links a { font-size: 12px; font-weight: 600; text-decoration: underline; opacity: 0.75; }
+.mk-done-links a:hover { opacity: 1; }
+
+/* Footer. */
+.mk-footer-grid { display: grid; grid-template-columns: 1.6fr repeat(4, 1fr); gap: 32px; }
+@media (max-width: 900px) { .mk-footer-grid { grid-template-columns: 1fr 1fr; } }
+@media (max-width: 560px) { .mk-footer-grid { grid-template-columns: 1fr; } }
+.mk-footer-brand p { color: var(--muted); font-size: 13px; line-height: 1.6; margin-top: 12px; max-width: 300px; }
+.mk-footer-col h5 { font-family: var(--font-mono-ed); font-size: 10px; font-weight: 500; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); margin: 0 0 12px; }
+.mk-footer-col a { display: block; font-size: 13px; color: var(--muted); padding: 4px 0; }
+.mk-footer-col a:hover { color: var(--ink); }
+.mk-footer-langs { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 44px; padding-top: 22px; border-top: 1px solid var(--rule); font-size: 12.5px; color: var(--muted); }
+.mk-footer-langs a.on { color: var(--ink); font-weight: 600; }
+.mk-footer-legal { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; margin-top: 16px; font-size: 11.5px; color: var(--muted-2); }
+.mk-footer-legal a:hover { color: var(--ink); }
+
+/* ---- Portal chrome (PortalTopBar.tsx) — replaces the client-portal left
+   sidebar with a sticky editorial top tab bar. 13 signed-in destinations +
+   3 mono-caps group separators (.pt-group); a guest shell (.pt-guest + .pt-guest-nav
+   inside the same .pt-tabs grid slot) for the signed-out marketing mini-nav.
+   Two-row grid (Round 1 fix, controller browser gate): row 1 is brand (left,
+   1fr) + .pt-right (right, auto); row 2 is the tab row spanning both columns,
+   left-aligned, so the 13-tab row never wraps *inside* a narrow middle
+   column and inflates the bar to ~330px — it now wraps (if at all) as its
+   own full-width row under a fixed-position brand/controls row. `min-height`
+   (not the brief's `height`) is kept from Round 0: a fixed height would clip
+   a wrapped tab line instead of the bar growing to show it. --------------- */
+.pt-bar { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: 1fr auto; row-gap: 0; align-items: center; padding: 0 24px; min-height: 62px; background: var(--surface); border-bottom: 1px solid var(--rule); font-family: var(--font-ui); }
+.pt-brand { grid-row: 1; display: flex; align-items: center; gap: 10px; padding: 12px 0; color: var(--ink); text-decoration: none; }
+.pt-brand-name { display: block; font-family: var(--font-serif); font-size: 19px; line-height: 1; }
+.pt-brand-meta { display: block; font-family: var(--font-mono-ed); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-2); margin-top: 3px; }
+.pt-tabs { grid-column: 1 / -1; grid-row: 2; justify-self: start; display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.pt-tab { padding: 10px 8px 8px; font-size: 13px; font-weight: 500; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; }
+.pt-tab:hover { color: var(--ink); }
+.pt-tab.active { color: var(--ink); border-bottom-color: var(--accent); }
+.pt-group { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-3); padding: 0 6px 0 14px; align-self: center; }
+.pt-guest { font-size: 13px; color: var(--muted); }
+.pt-guest-nav { gap: 8px 18px; padding: 8px 0 12px; }
+.pt-right { grid-row: 1; justify-self: end; display: flex; align-items: center; gap: 8px; }
+.pt-tier { color: var(--muted-2); }
+.pt-user { color: var(--muted); max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pt-menu { display: none; }
+@media (max-width: 960px) {
+  .pt-bar { grid-template-columns: 1fr auto; }
+  .pt-menu { display: inline-flex; grid-row: 1; grid-column: 2; }
+  .pt-right { grid-row: 2; grid-column: 1 / -1; flex-wrap: wrap; justify-self: start; padding-bottom: 10px; }
+  .pt-tabs { display: none; justify-self: stretch; width: 100%; grid-row: 3; grid-column: 1 / -1; flex-direction: column; align-items: stretch; gap: 0; border-top: 1px solid var(--rule); }
+  .pt-tabs.open { display: flex; }
+  .pt-tab { padding: 12px 0; border-bottom: 1px solid var(--rule-soft); }
+}
+
+/* ---- Explore (/explore) — tile grid + destination table + shared photo
+   primitives (DealSlideshow.tsx / StayHeroSlide.tsx are also used by the
+   Hotels/Airbnbs slideshows, Task 2.5). Tokens only, radius 0, no gradients,
+   no shadows, no blur — a translucent panel tint replaces glass/blur. ------ */
+
+.ed-explore > section:not(:last-child) { margin-bottom: 48px; }
+
+/* Tile active state — a filter/nav tile that reflects the current URL state.
+   An inset outline (not a border, which would fight the 1px grid-gap rule
+   lines) so the tile's box never shifts. Accent, not amber: this is a UI
+   state, not a fare. */
+.ed-tile.active { outline: 2px solid var(--accent); outline-offset: -2px; }
+
+/* Fare heatmap cell (task 3.7b, FareCalendar) — square day cell with a
+   hover affordance that doesn't rely on a Tailwind ring/scale utility. */
+.ed-fare-cell { transition: outline-color 120ms; }
+.ed-fare-cell:hover { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Rule BETWEEN rows, not above the first (task 3.7b fix1, /status per-check
+   list) — the `divide-y` equivalent without a Tailwind utility. */
+.ed-check-row + .ed-check-row { border-top: 1px solid var(--rule); }
+
+/* ComparePanel's pin cards (task 3.7b fix1) — reflows 1/2/3 up like the base
+   Tailwind grid-cols breakpoints did, via auto-fit rather than an inline
+   fixed column count (which forced N equal columns at every width). A
+   wider floor than the shared .ed-tiles default keeps a 3-up row readable. */
+.ed-tiles-compare { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+
+/* Table row highlight — "this option is within range of the cheapest one
+   shown". An 8% amber wash per the tint ceiling, so body text stays legible
+   at full ink. */
+.ed-table tr.hot td { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); }
+
+/* Compact filter/toggle chip — trip-length, month, provider-origin pickers.
+   Distinct from .ed-btn (which is sized for real actions): smaller, no gap,
+   meant to sit in a dense row. */
+/* Base .ed-chip is a static status indicator (tier badge, provider status,
+   "N active" counts) — non-interactive by default. Chips used as real
+   controls (filter toggles in ExploreRankedList/HotelsFilterRail/etc.) are
+   always rendered as an actual button or link, so the pointer/hover affordance
+   is scoped to those tags rather than the class, which a plain <span> never gets. */
+.ed-chip { display: inline-flex; align-items: center; padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); border-radius: 0; cursor: default; transition: opacity 120ms; }
+button.ed-chip, a.ed-chip, select.ed-chip, .ed-chip[role="button"] { cursor: pointer; }
+button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="button"]:hover { opacity: 0.8; }
+.ed-chip.active { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+
+/* Status chips (Support ticket list, task 2.11c) — three states an open/
+   in-progress/waiting/resolved ticket folds into. Text is mixed toward --ink
+   rather than used raw: raw --amber on its own 8% tint measures 4.16:1 in
+   light (below AA), and raw --muted on --surface-2 measures 4.18:1 (the same
+   failure .ed-tile.dim documents above) — see task-2.11c-report.md for the
+   four computed pairs (75%/65% mixes, both themes, all ≥5:1). */
+.ed-chip.status-open { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
+.ed-chip.status-waiting { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+.ed-chip.status-closed { background: var(--surface-2); border-color: var(--rule-strong); color: var(--ink-soft); }
+
+/* Status-ok / status-fail (task 3.7b, /status page) — same 8%-tint/75%-ink-mix
+   recipe as status-open/status-waiting above, so the two health states read
+   consistently with the rest of the chip family instead of inventing a new
+   green/red treatment. */
+.ed-chip.status-ok { background: color-mix(in srgb, var(--green) 8%, var(--surface)); border-color: color-mix(in srgb, var(--green) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--green) 75%, var(--ink)); }
+.ed-chip.status-fail { background: color-mix(in srgb, var(--red) 8%, var(--surface)); border-color: color-mix(in srgb, var(--red) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--red) 75%, var(--ink)); }
+
+/* Segmented view toggle (list / map). Accent for the active segment — a view
+   switch, not a fare or a primary action. */
+.ed-seg { display: inline-flex; border: 1px solid var(--rule-strong); }
+.ed-seg-btn { padding: 6px 12px; font: 600 11.5px/1 var(--font-ui); background: var(--surface); color: var(--muted); border: 0; border-left: 1px solid var(--rule-strong); cursor: pointer; }
+.ed-seg-btn:first-child { border-left: 0; }
+.ed-seg-btn.active { background: var(--accent); color: var(--on-accent); }
+
+/* Slideshow chrome (DealSlideshow.tsx) — arrows/dots/counter over a
+   full-bleed photo. Solid --panel-bg (the same "no glass, no blur" call
+   ruling 3 makes for the caption band) rather than a translucent tint, so
+   contrast over a bright photo never depends on what's under it;
+   opacity-on-hover keeps using Tailwind's group utility. Dots use
+   --panel-fg, not --amber — pagination is not a fare or a primary action. */
+.ed-show-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; background: var(--panel-bg); color: var(--panel-fg); font-size: 20px; line-height: 1; border: 0; border-radius: 0; cursor: pointer; transition: opacity 120ms; }
+.ed-show-arrow:hover { opacity: 0.8; }
+.ed-show-dots { position: absolute; bottom: 12px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 6px; }
+.ed-show-dot { width: 8px; height: 3px; background: color-mix(in srgb, var(--panel-fg) 45%, var(--panel-bg)); border: 0; border-radius: 0; padding: 0; cursor: pointer; transition: width 200ms, background 200ms; }
+.ed-show-dot.active { width: 20px; background: var(--panel-fg); }
+.ed-show-count { position: absolute; top: 12px; right: 12px; font-family: var(--font-mono-ed); font-size: 10px; font-weight: 600; color: var(--panel-fg); background: var(--panel-bg); padding: 4px 8px; }
+
+/* Photo hero slide (StayHeroSlide.tsx + the two HeroDeal/HeroDestination
+   slides in explore/page.tsx) — full-bleed photo (or a flat fallback tile
+   when no photo exists), radius 0, no gradient scrim: a solid --panel-bg/fg
+   caption band carries the text instead. */
+.ed-photo-hero { position: relative; width: 100%; height: 100%; overflow: hidden; }
+.ed-photo-hero-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+.ed-photo-hero-fallback { position: absolute; inset: 0; background: var(--surface-2); display: flex; align-items: center; justify-content: center; overflow: hidden; }
+.ed-photo-hero-fallback-code { font-family: var(--font-mono-ed); font-weight: 700; font-size: clamp(96px, 16vw, 220px); line-height: 1; letter-spacing: -0.02em; color: var(--muted-2); user-select: none; }
+.ed-photo-hero-band { position: absolute; left: 0; right: 0; bottom: 0; background: var(--panel-bg); color: var(--panel-fg); padding: 18px 24px 20px; }
+.ed-photo-hero-tags { display: flex; gap: 8px; margin-bottom: 10px; }
+.ed-photo-hero-tag { display: inline-flex; align-items: center; gap: 5px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 80%, var(--panel-bg)); }
+.ed-photo-hero-tag.deal { color: var(--amber); }
+.ed-photo-hero-eyebrow { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.18em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); margin-bottom: 4px; }
+.ed-photo-hero-title { font-family: var(--font-serif); font-weight: 400; font-size: clamp(26px, 3.6vw, 40px); letter-spacing: -0.02em; line-height: 1.03; color: var(--panel-fg); margin: 0; }
+.ed-photo-hero-meta { font-size: 12.5px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); margin-top: 6px; }
+.ed-photo-hero-foot { display: flex; align-items: flex-end; gap: 16px; margin-top: 14px; }
+.ed-photo-hero-price-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-photo-hero-price { font-family: var(--font-serif); font-weight: 400; font-size: 34px; letter-spacing: -0.02em; line-height: 1; color: var(--amber); }
+@media (max-width: 640px) { .ed-photo-hero-band { padding: 14px 16px 16px; } }
+
+/* Editorial language menu (LanguageMenu.tsx variant="editorial") — same
+   <details>/<summary>/menu structure as the 'topbar' variant, tokens only.
+   Used by PortalTopBar. */
+.ed-lang { position: relative; }
+.ed-lang summary { list-style: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 10px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); font-family: var(--font-mono-ed); font-size: 11px; letter-spacing: 0.08em; }
+.ed-lang summary::-webkit-details-marker { display: none; }
+.ed-lang-menu { position: absolute; top: calc(100% + 4px); inset-inline-end: 0; min-width: 180px; background: var(--surface); border: 1px solid var(--rule); padding: 4px; z-index: 40; }
+.ed-lang-menu a { display: flex; align-items: center; gap: 10px; padding: 7px 10px; font-size: 12.5px; color: var(--ink-soft); text-decoration: none; }
+.ed-lang-menu a:hover, .ed-lang-menu a.on { background: var(--surface-2); color: var(--ink); }
+
+/* ---- Date popover (DatePopover.tsx) — shared trigger + react-day-picker
+   panel, both on tokens. Shared with /searches; no page-context dependency.
+   Rules are prefixed `html[data-theme]` so they out-specify the legacy
+   `html.dark .rdp-*` block in globals.css (a v8-era selector; some of its
+   class names — .rdp-day/.rdp-weekday/.rdp-button_next/_previous — still
+   match react-day-picker v9's DOM) without editing that file. ---- */
+.ed-date-trigger { display: block; width: 100%; padding: 9px 11px; text-align: left; font: 500 13px/1.3 var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; cursor: pointer; }
+.ed-date-trigger:hover { border-color: var(--ink-soft); }
+.ed-date-trigger:focus { outline: 2px solid var(--accent); outline-offset: 0; }
+
+.ed-date-panel { position: absolute; z-index: 50; margin-top: 4px; padding: 8px; background: var(--surface); border: 1px solid var(--rule); border-radius: 0; }
+html[data-theme] .ed-date-panel .rdp-root {
+  --rdp-accent-color: var(--accent);
+  --rdp-accent-background-color: color-mix(in srgb, var(--accent) 15%, var(--surface));
+  --rdp-day_button-border-radius: 0;
+  --rdp-selected-border: none;
+  --rdp-today-color: var(--ink);
+  --rdp-disabled-opacity: 1;
+  color: var(--ink);
+}
+html[data-theme] .ed-date-panel .rdp-day,
+html[data-theme] .ed-date-panel .rdp-caption_label,
+html[data-theme] .ed-date-panel .rdp-button_next,
+html[data-theme] .ed-date-panel .rdp-button_previous { color: var(--ink); }
+html[data-theme] .ed-date-panel .rdp-weekday { color: var(--muted); }
+html[data-theme] .ed-date-panel .rdp-chevron { fill: var(--ink-soft); }
+html[data-theme] .ed-date-panel .rdp-selected .rdp-day_button { background: var(--btn-bg); color: var(--btn-fg); }
+html[data-theme] .ed-date-panel .rdp-today:not(.rdp-outside) .rdp-day_button { outline: 1px solid var(--accent); outline-offset: -2px; }
+html[data-theme] .ed-date-panel .rdp-disabled:not(.rdp-selected) { color: var(--muted-2); opacity: 1; }
+html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { background: var(--surface-2); }
+
+/* ---- Plans (client portal /pricing, PricingClient.tsx) — three plan tiles,
+   1px gaps over --rule like .ed-tiles. Two modifiers, independent and
+   co-occurring:
+   - `.current` — the signed-in user's OWN tier inverts onto --panel-bg/
+     --panel-fg (README: "current plan uses --panel-bg"). --ink is NOT reused
+     for the inverted text: --ink flips per theme (light in dark mode), so on
+     --panel-bg (dark in both themes) it would read fine in light mode and
+     fail in dark. Every inverted text role instead keys off --panel-fg,
+     the pattern already used by .mk-band.
+   - `.featured` — the "Most popular" (Pro) tile's own subscribe CTA may be
+     amber (ruling 5), but only paired with a foreground that does not flip:
+     --panel-bg is dark in both themes (light #14181B, dark #0A0C0E), so
+     amber/panel-bg clears AA in both — light 6.11:1, dark 8.52:1. --ink
+     would fail in dark (--ink is light there): amber/ink measures 1.99:1. */
+.ed-plans { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-plan { position: relative; background: var(--surface); padding: 24px 22px 22px; display: flex; flex-direction: column; }
+.ed-plan-badge { position: absolute; top: 18px; right: 18px; font-family: var(--font-mono-ed); font-size: 9.5px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--on-accent); background: var(--accent); padding: 3px 9px; }
+.ed-plan-price { font-family: var(--font-serif); font-weight: 400; font-size: 38px; letter-spacing: -0.02em; line-height: 1; color: var(--ink); margin-top: 6px; }
+.ed-plan-note { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.ed-plan-list { list-style: none; margin: 18px 0 22px; padding: 0; flex: 1; display: grid; gap: 6px; font-size: 13px; line-height: 1.5; color: var(--ink-soft); }
+.ed-plan-list li.off { color: var(--muted-2); }
+.ed-plan-cta { margin-top: auto; display: grid; gap: 8px; }
+
+.ed-plan.featured .ed-btn-primary { background: var(--amber); color: var(--panel-bg); }
+
+.ed-plan.current { background: var(--panel-bg); color: var(--panel-fg); }
+.ed-plan.current .ed-eyebrow,
+.ed-plan.current .ed-plan-note { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-plan.current .ed-plan-price { color: var(--panel-fg); }
+.ed-plan.current .ed-plan-list { color: color-mix(in srgb, var(--panel-fg) 90%, var(--panel-bg)); }
+.ed-plan.current .ed-plan-list li.off { color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-plan.current .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
+
+/* ---- Global widgets (ChatWidget / CompareTray / MobileBottomNav) — render
+   outside <main> on every portal page (DeferredAppWidgets.tsx, task 2.12).
+   Fixed positioning/sizing stays as Tailwind layout utilities on the
+   elements themselves (not colour); these primitives cover chrome only —
+   tokens, radius 0, no shadow, no gradient, no blur. */
+.ed-fab { width: 44px; height: 44px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+
+.ed-widget-panel { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; display: flex; flex-direction: column; overflow: hidden; }
+
+.ed-widget-head { background: var(--panel-bg); color: var(--panel-fg); padding: 12px 16px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ed-widget-head-title { font: 700 13px/1.2 var(--font-ui); }
+.ed-widget-head-meta { font-size: 10px; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); display: flex; align-items: center; gap: 5px; margin-top: 3px; }
+.ed-widget-head-btn { background: transparent; border: 1px solid color-mix(in srgb, var(--panel-fg) 30%, transparent); color: color-mix(in srgb, var(--panel-fg) 85%, var(--panel-bg)); font: 600 10px/1 var(--font-mono-ed); letter-spacing: 0.08em; text-transform: uppercase; padding: 5px 9px; cursor: pointer; }
+.ed-widget-head-btn:hover { background: color-mix(in srgb, var(--panel-fg) 12%, transparent); }
+
+/* Chat (ChatWidget.tsx). */
+.ed-chat-messages { flex: 1; overflow-y: auto; padding: 16px; display: flex; flex-direction: column; gap: 10px; background: var(--bg); }
+.ed-chat-row { display: flex; align-items: flex-end; gap: 8px; }
+.ed-chat-row.user { justify-content: flex-end; }
+.ed-chat-icon { color: var(--accent); flex-shrink: 0; }
+.ed-chat-bubble { max-width: 80%; padding: 9px 13px; font-size: 13px; line-height: 1.5; white-space: pre-wrap; border: 1px solid var(--rule-strong); border-radius: 0; }
+.ed-chat-bubble.assistant { background: var(--surface); color: var(--ink); }
+.ed-chat-bubble.user { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
+.ed-chat-error { border: 1px solid var(--red); color: var(--red); background: var(--surface); padding: 8px 12px; font-size: 12px; max-width: 90%; margin: 0 auto; }
+
+.ed-chat-chips { padding: 10px 12px 8px; display: flex; flex-wrap: wrap; gap: 6px; border-top: 1px solid var(--rule); background: var(--surface); }
+.ed-chat-chips-label { width: 100%; margin-bottom: 2px; }
+
+.ed-chat-composer { border-top: 1px solid var(--rule); padding: 10px; display: flex; gap: 6px; background: var(--surface); }
+.ed-chat-toggle { width: 30px; height: 30px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+.ed-chat-mic { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.ed-chat-send { width: 38px; height: 38px; padding: 0; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+/* Compare tray (CompareTray.tsx) — pinned deal comparison overlay. */
+.ed-tray-launcher { display: inline-flex; align-items: center; gap: 8px; padding: 9px 16px; background: var(--btn-bg); color: var(--btn-fg); border: 1px solid var(--btn-bg); border-radius: 0; font: 600 13px/1 var(--font-ui); cursor: pointer; }
+.ed-tray-count { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 20px; padding: 0 4px; background: var(--accent); color: var(--on-accent); font: 700 11px/1 var(--font-mono-ed); }
+.ed-tray-overlay { position: fixed; inset: 0; background: color-mix(in srgb, var(--panel-bg) 55%, transparent); }
+.ed-tray-panel { position: relative; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ed-tray-head { position: sticky; top: 0; background: var(--panel-bg); color: var(--panel-fg); padding: 14px 18px; display: flex; align-items: center; justify-content: space-between; }
+.ed-tray-head-eyebrow { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg)); }
+.ed-tray-head-title { font-family: var(--font-serif); font-size: 19px; line-height: 1.15; color: var(--panel-fg); }
+.ed-tray-head-btn { background: color-mix(in srgb, var(--panel-fg) 10%, transparent); border: 0; color: var(--panel-fg); font: 600 11px/1 var(--font-ui); padding: 6px 10px; cursor: pointer; }
+.ed-tray-close { font-size: 20px; line-height: 1; color: var(--panel-fg); background: none; border: 0; padding: 0 4px; cursor: pointer; }
+.ed-tray-card { position: relative; background: var(--surface); border: 1px solid var(--rule-strong); padding: 16px; }
+.ed-tray-card.cheapest { border-color: var(--green); }
+.ed-tray-badge { position: absolute; top: -1px; left: -1px; background: var(--green); color: var(--on-accent); font: 700 10px/1 var(--font-mono-ed); letter-spacing: 0.06em; text-transform: uppercase; padding: 4px 8px; }
+.ed-tray-unpin { position: absolute; top: 10px; right: 10px; background: none; border: 0; color: var(--muted-2); font-size: 13px; cursor: pointer; }
+.ed-tray-unpin:hover { color: var(--red); }
+
+/* Mobile bottom nav (MobileBottomNav.tsx). */
+.ed-bottomnav { background: var(--surface); border-top: 1px solid var(--rule); }
+.ed-bottomnav-grid { display: grid; grid-template-columns: repeat(5, 1fr); }
+.ed-bottomnav-tab { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 7px 0 6px; font: 600 10px/1 var(--font-ui); color: var(--muted-2); text-decoration: none; }
+.ed-bottomnav-tab.active { color: var(--ink); }
+.ed-bottomnav-tab-icon { display: flex; align-items: center; justify-content: center; width: 34px; height: 34px; color: inherit; }
+.ed-bottomnav-tab-bar { position: absolute; top: 0; height: 2px; width: 40px; background: var(--accent); }
+
+/* ---- Root footer (src/app/layout.tsx, ruling 2). Round 1 fix (F1): the
+   footer's real ground is --bg-app (globals.css, the legacy page background
+   var(--bg) never overrides), not editorial's own --bg — a hair darker in
+   light mode, enough that --muted/--muted-2 measured 4.36:1 there (below
+   4.5:1) with no headroom. Body copy and the brand span move to --ink-soft
+   (10.79:1 light / 12.30:1 dark against --bg-app); links move to --ink,
+   underlined, for their own higher-contrast affordance (16.51:1 light /
+   17.03:1 dark). See task-2.12-report.md Round 1 for the full pair table. */
+.ed-footer { border-top: 1px solid var(--rule); max-width: 80rem; margin: 48px auto 0; padding: 32px 24px; font-size: 12px; line-height: 1.6; color: var(--ink-soft); font-family: var(--font-ui); }
+.ed-footer-row { display: flex; flex-direction: column; gap: 8px; }
+@media (min-width: 768px) { .ed-footer-row { flex-direction: row; align-items: center; justify-content: space-between; } }
+.ed-footer-brand { font-weight: 600; color: var(--ink-soft); }
+.ed-footer-links { color: var(--ink-soft); display: flex; flex-wrap: wrap; gap: 6px 12px; }
+
+/* ---- Admin chrome (admin.flycheap.live) — Task 3.1 --------------------
+   Dark top bar + 214px rail, replacing the inline gradient shell and the
+   inline <style> block that used to live in admin/layout.tsx. The six rules
+   right below are verbatim from the redesign handoff (task-3.1-brief.md
+   Step 2). Everything after the next divider re-homes what that inline
+   block carried — scoped to .ad-shell instead of .admin-shell, tokens only,
+   radius 0, no shadow/gradient/backdrop-filter — because admin pages not
+   yet converted (Tasks 3.2–3.11) still reference these class names
+   directly (ad-btn, ad-panel, ad-eyebrow, ad-input, .card, .kpi, slate
+   utility remaps, raw h1/h2/h3, code chips…), not only through ui.tsx. */
+.ad-shell { position: fixed; inset: 0; overflow: auto; background: var(--bg); color: var(--ink); font-family: var(--font-ui); }
+.ad-top { position: sticky; top: 0; z-index: 30; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 24px; height: 56px; padding: 0 24px; background: var(--panel-bg); color: var(--panel-fg); }
+.ad-brand { display: flex; align-items: center; gap: 10px; color: var(--panel-fg); text-decoration: none; }
+.ad-brand-name { display: block; font-family: var(--font-serif); font-size: 19px; line-height: 1; }
+.ad-brand-meta { display: block; font-family: var(--font-mono-ed); font-size: 9px; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.6; margin-top: 3px; }
+.ad-crumb { opacity: 0.75; } .ad-right { display: flex; gap: 10px; align-items: center; }
+/* Deviation from the brief's verbatim `color: var(--accent)`: --panel-bg is
+   ALWAYS dark (both themes), but --accent flips to a dark teal in light mode
+   — accent-on-panel-bg measures 2.49:1 in light (fails AA). --panel-fg is
+   the correct read per ruling 4 ("text on --panel-bg via --panel-fg"); the
+   dot stays the shared .ed-dot green, which isn't text. */
+.ad-live { color: var(--panel-fg); display: inline-flex; gap: 6px; align-items: center; }
+.ad-top .ed-btn-secondary { background: transparent; color: var(--panel-fg); border-color: color-mix(in srgb, var(--panel-fg) 30%, transparent); }
+.ad-rail { position: fixed; top: 56px; bottom: 0; left: 0; width: 214px; overflow: auto; background: var(--surface); border-right: 1px solid var(--rule); padding: 18px 0; }
+.ad-rail-group { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted-3); padding: 18px 24px 8px; }
+.ad-rail-item { display: block; padding: 8px 24px 8px 22px; font-size: 13.5px; color: var(--muted); text-decoration: none; border-left: 2px solid transparent; }
+.ad-rail-item:hover { color: var(--ink); } .ad-rail-item.active { color: var(--ink); background: var(--surface-2); border-left-color: var(--accent); }
+.ad-main { margin-left: 214px; min-height: calc(100vh - 56px); }
+@media (max-width: 900px) { .ad-rail { position: static; width: auto; border-right: 0; border-bottom: 1px solid var(--rule); } .ad-main { margin-left: 0; } }
+
+/* ---- chrome support classes the brief's rule block above doesn't name --- */
+/* Below md (768px) the middle `.ad-crumb` cell (`hidden md:flex`) leaves the
+   DOM entirely, so the grid only has 2 items left and `.ad-right` auto-places
+   into the `1fr` column instead of the trailing `auto` one — margin-left:
+   auto keeps it pinned right in both layouts (a no-op in the 3-column case,
+   where it's already flush right). */
+.ad-right { margin-left: auto; }
+.ad-brand-slot { display: flex; align-items: center; }
+.ad-brand-mobile { font: 600 14px var(--font-ui); color: var(--panel-fg); }
+.ad-crumb-brand { color: color-mix(in srgb, var(--panel-fg) 62%, var(--panel-bg)); }
+.ad-crumb-sep { opacity: 0.35; }
+.ad-founder { color: color-mix(in srgb, var(--panel-fg) 55%, var(--panel-bg)); }
+.ad-crumb-label { font-family: var(--font-mono-ed); font-size: 11px; letter-spacing: 0.04em; color: color-mix(in srgb, var(--panel-fg) 88%, var(--panel-bg)); }
+.ad-rail-operator { padding: 0 24px 14px; font-size: 10px; letter-spacing: 0.08em; color: var(--muted-2); overflow-wrap: anywhere; }
+.ad-rail-item-inner { display: flex; align-items: center; gap: 8px; }
+.ad-rail-item-inner svg { opacity: 0.65; flex-shrink: 0; }
+.ad-rail-item.active .ad-rail-item-inner svg { opacity: 1; color: var(--accent); }
+.ad-rail-logout { width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; cursor: pointer; font: inherit; }
+/* Restored per fix-round-1 ruling A1: the base sidebar's footer control,
+   dropped in the first pass, mirrored here on tokens (was text-[11px]
+   text-white/55 hover:text-white on a border-t). */
+.ad-rail-foot { display: flex; align-items: center; gap: 8px; padding: 14px 24px; margin-top: 8px; border-top: 1px solid var(--rule); font-size: 11px; color: var(--muted); text-decoration: none; }
+.ad-rail-foot:hover { color: var(--ink); }
+.ad-rail-foot svg { flex-shrink: 0; opacity: 0.7; }
+
+/* ---- generic remaps for admin pages not yet converted off .card/.kpi/
+   raw headings/slate utilities/<code> — kept until their own tasks land.
+   `:not(.ed-h1)` / `:not(.ed-h2)` / `:not(.ad-table)` exclude the elements
+   ui.tsx itself renders: a bare `.ad-shell h1` selector (0,1,1) would
+   otherwise out-specify `.ed-h1` (0,1,0) and silently shrink PageHead's
+   title from 42px to 2.05rem, and `.ad-shell table thead th` (0,1,3) would
+   out-specify `.ad-table th` (0,1,1) and drop the --ink header rule ruling 3
+   asks for. Excluding by class sidesteps the specificity fight entirely
+   instead of trying to out-rank it. */
+.ad-shell h1:not(.ed-h1), .ad-shell h2:not(.ed-h2), .ad-shell h3 { font-family: var(--font-serif); font-weight: 400; color: var(--ink); letter-spacing: -0.015em; }
+.ad-shell h1:not(.ed-h1) { font-size: 2.05rem; line-height: 1.04; }
+.ad-shell h2:not(.ed-h2) { font-size: 1.4rem; line-height: 1.1; }
+.ad-shell h3 { font-size: 1.1rem; }
+/* Added per fix-round-1 ruling A2: the report claimed this rule already
+   existed and it didn't — 5 not-yet-converted pages use the bare .eyebrow
+   class (farepilot, integrations, queue, errors, revenue) and were falling
+   through to the global Tailwind .eyebrow. Raw --accent measures 6.88:1
+   (light, on --bg) / 7.18:1 (light, on --surface) / 7.32–8.01:1 (dark) — no
+   mix needed. */
+.ad-shell .eyebrow { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; color: var(--accent); }
+.ad-shell .card, .ad-shell .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); }
+.ad-shell .card-elevated { border-color: var(--accent); background: var(--surface); }
+.ad-shell .card:hover { border-color: var(--rule-strong); }
+.ad-shell .card .text-2xl, .ad-shell .card .text-3xl, .ad-shell .tabular { font-family: var(--font-mono-ed); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+.ad-shell .kpi-label { color: var(--muted); } .ad-shell .kpi-value { color: var(--ink); } .ad-shell .kpi-sub { color: var(--muted); }
+.ad-shell .kpi-brand { background: var(--panel-bg); }
+.ad-shell table:not(.ad-table) thead th { font-family: var(--font-mono-ed); color: var(--muted-2); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+.ad-shell table:not(.ad-table) tbody td { color: var(--ink-soft); border-color: var(--rule-soft); }
+.ad-shell table:not(.ad-table) tbody tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.ad-shell code { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--accent); padding: 1px 5px; border-radius: 0; font-family: var(--font-mono-ed); font-size: 0.85em; }
+.ad-shell .text-slate-500, .ad-shell .text-slate-400, .ad-shell .text-slate-600 { color: var(--muted); }
+.ad-shell .text-slate-700, .ad-shell .text-slate-900, .ad-shell .text-slate-100, .ad-shell .text-slate-300 { color: var(--ink); }
+.ad-shell .bg-slate-100, .ad-shell .bg-slate-50 { background: var(--surface-2); }
+.ad-shell .border-slate-100, .ad-shell .border-slate-200, .ad-shell .border-slate-800 { border-color: var(--rule-soft); }
+
+/* ---- Admin page kit (src/app/admin/_components/ui.tsx) — also referenced
+   directly (ad-btn, ad-btn-gold, ad-eyebrow, ad-input, ad-panel-title) by
+   pages that don't go through ui.tsx's own components. */
+.ad-eyebrow { font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.2em; text-transform: uppercase; line-height: 1.4; color: var(--muted-2); }
+.ad-eyebrow.accent { color: var(--accent); }
+.ad-note { font-size: 11.5px; line-height: 1.4; color: var(--muted); }
+.ad-rule-top { border-top: 1px solid var(--rule-soft); }
+.ad-rule-top:first-child { border-top: 0; }
+.ad-panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; padding: 16px 18px; }
+.ad-panel-gold { border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
+.ad-panel-title { font-family: var(--font-serif); font-weight: 400; font-size: 15px; color: var(--ink); letter-spacing: -0.01em; }
+.ad-kpi { display: block; padding: 14px 16px 15px; }
+.ad-kpi-value { font-family: var(--font-serif); font-weight: 400; font-size: 34px; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; color: var(--ink); }
+.ad-kpi-link { text-decoration: none; transition: opacity 120ms; }
+.ad-kpi-link:hover { opacity: 0.72; }
+.ad-chip { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.05em; padding: 2px 7px; border-radius: 0; background: var(--surface-2); border: 1px solid var(--rule); color: var(--ink-soft); white-space: nowrap; }
+.ad-btn { display: inline-flex; align-items: center; gap: 5px; font: 600 11.5px/1 var(--font-ui); padding: 6px 11px; border: 1px solid var(--rule-strong); border-radius: 0; background: var(--surface); color: var(--ink-soft); text-decoration: none; white-space: nowrap; transition: opacity 120ms; }
+.ad-btn:hover { opacity: 0.72; }
+.ad-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* --panel-bg, not --ink: --ink flips light in dark mode, and --amber+--ink
+   measures 1.99:1 there (task-2.8-report.md precedent) — --panel-bg stays
+   near-black in both themes, same fix the pricing tile's featured CTA uses. */
+.ad-btn-gold { background: var(--amber); color: var(--panel-bg); border-color: var(--amber); }
+.ad-table { border-collapse: collapse; font-size: 12.5px; }
+.ad-table th { text-align: left; padding: 7px 10px; font-family: var(--font-mono-ed); font-size: 9.5px; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted-2); font-weight: 500; border-bottom: 1px solid var(--ink); background: transparent; }
+.ad-table td { padding: 8px 10px; border-top: 1px solid var(--rule-soft); color: var(--ink-soft); vertical-align: middle; }
+.ad-table tbody tr:hover td { background: color-mix(in srgb, var(--accent) 4%, transparent); }
+/* Task 3.2 (errors page): row emphasis for error-level events — was a
+   `linear-gradient(90deg, rgba(232,163,61,.10), transparent 70%)` (amber on
+   decoration, the exact thing the design rule reserves amber against).
+   --red is the correct token: error/failed rows read as --red site-wide. */
+.ad-table tbody tr.row-hot td { background: color-mix(in srgb, var(--red) 6%, transparent); }
+/* Fix round 1 (C2): --muted (.ad-note) on the row-hot tint measures 4.33:1 in
+   light — under AA. --ink-soft clears it (10.73:1 light / 10.0:1 dark) and is
+   already the tone the rest of this row family uses for on-tint text. */
+.ad-table tbody tr.row-hot .ad-note { color: var(--ink-soft); }
+.ad-input { width: 190px; max-width: 46vw; background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; padding: 7px 10px; color: var(--ink); font-size: 12.5px; font-family: var(--font-mono-ed); outline: none; }
+.ad-input:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+.ad-tone-neutral { color: var(--ink); }
+/* Mixed toward --ink, not raw --amber: raw amber text measures 2.92:1 on
+   --surface in light (below AA even at the KPI value's large size) — same
+   65% mix already established for .ed-chip.status-waiting / ad-tone-warn. */
+.ad-tone-gold { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+.ad-tone-good { color: var(--green); }
+.ad-tone-bad { color: var(--red); }
+.ad-tone-warn { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+
+/* BarRow's 'bad' tone needs a fill the shared .ed-bar-fill didn't have yet. */
+.ed-bar-fill.red { background: var(--red); }
+/* Task 3.2: signups' FunnelRow 'All signups' total row — was a literal
+   #3D6B86, now the one --track-based fill .ed-bar-fill didn't have. */
+.ed-bar-fill.muted { background: var(--track); }
+.ed-footer a { color: var(--ink); text-decoration: underline; }
+
+/* Task 3.4: RowMenu.tsx's per-row ⋯ popover on /admin/users — a flat panel,
+   not an elevated card: --surface ground, 1px --rule-strong, radius 0, no
+   shadow (was a literal #131C2E fill with a rounded-lg + drop shadow). */
+.ad-menu { background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ad-menu-trigger { color: var(--muted); transition: color 120ms; }
+.ad-menu-trigger:hover { color: var(--ink); }
+.ad-menu-item { color: var(--ink-soft); }
+.ad-menu-item:hover { opacity: 0.72; }
+/* Destructive trigger inside the menu list (the danger-red text-only row,
+   distinct from .ed-btn-danger's own bordered button used on the real
+   Delete submit). */
+.ad-menu-item.danger { color: var(--red); }
+.ad-menu-heading { color: var(--muted-2); }
+/* Confirm-delete field inside the popover — same flat input, red accent. */
+.ed-input.danger { border-color: var(--red); }
+.ed-input.danger:focus { outline-color: var(--red); }
+
+/* ---- Stacked bars (StackedBars.tsx) — README "Feature-block catalogue":
+   Command centre, Click stream, Acquisition, Errors. 190px tall, 5px gap,
+   --accent over --amber, bottom rule, mono axis labels. Bar count is
+   whatever `series.length` the caller passes — never fixed here. */
+.ed-stackbars { display: flex; align-items: flex-end; gap: 5px; border-bottom: 1px solid var(--rule); }
+.ed-stackbar { flex: 1 1 0; min-width: 2px; display: flex; flex-direction: column; justify-content: flex-end; }
+.ed-stackbar-seg { width: 100%; }
+.ed-stackbar-seg.a { background: var(--accent); }
+.ed-stackbar-seg.b { background: var(--amber); }
+.ed-stackbars-axis { display: flex; gap: 5px; margin-top: 6px; }
+.ed-stackbars-tick { flex: 1 1 0; min-width: 2px; text-align: center; font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* ---- Funnel (Funnel.tsx) — README "Feature-block catalogue": Funnel.
+   5(+) stages, 44px bars on --surface-2, last (conversion) stage
+   --amber, serif value right. Stage count is whatever `stages.length`
+   the caller passes — never fixed here (see the component's own
+   comment on funnelMetrics' conditional delivered/opened rows). */
+.ed-funnel { display: grid; }
+.ed-funnel-row { display: grid; grid-template-columns: minmax(140px, 1fr) 2.4fr auto; align-items: center; gap: 18px; padding: 10px 0; border-top: 1px solid var(--rule-soft); }
+.ed-funnel-row:first-child { border-top: 0; }
+.ed-funnel-label { font-size: 13px; color: var(--ink-soft); }
+.ed-funnel-bar { height: 44px; background: var(--surface-2); }
+.ed-funnel-bar-fill { height: 100%; background: var(--accent); }
+/* Raw --amber on --surface-2 measures 2.59:1 in light (below the 3:1
+   non-text floor, WCAG 1.4.11) — --surface-2 is itself a warm cream
+   close in lightness to amber. Reuses .ad-tone-gold's same 65%
+   amber/ink mix (4.81:1 light / 8.78:1 dark against --surface-2). */
+.ed-funnel-bar-fill.amber { background: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+.ed-funnel-value { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.ed-funnel-value-n { font-family: var(--font-serif); font-weight: 400; font-size: 22px; letter-spacing: -0.01em; line-height: 1; color: var(--ink); }
+.ed-funnel-meta { font-family: var(--font-mono-ed); font-size: 10.5px; color: var(--muted-2); white-space: nowrap; }
+
+/* ---- Poll heatmap (Heatmap.tsx) — README "Feature-block catalogue":
+   Fare engine. 20px cells, 3px gap, radius 0, accent mixed 12→92% by
+   call volume, tinted toward --red by error share. Row/cell counts
+   come entirely from the caller's data (see the component's own
+   comment — providerHealthHourly has no provider dimension, so Fare
+   engine renders one 1×24 strip, not a fabricated 7×24 week). */
+.ed-heatmap-row { display: flex; align-items: center; margin-bottom: 3px; }
+.ed-heatmap-row-label { font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-2); width: 96px; flex-shrink: 0; }
+.ed-heatmap-grid { display: grid; }
+.ed-heatmap-cell { border-radius: 0; }
+.ed-heatmap-axis { display: grid; margin-top: 6px; }
+.ed-heatmap-tick { font-family: var(--font-mono-ed); font-size: 9.5px; color: var(--muted-2); text-align: center; white-space: nowrap; overflow: hidden; }
+
+/* ---- Task 3.6 (queue / tickets) — underline filter tabs. No existing
+   primitive fit: .ed-seg is a bordered segmented box (wrong shape for a
+   nav that also carries a route — queue/tickets use <Link href>, not
+   buttons). Active state uses --accent for the rule, replacing the two
+   pages' literal border-[#E8A33D] (ruling: the amber filter-tab border
+   becomes the --accent active rule, not amber — amber stays reserved for
+   fares/primary actions). */
+.ad-tabs { display: flex; flex-wrap: wrap; gap: 2px; border-bottom: 1px solid var(--rule); }
+.ad-tab { display: inline-block; margin-bottom: -1px; padding: 8px 14px; font-size: 13px; color: var(--muted); text-decoration: none; border-bottom: 2px solid transparent; transition: color 120ms; }
+.ad-tab:hover { color: var(--ink-soft); }
+.ad-tab.active { border-color: var(--accent); color: var(--ink); font-weight: 600; }
+
+/* ---- Task 3.6 (tickets/[ref]) — conversation thread bubbles. Distinct
+   from the client ChatWidget's .ed-chat-bubble (bg-swap) on purpose: a
+   support thread is a record, not a live back-and-forth, so "ours" reads
+   as a filed reply (left accent rule on its own tint) rather than a
+   filled chat pill. Replaces the literal #E8A33D/[0.06] tint. */
+.ad-thread-msg { padding: 12px 14px; font-size: 13.5px; line-height: 1.6; white-space: pre-wrap; }
+.ad-thread-msg.ours { background: color-mix(in srgb, var(--accent) 6%, var(--surface-2)); border-left: 3px solid var(--accent); }
+.ad-thread-msg.theirs { background: var(--surface); border: 1px solid var(--rule); }
+
+/* ---- Task 3.6 (tickets/[ref]) — status-rail picker rows. Replaces the
+   literal #E8A33D/[0.08] "current" tint (amber-as-decoration) with
+   --surface-2 + an --accent border, per ruling 3 (amber reserved for
+   data/"wait", not a selection state). */
+.ad-statuspick { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-size: 13px; border: 1px solid var(--rule-strong); border-radius: 0; background: var(--surface); color: var(--ink-soft); text-align: left; cursor: pointer; transition: opacity 120ms, border-color 120ms; }
+.ad-statuspick:hover { opacity: 0.8; }
+.ad-statuspick.active { background: var(--surface-2); border-color: var(--accent); color: var(--ink); cursor: default; }
+.ad-statuspick:disabled { cursor: default; }
+
+/* ---- Task 3.7a (login, public chrome, trip) — small set of generically
+   reusable primitives the existing library didn't cover. Nothing here is
+   route-specific; each composes with .ed-panel/.ed-btn/.mk-* rather than
+   duplicating them. */
+
+/* Centers a max-width column inside .ed-panel (auth card, trip card,
+   admin-login card) — the library had no centered-column primitive. */
+.ed-card { max-width: 34rem; margin: clamp(2.5rem, 10vh, 6rem) auto 0; }
+
+/* Field hint / helper text under an .ed-input, and a checkbox row — the
+   two .nc-confirm-card pieces (nc-field-hint, nc-check) that had no
+   .ed-* analog. */
+.ed-field-block { display: block; margin: 16px 0 8px; }
+.ed-field-hint { display: block; font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 4px; }
+.ed-checkbox { display: flex; gap: 8px; align-items: flex-start; margin-top: 16px; font-size: 13px; color: var(--ink); }
+.ed-checkbox input { margin-top: 3px; accent-color: var(--accent); }
+.ed-checkbox .ed-field-hint { margin-top: 2px; }
+
+/* Literal --amber as TEXT on a light surface measures 2.8-2.9:1 (checked
+   against the actual token hex) — well under the 4.5:1 AA floor; every
+   existing amber-as-text use in this file sits on --panel-bg (dark ground),
+   never on --surface/--bg. Same fix as .ed-chip.status-waiting's amber
+   formula: mix 65% toward --ink so light clears AA (5.2-5.4:1) and dark
+   stays comfortably legible (9-9.7:1) without losing the amber hue. Used
+   for the one amber fare figure that renders on a light ground (login's
+   live stats/deals rail, outside any .ed-photo-hero/.ad-btn-gold panel). */
+.ed-fare-text { color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+
+/* Two-column login layout (intel panel + auth panel). Same hairline-grid
+   technique as .ed-stats/.mk-pricing: 1px background gap reads as a rule
+   between the two panels in both themes without a literal border color. */
+.ed-login-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 1px; background: var(--rule); border: 1px solid var(--rule); }
+.ed-login-grid > .ed-panel { border: 0; padding: 32px 36px; }
+@media (max-width: 880px) { .ed-login-grid { grid-template-columns: 1fr; } }
+
+/* Escapes the padding AdminAwareMain's <div class="ed-page"> imposes on
+   every non-full-bleed route, so a page that wants its own edge-to-edge
+   .mk-nav / .mk-footer (about/demo/terms/trial-terms/checkout/credits —
+   none of them are in ClientChrome's full-bleed allowlist, and adding
+   them there is out of this task's scope) can still go full width. Mirrors
+   .ed-page's own padding values/breakpoint exactly so it cancels cleanly
+   instead of leaving a residual gap or a horizontal-scroll sliver.
+
+   Scoped to `.ed-page > .mk-bleed`, not a bare `.mk-bleed`: on the
+   marketing host (flycheap.live) ClientChrome's isFullBleed(...,
+   marketingHost) is true, so AdminAwareMain renders a bare <main> with NO
+   .ed-page wrapper at all — an unconditional negative margin there would
+   pull the page past the viewport edge instead of cancelling anything,
+   causing the exact horizontal overflow this rule exists to prevent. */
+.ed-page > .mk-bleed { margin: -44px -48px -80px; }
+@media (max-width: 720px) { .ed-page > .mk-bleed { margin: -28px -20px -64px; } }
+
+/* Legal-copy sections (terms / trial-terms) — a heading + paragraph list
+   with a hairline between entries, and the anchor-jump table of contents
+   above it. */
+.ed-legal-list { display: grid; }
+.ed-legal-item { padding: 20px 0; border-top: 1px solid var(--rule); }
+.ed-legal-item:first-child { border-top: 0; padding-top: 0; }
+.ed-legal-item h3 { font-family: var(--font-serif); font-weight: 400; font-size: 18px; letter-spacing: -0.01em; color: var(--ink); margin: 0 0 8px; }
+.ed-legal-item p { color: var(--muted); font-size: 13.5px; line-height: 1.6; margin: 0; }
+/* --surface (not --surface-2): --muted measures ~4.17:1 on --surface-2 in
+   light — under the 4.5:1 AA floor for 12.5px text. --surface (near-white)
+   is the pairing the rest of the system already uses for --muted body copy. */
+.ed-toc { display: flex; flex-wrap: wrap; gap: 8px 18px; margin: 20px 0 8px; padding: 14px 16px; background: var(--surface); border: 1px solid var(--rule); font-size: 12.5px; }
+.ed-toc a { color: var(--muted); }
+.ed-toc a:hover { color: var(--ink); }
+
+/* Photo-credit grid (/credits). */
+.ed-credits { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1px; background: var(--rule); border: 1px solid var(--rule); margin-top: 28px; }
+.ed-credit { background: var(--surface); display: flex; flex-direction: column; }
+.ed-credit img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; }
+.ed-credit-body { padding: 12px 14px 14px; }
+.ed-credit-place { font-weight: 600; font-size: 13px; color: var(--ink); }
+.ed-credit-code { font-family: var(--font-mono-ed); font-size: 10px; color: var(--muted-2); margin-left: 6px; }
+.ed-credit-author { font-size: 12px; color: var(--muted); margin-top: 2px; }
+.ed-credit-meta { font-size: 11.5px; color: var(--muted-2); margin-top: 6px; }
+.ed-credit-meta a { text-decoration: underline; }
+
+/* Demo player (/demo → DemoPlayer.tsx): video stage + chapter list.
+   Traffic-light dots reuse .ed-dot (the acceptance grid's one radius
+   allowance) instead of a new rounded primitive. */
+.ed-demo-layout { display: grid; grid-template-columns: 2fr 1fr; gap: 24px; align-items: start; margin-top: 28px; }
+@media (max-width: 860px) { .ed-demo-layout { grid-template-columns: 1fr; } }
+.ed-demo-stage { background: var(--surface); border: 1px solid var(--rule); }
+.ed-demo-browser-bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--rule); background: var(--surface); }
+.ed-demo-browser-dots { display: flex; gap: 5px; }
+.ed-demo-browser-url { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted); }
+.ed-demo-stage video { display: block; width: 100%; }
+.ed-demo-chapters { background: var(--surface); border: 1px solid var(--rule); max-height: 520px; overflow-y: auto; }
+.ed-demo-chapters-head { padding: 12px 14px; font-family: var(--font-mono-ed); font-size: 10px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted-2); border-bottom: 1px solid var(--rule); }
+.ed-demo-chapter { display: flex; gap: 10px; width: 100%; text-align: left; padding: 12px 14px; border: 0; border-bottom: 1px solid var(--rule-soft); background: transparent; cursor: pointer; }
+.ed-demo-chapter:hover { background: var(--surface-2); }
+.ed-demo-chapter.active { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
+.ed-demo-chapter .ts { font-family: var(--font-mono-ed); font-size: 11px; color: var(--muted-2); flex-shrink: 0; padding-top: 1px; }
+.ed-demo-chapter .body { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.ed-demo-chapter .label { font-size: 13px; font-weight: 600; color: var(--ink); }
+.ed-demo-chapter.active .label { color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
+.ed-demo-chapter .desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+/* The first chapter is .active by default (DemoPlayer's initial state), so
+   this renders on load, not just after a click: --muted/--muted-2 on the
+   8%-accent-tinted background is close enough to the AA floor in light
+   that the tint's own lightness shift can tip it under, so the active
+   row's secondary text steps up to --ink-soft rather than reusing --muted. */
+.ed-demo-chapter.active .ts, .ed-demo-chapter.active .desc { color: var(--ink-soft); }
+
+/* ---- Task 3.7c (/org, /org/groups, /org/groups/[id], /org/reports) — the
+   B2B organisation portal. Its nc-prefixed classes lived in TWO places
+   neither of which the org pages imported: nc-act and its -primary/-quiet
+   modifiers in board/board.css, and nc-btn-quiet, nc-table, the nc-queue
+   family, the nc-savings family, nc-pill-good, nc-pill-quiet, nc-note,
+   nc-mono, nc-neg, nc-link and nc-muted in globals.css's night-cabin block
+   (the one Task 3.9 deletes). Grepped: the org pages were the ONLY consumer
+   of every one of those globals.css rules — board.css is untouched here
+   because BoardCardView.tsx / board/[id]/page.tsx still render its nc-act
+   family directly (already on editorial tokens since task 2.11c). Nothing
+   below is imported from either legacy file; the org portal now depends on
+   editorial.css alone. */
+
+/* Work queue — the org home's "what needs a human today" list, and the
+   monthly-reports approval queue. Amber marks the row that wants action
+   now; a quieter rule/accent border on everything else keeps the eye on
+   what to work rather than on the whole list (same left-edge-signal
+   precedent as board.css's .nc-card[data-state='buy']; a 3px border isn't
+   text, so it isn't subject to the 8% tint ceiling). */
+.ed-queue { list-style: none; margin: 0; padding: 0; }
+.ed-queue-row { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-start; justify-content: space-between; padding: 14px 0 15px 14px; border-top: 1px solid var(--rule); border-left: 3px solid transparent; }
+.ed-queue-row:first-child { border-top: none; }
+.ed-queue-row.act   { border-left-color: var(--amber); }
+.ed-queue-row.soon  { border-left-color: var(--accent); }
+.ed-queue-row.quiet { border-left-color: var(--rule-strong); }
+.ed-queue-main { min-width: 16rem; flex: 1; }
+.ed-queue-tag { display: inline-block; font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-2); margin-right: 10px; }
+.ed-queue-route { font-weight: 650; color: var(--ink); }
+.ed-queue-group { font-weight: 400; color: var(--muted); }
+.ed-queue-detail { margin: 5px 0 0; font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.ed-queue-actions { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+
+/* Small button size — composes with .ed-btn-primary/-secondary rather than
+   forcing a fill the way .ed-btn-row does, so a quiet row action (Undo,
+   Rotate link) and a primary one (Mark booked) can share one size class. */
+.ed-btn-sm { padding: 6px 11px; font-size: 11.5px; }
+/* Ghost button — the overflow action next to a primary one (Skip, next to
+   Approve). No border, --muted text: lower visual weight than
+   .ed-btn-secondary's outline. */
+.ed-btn.ed-btn-quiet { background: transparent; border-color: transparent; color: var(--muted); padding-inline: 8px; font-weight: 500; }
+.ed-btn.ed-btn-quiet:hover { color: var(--ink); opacity: 1; }
+
+/* Compact inline input — an amount/target entered next to its row's submit
+   button, not a full-width form field like .ed-input. */
+.ed-input-sm { width: 5.5rem; padding: 6px 8px; font: 500 12px/1.3 var(--font-ui); color: var(--ink); background: var(--surface); border: 1px solid var(--rule-strong); border-radius: 0; }
+.ed-input-sm::placeholder { color: var(--muted-2); }
+.ed-input-sm:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+
+/* Savings headline figure (client detail + reports queue). The night-cabin
+   version painted this amber (2.92:1 on a light surface, the exact
+   failure board.css's fare-digit comment documents) — this is a derived
+   report figure, not literally a fare, so per the brief's own money-figure
+   rule it takes plain --ink (inherited, no color set here) and only steps
+   to --red via .ed-delta-down when the total is negative. */
+.ed-savings-total { display: flex; align-items: baseline; gap: 12px; margin-bottom: 14px; }
+.ed-savings-label { font-family: var(--font-mono-ed); font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted-2); }
+.ed-savings-amount { font-family: var(--font-serif); font-size: 1.6rem; font-weight: 700; }

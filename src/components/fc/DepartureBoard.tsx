@@ -5,8 +5,8 @@ import { FcRoute } from './PageKit';
 
    The most characteristic object in this subject's world, built
    from the customer's OWN routes and real recorded fares — not a
-   decorative hero. Each row is a ticket stub: pale stock on the
-   dark deck, torn along a perforation, fare on the stub.
+   decorative hero. Editorial skeleton: a ruled table, route code in
+   mono, fare in serif ink, meta in muted — no ticket-stub chrome.
    ============================================================ */
 
 export type BoardRow = {
@@ -21,11 +21,11 @@ export type BoardRow = {
   low30: number | null;
 };
 
-function statusOf(r: BoardRow): { label: string; color: string } {
-  if (r.perAdultUsd == null) return { label: 'Watching', color: 'var(--nc-on-dark-faint)' };
-  if (r.target != null && r.perAdultUsd <= r.target) return { label: 'At your price', color: 'var(--nc-mint)' };
-  if (r.low30 != null && r.perAdultUsd <= r.low30) return { label: 'Lowest seen', color: 'var(--nc-amber)' };
-  return { label: 'Above target', color: 'var(--nc-on-dark-mute)' };
+function statusOf(r: BoardRow): { label: string } {
+  if (r.perAdultUsd == null) return { label: 'Watching' };
+  if (r.target != null && r.perAdultUsd <= r.target) return { label: 'At your price' };
+  if (r.low30 != null && r.perAdultUsd <= r.low30) return { label: 'Lowest seen' };
+  return { label: 'Above target' };
 }
 
 /** "Sat 3 Nov" — travellers think in days of the week, not ISO dates. */
@@ -39,56 +39,54 @@ export function DepartureBoard({ rows }: { rows: BoardRow[] }) {
   if (rows.length === 0) return null;
 
   return (
-    <div className="space-y-2.5 mb-7">
-      {rows.map(r => {
-        const s = statusOf(r);
-        const gap = r.target != null && r.perAdultUsd != null ? r.perAdultUsd - r.target : null;
-        return (
-          <article key={r.id} className="nc-ticket flex items-stretch overflow-hidden">
-            {/* Left: the itinerary */}
-            <div className="flex-1 min-w-0 px-5 py-4">
-              <div className="nc-code text-[1.35rem]" style={{ color: 'var(--nc-on-dark)' }}>
-                {r.origin}
-                <span aria-hidden className="mx-2" style={{ color: 'var(--nc-on-dark-faint)' }}>→</span>
-                {r.destination}
-              </div>
-              <div className="mt-1.5 text-[12.5px]" style={{ color: 'var(--nc-on-dark-mute)' }}>
-                {day(r.departDate)} — {day(r.returnDate)}
-              </div>
-              <div className="mt-2 text-[13.5px] font-semibold" style={{ color: s.color === 'var(--nc-on-dark-faint)' ? 'var(--nc-on-dark-faint)' : undefined }}>
-                <span style={{ color: s.label === 'At your price' ? 'var(--nc-mint)' : s.label === 'Lowest seen' ? 'var(--nc-teal)' : 'var(--nc-on-dark-faint)' }}>
-                  {s.label}
-                </span>
-                {gap != null && gap > 0 && (
-                  <span style={{ color: 'var(--nc-on-dark-mute)' }}> · ${Math.round(gap)} above your target</span>
-                )}
-              </div>
-            </div>
-
-            {/* Right: the stub, torn along the perforation */}
-            <div
-              className="nc-ticket-stub shrink-0 px-5 py-4 flex flex-col items-end justify-center text-right"
-              style={{ minWidth: '9.5rem' }}
-            >
-              <div className="text-[10.5px] uppercase tracking-wider" style={{ color: 'var(--nc-on-dark-faint)' }}>
-                {r.perAdultUsd != null ? 'per adult' : 'no fare yet'}
-              </div>
-              <div
-                className="tabular-nums leading-none mt-1"
-                style={{ fontFamily: 'var(--nc-mono)', fontSize: '1.55rem', color: 'var(--nc-amber)' }}
-              >
-                {r.perAdultUsd != null ? `$${Math.round(r.perAdultUsd).toLocaleString('en-US')}` : '—'}
-              </div>
-              {r.target != null && (
-                <div className="text-[11px] mt-1.5" style={{ color: 'var(--nc-on-dark-faint)' }}>
-                  target ${Math.round(r.target)}
+    <table className="ed-table" style={{ marginBottom: 28 }}>
+      <tbody>
+        {rows.map(r => {
+          const s = statusOf(r);
+          const gap = r.target != null && r.perAdultUsd != null ? r.perAdultUsd - r.target : null;
+          return (
+            <tr key={r.id}>
+              {/* Left: the itinerary */}
+              <td>
+                <div className="ed-mono" style={{ fontSize: '1.05rem', letterSpacing: 0, textTransform: 'none', fontWeight: 600, color: 'var(--ink)' }}>
+                  {r.origin}
+                  <span aria-hidden style={{ margin: '0 8px', color: 'var(--muted-2)' }}>→</span>
+                  {r.destination}
                 </div>
-              )}
-            </div>
-          </article>
-        );
-      })}
-    </div>
+                <div style={{ marginTop: 6, fontSize: 12.5, color: 'var(--muted)' }}>
+                  {day(r.departDate)} — {day(r.returnDate)}
+                </div>
+                <div style={{ marginTop: 6, fontSize: 13, fontWeight: 600 }}>
+                  <span style={{ color: s.label === 'At your price' ? 'var(--green)' : s.label === 'Lowest seen' ? 'var(--accent)' : 'var(--muted)' }}>
+                    {s.label}
+                  </span>
+                  {gap != null && gap > 0 && (
+                    <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · ${Math.round(gap)} above your target</span>
+                  )}
+                </div>
+              </td>
+
+              {/* Right: the fare */}
+              <td style={{ textAlign: 'right', whiteSpace: 'nowrap' }}>
+                <div className="ed-mono" style={{ color: 'var(--muted-2)' }}>
+                  {r.perAdultUsd != null ? 'per adult' : 'no fare yet'}
+                </div>
+                <div
+                  style={{ fontFamily: 'var(--font-serif)', fontWeight: 400, fontSize: '1.6rem', letterSpacing: '-0.02em', lineHeight: 1, marginTop: 6, color: 'var(--ink)' }}
+                >
+                  {r.perAdultUsd != null ? `$${Math.round(r.perAdultUsd).toLocaleString('en-US')}` : '—'}
+                </div>
+                {r.target != null && (
+                  <div style={{ fontSize: 11, marginTop: 6, color: 'var(--muted-2)' }}>
+                    target ${Math.round(r.target)}
+                  </div>
+                )}
+              </td>
+            </tr>
+          );
+        })}
+      </tbody>
+    </table>
   );
 }
 
@@ -100,7 +98,7 @@ export function BoardStrip({ rows }: { rows: BoardRow[] }) {
       {rows.slice(0, 6).map(r => (
         <span key={r.id} className="inline-flex items-baseline gap-2.5 text-[13px]">
           <FcRoute from={r.origin} to={r.destination} size="sm" />
-          <span className="nc-fare">
+          <span className="ed-mono" style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--ink)' }}>
             {r.perAdultUsd != null ? `$${Math.round(r.perAdultUsd)}` : '—'}
           </span>
         </span>

@@ -35,13 +35,13 @@ export function ComparePanel() {
   if (!mounted) return null;
   if (pins.length === 0) {
     return (
-      <div className="card text-center py-12">
-        <div className="text-5xl mb-3">📌</div>
-        <h2 className="!mb-1">No pins yet</h2>
-        <p className="text-sm text-slate-500 max-w-md mx-auto">
+      <div className="ed-empty">
+        <div style={{ fontSize: 40, marginBottom: 8 }}>📌</div>
+        <h2 className="ed-empty-head">No pins yet</h2>
+        <p className="ed-empty-body">
           On the dashboard, click the 📌 icon next to any deal to add it here. Compare up to three at a time.
         </p>
-        <Link href="/" className="btn btn-primary mt-4">Browse deals →</Link>
+        <Link href="/" className="ed-btn ed-btn-primary" style={{ marginTop: 16 }}>Browse deals →</Link>
       </div>
     );
   }
@@ -65,17 +65,17 @@ export function ComparePanel() {
   }
 
   function winBadge(isWin: boolean) {
-    return isWin ? <span className="badge badge-success ml-1">best</span> : null;
+    return isWin ? <span className="ed-chip status-ok" style={{ marginLeft: 6, padding: '2px 8px' }}>best</span> : null;
   }
 
   return (
-    <div className="space-y-3">
-      <div className="flex items-center justify-between gap-2 flex-wrap">
-        <div className="text-xs text-slate-500">{pins.length} of 3 pinned</div>
-        <button onClick={clearAll} className="btn btn-sm">Clear all</button>
+    <div style={{ display: 'grid', gap: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8, flexWrap: 'wrap' }}>
+        <div className="ed-panel-note" style={{ marginTop: 0 }}>{pins.length} of 3 pinned</div>
+        <button onClick={clearAll} className="ed-btn ed-btn-secondary">Clear all</button>
       </div>
 
-      <div className={`grid gap-4 grid-cols-1 ${pins.length >= 2 ? 'md:grid-cols-2' : ''} ${pins.length >= 3 ? 'lg:grid-cols-3' : ''}`}>
+      <div className="ed-tiles ed-tiles-compare">
         {pins.map(d => {
           const stops = Math.max(d.outbound_transfers ?? 0, d.return_transfers ?? 0);
           const isCheapest = d.per_adult_usd === minPerAdult;
@@ -84,27 +84,32 @@ export function ComparePanel() {
           const isParty = d.party_total_usd === minParty;
           const stopsLabel = stops === 0 ? 'Nonstop' : `${stops} stop${stops === 1 ? '' : 's'}`;
           return (
-            <div key={d.key} className={`card relative ${isCheapest ? 'border-emerald-300 dark:border-emerald-700' : ''}`}>
+            <div
+              key={d.key}
+              className="ed-panel"
+              style={{ position: 'relative', borderColor: isCheapest ? 'var(--green)' : undefined }}
+            >
               <button
                 onClick={() => unpin(d)}
                 aria-label="Unpin"
-                className="absolute top-2 right-2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-base leading-none"
+                style={{ position: 'absolute', top: 10, right: 10, color: 'var(--muted)', fontSize: 16, lineHeight: 1, background: 'transparent', border: 0, cursor: 'pointer' }}
               >×</button>
-              <div className="eyebrow mb-1 text-brand-700 dark:text-brand-300">
+              <div className="ed-eyebrow">
                 {d.origin} → {d.destination || 'CAI'}
               </div>
-              <div className="text-3xl font-bold text-slate-900 dark:text-slate-100">
-                {fmtUSD(d.per_adult_usd)}<span className="text-sm text-slate-500 font-normal">/adult</span>
+              <div style={{ fontFamily: 'var(--font-serif)', fontSize: 30, color: 'var(--ink)', marginTop: 4, display: 'flex', alignItems: 'baseline', flexWrap: 'wrap' }}>
+                <span className="ed-fare-text">{fmtUSD(d.per_adult_usd)}</span>
+                <span style={{ fontSize: 13, color: 'var(--muted)', fontFamily: 'var(--font-ui)', marginLeft: 4 }}>/adult</span>
                 {winBadge(isCheapest)}
               </div>
 
-              <dl className="mt-4 space-y-2 text-sm">
+              <dl style={{ marginTop: 16, display: 'grid', gap: 8, fontSize: 13 }}>
                 <Row label="Party total" value={<>{fmtUSD(d.party_total_usd)}{winBadge(isParty)}</>} />
                 <Row label="Outbound"   value={fmtDate(d.outbound_date)} />
                 <Row label="Return"     value={fmtDate(d.return_date)} />
                 <Row label="Trip"       value={<>{d.trip_length_days} d{winBadge(isShortest)}</>} />
                 <Row label="Stops"      value={<>{stopsLabel}{winBadge(isStops)}</>} />
-                <Row label="Flights"    value={<span className="font-mono text-xs">{d.outbound_flight_no || '—'} / {d.return_flight_no || '—'}</span>} />
+                <Row label="Flights"    value={<span className="ed-mono" style={{ textTransform: 'none', letterSpacing: 0, fontSize: 12 }}>{d.outbound_flight_no || '—'} / {d.return_flight_no || '—'}</span>} />
               </dl>
 
               <a
@@ -115,7 +120,8 @@ export function ComparePanel() {
                 })}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="btn btn-primary btn-sm mt-4 w-full justify-center"
+                className="ed-btn ed-btn-primary"
+                style={{ marginTop: 16, width: '100%', justifyContent: 'center' }}
               >
                 Book → {fmtUSD(d.per_adult_usd)}/adult
               </a>
@@ -129,9 +135,9 @@ export function ComparePanel() {
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="flex items-center justify-between gap-3">
-      <dt className="text-xs uppercase tracking-wide text-slate-400">{label}</dt>
-      <dd className="text-slate-800 dark:text-slate-200 font-medium">{value}</dd>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
+      <dt className="ed-label" style={{ marginBottom: 0 }}>{label}</dt>
+      <dd style={{ color: 'var(--ink)', fontWeight: 500, margin: 0 }}>{value}</dd>
     </div>
   );
 }

@@ -16,7 +16,7 @@ function SaveButton({ label = 'Save' }: { label?: string }) {
 function Feedback({ state }: { state: ActionState }) {
   if (!state) return null;
   return (
-    <div className={`text-[11.5px] mt-1.5 ${state.error ? 'text-rose-300' : 'text-emerald-300'}`}>
+    <div className={`text-[11.5px] mt-1.5 ${state.error ? 'ad-tone-bad' : 'ad-tone-good'}`}>
       {state.error ?? state.ok}
     </div>
   );
@@ -27,14 +27,14 @@ export function TierForm({ userId, tier, tiers }: { userId: number; tier: string
   return (
     <form action={action}>
       <input type="hidden" name="userId" value={userId} />
-      <label className="ad-eyebrow text-white/40">Tier</label>
+      <label className="ad-eyebrow">Tier</label>
       <div className="flex gap-2 mt-1.5">
         <select name="tier" defaultValue={tier} className="ad-input flex-1">
           {tiers.map(t => <option key={t} value={t}>{t}</option>)}
         </select>
         <SaveButton />
       </div>
-      <div className="text-[11.5px] text-white/40 mt-1.5 leading-snug">
+      <div className="ad-note mt-1.5 leading-snug">
         Grants a comp. No Stripe subscription is created and nobody is charged.
       </div>
       <Feedback state={state} />
@@ -51,7 +51,7 @@ export function SubscriptionForm({ userId, status, trialEndsAt }: {
   return (
     <form action={action}>
       <input type="hidden" name="userId" value={userId} />
-      <label className="ad-eyebrow text-white/40">Subscription</label>
+      <label className="ad-eyebrow">Subscription</label>
       <div className="flex flex-wrap gap-2 mt-1.5">
         <select name="status" defaultValue={status} className="ad-input flex-1 min-w-[140px]">
           {STATUSES.map(s => <option key={s} value={s}>{s || '(none)'}</option>)}
@@ -63,7 +63,7 @@ export function SubscriptionForm({ userId, status, trialEndsAt }: {
         />
         <SaveButton />
       </div>
-      <div className="text-[11.5px] text-white/40 mt-1.5 leading-snug">
+      <div className="ad-note mt-1.5 leading-snug">
         Only <code>active</code>, <code>trialing</code> and <code>past_due</code> count toward MRR.
         This never contacts Stripe or PayPal — use it to correct records, not to cancel a real subscription.
       </div>
@@ -77,10 +77,10 @@ export function FareSettingForm({ userId, settingKey, label, hint, value }: {
 }) {
   const [state, action] = useActionState(setFareSetting, null);
   return (
-    <form action={action} className="py-2.5 border-t border-white/[0.06] first:border-t-0 first:pt-0">
+    <form action={action} className="ad-rule-top py-2.5 first:pt-0">
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="key" value={settingKey} />
-      <label className="ad-eyebrow text-white/40">{label}</label>
+      <label className="ad-eyebrow">{label}</label>
       <div className="flex gap-2 mt-1.5">
         <input
           type="text" name="value" defaultValue={value}
@@ -89,7 +89,7 @@ export function FareSettingForm({ userId, settingKey, label, hint, value }: {
         />
         <SaveButton />
       </div>
-      <div className="text-[11.5px] text-white/40 mt-1 leading-snug">{hint} Leave blank to clear the override.</div>
+      <div className="ad-note mt-1 leading-snug">{hint} Leave blank to clear the override.</div>
       <Feedback state={state} />
     </form>
   );

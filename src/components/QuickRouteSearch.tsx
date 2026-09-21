@@ -76,72 +76,74 @@ export function QuickRouteSearch() {
   }
 
   return (
-    <section className="card card-feature">
-      <div className="eyebrow">Search any route · worldwide</div>
-      <h2 className="!mb-2">Track a fare or check live prices</h2>
-      <p className="text-xs text-slate-500 mb-4">
+    <section className="ed-panel">
+      <div className="ed-eyebrow">Search any route · worldwide</div>
+      <h2 className="ed-h2">Track a fare or check live prices</h2>
+      <p className="ed-panel-note" style={{ marginBottom: 16 }}>
         Any 3-letter airport code, any airline, any party size. <strong>Track</strong> adds it to your watchlist and we start checking it straight away, alerting you the moment it drops below your target. <strong>Live search</strong> jumps to /offers and queries the providers right now.
       </p>
 
-      <div className="flex items-center gap-1 mb-3 p-1 rounded-lg bg-slate-100 dark:bg-slate-800 w-fit">
-        <button type="button" onClick={() => setAnyDates(false)}
-          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${!anyDates ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
-          Exact dates
-        </button>
-        <button type="button" onClick={() => setAnyDates(true)}
-          className={`px-3 py-1.5 rounded-md text-xs font-semibold transition ${anyDates ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm' : 'text-slate-500'}`}>
-          Any dates
-        </button>
-        <span className="text-[11px] text-slate-500 ml-2 pr-2">
+      <div className="flex items-center gap-3 mb-3">
+        <div className="ed-seg" role="tablist" aria-label="Date mode">
+          <button type="button" onClick={() => setAnyDates(false)}
+            className={`ed-seg-btn${!anyDates ? ' active' : ''}`}>
+            Exact dates
+          </button>
+          <button type="button" onClick={() => setAnyDates(true)}
+            className={`ed-seg-btn${anyDates ? ' active' : ''}`}>
+            Any dates
+          </button>
+        </div>
+        <span className="ed-panel-note" style={{ margin: 0 }}>
           {anyDates ? 'We scan all 12 months and alert on the cheapest window.' : 'Track one specific trip.'}
         </span>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-7 gap-3 items-end">
-        <div className="text-xs">
-          <span className="block mb-1 text-slate-500">Origin</span>
+        <div>
+          <span className="ed-label">Origin</span>
           <AirportSelect value={origin} onChange={setOrigin} placeholder="JFK, New York, …" />
         </div>
-        <div className="text-xs">
-          <span className="block mb-1 text-slate-500">Destination</span>
+        <div>
+          <span className="ed-label">Destination</span>
           <AirportSelect value={destination} onChange={setDestination} placeholder="CAI, Cairo, …" />
         </div>
         {!anyDates && (
           <>
-            <label className="text-xs">
-              <span className="block mb-1 text-slate-500">Depart</span>
-              <input type="date" value={depart} onChange={e => setDepart(e.target.value)} className="w-full" />
+            <label>
+              <span className="ed-label">Depart</span>
+              <input type="date" value={depart} onChange={e => setDepart(e.target.value)} className="ed-input" />
             </label>
-            <label className="text-xs">
-              <span className="block mb-1 text-slate-500">Return</span>
-              <input type="date" value={ret} onChange={e => setRet(e.target.value)} min={depart || undefined} className="w-full" />
+            <label>
+              <span className="ed-label">Return</span>
+              <input type="date" value={ret} onChange={e => setRet(e.target.value)} min={depart || undefined} className="ed-input" />
             </label>
           </>
         )}
-        <label className="text-xs">
-          <span className="block mb-1 text-slate-500">Adults</span>
-          <input type="number" min={1} max={9} value={adults} onChange={e => setAdults(Math.max(1, Math.min(9, parseInt(e.target.value, 10) || 1)))} className="w-full" />
+        <label>
+          <span className="ed-label">Adults</span>
+          <input type="number" min={1} max={9} value={adults} onChange={e => setAdults(Math.max(1, Math.min(9, parseInt(e.target.value, 10) || 1)))} className="ed-input" />
         </label>
-        <label className="text-xs">
-          <span className="block mb-1 text-slate-500">Infants</span>
-          <input type="number" min={0} max={4} value={infants} onChange={e => setInfants(Math.max(0, Math.min(4, parseInt(e.target.value, 10) || 0)))} className="w-full" />
+        <label>
+          <span className="ed-label">Infants</span>
+          <input type="number" min={0} max={4} value={infants} onChange={e => setInfants(Math.max(0, Math.min(4, parseInt(e.target.value, 10) || 0)))} className="ed-input" />
         </label>
-        <label className="text-xs">
-          <span className="block mb-1 text-slate-500">Target $/adult <span className="text-slate-400">(optional)</span></span>
-          <input type="number" min={1} step={10} placeholder="e.g. 600" value={target} onChange={e => setTarget(e.target.value.replace(/[^0-9]/g, ''))} className="w-full" />
+        <label>
+          <span className="ed-label">Target $/adult <span style={{ color: 'var(--muted-2)', textTransform: 'none', letterSpacing: 0 }}>(optional)</span></span>
+          <input type="number" min={1} step={10} placeholder="e.g. 600" value={target} onChange={e => setTarget(e.target.value.replace(/[^0-9]/g, ''))} className="ed-input" />
         </label>
       </div>
 
       <div className="flex gap-2 mt-4">
-        <button type="button" onClick={track} disabled={busy !== null || pending} className="btn btn-primary">
+        <button type="button" onClick={track} disabled={busy !== null || pending} className="ed-btn ed-btn-primary">
           {busy === 'track' ? 'Adding…' : '➕ Track this route'}
         </button>
-        <button type="button" onClick={liveSearch} disabled={busy !== null} className="btn">
+        <button type="button" onClick={liveSearch} disabled={busy !== null} className="ed-btn ed-btn-secondary">
           🔎 Live search now →
         </button>
       </div>
 
-      {err && <p className="text-sm text-red-600 mt-2">{err}</p>}
+      {err && <p className="ed-panel-note" style={{ color: 'var(--red)', marginTop: 8 }}>{err}</p>}
     </section>
   );
 }

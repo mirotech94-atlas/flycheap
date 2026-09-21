@@ -28,13 +28,13 @@ export function WaitlistRow({
 
   return (
     <tr>
-      <td className="font-mono tabular-nums text-white/50">#{position}</td>
-      <td className="text-white/90">{email}</td>
-      <td className="text-white/45 text-[11.5px]">{referredBy ? `via ${referredBy}` : 'direct'}</td>
-      <td className="text-white/45 whitespace-nowrap">{requested}</td>
+      <td className="font-mono tabular-nums ad-note">#{position}</td>
+      <td style={{ color: 'var(--ink)' }}>{email}</td>
+      <td className="ad-note">{referredBy ? `via ${referredBy}` : 'direct'}</td>
+      <td className="ad-note whitespace-nowrap">{requested}</td>
       <td>
         {res?.message ? (
-          <span className={`text-[11.5px] ${res.ok ? 'text-emerald-300' : 'text-rose-300'}`}>
+          <span className={`text-[11.5px] ${res.ok ? 'ad-tone-good' : 'ad-tone-bad'}`}>
             {res.ok ? '✓ ' : '✕ '}{res.message}
           </span>
         ) : state === 'pending' ? (
@@ -46,11 +46,11 @@ export function WaitlistRow({
         ) : state === 'approved' ? (
           <form action={action} className="flex items-center gap-2">
             <input type="hidden" name="id" value={id} />
-            <span className="text-emerald-300 text-[11.5px]">Approved</span>
+            <span className="ad-tone-good text-[11.5px]">Approved</span>
             <Btn action="approve" label="Resend invite" />
           </form>
         ) : (
-          <span className="text-white/35 text-[11.5px]">Declined</span>
+          <span className="ad-note text-[11.5px]">Declined</span>
         )}
       </td>
     </tr>

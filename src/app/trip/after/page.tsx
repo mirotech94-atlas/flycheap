@@ -1,4 +1,3 @@
-import '../trip.css';
 import { tripForConfirmToken, postTripNextStep } from '@/lib/tripChain';
 import { queries } from '@/lib/db';
 import { answerAfter } from './actions';
@@ -33,8 +32,8 @@ export default async function TripAfterPage(
     const travelled = sp.done === 'yes';
     return (
       <Shell>
-        <h1 className="nc-h1">{travelled ? 'Thanks — that helps more than you’d think.' : 'Noted. Sorry the trip didn’t happen.'}</h1>
-        <p className="nc-lede">
+        <h1 className="ed-h2">{travelled ? 'Thanks — that helps more than you’d think.' : 'Noted. Sorry the trip didn’t happen.'}</h1>
+        <p className="ed-sub">
           {travelled
             ? sp.home === '1'
               ? 'We’ll keep watching this route between trips and tell you when next year’s fares open cheap. It never expires.'
@@ -48,8 +47,8 @@ export default async function TripAfterPage(
   if (!trip) {
     return (
       <Shell>
-        <h1 className="nc-h1">That link has expired.</h1>
-        <p className="nc-lede">
+        <h1 className="ed-h2">That link has expired.</h1>
+        <p className="ed-sub">
           These links last 30 days and can only be used once. Nothing is wrong with your
           account — there is just nothing left to answer here.
         </p>
@@ -66,13 +65,13 @@ export default async function TripAfterPage(
 
   return (
     <Shell>
-      <h1 className="nc-h1">Welcome back — how was {trip.destination}?</h1>
-      <p className="nc-lede">
+      <h1 className="ed-h2">Welcome back — how was {trip.destination}?</h1>
+      <p className="ed-sub">
         {trip.origin} → {trip.destination}
         {trip.depart_date ? ` · ${trip.depart_date}` : ''}
         {trip.return_date ? ` to ${trip.return_date}` : ''}
       </p>
-      <p className="nc-lede">
+      <p className="ed-sub">
         Two quick things. Did the trip happen, and what did you actually pay for the flights?
         {perAdultHint ? ` ${perAdultHint}` : ''}
       </p>
@@ -80,27 +79,27 @@ export default async function TripAfterPage(
       <form action={answerAfter}>
         <input type="hidden" name="token" value={token} />
 
-        <label className="nc-field">
-          <span className="nc-field-label">What you paid for the flights, in total (USD)</span>
+        <label className="ed-field-block">
+          <span className="ed-label">What you paid for the flights, in total (USD)</span>
           <input
             name="paid"
             type="text"
             inputMode="decimal"
             placeholder={trip.fare_per_adult_usd ? `e.g. ${Math.round(trip.fare_per_adult_usd * trip.adults)}` : 'e.g. 1840'}
-            className="nc-input"
+            className="ed-input"
           />
-          <span className="nc-field-hint">
+          <span className="ed-field-hint">
             For everyone on the booking, not per person. Leave it blank if you’d rather not say —
             the trip still counts.
           </span>
         </label>
 
         {next === 'offer-home-route' && (
-          <label className="nc-check">
+          <label className="ed-checkbox">
             <input type="checkbox" name="home_route" />
             <span>
               I fly this route every year — keep watching it
-              <span className="nc-field-hint">
+              <span className="ed-field-hint">
                 A home route never expires. We keep watching between trips and tell you when
                 next year’s fares open cheap.
               </span>
@@ -108,14 +107,14 @@ export default async function TripAfterPage(
           </label>
         )}
         {next === 'keep-watching' && (
-          <p className="nc-field-hint">This is one of your home routes — we keep watching it between trips.</p>
+          <p className="ed-field-hint">This is one of your home routes — we keep watching it between trips.</p>
         )}
 
-        <div className="nc-actions">
-          <button type="submit" name="travelled" value="yes" className="nc-btn">
+        <div className="ed-actions" style={{ marginTop: 20, marginBottom: 0 }}>
+          <button type="submit" name="travelled" value="yes" className="ed-btn ed-btn-primary">
             Yes, I travelled
           </button>
-          <button type="submit" name="travelled" value="no" className="nc-btn-quiet">
+          <button type="submit" name="travelled" value="no" className="ed-btn ed-btn-secondary">
             Plans changed, I didn’t go
           </button>
         </div>
@@ -126,8 +125,6 @@ export default async function TripAfterPage(
 
 function Shell({ children }: { children: React.ReactNode }) {
   return (
-    <main className="fc-shell" data-theme="cabin">
-      <div className="nc-confirm-card">{children}</div>
-    </main>
+    <div className="ed-panel ed-card">{children}</div>
   );
 }

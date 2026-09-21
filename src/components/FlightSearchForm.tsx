@@ -66,13 +66,13 @@ function SuggList({
       {sugg.map((s, i) => (
         <button key={`${s.iata}-${i}`} type="button"
           onMouseDown={e => e.preventDefault()} onClick={() => onPick(s)} onMouseEnter={() => onHL(i)}
-          className={`w-full text-left px-3 py-2 text-xs border-b border-slate-100 dark:border-slate-800 last:border-b-0 ${i === hl ? 'bg-brand/10 dark:bg-brand-900/30' : 'hover:bg-slate-50 dark:hover:bg-slate-800/60'}`}
+          className={`ed-field-drop-row${i === hl ? ' hl' : ''}`}
         >
           <div className="flex items-center gap-2">
-            <span className="font-mono font-semibold text-brand-700 dark:text-brand-300 w-10 shrink-0">{s.iata}</span>
+            <span className="ed-mono w-10 shrink-0" style={{ color: 'var(--accent)' }}>{s.iata}</span>
             <span className="flex-1 min-w-0">
-              <span className="text-slate-800 dark:text-slate-100 truncate block">{s.label}</span>
-              <span className="text-[10px] text-slate-400 truncate block">{s.sub}</span>
+              <span className="truncate block" style={{ color: 'var(--ink)' }}>{s.label}</span>
+              <span className="text-[10px] truncate block" style={{ color: 'var(--muted-2)' }}>{s.sub}</span>
             </span>
           </div>
         </button>
@@ -196,21 +196,25 @@ export function FlightSearchForm({
 
   const today = new Date().toISOString().slice(0, 10);
 
-  // Shared classes
-  const field = 'flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 border border-white/20 text-white';
-  const inp = 'flex-1 border-0 bg-transparent font-semibold focus:outline-none focus:ring-0 px-0 py-0 shadow-none text-white placeholder-white/50 text-sm min-w-0';
-  const tag = 'text-[10px] uppercase tracking-wide text-white/50 shrink-0';
-  const drop = 'absolute left-0 right-0 mt-1 max-h-60 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-lift';
+  // Shared classes — layout only; colour/surface live on .ed-field* in editorial.css.
+  const field = 'ed-field';
+  const inp = 'ed-field-input';
+  const tag = 'ed-field-tag';
+  const drop = 'ed-field-drop';
+  const iconColor = { color: 'color-mix(in srgb, var(--panel-fg) 60%, var(--panel-bg))' } as const;
 
   return (
-    <div className="rounded-2xl bg-white/8 backdrop-blur-md border border-white/20">
+    <div style={{ background: 'color-mix(in srgb, var(--panel-fg) 8%, var(--panel-bg))', border: '1px solid color-mix(in srgb, var(--panel-fg) 20%, var(--panel-bg))', borderRadius: 0 }}>
       {/* Trip type toggle */}
       <div className="flex items-center gap-1 px-4 pt-3 pb-2">
         {(['round-trip', 'one-way'] as TripType[]).map(t => (
           <button key={t} type="button" onClick={() => setTripType(t)}
-            className={`text-xs px-3 py-1 rounded-full font-semibold transition ${
-              tripType === t ? 'bg-[#E8A33D] text-[#0B1220]' : 'text-white/65 hover:text-white hover:bg-white/10'
-            }`}
+            className="text-xs px-3 py-1 font-semibold transition"
+            style={{
+              borderRadius: 0,
+              background: tripType === t ? 'var(--panel-fg)' : 'transparent',
+              color: tripType === t ? 'var(--panel-bg)' : 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))',
+            }}
           >
             {t === 'round-trip' ? 'Round-trip' : 'One-way'}
           </button>
@@ -221,7 +225,7 @@ export function FlightSearchForm({
         {/* From */}
         <div ref={originRef} className="relative flex-1 min-w-[160px]">
           <div className={field}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-white/60">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0" style={iconColor}>
               <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/>
             </svg>
             <input type="text" value={originQ} placeholder="From city"
@@ -242,7 +246,7 @@ export function FlightSearchForm({
         {/* To */}
         <div ref={destRef} className="relative flex-1 min-w-[160px]">
           <div className={field}>
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0 text-white/60">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="shrink-0" style={iconColor}>
               <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
             <input type="text" value={destQ} placeholder="Anywhere"
@@ -257,11 +261,11 @@ export function FlightSearchForm({
             <div className={drop} style={{ zIndex: 9999 }}>
               <button type="button" onMouseDown={e => e.preventDefault()}
                 onClick={() => { setDest(''); setDestQ(''); setDestOpen(false); }}
-                className="w-full text-left px-3 py-2 text-xs border-b border-slate-100 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-800/60"
+                className="ed-field-drop-row"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-mono font-semibold text-brand-700 dark:text-brand-300 w-10 shrink-0">ANY</span>
-                  <span className="text-slate-800 dark:text-slate-100">Anywhere — explore all deals</span>
+                  <span className="ed-mono w-10 shrink-0" style={{ color: 'var(--accent)' }}>ANY</span>
+                  <span style={{ color: 'var(--ink)' }}>Anywhere — explore all deals</span>
                 </div>
               </button>
               <SuggList sugg={destSugg} hl={destHL} onPick={pickDest} onHL={i => setDestHL(i)} />
@@ -272,7 +276,7 @@ export function FlightSearchForm({
         {/* Budget (anywhere) OR Dates (specific dest) */}
         {isAnywhere ? (
           <div className={field + ' shrink-0'} style={{ minWidth: 130 }}>
-            <span className="text-white/60 text-sm">$</span>
+            <span className="text-sm" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>$</span>
             <input type="number" min={50} max={5000} step={50} value={budget}
               onChange={e => setBudget(Number(e.target.value))}
               className={inp} style={{ width: 64 }} aria-label="Max budget USD"
@@ -282,7 +286,7 @@ export function FlightSearchForm({
         ) : (
           <>
             <div className={field + ' shrink-0'} style={{ minWidth: 130 }}>
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/60">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" style={iconColor}>
                 <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
               </svg>
               <input type="date" value={departDate} min={today}
@@ -292,7 +296,7 @@ export function FlightSearchForm({
             </div>
             {tripType === 'round-trip' && (
               <div className={field + ' shrink-0'} style={{ minWidth: 130 }}>
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0 text-white/60">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="shrink-0" style={iconColor}>
                   <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
                 </svg>
                 <input type="date" value={returnDate} min={departDate}
@@ -309,25 +313,27 @@ export function FlightSearchForm({
           <button type="button" onClick={() => setPaxOpen(v => !v)}
             className={field + ' cursor-pointer gap-1.5'}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-white/60">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={iconColor}>
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
             </svg>
             <span className="text-sm font-semibold">{adults} adult{adults !== 1 ? 's' : ''}</span>
-            <span className="text-white/40 text-xs">▾</span>
+            <span className="text-xs" style={{ color: 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))' }}>▾</span>
           </button>
           {paxOpen && (
-            <div className="absolute right-0 mt-1 w-52 bg-white dark:bg-slate-900 rounded-lg border border-slate-200 dark:border-slate-700 shadow-lift p-3" style={{ zIndex: 9999 }}>
+            <div className="absolute right-0 mt-1 w-52 p-3" style={{ zIndex: 9999, background: 'var(--surface)', border: '1px solid var(--rule)', borderRadius: 0 }}>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">Adults</div>
-                  <div className="text-[10px] text-slate-400">Age 12+</div>
+                  <div className="text-sm font-semibold" style={{ color: 'var(--ink)' }}>Adults</div>
+                  <div className="text-[10px]" style={{ color: 'var(--muted-2)' }}>Age 12+</div>
                 </div>
                 <div className="flex items-center gap-2">
                   <button type="button" onClick={() => setAdults(v => Math.max(1, v - 1))}
-                    className="w-7 h-7 rounded-full border border-slate-300 dark:border-slate-600 text-sm font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200">−</button>
-                  <span className="w-4 text-center font-semibold text-slate-800 dark:text-slate-100 tabular">{adults}</span>
+                    className="w-7 h-7 text-sm font-bold flex items-center justify-center"
+                    style={{ borderRadius: 0, border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>−</button>
+                  <span className="w-4 text-center font-semibold tabular" style={{ color: 'var(--ink)' }}>{adults}</span>
                   <button type="button" onClick={() => setAdults(v => Math.min(9, v + 1))}
-                    className="w-7 h-7 rounded-full border border-slate-300 dark:border-slate-600 text-sm font-bold flex items-center justify-center hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200">+</button>
+                    className="w-7 h-7 text-sm font-bold flex items-center justify-center"
+                    style={{ borderRadius: 0, border: '1px solid var(--rule-strong)', color: 'var(--ink-soft)' }}>+</button>
                 </div>
               </div>
             </div>
@@ -336,7 +342,8 @@ export function FlightSearchForm({
 
         {/* Submit */}
         <button type="submit" disabled={submitting}
-          className="shrink-0 px-5 py-2.5 rounded-xl font-bold text-sm bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] disabled:opacity-60 transition shadow-sm"
+          className="ed-btn ed-btn-primary shrink-0 px-5 py-2.5 text-sm justify-center"
+          style={{ background: 'var(--amber)', color: 'var(--panel-bg)' }}
         >
           {submitting ? 'Loading…' : isAnywhere ? 'Find deals' : 'Search flights'}
         </button>

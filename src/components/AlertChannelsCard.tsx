@@ -135,98 +135,105 @@ export function AlertChannelsCard() {
   }
 
   return (
-    <div className="card" id="alerts">
-      <div className="card-head">
+    <section className="ed-panel" id="alerts">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow">Alerts &amp; channels</div>
-          <h2 className="!mb-0">Where should alerts land?</h2>
+          <div className="ed-eyebrow">Alerts &amp; channels</div>
+          <h2 className="ed-panel-title">Where should alerts land?</h2>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="ed-panel-note" style={{ marginBottom: 8 }}>
         Select every channel you want fare alerts on. Each fires only when its credentials are configured — others gracefully skip without erroring.
       </p>
 
-      <div className="grid md:grid-cols-2 gap-2 mb-4">
+      <div className="mb-4">
         {CHANNELS.map(c => (
-          <label
-            key={c.id}
-            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition ${
-              selected.has(c.id)
-                ? 'border-brand-700 bg-brand/5 dark:bg-brand-900/20'
-                : 'border-slate-200 dark:border-slate-700 hover:border-slate-400'
-            }`}
-          >
-            <input
-              type="checkbox"
-              checked={selected.has(c.id)}
-              onChange={() => toggle(c.id)}
-              className="mt-0.5"
-            />
-            <div className="flex-1 min-w-0">
-              <div className="text-sm font-semibold text-slate-800 dark:text-slate-100">{c.label}</div>
-              <div className="text-[11px] text-slate-500">{c.hint}</div>
-            </div>
+          <div key={c.id} className="ed-toggle-row">
+            <label className="ed-toggle-label">
+              <span className="ed-toggle-text">
+                <span className="ed-toggle-name">{c.label}</span>
+                <span className="ed-toggle-help">{c.hint}</span>
+              </span>
+              <span className="ed-toggle-switch">
+                <input
+                  type="checkbox"
+                  className="ed-toggle-input"
+                  role="switch"
+                  aria-checked={selected.has(c.id)}
+                  checked={selected.has(c.id)}
+                  onChange={() => toggle(c.id)}
+                />
+                <span className="ed-toggle" aria-hidden><span className="ed-knob" /></span>
+              </span>
+            </label>
+            {/* Outside the label on purpose — a click on Test must not also
+                toggle the switch. (Kept the handler's own e.preventDefault()
+                byte-identical to the base file even though it's now
+                belt-and-suspenders, not load-bearing.) */}
             <button
               type="button"
               onClick={e => { e.preventDefault(); test(c.id); }}
-              className="btn btn-sm shrink-0"
+              className="ed-btn ed-btn-secondary"
               disabled={testing === c.id}
               title="Send a test notification"
             >
               {testing === c.id ? '…' : 'Test'}
             </button>
-          </label>
+          </div>
         ))}
       </div>
 
       {selected.has('slack') && (
-        <div className="mb-4 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/30">
-          <div className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">Slack</div>
-          <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 block mt-2">
-            Bot-token target <span className="font-normal lowercase tracking-normal text-slate-400">(channel ID, user ID, or @user)</span>
+        <div className="ed-subpanel mb-4">
+          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 8 }}>Slack</div>
+          <label className="ed-label" style={{ marginTop: 8 }}>
+            Bot-token target <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--muted-2)' }}>(channel ID, user ID, or @user)</span>
           </label>
           <input
             value={cfg.alert_slack_target}
             onChange={e => field('alert_slack_target')(e.target.value)}
             placeholder={configured.alert_slack_target ? "Already set — type to replace" : "C0123ABC or U0123ABC or @you@example.com"}
-            className="w-full font-mono text-xs mt-1"
+            className="ed-input"
+            style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 12 }}
           />
-          <p className="text-[10px] text-slate-500 mt-1">
-            Requires <code>SLACK_BOT_TOKEN</code> in <code>.env.local</code>. Bot-token path can DM users — webhooks can&rsquo;t.
+          <p className="ed-panel-note" style={{ marginTop: 6 }}>
+            Requires <code className="ed-code">SLACK_BOT_TOKEN</code> in <code className="ed-code">.env.local</code>. Bot-token path can DM users — webhooks can&rsquo;t.
           </p>
-          <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 block mt-3">
-            Incoming webhook URL <span className="font-normal lowercase tracking-normal text-slate-400">(fallback — channel only)</span>
+          <label className="ed-label" style={{ marginTop: 12 }}>
+            Incoming webhook URL <span style={{ textTransform: 'none', letterSpacing: 0, color: 'var(--muted-2)' }}>(fallback — channel only)</span>
           </label>
           <input
             value={cfg.alert_slack_webhook}
             onChange={e => field('alert_slack_webhook')(e.target.value)}
             placeholder={configured.alert_slack_webhook ? "Already set — type to replace" : "https://hooks.slack.com/services/T…/B…/…"}
-            className="w-full font-mono text-xs mt-1"
+            className="ed-input"
+            style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 12 }}
           />
         </div>
       )}
 
       {selected.has('telegram') && (
-        <div className="mb-4 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50/60 dark:bg-slate-900/30">
-          <div className="font-semibold text-sm text-slate-800 dark:text-slate-100 mb-2">Telegram</div>
-          <label className="text-[11px] uppercase tracking-wide font-semibold text-slate-500 block">Chat ID</label>
+        <div className="ed-subpanel mb-4">
+          <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)', marginBottom: 8 }}>Telegram</div>
+          <label className="ed-label">Chat ID</label>
           <input
             value={cfg.alert_telegram_chat_id}
             onChange={e => field('alert_telegram_chat_id')(e.target.value)}
             placeholder="123456789"
-            className="w-full font-mono text-xs mt-1"
+            className="ed-input"
+            style={{ fontFamily: 'var(--font-mono-ed)', fontSize: 12 }}
           />
-          <p className="text-[10px] text-slate-500 mt-1">
-            Requires <code>TELEGRAM_BOT_TOKEN</code>. Get your chat ID by messaging the bot then visiting <code>api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>.
+          <p className="ed-panel-note" style={{ marginTop: 6 }}>
+            Requires <code className="ed-code">TELEGRAM_BOT_TOKEN</code>. Get your chat ID by messaging the bot then visiting <code className="ed-code">api.telegram.org/bot&lt;TOKEN&gt;/getUpdates</code>.
           </p>
         </div>
       )}
 
       <div className="flex items-center gap-2">
-        <button onClick={save} className="btn btn-primary btn-sm" disabled={saving}>
+        <button onClick={save} className="ed-btn ed-btn-primary" disabled={saving}>
           {saving ? 'Saving…' : 'Save channels'}
         </button>
       </div>
-    </div>
+    </section>
   );
 }

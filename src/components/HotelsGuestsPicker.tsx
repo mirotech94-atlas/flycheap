@@ -108,46 +108,46 @@ export function HotelsGuestsPicker({
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full rounded border px-2 py-1 text-xs text-left"
-        style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, #cbd5e1)' }}
+        className="ed-input"
+        style={{ textAlign: 'left' }}
       >
         {summarizeGuests(value)}
       </button>
       {open && (
         <div
-          className="absolute z-30 mt-1 right-0 w-72 rounded-lg border shadow-lg p-3 space-y-3"
-          style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, #cbd5e1)' }}
+          className="ed-panel absolute z-30 mt-1 right-0 space-y-3"
+          style={{ width: 288, padding: 14 }}
         >
           {value.rooms.map((r, i) => (
-            <div key={i} className="space-y-2 pb-2 border-b last:border-0" style={{ borderColor: 'var(--border, rgba(148,163,184,0.25))' }}>
+            <div key={i} className="space-y-2 pb-2" style={{ borderBottom: i < value.rooms.length - 1 ? '1px solid var(--rule-soft)' : 'none' }}>
               <div className="flex items-center justify-between">
-                <div className="text-xs font-medium">Room {i + 1}</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: 'var(--ink)' }}>Room {i + 1}</div>
                 {value.rooms.length > 1 && (
-                  <button type="button" onClick={() => removeRoom(i)} className="text-[10px] underline" style={{ color: 'var(--text-muted, #64748b)' }}>
+                  <button type="button" onClick={() => removeRoom(i)} style={{ fontSize: 10, textDecoration: 'underline', color: 'var(--muted)' }}>
                     Remove
                   </button>
                 )}
               </div>
-              <div className="flex items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center justify-between gap-2" style={{ fontSize: 11, color: 'var(--ink)' }}>
                 <span>Adults</span>
                 <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => setRoom(i, { adults: Math.max(1, r.adults - 1) })} className="w-6 h-6 rounded border" style={{ borderColor: 'var(--border, #cbd5e1)' }}>−</button>
+                  <button type="button" onClick={() => setRoom(i, { adults: Math.max(1, r.adults - 1) })} className="w-6 h-6" style={{ border: '1px solid var(--rule-strong)', color: 'var(--ink)' }}>−</button>
                   <span className="tabular-nums w-4 text-center">{r.adults}</span>
-                  <button type="button" onClick={() => setRoom(i, { adults: Math.min(4, r.adults + 1) })} className="w-6 h-6 rounded border" style={{ borderColor: 'var(--border, #cbd5e1)' }}>+</button>
+                  <button type="button" onClick={() => setRoom(i, { adults: Math.min(4, r.adults + 1) })} className="w-6 h-6" style={{ border: '1px solid var(--rule-strong)', color: 'var(--ink)' }}>+</button>
                 </div>
               </div>
-              <div className="flex items-center justify-between gap-2 text-[11px]">
+              <div className="flex items-center justify-between gap-2" style={{ fontSize: 11, color: 'var(--ink)' }}>
                 <span>Children</span>
                 <div className="flex items-center gap-1.5">
-                  <button type="button" onClick={() => setChildCount(i, Math.max(0, r.children.length - 1))} className="w-6 h-6 rounded border" style={{ borderColor: 'var(--border, #cbd5e1)' }}>−</button>
+                  <button type="button" onClick={() => setChildCount(i, Math.max(0, r.children.length - 1))} className="w-6 h-6" style={{ border: '1px solid var(--rule-strong)', color: 'var(--ink)' }}>−</button>
                   <span className="tabular-nums w-4 text-center">{r.children.length}</span>
-                  <button type="button" onClick={() => setChildCount(i, Math.min(4, r.children.length + 1))} className="w-6 h-6 rounded border" style={{ borderColor: 'var(--border, #cbd5e1)' }}>+</button>
+                  <button type="button" onClick={() => setChildCount(i, Math.min(4, r.children.length + 1))} className="w-6 h-6" style={{ border: '1px solid var(--rule-strong)', color: 'var(--ink)' }}>+</button>
                 </div>
               </div>
               {r.children.length > 0 && (
                 <div className="grid grid-cols-2 gap-1.5">
                   {r.children.map((age, k) => (
-                    <label key={k} className="text-[10px]" style={{ color: 'var(--text-muted, #64748b)' }}>
+                    <label key={k} style={{ fontSize: 10, color: 'var(--muted)' }}>
                       Child {k + 1} age
                       <input
                         type="number"
@@ -155,8 +155,8 @@ export function HotelsGuestsPicker({
                         max={17}
                         value={age}
                         onChange={(e) => setChildAge(i, k, Number(e.target.value))}
-                        className="w-full mt-0.5 rounded border px-1 py-0.5 text-[11px]"
-                        style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, #cbd5e1)' }}
+                        className="ed-input"
+                        style={{ marginTop: 2, fontSize: 11, padding: '3px 6px' }}
                       />
                     </label>
                   ))}
@@ -169,17 +169,17 @@ export function HotelsGuestsPicker({
               type="button"
               onClick={addRoom}
               disabled={value.rooms.length >= 5}
-              className="text-[11px] underline disabled:opacity-40"
-              style={{ color: 'var(--text-muted, #64748b)' }}
+              className="disabled:opacity-40"
+              style={{ fontSize: 11, textDecoration: 'underline', color: 'var(--muted)' }}
             >
               + Add room {value.rooms.length >= 5 ? '(max 5)' : ''}
             </button>
-            <button type="button" onClick={() => setOpen(false)} className="text-[11px] btn btn-primary px-2 py-0.5">
+            <button type="button" onClick={() => setOpen(false)} className="ed-btn ed-btn-primary" style={{ fontSize: 11, padding: '4px 10px' }}>
               Done
             </button>
           </div>
           {value.rooms.length > 1 && (
-            <div className="text-[10px]" style={{ color: 'var(--text-faint, #94a3b8)' }}>
+            <div style={{ fontSize: 10, color: 'var(--muted-2)' }}>
               Multi-room: rate per room may vary on the provider&apos;s site.
             </div>
           )}

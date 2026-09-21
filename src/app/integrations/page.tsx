@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCurrentUser, isOwner } from '@/lib/auth';
 import { AiProviderChain } from '@/components/AiProviderChain';
+import { FcPageHead } from '@/components/fc/PageKit';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'Integrations — FlyCheap' };
@@ -108,6 +109,9 @@ const cards: Card[] = [
   },
 ];
 
+// Brand marks — Slack (4 fills) and Telegram (2: circle + glyph). Left as
+// literal hex on purpose: these are third-party logos, not design-system
+// colour (see tests/noHardcodedHex.test.ts ALLOWLIST).
 function PlatformIcon({ platform, className = 'w-7 h-7' }: { platform: Card['platform']; className?: string }) {
   if (platform === 'Slack') {
     return (
@@ -132,43 +136,35 @@ export default async function IntegrationsPage() {
   // sees the chain and its health only — this page is publicly reachable.
   const ownerView = isOwner(await getCurrentUser());
   return (
-    <div className="space-y-6 max-w-6xl mx-auto">
-      <header className="motion-fade-in">
-        <div className="eyebrow mb-1">Integrations</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white tracking-tight font-display">
-          Slack &amp; Telegram &mdash; open to everyone
-        </h1>
-        <p className="text-sm text-slate-500 mt-2 max-w-2xl">
-          FlyCheap&rsquo;s deal alerts and support channels. Pick where you want them &mdash;
-          we watch <strong>1,000+ airlines</strong> every day; you choose how the alerts reach you.
-        </p>
-      </header>
+    <div>
+      <div className="ed-eyebrow">Integrations</div>
+      <FcPageHead
+        title="Slack & Telegram — open to everyone"
+        lede="FlyCheap’s deal alerts and support channels. Pick where you want them — we watch 1,000+ airlines every day; you choose how the alerts reach you."
+      />
 
-      {/* Channel cards — alerts row, then support row, so each column reads as
-          one platform (Slack / Telegram / Discord) and the grid fills the width. */}
-      <section className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4 motion-slide-up">
+      {/* Channel tiles — one per channel (platform × alerts/support), alerts
+          row then support row so each column reads as one platform. Amber
+          stays reserved for fares: status reads through the dot + dim ground,
+          never a colour shift on the tile itself. */}
+      <div className="ed-tiles">
         {[...cards.filter(c => c.variant === 'alerts'), ...cards.filter(c => c.variant === 'support')].map(c => {
           const isExternal = c.href.startsWith('http');
           const ctaLabel = c.configured
             ? `Open ${c.platform} →`
             : (c.variant === 'support' ? 'Contact us →' : 'Set up alerts →');
           const inner = (
-            <div className="flex items-start gap-4">
-              <div className="shrink-0 mt-0.5"><PlatformIcon platform={c.platform} /></div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2">
-                  <h2 className="!mb-0 text-lg">{c.platform}</h2>
-                  <span className={`badge ${c.variant === 'alerts' ? 'badge-success' : 'badge-muted'}`}>
-                    {c.variant === 'alerts' ? '#alerts' : '#support'}
-                  </span>
-                  {!c.configured && <span className="badge badge-warn">Soon</span>}
-                </div>
-                <p className="text-sm text-slate-600 dark:text-slate-300 mt-1.5 leading-relaxed">{c.blurb}</p>
-                <div className="mt-3 text-sm font-semibold text-brand-700 group-hover:translate-x-0.5 transition">
-                  {ctaLabel}
-                </div>
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <PlatformIcon platform={c.platform} className="w-5 h-5" />
+                <div className="ed-tile-kicker" style={{ marginBottom: 0 }}>{c.platform}</div>
+                <span className={c.configured ? 'ed-dot' : 'ed-dot muted'} aria-hidden />
+                {!c.configured && <span className="ed-chip" style={{ padding: '2px 8px', fontSize: 10 }}>Soon</span>}
               </div>
-            </div>
+              <div className="ed-tile-value" style={{ fontSize: 18 }}>{c.variant === 'alerts' ? '#alerts' : '#support'}</div>
+              <p className="ed-tile-meta">{c.blurb}</p>
+              <span className="ed-btn ed-btn-tile">{ctaLabel}</span>
+            </>
           );
           return isExternal ? (
             <a
@@ -176,7 +172,7 @@ export default async function IntegrationsPage() {
               href={c.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="card hover:shadow-lg transition group"
+              className={c.configured ? 'ed-tile' : 'ed-tile dim'}
             >
               {inner}
             </a>
@@ -184,80 +180,84 @@ export default async function IntegrationsPage() {
             <Link
               key={`${c.platform}-${c.variant}`}
               href={c.href}
-              className="card hover:shadow-lg transition group"
+              className={c.configured ? 'ed-tile' : 'ed-tile dim'}
             >
               {inner}
             </Link>
           );
         })}
-      </section>
+      </div>
 
-      <AiProviderChain ownerView={ownerView} />
+      <div style={{ marginTop: 28 }}>
+        <AiProviderChain ownerView={ownerView} />
+      </div>
 
-      <section className="card motion-slide-up">
-        <div className="eyebrow mb-1">Set up in 2 minutes</div>
-        <h2 className="!mb-1">The commands</h2>
-        <p className="text-sm text-slate-500 mb-4">
+      <section className="ed-panel" style={{ marginTop: 28 }}>
+        <div className="ed-eyebrow" style={{ marginBottom: 4 }}>Set up in 2 minutes</div>
+        <h2 className="ed-h2">The commands</h2>
+        <p className="ed-panel-note" style={{ marginBottom: 16 }}>
           Add a route and a target price right where you already work. Every drop below your
           target posts automatically.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 16 }}>
+          <div className="ed-subpanel">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <PlatformIcon platform="Slack" className="w-5 h-5" />
-              <span className="font-semibold">Slack</span>
-              <span className="badge badge-muted">#flycheap-alerts</span>
+              <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink)' }}>Slack</span>
+              <span className="ed-chip">#flycheap-alerts</span>
             </div>
-            <ol className="text-sm text-slate-700 dark:text-slate-300 space-y-1.5 list-decimal list-inside">
-              <li>Join the workspace and open <code className="text-xs">#flycheap-alerts</code></li>
-              <li>Run <code className="text-xs">/flycheap watch JFK LIS 450</code></li>
+            <ol style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 7, fontSize: 13, color: 'var(--ink-soft)' }}>
+              <li>Join the workspace and open <code className="ed-code">#flycheap-alerts</code></li>
+              <li>Run <code className="ed-code">/flycheap watch JFK LIS 450</code></li>
               <li>Every drop posts in the channel — for the whole team</li>
             </ol>
           </div>
-          <div className="rounded-xl border border-slate-200 dark:border-slate-800 p-4">
-            <div className="flex items-center gap-2 mb-2">
+          <div className="ed-subpanel green">
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
               <PlatformIcon platform="Telegram" className="w-5 h-5" />
-              <span className="font-semibold">Telegram</span>
-              <span className="badge badge-success">live</span>
+              <span style={{ fontWeight: 600, fontSize: 13.5, color: 'var(--ink)' }}>Telegram</span>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: 11, color: 'var(--green)' }}>
+                <span className="ed-dot" aria-hidden /> live
+              </span>
             </div>
-            <ol className="text-sm text-slate-700 dark:text-slate-300 space-y-1.5 list-decimal list-inside">
-              <li>Open <a className="text-brand-700 underline" href={`https://t.me/${RAW_TG_ALERTS_BOT}`} target="_blank" rel="noopener noreferrer">@{RAW_TG_ALERTS_BOT}</a> and tap <strong>Start</strong></li>
-              <li>Send <code className="text-xs">/watch JFK LIS 450</code></li>
+            <ol style={{ margin: 0, paddingLeft: 18, display: 'grid', gap: 7, fontSize: 13, color: 'var(--ink-soft)' }}>
+              <li>Open <a style={{ color: 'var(--accent)', textDecoration: 'underline' }} href={`https://t.me/${RAW_TG_ALERTS_BOT}`} target="_blank" rel="noopener noreferrer">@{RAW_TG_ALERTS_BOT}</a> and tap <strong>Start</strong></li>
+              <li>Send <code className="ed-code">/watch JFK LIS 450</code></li>
               <li>Your phone buzzes the moment the price falls under your target</li>
             </ol>
           </div>
         </div>
-        <p className="text-xs text-slate-400 mt-3">
-          Format: <code className="text-xs">watch ORIGIN DESTINATION PRICE</code> (3-letter airport codes, target in USD).
-          Manage anytime with <code className="text-xs">list</code> and <code className="text-xs">unwatch</code>. Discord — coming next month.
+        <p style={{ fontSize: 12, color: 'var(--muted-2)', marginTop: 14 }}>
+          Format: <code className="ed-code">watch ORIGIN DESTINATION PRICE</code> (3-letter airport codes, target in USD).
+          Manage anytime with <code className="ed-code">list</code> and <code className="ed-code">unwatch</code>. Discord — coming next month.
         </p>
       </section>
 
-      <section className="card motion-slide-up motion-delay-1">
-        <h2 className="!mb-1">Wire alerts into your own channel</h2>
-        <p className="text-sm text-slate-500 mb-3">
+      <section className="ed-panel" style={{ marginTop: 16 }}>
+        <h2 className="ed-h2">Wire alerts into your own channel</h2>
+        <p className="ed-panel-note" style={{ marginBottom: 12 }}>
           Already on Slack or Telegram? Point your private route alerts at your own webhook/chat instead
           of (or in addition to) email.
         </p>
-        <ul className="text-sm text-slate-700 dark:text-slate-300 space-y-1.5">
-          <li>&middot; <strong>Slack:</strong> create an incoming-webhook URL and paste it under <Link className="text-brand-700 underline" href="/settings#alerts">Settings &rarr; Channels</Link>.</li>
+        <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'grid', gap: 7, fontSize: 13, color: 'var(--ink-soft)' }}>
+          <li>&middot; <strong>Slack:</strong> create an incoming-webhook URL and paste it under <Link style={{ color: 'var(--accent)', textDecoration: 'underline' }} href="/settings#alerts">Settings &rarr; Channels</Link>.</li>
           <li>&middot; <strong>Telegram:</strong> {TG_ALERTS_OK ? (
-            <>open <a className="text-brand-700 underline" href={RAW_TG_ALERTS_URL} target="_blank" rel="noopener noreferrer">@{RAW_TG_ALERTS_BOT || 'our bot'}</a>, send <code className="text-xs">/start</code>, and the bot replies with your private chat-id. Paste that under <Link className="text-brand-700 underline" href="/settings#alerts">Settings &rarr; Channels</Link>.</>
+            <>open <a style={{ color: 'var(--accent)', textDecoration: 'underline' }} href={RAW_TG_ALERTS_URL} target="_blank" rel="noopener noreferrer">@{RAW_TG_ALERTS_BOT || 'our bot'}</a>, send <code className="ed-code">/start</code>, and the bot replies with your private chat-id. Paste that under <Link style={{ color: 'var(--accent)', textDecoration: 'underline' }} href="/settings#alerts">Settings &rarr; Channels</Link>.</>
           ) : (
-            <>set <code className="text-xs">TELEGRAM_BOT_TOKEN</code> in env and your chat-id under <Link className="text-brand-700 underline" href="/settings#alerts">Settings &rarr; Channels</Link>. Public bot launching soon.</>
+            <>set <code className="ed-code">TELEGRAM_BOT_TOKEN</code> in env and your chat-id under <Link style={{ color: 'var(--accent)', textDecoration: 'underline' }} href="/settings#alerts">Settings &rarr; Channels</Link>. Public bot launching soon.</>
           )}</li>
         </ul>
       </section>
 
-      <section className="card motion-slide-up motion-delay-2 bg-slate-50/60 dark:bg-slate-900/40">
-        <h2 className="!mb-1 text-base">Talk to a human directly</h2>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+      <section className="ed-panel" style={{ marginTop: 16 }}>
+        <h2 className="ed-h2" style={{ fontSize: 19 }}>Talk to a human directly</h2>
+        <p className="ed-panel-note" style={{ marginBottom: 10 }}>
           I&rsquo;m Miro &mdash; the founder. If Slack/Telegram aren&rsquo;t your thing, reach me
           straight away:
         </p>
-        <div className="mt-2 flex flex-wrap gap-x-5 gap-y-1 text-sm">
-          <a className="text-brand-700 font-semibold" href="mailto:miro@flycheap.live">miro@flycheap.live</a>
-          <a className="text-brand-700 font-semibold" href="tel:+19176554405">+1 (917) 655-4405</a>
+        <div style={{ display: 'flex', flexWrap: 'wrap', columnGap: 22, rowGap: 6, fontSize: 13 }}>
+          <a style={{ color: 'var(--accent)', fontWeight: 600 }} href="mailto:miro@flycheap.live">miro@flycheap.live</a>
+          <a style={{ color: 'var(--accent)', fontWeight: 600 }} href="tel:+19176554405">+1 (917) 655-4405</a>
         </div>
       </section>
     </div>

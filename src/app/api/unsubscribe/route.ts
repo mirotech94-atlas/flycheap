@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
   queries.setUserSetting(user.id, 'alert_channels', '');
   return new Response(htmlPage(
     "You're unsubscribed",
-    `${email} will no longer receive fare alerts or digests. Re-enable any time at <a href="https://my.flycheap.live/settings" style="color:#0a3a6b">Settings → Alerts</a>.`,
+    `${email} will no longer receive fare alerts or digests. Re-enable any time at <a href="https://my.flycheap.live/settings" style="color:#1F615D">Settings → Alerts</a>.`,
     true
   ), { status: 200, headers: { 'Content-Type': 'text/html; charset=utf-8' } });
 }
@@ -52,14 +52,18 @@ export async function GET(req: NextRequest) {
 function htmlPage(title: string, body: string, ok: boolean): string {
   return `<!DOCTYPE html><html><head><meta charset="utf-8"><title>${title}</title><meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#f4f6fb;margin:0;padding:60px 20px;color:#0b1220}
-.card{max-width:480px;margin:auto;background:white;border:1px solid #e5e9f1;border-radius:14px;padding:32px;box-shadow:0 8px 24px -12px rgba(15,23,42,.08);text-align:center}
-.icon{width:64px;height:64px;border-radius:18px;background:${ok ? 'linear-gradient(135deg,#10b981,#059669)' : 'linear-gradient(135deg,#ef4444,#b91c1c)'};color:white;display:grid;place-items:center;margin:0 auto 16px;font-size:32px}
-h1{margin:0 0 8px;font-size:24px;color:#0a3a6b}
-p{color:#475569;line-height:1.5}
-a.btn{display:inline-block;background:#0a3a6b;color:white;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:600;margin-top:16px}
+/* A standalone document: it never loads the app stylesheet, so the editorial
+   palette is written out as literals here, the same way the email templates
+   do it. Light only, flat, square, no shadow, no gradient. */
+body{font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;background:#FBFAF7;margin:0;padding:60px 20px;color:#14181B}
+.card{max-width:480px;margin:auto;background:#FFFFFF;border:1px solid #E6E2DA;padding:32px;text-align:center}
+.icon{font-size:15px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;color:${ok ? '#3E7D5A' : '#B4453C'};margin:0 0 14px}
+h1{margin:0 0 10px;font-family:Newsreader,Georgia,serif;font-weight:400;font-size:28px;letter-spacing:-.02em;color:#14181B}
+p{color:#3B3833;line-height:1.5;font-size:14px}
+a{color:#1F615D}
+a.btn{display:inline-block;background:#14181B;color:#FFFFFF;padding:12px 22px;text-decoration:none;font-weight:600;font-size:12.5px;margin-top:18px}
 </style></head><body><div class="card">
-<div class="icon">${ok ? '✓' : '!'}</div>
+<div class="icon">${ok ? 'Unsubscribed' : 'Link problem'}</div>
 <h1>${title}</h1>
 <p>${body}</p>
 <a class="btn" href="https://flycheap.live/">Back to FlyCheap</a>

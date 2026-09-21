@@ -35,15 +35,15 @@ export function DatePopover({
       <button
         type="button"
         onClick={() => setOpen(o => !o)}
-        className="w-full px-3 py-1.5 text-left rounded-md border border-slate-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand/40 hover:border-slate-400"
+        className="ed-date-trigger"
       >
         {selected
-          ? <span className="text-slate-900">{format(selected, 'EEE, MMM d, yyyy')}</span>
-          : <span className="text-slate-400">Pick a date…</span>}
-        <span className="float-right text-slate-400">📅</span>
+          ? <span style={{ color: 'var(--ink)' }}>{format(selected, 'EEE, MMM d, yyyy')}</span>
+          : <span style={{ color: 'var(--muted)' }}>Pick a date…</span>}
+        <span className="float-right" style={{ color: 'var(--muted)' }}>📅</span>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 shadow-xl p-2">
+        <div className="ed-date-panel">
           <DayPicker
             mode="single"
             selected={selected}

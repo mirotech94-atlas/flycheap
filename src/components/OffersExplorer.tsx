@@ -14,12 +14,6 @@ function fmtLeg(iso: string | null): { date: string; time: string } {
   return { date, time };
 }
 
-const PROVIDER_STYLE: Record<string, string> = {
-  travelpayouts: 'bg-sky-100 text-sky-800 dark:bg-sky-900/40 dark:text-sky-300',
-  serpapi:       'bg-violet-100 text-violet-800 dark:bg-violet-900/40 dark:text-violet-300',
-  amadeus:       'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-300',
-  kiwi:          'bg-lime-100 text-lime-800 dark:bg-lime-900/40 dark:text-lime-300',
-};
 const PROVIDER_LABEL: Record<string, string> = {
   travelpayouts: 'Aviasales', serpapi: 'Google Flights', amadeus: 'Amadeus', kiwi: 'Kiwi',
 };
@@ -158,6 +152,18 @@ export function OffersExplorer(props: {
     return base.slice(0, Number.isFinite(n) ? n : 25);
   }, [offers, limit]);
 
+  // Feature block: ranked bars. Bar length is the only measure the data
+  // actually supports for a set of one-off search results — there is no
+  // buy/wait verdict here (that needs tracked history, see the dashboard's
+  // ed-ranked block), so each bar is per-adult price relative to the most
+  // expensive offer shown, and the fill stays --accent (no amber modifier —
+  // amber is reserved for fares/primary actions, and nothing here signals
+  // "wait").
+  const maxShownPrice = useMemo(
+    () => shown.reduce((m, o) => Math.max(m, o.per_adult_usd), 0),
+    [shown],
+  );
+
   // Apply a fully-resolved /api/offers payload to component state.
   function applyResult(j: { ok?: boolean; error?: string; offers?: Offer[]; count?: number; summary?: string[]; echo?: Record<string, unknown>; fallback?: { window: string; offers: Array<Offer & { suggested_depart_shift_days: number | null; suggested_return_shift_days: number | null }> } | null; provider_results?: unknown[]; freshly_polled?: boolean }) {
     setOffers(j.offers ?? []);
@@ -267,21 +273,21 @@ export function OffersExplorer(props: {
   }
 
   return (
-    <div className="card card-feature overflow-x-auto">
-      <div className="card-head">
+    <div className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-emerald-700">One-stop and nonstop</div>
-          <h2 className="!mb-0 text-slate-900">Search any route window</h2>
+          <div className="ed-eyebrow">One-stop and nonstop</div>
+          <h2 className="ed-panel-title">Search any route window</h2>
         </div>
-        <div className="flex items-center gap-2 flex-wrap">
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
           {enabledConfigured.length === 0
-            ? <span className="badge badge-warn">No enabled providers configured</span>
-            : <span className="badge badge-info">{enabledConfigured.length} providers active</span>}
+            ? <span className="ed-chip" style={{ color: 'var(--red)', borderColor: 'var(--red)' }}>No enabled providers configured</span>
+            : <span className="ed-chip">{enabledConfigured.length} providers active</span>}
         </div>
       </div>
 
       {!hideForm && (
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 items-end p-3 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800">
+      <div className="ed-subpanel" style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 10 }}>
         {/* Shared worldwide airport list for both origin + destination pickers */}
         <datalist id="offers-airports">
           {AIRPORTS.map(a => (
@@ -289,41 +295,41 @@ export function OffersExplorer(props: {
           ))}
         </datalist>
 
-        <label className="text-xs text-slate-500 col-span-2">
-          <span className="block mb-1">Origin(s) — any airport, comma-separate for multiple</span>
+        <label style={{ gridColumn: 'span 2' }}>
+          <span className="ed-label">Origin(s) — any airport, comma-separate for multiple</span>
           <input
             value={originStr}
             onChange={e => setOriginStr(e.target.value.toUpperCase())}
             list="offers-airports"
             placeholder="JFK, EWR — or LHR, CDG, DXB…"
-            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
+            className="ed-input"
           />
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Destination</span>
+        <label>
+          <span className="ed-label">Destination</span>
           <input
             value={destination}
             onChange={e => setDestination(e.target.value.toUpperCase())}
             list="offers-airports"
             placeholder="CAI"
-            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
+            className="ed-input"
           />
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Depart</span>
-          <input type="date" value={departDate} onChange={e => setDepartDate(e.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700" />
+        <label>
+          <span className="ed-label">Depart</span>
+          <input type="date" value={departDate} onChange={e => setDepartDate(e.target.value)} className="ed-input" />
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Return</span>
-          <input type="date" value={returnDate} onChange={e => setReturnDate(e.target.value)} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700" />
+        <label>
+          <span className="ed-label">Return</span>
+          <input type="date" value={returnDate} onChange={e => setReturnDate(e.target.value)} className="ed-input" />
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Stops</span>
-          <select value={stops} onChange={e => setStops(e.target.value as StopsFilter)} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
+        <label>
+          <span className="ed-label">Stops</span>
+          <select value={stops} onChange={e => setStops(e.target.value as StopsFilter)} className="ed-input">
             <option value="all">All</option>
             <option value="nonstop">Nonstop</option>
             <option value="one-stop">1 stop</option>
@@ -331,18 +337,18 @@ export function OffersExplorer(props: {
           </select>
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Adults</span>
-          <input type="number" min={1} value={adults} onChange={e => setAdults(Number(e.target.value))} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700" />
+        <label>
+          <span className="ed-label">Adults</span>
+          <input type="number" min={1} value={adults} onChange={e => setAdults(Number(e.target.value))} className="ed-input" />
         </label>
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Infants</span>
-          <input type="number" min={0} value={infants} onChange={e => setInfants(Number(e.target.value))} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700" />
+        <label>
+          <span className="ed-label">Infants</span>
+          <input type="number" min={0} value={infants} onChange={e => setInfants(Number(e.target.value))} className="ed-input" />
         </label>
 
-        <label className="text-xs text-slate-500">
-          <span className="block mb-1">Show</span>
-          <select value={limit} onChange={e => setLimit(e.target.value as ShowLimit)} className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700">
+        <label>
+          <span className="ed-label">Show</span>
+          <select value={limit} onChange={e => setLimit(e.target.value as ShowLimit)} className="ed-input">
             <option value="25">25</option>
             <option value="50">50</option>
             <option value="100">100</option>
@@ -350,18 +356,18 @@ export function OffersExplorer(props: {
           </select>
         </label>
 
-        <label className="text-xs text-slate-500 col-span-2 md:col-span-2 flex items-center gap-2 mt-4">
-          <input type="checkbox" checked={egyptairOnly} onChange={e => setEgyptairOnly(e.target.checked)} />
+        <label style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 12.5, color: 'var(--ink-soft)' }}>
+          <input type="checkbox" checked={egyptairOnly} onChange={e => setEgyptairOnly(e.target.checked)} style={{ accentColor: 'var(--accent)' }} />
           <span>EgyptAir only (MS) — uncheck to also see other carriers</span>
         </label>
 
-        <div className="col-span-2 md:col-span-6 flex items-center gap-2">
-          <button type="button" className="btn btn-primary text-xs" onClick={run} disabled={pending}>
+        <div style={{ gridColumn: 'span 2', display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap' }}>
+          <button type="button" className="ed-btn ed-btn-primary" onClick={run} disabled={pending}>
             {pending ? 'Searching…' : 'Search'}
           </button>
           <button
             type="button"
-            className="btn text-xs"
+            className="ed-btn ed-btn-secondary"
             onClick={async () => {
               setCoverage(null); setCoverageBusy(true);
               const startMonth = (departDate || '2026-01-01').slice(0, 7);
@@ -384,7 +390,7 @@ export function OffersExplorer(props: {
           >
             {coverageBusy ? 'Scanning…' : 'Scan months for cached data'}
           </button>
-          {msg && <span className="text-xs text-slate-500">{msg}</span>}
+          {msg && <span style={{ fontSize: 12.5, color: 'var(--muted)' }}>{msg}</span>}
         </div>
       </div>
       )}
@@ -392,11 +398,11 @@ export function OffersExplorer(props: {
       {/* On-demand poll status — shown while the API has returned poll_id
           and we're awaiting the background provider call. */}
       {pollState && (
-        <div className="mt-3 p-3 rounded-lg border border-sky-300 bg-sky-50/70 dark:bg-sky-900/20 flex items-center gap-3">
-          <span className="inline-block h-3 w-3 rounded-full bg-sky-500 animate-pulse" aria-hidden />
-          <div className="text-sm text-sky-900 dark:text-sky-200">
-            🔄 Pulling fresh prices from your providers — usually a few seconds…
-            <div className="text-[11px] text-sky-700/80 dark:text-sky-300/70 mt-0.5">
+        <div className="ed-subpanel accent" style={{ marginTop: 14, display: 'flex', alignItems: 'center', gap: 12 }}>
+          <span className="ed-dot" style={{ background: 'var(--accent)' }} aria-hidden />
+          <div style={{ fontSize: 13, color: 'var(--ink)' }}>
+            Pulling fresh prices from your providers — usually a few seconds…
+            <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 3 }}>
               Checking every 2s · will give up after 60s and offer email-when-ready.
             </div>
           </div>
@@ -406,18 +412,19 @@ export function OffersExplorer(props: {
       {/* Gave up waiting — surface the queue-alert button so the route lands
           in the background poller and the user gets notified when fares hit. */}
       {pollGaveUp && !pollState && offers.length === 0 && (
-        <div className="mt-3 p-3 rounded-lg border border-amber-300 bg-amber-50/70 dark:bg-amber-900/20">
-          <div className="text-sm text-amber-900 dark:text-amber-200 font-semibold">
+        <div className="ed-subpanel" style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 13, fontWeight: 600, color: 'var(--ink)' }}>
             We&apos;ve queued this for the next polling cycle — we&apos;ll email you when it&apos;s ready.
           </div>
           {queuedSearchId ? (
-            <div className="text-xs text-amber-700 dark:text-amber-300 mt-1">
-              ✓ Queued as search #{queuedSearchId}. The background poller will email you when fares land.
+            <div style={{ fontSize: 11.5, color: 'var(--muted)', marginTop: 4 }}>
+              Queued as search #{queuedSearchId}. The background poller will email you when fares land.
             </div>
           ) : (
             <button
               type="button"
-              className="btn btn-primary text-xs mt-2"
+              className="ed-btn ed-btn-primary"
+              style={{ marginTop: 10 }}
               onClick={async () => {
                 const res = await fetch('/api/offers/queue-alert', {
                   method: 'POST',
@@ -436,7 +443,7 @@ export function OffersExplorer(props: {
                 else setMsg(j.error || 'Could not queue alert — sign in?');
               }}
             >
-              📧 Email me when it&apos;s ready
+              Email me when it&apos;s ready
             </button>
           )}
         </div>
@@ -445,13 +452,14 @@ export function OffersExplorer(props: {
       {/* Nearest-cached-date fallback — when exact dates have 0 results,
           show the closest pairings so the user can apply them with one click. */}
       {offers.length === 0 && fallback && fallback.offers.length > 0 && (
-        <div className="mt-3 p-3 rounded-lg border border-emerald-300 bg-emerald-50/60 dark:bg-emerald-900/10">
-          <div className="text-xs font-semibold text-emerald-900 dark:text-emerald-300 mb-2">
-            ✨ Closest available pairings ({fallback.window}) {egyptairOnly && fallback.offers.some(o => !((o.airline ?? '').startsWith('MS')))
-              ? <span className="font-normal text-amber-700">— note: cache has no EgyptAir for those dates; showing other carriers too</span>
+        <div className="ed-subpanel green" style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink-soft)', marginBottom: 10, display: 'flex', alignItems: 'center', gap: 7 }}>
+            <span className="ed-dot" style={{ background: 'var(--green)' }} aria-hidden />
+            Closest available pairings ({fallback.window}) {egyptairOnly && fallback.offers.some(o => !((o.airline ?? '').startsWith('MS')))
+              ? <span style={{ fontWeight: 400, color: 'var(--muted)' }}>— note: cache has no EgyptAir for those dates; showing other carriers too</span>
               : ''}:
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
             {fallback.offers.slice(0, 8).map((o, i) => {
               const dShift = o.suggested_depart_shift_days;
               const rShift = o.suggested_return_shift_days;
@@ -468,17 +476,18 @@ export function OffersExplorer(props: {
                     if (newDepart) setDepartDate(newDepart);
                     if (newReturn) setReturnDate(newReturn);
                   }}
-                  className={`text-left p-2 rounded-lg border cursor-pointer text-xs ${isMS ? 'border-emerald-300 bg-white hover:bg-emerald-50' : 'border-amber-200 bg-amber-50/30 hover:bg-amber-50'}`}
+                  className="ed-input"
+                  style={{ textAlign: 'left', cursor: 'pointer', fontSize: 12 }}
                 >
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="font-semibold text-emerald-700">{money(o.per_adult_usd)}/adult</div>
-                    <span className={`badge ${isMS ? 'badge-ok' : 'badge-warn'} text-[10px]`}>{o.airline || '?'}</span>
-                    <div className="text-[10px] text-slate-400 ml-auto">depart {dStr}, return {rStr}</div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+                    <span style={{ fontFamily: 'var(--font-mono-ed)', fontWeight: 600, color: 'var(--ink)' }}>{money(o.per_adult_usd)}/adult</span>
+                    <span className="ed-mono" style={{ color: isMS ? 'var(--green)' : 'var(--muted)', fontSize: 9.5 }}>{o.airline || '?'}</span>
+                    <span style={{ fontSize: 10, color: 'var(--muted-2)', marginLeft: 'auto' }}>depart {dStr}, return {rStr}</span>
                   </div>
-                  <div className="text-slate-600 mt-1">
+                  <div style={{ color: 'var(--ink-soft)', marginTop: 4 }}>
                     {o.outbound_flight_no} {newDepart} → {o.return_flight_no} {newReturn}
                   </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">
+                  <div style={{ fontSize: 10, color: 'var(--muted-2)', marginTop: 2 }}>
                     {stopLabel(maxStops(o))} · party {money(o.total_party_usd)} · click to apply
                   </div>
                 </button>
@@ -490,11 +499,11 @@ export function OffersExplorer(props: {
 
       {/* Coverage scan — when 0 results, show user which months actually have data */}
       {coverage && (
-        <div className="mt-3 p-3 rounded-lg border border-amber-200 bg-amber-50/60 dark:bg-amber-900/10">
-          <div className="text-xs font-semibold text-amber-900 dark:text-amber-300 mb-2">
+        <div className="ed-subpanel" style={{ marginTop: 14 }}>
+          <div style={{ fontSize: 11.5, fontWeight: 600, color: 'var(--ink)', marginBottom: 10 }}>
             Travelpayouts cache coverage · {originValue.split(',')[0]} → {destination} · {egyptairOnly ? 'EgyptAir (MS)' : 'any airline'}
           </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: 8 }}>
             {coverage.map(m => {
               const has = m.matchingAirline > 0;
               const days = Object.entries(m.byDay).sort();
@@ -513,16 +522,17 @@ export function OffersExplorer(props: {
                       setReturnDate(after.toISOString().slice(0, 10));
                     }
                   }}
-                  className={`text-left p-2 rounded-lg border text-xs ${has ? 'border-emerald-300 bg-white hover:bg-emerald-50 cursor-pointer' : 'border-slate-200 bg-slate-50 dark:bg-slate-800 opacity-70 cursor-not-allowed'}`}
+                  className="ed-input"
+                  style={{ textAlign: 'left', fontSize: 12, cursor: has ? 'pointer' : 'not-allowed', opacity: has ? 1 : 0.6 }}
                 >
-                  <div className="font-semibold text-slate-700 dark:text-slate-200">{m.month}</div>
-                  <div className="text-[11px] mt-0.5">
+                  <div style={{ fontWeight: 600, color: 'var(--ink)' }}>{m.month}</div>
+                  <div style={{ fontSize: 11, marginTop: 2 }}>
                     {has
-                      ? <span className="text-emerald-700 dark:text-emerald-400">{m.matchingAirline} flights · {Object.keys(m.byDay).length} days</span>
-                      : <span className="text-slate-400">none cached ({m.totalCached} other airlines)</span>}
+                      ? <span style={{ color: 'var(--green)' }}>{m.matchingAirline} flights · {Object.keys(m.byDay).length} days</span>
+                      : <span style={{ color: 'var(--muted-2)' }}>none cached ({m.totalCached} other airlines)</span>}
                   </div>
                   {has && days.length > 0 && (
-                    <div className="text-[10px] text-slate-500 mt-1 truncate">
+                    <div style={{ fontSize: 10, color: 'var(--muted-2)', marginTop: 4, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       first: {days[0][0]}{days.length > 1 ? ` … last: ${days[days.length - 1][0]}` : ''}
                     </div>
                   )}
@@ -530,28 +540,28 @@ export function OffersExplorer(props: {
               );
             })}
           </div>
-          <p className="text-[10px] text-slate-500 mt-2">Click a green cell to auto-fill that month&apos;s first cached date as Depart (Return = +14 days).</p>
+          <p style={{ fontSize: 10.5, color: 'var(--muted-2)', marginTop: 10 }}>Click a cell with data to auto-fill that month&apos;s first cached date as Depart (Return = +14 days).</p>
         </div>
       )}
 
       {/* Diagnostics panel — always shows last call's result + per-provider notes */}
       {(diagnostics.length > 0 || echo) && (
-        <details className="mt-3 text-xs" open={offers.length === 0 && diagnostics.length > 0}>
-          <summary className="cursor-pointer text-slate-600 hover:text-slate-900 font-semibold">
+        <details style={{ marginTop: 14, fontSize: 12 }} open={offers.length === 0 && diagnostics.length > 0}>
+          <summary className="ed-mono" style={{ cursor: 'pointer', color: 'var(--muted)' }}>
             Provider diagnostics ({diagnostics.length})
           </summary>
-          <div className="mt-2 p-3 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 space-y-2">
+          <div className="ed-subpanel" style={{ marginTop: 8, display: 'grid', gap: 8 }}>
             {echo && (
-              <div className="text-slate-500">
-                <span className="font-semibold text-slate-700 dark:text-slate-300">Bot received:</span>{' '}
+              <div style={{ color: 'var(--muted)' }}>
+                <span style={{ fontWeight: 600, color: 'var(--ink-soft)' }}>Bot received:</span>{' '}
                 origin <code>{String(echo.origin)}</code>{' → '}<code>{String(echo.destination)}</code>{' · '}
                 depart <code>{String(echo.departDate)}</code>{' / return '}<code>{String(echo.returnDate)}</code>{' · '}
                 {String(echo.adults)} ad + {String(echo.infants)} inf · stops <code>{String(echo.stops)}</code>
               </div>
             )}
-            <ul className="space-y-1">
+            <ul style={{ display: 'grid', gap: 4, listStyle: 'none', padding: 0, margin: 0 }}>
               {diagnostics.map((d, i) => (
-                <li key={i} className={`font-mono ${d.includes('ERROR') ? 'text-red-600' : 'text-slate-600 dark:text-slate-400'}`}>
+                <li key={i} style={{ fontFamily: 'var(--font-mono-ed)', color: d.includes('ERROR') ? 'var(--red)' : 'var(--muted)' }}>
                   {d}
                 </li>
               ))}
@@ -560,69 +570,42 @@ export function OffersExplorer(props: {
         </details>
       )}
 
+      {/* Feature block — ranked bars, cheapest first (shown is already sorted
+          ascending by per_adult_usd). Bar length is price relative to the
+          most expensive offer shown; fill stays --accent throughout (no
+          amber — there is no buy/wait verdict for a one-off search result). */}
       {shown.length > 0 && (
-        <table className="fmt mt-4">
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Origin</th>
-              <th>Stops</th>
-              <th>Outbound</th>
-              <th>Return</th>
-              <th>Per adult</th>
-              <th>Party total</th>
-              <th>Provider</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.map((o, idx) => {
-              const out = fmtLeg(o.outbound_depart_iso);
-              const ret = fmtLeg(o.return_depart_iso);
-              const bookHref = bookingLink({
-                origin: o.origin,
-                destination,
-                departDate: o.outbound_depart_iso?.slice(0, 10) || departDate,
-                returnDate: o.return_depart_iso?.slice(0, 10) || returnDate,
-                adults,
-                infants,
-                trackAs: { perAdult: o.per_adult_usd, provider: o.provider, surface: 'offers-results-table' },
-              });
-              return (
-                <tr key={`${o.provider}-${idx}`}>
-                  <td className="text-slate-500 text-xs">{idx + 1}</td>
-                  <td className="font-semibold">{o.origin}</td>
-                  <td className="text-slate-500 text-xs">{stopLabel(maxStops(o))}</td>
-                  <td>
-                    <div className="font-semibold">{out.date}{out.time && <span className="text-slate-400 font-normal"> · {out.time}</span>}</div>
-                    <div className="text-xs text-slate-500">{o.outbound_flight_no || '—'}</div>
-                  </td>
-                  <td>
-                    <div className="font-semibold">{ret.date}{ret.time && <span className="text-slate-400 font-normal"> · {ret.time}</span>}</div>
-                    <div className="text-xs text-slate-500">{o.return_flight_no || '—'}</div>
-                  </td>
-                  <td className="font-semibold">{money(o.per_adult_usd)}</td>
-                  <td>{money(o.total_party_usd)}</td>
-                  <td>
-                    <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold ${PROVIDER_STYLE[o.provider] ?? 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300'}`}>
-                      {PROVIDER_LABEL[o.provider] ?? o.provider}
-                    </span>
-                  </td>
-                  <td>
-                    <a
-                      href={bookHref}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="inline-block px-3 py-1.5 rounded-lg text-xs font-bold bg-[#E8A33D] text-[#0B1220] hover:bg-[#F2B961] transition whitespace-nowrap"
-                    >
-                      Book →
-                    </a>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+        <div className="ed-ranked" style={{ marginTop: 20 }}>
+          {shown.map((o, idx) => {
+            const out = fmtLeg(o.outbound_depart_iso);
+            const ret = fmtLeg(o.return_depart_iso);
+            const pct = maxShownPrice > 0 ? (o.per_adult_usd / maxShownPrice) * 100 : 0;
+            const bookHref = bookingLink({
+              origin: o.origin,
+              destination,
+              departDate: o.outbound_depart_iso?.slice(0, 10) || departDate,
+              returnDate: o.return_depart_iso?.slice(0, 10) || returnDate,
+              adults,
+              infants,
+              trackAs: { perAdult: o.per_adult_usd, provider: o.provider, surface: 'offers-results-table' },
+            });
+            return (
+              <div className="ed-ranked-row" key={`${o.provider}-${idx}`}>
+                <div>
+                  <div className="ed-ranked-name">{o.origin} → {destination}</div>
+                  <div className="ed-ranked-meta">
+                    {stopLabel(maxStops(o))} · {out.date}{out.time && ` ${out.time}`} → {ret.date}{ret.time && ` ${ret.time}`} · {PROVIDER_LABEL[o.provider] ?? o.provider} · party {money(o.total_party_usd)}
+                  </div>
+                </div>
+                <div className="ed-bar"><div className="ed-bar-fill" style={{ width: `${pct}%` }} /></div>
+                <div className="ed-ranked-value">{money(o.per_adult_usd)}</div>
+                <a className="ed-btn ed-btn-row" href={bookHref} target="_blank" rel="noopener noreferrer">
+                  Book →
+                </a>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

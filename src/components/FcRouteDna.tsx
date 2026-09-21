@@ -93,7 +93,7 @@ export function FcRouteDna({
           <div className="fc-card-meta">
             {origin} ↔ {dest} · {effective.observedPolls > 0 ? `${effective.observedPolls} polls observed` : '90 days observed'}
             {loading && <span style={{ marginLeft: 8, opacity: .6 }}>· loading…</span>}
-            {err && <span style={{ marginLeft: 8, color: '#b04a2f' }}>· {err}</span>}
+            {err && <span style={{ marginLeft: 8, color: 'var(--red)' }}>· {err}</span>}
           </div>
         </div>
         <div style={{ position: 'relative' }}>
@@ -109,11 +109,10 @@ export function FcRouteDna({
             <div
               style={{
                 position: 'absolute', top: '110%', right: 0, zIndex: 30,
-                background: 'var(--fc-card-bg, #fff)',
-                color: 'var(--fc-ink, #1a1d24)',
-                border: '1px solid rgba(0,0,0,.12)',
-                borderRadius: 6,
-                boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+                background: 'var(--surface)',
+                color: 'var(--ink)',
+                border: '1px solid var(--rule-strong)',
+                borderRadius: 0,
                 minWidth: 180, padding: 4, maxHeight: 280, overflowY: 'auto',
               }}
               onMouseLeave={() => setOpen(false)}
@@ -125,8 +124,8 @@ export function FcRouteDna({
                     key={`${r.origin}-${r.destination}`}
                     style={{
                       padding: '6px 10px', cursor: 'pointer',
-                      fontSize: 13, borderRadius: 4,
-                      background: active ? 'rgba(212,175,55,.18)' : 'transparent',
+                      fontSize: 13, borderRadius: 0,
+                      background: active ? 'color-mix(in srgb, var(--amber) 18%, transparent)' : 'transparent',
                       fontFamily: 'var(--font-mono)',
                     }}
                     onClick={() => { setOrigin(r.origin); setDest(r.destination); setOpen(false); }}

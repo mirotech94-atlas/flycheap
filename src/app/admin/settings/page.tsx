@@ -88,7 +88,7 @@ export default async function AdminSettingsPage() {
 
       <Panel title="Recent configuration changes" sub="Every save is recorded with the before and after value">
         {settingAudit.length === 0 ? (
-          <div className="py-6 text-center text-[12.5px] text-white/35">
+          <div className="py-6 text-center text-[12.5px] ad-note">
             No configuration changes recorded yet.
           </div>
         ) : (
@@ -101,10 +101,10 @@ export default async function AdminSettingsPage() {
               } catch { /* keep raw */ }
               return (
                 <tr key={i}>
-                  <td className="text-white/50 whitespace-nowrap">{ago(a.occurred_at ?? a.created_at)}</td>
+                  <td className="ad-note whitespace-nowrap">{ago(a.occurred_at ?? a.created_at)}</td>
                   <td className="font-mono text-[11.5px]">{(a.entity ?? '').replace('settings/', '')}</td>
-                  <td className="font-mono text-[11.5px] text-white/70">{change}</td>
-                  <td className="text-white/45">{a.email ?? '—'}</td>
+                  <td className="font-mono text-[11.5px] ad-tone-neutral">{change}</td>
+                  <td className="ad-note">{a.email ?? '—'}</td>
                 </tr>
               );
             })}
@@ -112,10 +112,10 @@ export default async function AdminSettingsPage() {
         )}
       </Panel>
 
-      <p className="text-[11.5px] text-white/35 leading-relaxed">
+      <p className="text-[11.5px] ad-note leading-relaxed">
         Secrets (API keys, tokens, billing credentials) are deliberately not editable here — they live in the
         server environment file and are never rendered to a browser. Manage provider keys on the{' '}
-        <Link href="/admin/integrations" className="text-white/60 underline">Integrations</Link> page.
+        <Link href="/admin/integrations" style={{ color: 'var(--ink)' }} className="underline">Integrations</Link> page.
       </p>
     </div>
   );

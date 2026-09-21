@@ -77,12 +77,12 @@ export function PriceChart({
         {bandTop != null && bandBottom != null && (
           <rect
             x={PAD.left} y={bandTop} width={plotW} height={Math.max(1, bandBottom - bandTop)}
-            fill="var(--nc-teal)" opacity="0.07"
+            fill="var(--accent)" opacity="0.07"
           />
         )}
 
-        <path d={area} fill="var(--nc-teal)" opacity="0.13" />
-        <path d={line} fill="none" stroke="var(--nc-teal)" strokeWidth="2"
+        <path d={area} fill="var(--accent)" opacity="0.13" />
+        <path d={line} fill="none" stroke="var(--accent)" strokeWidth="2"
           strokeLinejoin="round" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
 
         {/* The user's target. The one amber thing on the chart. */}
@@ -90,12 +90,12 @@ export function PriceChart({
           <>
             <line
               x1={PAD.left} x2={PAD.left + plotW} y1={y(targetPerAdult)} y2={y(targetPerAdult)}
-              stroke="var(--nc-amber)" strokeWidth="1.5" strokeDasharray="5 4"
+              stroke="var(--amber)" strokeWidth="1.5" strokeDasharray="5 4"
               vectorEffect="non-scaling-stroke"
             />
             <text
               x={PAD.left + plotW + 6} y={y(targetPerAdult) + 4}
-              fill="var(--nc-amber)" fontSize="11" fontFamily="var(--nc-mono)"
+              fill="var(--amber)" fontSize="11" fontFamily="var(--font-mono-ed)"
             >
               {money(targetPerAdult)}
             </text>
@@ -103,19 +103,19 @@ export function PriceChart({
         )}
 
         {/* Today. */}
-        <circle cx={x(prices.length - 1)} cy={y(lastV)} r="3.5" fill="var(--nc-on-dark)" />
+        <circle cx={x(prices.length - 1)} cy={y(lastV)} r="3.5" fill="var(--ink)" />
 
-        <text x={PAD.left} y={H - 8} fill="var(--nc-on-dark-faint)" fontSize="11">{firstDay}</text>
-        <text x={PAD.left + plotW} y={H - 8} fill="var(--nc-on-dark-faint)" fontSize="11" textAnchor="end">{lastDay}</text>
+        <text x={PAD.left} y={H - 8} fill="var(--muted-2)" fontSize="11">{firstDay}</text>
+        <text x={PAD.left + plotW} y={H - 8} fill="var(--muted-2)" fontSize="11" textAnchor="end">{lastDay}</text>
       </svg>
 
       <div className="nc-chart-legend">
         <span>
-          <i className="nc-swatch" style={{ background: 'var(--nc-teal)' }} /> Price per adult
+          <i className="nc-swatch" style={{ background: 'var(--accent)' }} /> Price per adult
         </span>
         {targetPerAdult != null && (
           <span>
-            <i className="nc-swatch" style={{ background: 'var(--nc-amber)' }} />
+            <i className="nc-swatch" style={{ background: 'var(--amber)' }} />
             {targetIsEquivalent
               ? `Your target, per adult (${money(targetPerAdult)} each)`
               : 'Your target'}
@@ -123,7 +123,7 @@ export function PriceChart({
         )}
         {low != null && high != null && (
           <span>
-            <i className="nc-swatch" style={{ background: 'color-mix(in srgb, var(--nc-teal) 30%, transparent)', height: '9px' }} />
+            <i className="nc-swatch" style={{ background: 'color-mix(in srgb, var(--accent) 30%, transparent)', height: '9px' }} />
             30-day range {money(low)}–{money(high)}
           </span>
         )}

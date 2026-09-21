@@ -1,10 +1,15 @@
 import { queries } from '@/lib/db';
 import { fmtRelative } from '@/lib/utils';
 import { listEarlyAccess } from '@/lib/early-access';
-import { Panel, Table, ago } from '../_components/ui';
+import { PageHead, Panel, Kpi, Table, fmtInt, ago } from '../_components/ui';
+import { StackedBars } from '../_components/StackedBars';
 import { WaitlistRow } from './WaitlistRow';
 
 export const dynamic = 'force-dynamic';
+
+// Single source for the "N newest signups" heading and the row limit it
+// describes — was typed twice (the heading's "50" and `.slice(0, 50)`).
+const NEWEST_SIGNUPS_LIMIT = 50;
 
 export default async function SignupsPage() {
   const m = queries.adminMetrics();
@@ -12,7 +17,7 @@ export default async function SignupsPage() {
   const last7  = queries.signupsLastNDays(7);
   const last30 = queries.signupsLastNDays(30);
   const daily  = queries.signupsByDay(90);
-  const users  = queries.listAllUsers().slice(0, 50);
+  const users  = queries.listAllUsers().slice(0, NEWEST_SIGNUPS_LIMIT);
   // Early-access waitlist — the queue behind the "access request waiting" alert.
   const waitlist = (() => { try { return listEarlyAccess(); } catch { return []; } })();
   const pending = waitlist.filter(r => !r.approved_at && !r.declined_at);
@@ -24,11 +29,11 @@ export default async function SignupsPage() {
 
   return (
     <div className="space-y-8">
-      <div>
-        <div className="text-[11px] uppercase tracking-[0.18em] text-[#6FB3C9] mb-1">Admin · signups</div>
-        <h1 className="text-3xl font-bold tracking-tight">Signups</h1>
-        <p className="text-sm text-white/55 mt-1">Acquisition + tier funnel for the FlyCheap user base.</p>
-      </div>
+      <PageHead
+        eyebrow="Admin · signups"
+        title="Signups"
+        sub="Acquisition + tier funnel for the FlyCheap user base."
+      />
 
       <div id="waitlist" className="scroll-mt-24">
         <Panel
@@ -39,7 +44,7 @@ export default async function SignupsPage() {
           tone={pending.length > 0 ? 'gold' : undefined}
         >
           {waitlist.length === 0 ? (
-            <div className="py-6 text-center text-[12.5px] text-white/35">No access requests yet.</div>
+            <div className="ad-note py-6 text-center">No access requests yet.</div>
           ) : (
             <Table head={['#', 'Email', 'Source', 'Requested', 'Decision']}>
               {waitlist.map(r => (
@@ -58,107 +63,78 @@ export default async function SignupsPage() {
         </Panel>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <Tile label="Today"     value={today} />
-        <Tile label="Last 7d"   value={last7} />
-        <Tile label="Last 30d"  value={last30} />
-        <Tile label="All-time"  value={m.users.total} accent />
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <Kpi label="Today" value={fmtInt(today)} />
+        <Kpi label="Last 7d" value={fmtInt(last7)} />
+        <Kpi label="Last 30d" value={fmtInt(last30)} />
+        <Kpi label="All-time" value={fmtInt(m.users.total)} tone="gold" />
       </div>
 
-      <div className="rounded-xl p-4 border border-white/6 bg-[#1B2740]">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-white/50 mb-3">Daily signups · last 90 days</div>
-        <Chart data={daily} />
-      </div>
+      <Panel title="Daily signups" sub={`Over the ${daily.length}-day window this data spans`}>
+        <StackedBars series={daily.map(d => ({ a: d.n, label: d.day.slice(5) }))} />
+      </Panel>
 
-      <div className="rounded-xl p-4 border border-white/6 bg-[#1B2740]">
-        <div className="text-[11px] uppercase tracking-[0.14em] text-white/50 mb-3">Tier funnel</div>
-        <FunnelRow label="All signups" value={total} max={total} color="#3D6B86" />
-        <FunnelRow label="Free"        value={free}  max={total} color="#7E8AA0" />
-        <FunnelRow label="Pro"         value={pro}   max={total} color="#7BC49A" />
-        <FunnelRow label="Enterprise"  value={ent}   max={total} color="#E8A33D" />
-      </div>
+      <Panel title="Tier funnel">
+        <FunnelRow label="All signups" value={total} max={total} color="accent" />
+        <FunnelRow label="Free"        value={free}  max={total} color="muted" />
+        <FunnelRow label="Pro"         value={pro}   max={total} color="green" />
+        <FunnelRow label="Enterprise"  value={ent}   max={total} color="amber" />
+      </Panel>
 
-      <div className="rounded-xl border border-white/6 bg-[#1B2740] overflow-hidden">
-        <div className="px-4 py-3 text-[11px] uppercase tracking-[0.14em] text-white/50 border-b border-white/5">
-          50 newest signups
-        </div>
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-[10px] uppercase tracking-wider text-white/45">
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Tier</th>
-              <th className="px-4 py-2">Joined</th>
-              <th className="px-4 py-2 text-right">Routes</th>
+      <Panel title={`${NEWEST_SIGNUPS_LIMIT} newest signups`}>
+        <Table head={['Email', 'Tier', 'Joined', 'Routes']}>
+          {users.map(u => (
+            <tr key={u.id}>
+              <td>{u.email}</td>
+              <td><TierChip tier={u.tier} /></td>
+              <td className="ad-note">{fmtRelative(u.created_at + 'Z')}</td>
+              <td className="text-right tabular-nums">{u.active_searches}/{u.total_searches}</td>
             </tr>
-          </thead>
-          <tbody>
-            {users.map(u => (
-              <tr key={u.id} className="border-t border-white/5">
-                <td className="px-4 py-2">{u.email}</td>
-                <td className="px-4 py-2 text-xs">
-                  <span className={`px-1.5 py-0.5 rounded uppercase tracking-wider text-[10px] ${
-                    u.tier === 'enterprise' ? 'bg-[#6FB3C9]/20 text-[#9ACBDB]' :
-                    u.tier === 'pro'        ? 'bg-emerald-500/20 text-emerald-300' :
-                    'bg-white/10 text-white/60'
-                  }`}>{u.tier}</span>
-                </td>
-                <td className="px-4 py-2 text-xs text-white/55">{fmtRelative(u.created_at + 'Z')}</td>
-                <td className="px-4 py-2 text-right tabular-nums">{u.active_searches}/{u.total_searches}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          ))}
+        </Table>
+      </Panel>
     </div>
   );
 }
 
-function Tile({ label, value, accent }: { label: string; value: number; accent?: boolean }) {
+const TIER_TINT: Record<string, React.CSSProperties> = {
+  // Bare --accent on its 8% tint measures 6.35:1 light / 6.40:1 dark — clears
+  // AA as-is, no mix needed.
+  enterprise: { background: 'color-mix(in srgb, var(--accent) 8%, var(--surface))', color: 'var(--accent)' },
+  // Fix round 1 (C1): bare --green on its 8% tint measured 4.44:1 in light —
+  // under AA at this chip's 10px size. Mixed 75% toward --ink (the same move
+  // .ad-tone-gold/.ad-tone-warn already make for amber) clears it: 6.21:1
+  // light / 7.28:1 dark.
+  pro:        { background: 'color-mix(in srgb, var(--green) 8%, var(--surface))', color: 'color-mix(in srgb, var(--green) 75%, var(--ink))' },
+  // --muted on --surface-2 measures 4.18:1 in light — just under AA for this
+  // size of text. --ink-soft clears it (10.35:1 light / 9.8:1 dark).
+  free:       { background: 'var(--surface-2)', color: 'var(--ink-soft)' },
+};
+
+function TierChip({ tier }: { tier: string }) {
   return (
-    <div
-      className="rounded-xl p-4 border"
-      style={{
-        background: accent ? 'linear-gradient(135deg, rgba(232,163,61,0.10), rgba(15,31,58,1))' : '#1B2740',
-        borderColor: accent ? 'rgba(232,163,61,0.25)' : 'rgba(255,255,255,0.06)',
-      }}
-    >
-      <div className="text-[10px] uppercase tracking-[0.14em] text-white/50">{label}</div>
-      <div className="text-2xl font-bold tabular-nums mt-1">{value}</div>
-    </div>
+    <span className="ad-chip" style={{ textTransform: 'uppercase', ...(TIER_TINT[tier] ?? TIER_TINT.free) }}>
+      {tier}
+    </span>
   );
 }
 
-function FunnelRow({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+/** One row of the tier funnel: label, track + fill, count and share. */
+function FunnelRow({
+  label, value, max, color,
+}: { label: string; value: number; max: number; color: 'accent' | 'muted' | 'green' | 'amber' }) {
   const pct = max > 0 ? (value / max) * 100 : 0;
   return (
-    <div className="flex items-center gap-3 py-1.5">
-      <div className="w-32 text-xs text-white/60">{label}</div>
-      <div className="flex-1 h-6 bg-white/5 rounded-md overflow-hidden">
-        <div className="h-full flex items-center justify-end px-2 text-[10px] font-semibold text-white tabular-nums"
-             style={{ width: `${pct}%`, background: color }}>
-          {value}
-        </div>
+    <div className="ad-rule-top py-2">
+      <div className="flex items-baseline justify-between gap-3 text-[12.5px]">
+        <span className="truncate ad-tone-neutral">{label}</span>
+        <span className="ad-note shrink-0" style={{ fontFamily: 'var(--font-mono-ed)' }}>
+          {value.toLocaleString()} · {pct.toFixed(0)}%
+        </span>
       </div>
-      <div className="w-12 text-right text-xs text-white/50 tabular-nums">{pct.toFixed(0)}%</div>
-    </div>
-  );
-}
-
-function Chart({ data }: { data: Array<{ day: string; n: number }> }) {
-  if (data.length === 0) {
-    return <div className="py-8 text-center text-sm text-white/50">No data.</div>;
-  }
-  const max = Math.max(1, ...data.map(d => d.n));
-  return (
-    <div className="flex items-end gap-[2px] h-32">
-      {data.map(d => (
-        <div
-          key={d.day}
-          title={`${d.day} · ${d.n} signup${d.n === 1 ? '' : 's'}`}
-          className="flex-1 rounded-t-sm"
-          style={{ height: `${(d.n / max) * 100}%`, minHeight: 2, background: '#E8A33D' }}
-        />
-      ))}
+      <div className="ed-bar mt-1.5">
+        <div className={`ed-bar-fill ${color === 'accent' ? '' : color}`} style={{ width: `${pct}%` }} />
+      </div>
     </div>
   );
 }

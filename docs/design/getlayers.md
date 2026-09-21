@@ -326,7 +326,7 @@ Run this in the console on any page; it reports every text node below 4.5:1 agai
 nearest painted ancestor background. All 14 pages currently return zero.
 
 ```js
-const L=c=>{const m=c.match(/[\d.]+/g);if(!m)return null;const[r,g,b]=m.slice(0,3).map(Number);
+const L=c=>{const cs=/^color\(srgb/.test(c);const m=c.replace(/^color\(srgb\s*/,'').match(/[\d.]+/g);if(!m)return null;let[r,g,b]=m.slice(0,3).map(Number);if(cs){r*=255;g*=255;b*=255}
 if(m[3]!==undefined&&+m[3]<0.3)return null;const f=v=>{v/=255;return v<=0.03928?v/12.92:((v+0.055)/1.055)**2.4};
 return 0.2126*f(r)+0.7152*f(g)+0.0722*f(b)};
 const B=e=>{while(e){const l=L(getComputedStyle(e).backgroundColor);if(l!==null)return l;e=e.parentElement}return 0};
@@ -381,3 +381,63 @@ to `--nc-deck`, so the cards become dark panels and the dark-ground inks are cor
 **The lesson: it survived every audit because no audit ever visited `/credits`.** A per-page
 audit only proves the pages you list. Enumerate routes from the filesystem, not from memory.
 
+
+## 10. The editorial system — 2026-09-21
+
+Night-cabin is retired. Every surface (flycheap.live, my.flycheap.live, admin.flycheap.live) now
+runs on the handoff's editorial design sheet (`docs/design/handoff/README.md`), implemented in
+`src/app/editorial.css`. This section is the operating manual; §4's retint rules now target these
+tokens instead of `--nc-*`.
+
+### Tokens
+
+Twenty-two custom properties, light on `:root`, dark on `html[data-theme="dark"]`:
+`--bg --surface --surface-2 --ink --ink-soft --muted --muted-2 --muted-3 --rule --rule-soft
+--rule-strong --track --accent --amber --green --red --panel-bg --panel-fg --btn-bg --btn-fg
+--knob --on-accent`. Two rulings differ from the handoff table: every light-theme muted grey is
+`#78736A` (the spec's `#7A756C`/`#9B958A`/`#B0AAA0` fail AA on `--bg`), and `--muted-2` therefore
+equals `--muted` in light. The `--fc-*` names on `:root` are aliases the dashboard-widget rules in
+`globals.css` still read (`--fc-ink: var(--ink)` …); they are an indirection, not a shim.
+
+Theme = the `fc-theme` cookie (`light`, anything else is dark), read server-side into
+`data-theme` + `.dark` on `<html>`; `ThemeToggle` is the only control.
+
+### Colour roles
+
+- `--accent` (teal): primary data colour, links, active tab rule, heat-map base.
+- `--amber`: fares, "wait" verdicts, secondary chart series, the featured pricing tile's CTA. Never
+  decoration, never a primary button, and never as text on `--surface`/`--bg` in light (2.9:1):
+  fare digits use `.ed-fare-text` = `color-mix(in srgb, var(--amber) 65%, var(--ink))`.
+- `--green` / `--red`: deltas and status only.
+- Primary actions: `.ed-btn-primary` (`--btn-bg`/`--btn-fg`, ink on light, paper on dark).
+- Tints are `color-mix(in srgb, <token> N%, var(--surface))` with N ≤ 8. Secondary text on a tint
+  or on `--surface-2` is `--ink-soft`, never `--muted` (4.2:1). Chip text ≤ 11px on a light tint is
+  mixed ≥ 75% toward `--ink`.
+- Brand marks (Slack, Telegram, the FlyCheap logo tile), tenant palettes and partner dot colours are
+  data and stay literal; `tests/noHardcodedHex.test.ts` allowlists exactly those files.
+
+### Geometry and type
+
+Radius 0 everywhere except status dots and the avatar disc. No `box-shadow` (Tailwind `ring-*`
+compiles to one — use `outline`), no gradients (the logo tile is brand art), no `backdrop-filter`.
+Faces: Public Sans (UI), Newsreader (headings, KPI digits), IBM Plex Mono (eyebrows, labels, axes,
+chips) via `--font-ui` / `--font-serif` / `--font-mono-ed`.
+
+### Chrome traps
+
+- The marketing host renders a bare `<main>` (no `.ed-page`), the portal host wraps pages in
+  `.ed-page`. Anything that cancels that padding must be scoped: `.ed-page > .mk-bleed`. Emulate
+  locally with `MARKETING_HOST=mk.localhost NEXT_DIST_DIR=.next.verify npx next start -p 3098`.
+- Pages that never had page-own chrome (privacy, status, contact …) keep none; only routes that
+  already shipped their own top bar (about, demo, terms …) use `PublicTopbar`/`PublicFooter`.
+- `layout.tsx`'s `brandStyle` override is load-bearing for `bg-brand-gradient` on the concierge
+  avatar badge.
+
+### The audit
+
+Gate every route in both themes, signed out and signed in, at desktop and 375px, with the body-level
+script in §8 (its parser reads `color(srgb …)` results from `color-mix`). Switch theme by setting the
+`fc-theme` cookie and reloading — never by clicking the toggle, whose 0.6s transition makes the
+reading lie. First loads after a server restart can read the page unstyled: re-read before trusting
+a whole-page failure. Pass = 0 contrast fails, 0 radius (dots/discs excepted), 0 shadows, 0
+gradients, `scrollWidth === innerWidth`, serif headings.

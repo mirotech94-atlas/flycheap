@@ -114,18 +114,22 @@ function ToastViewport({ toasts, dismiss }: { toasts: Toast[]; dismiss: (id: num
 
 function ToastCard({ t, onClose }: { t: Toast; onClose: () => void }) {
   const accent = {
-    success: { ring: 'rgba(16,185,129,0.55)', bar: '#10b981', icon: '✓' },
-    info:    { ring: 'rgba(59,130,246,0.55)', bar: '#3b82f6', icon: 'ℹ' },
-    warn:    { ring: 'rgba(245,158,11,0.55)', bar: '#f59e0b', icon: '!' },
-    error:   { ring: 'rgba(239,68,68,0.55)',  bar: '#ef4444', icon: '×' },
+    success: { bar: 'var(--green)', icon: '✓' },
+    info:    { bar: 'var(--accent)', icon: 'ℹ' },
+    warn:    { bar: 'var(--amber)', icon: '!' },
+    error:   { bar: 'var(--red)', icon: '×' },
   }[t.kind];
+  const panelFg72 = 'color-mix(in srgb, var(--panel-fg) 72%, var(--panel-bg))';
 
   return (
     <div
       role="status"
-      className="pointer-events-auto motion-slide-right relative overflow-hidden rounded-xl shadow-lift backdrop-blur-md bg-white/95 dark:bg-slate-900/95 border border-slate-200/80 dark:border-slate-700/60 text-sm"
+      className="pointer-events-auto motion-slide-right relative overflow-hidden text-sm"
       style={{
-        boxShadow: `0 1px 0 ${accent.ring} inset, 0 18px 40px -16px rgba(0,0,0,.35)`,
+        background: 'var(--panel-bg)',
+        color: 'var(--panel-fg)',
+        border: '1px solid var(--rule-strong)',
+        borderRadius: 0,
       }}
     >
       <div
@@ -136,23 +140,27 @@ function ToastCard({ t, onClose }: { t: Toast; onClose: () => void }) {
         }}
       />
       <div className="pl-4 pr-3 py-3 flex items-start gap-3">
+        {/* The accent lives on the left rule (above) — the glyph itself
+            stays panel-fg so it reads at full contrast in both themes
+            rather than needing a fill colour that only works in one. */}
         <span
           aria-hidden="true"
-          className="flex-shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[11px] font-bold text-white"
-          style={{ background: accent.bar }}
+          className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-[13px] font-bold"
+          style={{ color: 'var(--panel-fg)' }}
         >
           {accent.icon}
         </span>
         <div className="flex-1 min-w-0">
-          <div className="font-semibold text-slate-900 dark:text-slate-100">{t.title}</div>
+          <div className="font-semibold" style={{ color: 'var(--panel-fg)' }}>{t.title}</div>
           {t.description && (
-            <div className="text-[12px] text-slate-600 dark:text-slate-400 mt-0.5 break-words">{t.description}</div>
+            <div className="text-[12px] mt-0.5 break-words" style={{ color: panelFg72 }}>{t.description}</div>
           )}
         </div>
         <button
           onClick={onClose}
           aria-label="Dismiss"
-          className="ml-1 -mr-1 px-1 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 text-base leading-none"
+          className="ml-1 -mr-1 px-1 text-base leading-none"
+          style={{ color: panelFg72 }}
         >
           ×
         </button>

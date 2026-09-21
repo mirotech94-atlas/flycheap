@@ -1,4 +1,5 @@
 import { queries } from '@/lib/db';
+import { Panel, Kpi, Table, Status } from '../_components/ui';
 
 export const dynamic = 'force-dynamic';
 
@@ -71,75 +72,48 @@ export default async function AdminIntegrationsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <div className="eyebrow mb-1">Admin · Integrations</div>
-        <h1 className="text-3xl md:text-4xl font-bold text-white tracking-tight font-display">
+        <div className="ad-eyebrow accent mb-1">Admin · Integrations</div>
+        <h1 className="ed-h1">
           Integrations &amp; API keys
         </h1>
-        <p className="text-sm text-white/55 mt-1">
-          Per-provider configuration status. Secrets stay in <code>.env.local</code> on the server — only
+        <p className="ed-sub">
+          Per-provider configuration status. Secrets stay in <code className="ed-code">.env.local</code> on the server — only
           presence flags are surfaced here.
         </p>
       </div>
 
       <section className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="kpi">
-          <div className="kpi-label">Configured</div>
-          <div className="kpi-value">{rows.filter(r => r.configured).length}<span className="text-base text-white/45"> / {rows.length}</span></div>
-          <div className="kpi-sub">across {cats.length} categories</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">Missing</div>
-          <div className="kpi-value">{rows.filter(r => !r.configured).length}</div>
-          <div className="kpi-sub">unconfigured providers</div>
-        </div>
-        <div className="kpi">
-          <div className="kpi-label">API calls this month</div>
-          <div className="kpi-value">{callsThisMonth.toLocaleString()}</div>
-          <div className="kpi-sub">aggregate across providers</div>
-        </div>
-        <div className="kpi kpi-brand">
-          <div className="kpi-label">Health</div>
-          <div className="kpi-value">{Math.round((rows.filter(r => r.configured).length / rows.length) * 100)}%</div>
-          <div className="kpi-sub">keys present coverage</div>
-        </div>
+        <Kpi label="Configured" value={rows.filter(r => r.configured).length} unit={`/ ${rows.length}`}
+          foot={`across ${cats.length} categories`} />
+        <Kpi label="Missing" value={rows.filter(r => !r.configured).length} foot="unconfigured providers" />
+        <Kpi label="API calls this month" value={callsThisMonth.toLocaleString()} foot="aggregate across providers" />
+        <Kpi label="Health" value={`${Math.round((rows.filter(r => r.configured).length / rows.length) * 100)}%`}
+          foot="keys present coverage" tone="gold" />
       </section>
 
       {cats.map(([cat, b]) => (
-        <section key={cat} className="card">
-          <div className="card-head flex items-center justify-between">
-            <h2 className="!mb-0">{cat}</h2>
-            <span className="text-xs text-white/45">{b.ok} / {b.total} configured</span>
-          </div>
-          <table className="w-full mt-2 text-sm">
-            <thead>
-              <tr className="text-left text-[11px] uppercase tracking-wider text-white/45 border-b border-white/8">
-                <th className="py-2">Provider</th>
-                <th className="py-2">Env var</th>
-                <th className="py-2 text-right">Status</th>
+        <Panel key={cat} title={cat} right={<span className="ad-note">{b.ok} / {b.total} configured</span>}>
+          <Table head={['Provider', 'Env var', 'Status']}>
+            {rows.filter(r => r.category === cat).map(r => (
+              <tr key={r.env}>
+                <td className="font-semibold ad-tone-neutral">{r.name}</td>
+                <td><code className="ed-code">{r.env}</code></td>
+                <td className="text-right">
+                  {r.configured ? (
+                    <Status tone="good">configured</Status>
+                  ) : (
+                    <Status tone="warn">missing</Status>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {rows.filter(r => r.category === cat).map(r => (
-                <tr key={r.env} className="border-b border-white/5 last:border-0">
-                  <td className="py-2.5 font-semibold">{r.name}</td>
-                  <td className="py-2.5"><code>{r.env}</code></td>
-                  <td className="py-2.5 text-right">
-                    {r.configured ? (
-                      <span className="text-[11px] uppercase tracking-wide font-bold text-emerald-400">● configured</span>
-                    ) : (
-                      <span className="text-[11px] uppercase tracking-wide font-bold text-amber-400">○ missing</span>
-                    )}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
+            ))}
+          </Table>
+        </Panel>
       ))}
 
-      <div className="text-xs text-white/45">
-        To change a key, SSH into prod, edit <code>/opt/egyptair-tracker/.env.local</code>, then
-        <code> systemctl restart egyptair.service</code>. Never paste secrets in chat.
+      <div className="text-xs ad-note">
+        To change a key, SSH into prod, edit <code className="ed-code">/opt/egyptair-tracker/.env.local</code>, then
+        <code className="ed-code"> systemctl restart egyptair.service</code>. Never paste secrets in chat.
       </div>
     </div>
   );

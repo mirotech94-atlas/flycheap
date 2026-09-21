@@ -43,14 +43,18 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans:    ['var(--font-sans)', 'ui-sans-serif', 'system-ui'],
-        display: ['var(--font-display)', 'var(--font-sans)', 'ui-sans-serif', 'system-ui'],
-        mono:    ['var(--font-mono)', 'ui-monospace', 'SFMono-Regular'],
+        /* Editorial redesign faces only — Public Sans, Newsreader, IBM Plex
+           Mono (docs/design/handoff/README.md "Type"), bound via the
+           --font-ui/--font-serif/--font-mono-ed tokens in editorial.css. */
+        sans:    ['var(--font-ui)', 'ui-sans-serif', 'system-ui'],
+        display: ['var(--font-serif)', 'var(--font-ui)', 'ui-sans-serif', 'system-ui'],
+        mono:    ['var(--font-mono-ed)', 'ui-monospace', 'SFMono-Regular'],
       },
       boxShadow: {
-        soft:  '0 1px 2px rgba(15,23,42,.04), 0 1px 3px rgba(15,23,42,.06)',
-        card:  '0 1px 2px rgba(15,23,42,.04), 0 8px 24px -12px rgba(15,23,42,.10)',
-        lift:  '0 10px 30px -12px rgba(26,68,89,.30), 0 4px 10px -4px rgba(11,18,32,.10)',
+        /* soft/card/lift deleted (task 3.10): their only call sites were
+           ExploreSearchBar.tsx and Select.tsx, both removed as orphaned
+           components. ring is unrelated (no `shadow-ring` consumer found)
+           but is left alone — out of scope for the fonts/shadow cleanup. */
         ring:  '0 0 0 1px rgba(26,68,89,.10)',
       },
       backgroundImage: {

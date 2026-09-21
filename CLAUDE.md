@@ -2,12 +2,18 @@
 
 ## Design
 
-The design system is **night-cabin**. Tokens are `--nc-*` in `src/app/globals.css` (from line
-~3466). Rollout is complete across every client page. **Do not revert to the old navy/gold
-Bloomberg look** unless Myron says so.
+The design system is the **editorial** sheet from `docs/design/handoff/README.md`, implemented in
+`src/app/editorial.css`: 22 tokens (`--bg … --on-accent`), light on `:root`, dark on
+`html[data-theme="dark"]`, chosen by the `fc-theme` cookie. Night-cabin (`--nc-*`, `data-fc-theme`,
+`FcTweaks`) is gone; the `--fc-*` names are aliases the dashboard-widget rules read. Faces: Public
+Sans, Newsreader, IBM Plex Mono. Radius 0, no shadows, no gradients, no hex in components (the
+allowlist in `tests/noHardcodedHex.test.ts` is brand/tenant data only). Manual:
+[docs/design/getlayers.md §10](docs/design/getlayers.md).
 
-The one rule that matters most: `--nc-amber #E8A33D` is reserved for **fares and primary actions
-only**. If amber shows up on decoration, the price stops being the loudest thing on the page.
+The one rule that matters most: `--amber` is reserved for **fares, "wait" verdicts and the featured
+pricing CTA**. Primary actions are `.ed-btn-primary` (ink). Amber is never decoration and never text
+on a light surface (use `.ed-fare-text`). If amber shows up elsewhere, the price stops being the
+loudest thing on the page.
 
 ## GetLayers
 

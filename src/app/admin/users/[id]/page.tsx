@@ -93,7 +93,7 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
       <div className="grid lg:grid-cols-2 gap-3 items-start">
         <Panel title="Plan" sub="Setting a paid tier by hand grants a COMP — it does not create a Stripe subscription or bill anyone.">
           <TierForm userId={u.id} tier={u.tier} tiers={Object.keys(TIER_LIMITS)} />
-          <div className="mt-4 pt-4 border-t border-white/[0.07]">
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule-soft)' }}>
             <SubscriptionForm userId={u.id} status={u.subscription_status ?? ''} trialEndsAt={u.trial_ends_at ?? ''} />
           </div>
         </Panel>
@@ -108,21 +108,21 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
 
       {/* ── Routes ── */}
       <Panel title="Tracked routes" sub="What this account is actually watching"
-        right={<span className="text-[11px] font-mono text-white/35">{routes.length} route{routes.length === 1 ? '' : 's'}</span>}>
+        right={<span className="text-[11px] font-mono" style={{ color: 'var(--muted-2)' }}>{routes.length} route{routes.length === 1 ? '' : 's'}</span>}>
         {routes.length === 0 ? (
-          <div className="py-8 text-center text-[12.5px] text-white/35">
+          <div className="py-8 text-center text-[12.5px]" style={{ color: 'var(--muted-2)' }}>
             No routes. This account cannot receive an alert until it adds one — activation, not acquisition, is the gap.
           </div>
         ) : (
           <Table head={['Route', 'Dates', 'Target', 'Mode', 'State']}>
             {routes.map(r => (
               <tr key={r.id}>
-                <td className="font-mono font-medium text-white/90">{r.origin} → {r.destination}</td>
-                <td className="text-white/55 whitespace-nowrap">{r.depart_date} → {r.return_date}</td>
+                <td className="font-mono font-medium" style={{ color: 'var(--ink)' }}>{r.origin} → {r.destination}</td>
+                <td className="whitespace-nowrap" style={{ color: 'var(--muted)' }}>{r.depart_date} → {r.return_date}</td>
                 <td className="font-mono tabular-nums">
-                  {r.target_per_adult_usd != null ? `$${Math.round(r.target_per_adult_usd)}` : <span className="text-white/25">default</span>}
+                  {r.target_per_adult_usd != null ? `$${Math.round(r.target_per_adult_usd)}` : <span style={{ color: 'var(--muted-2)' }}>default</span>}
                 </td>
-                <td className="text-white/55">{(r as { date_mode?: string }).date_mode === 'any' ? 'Any dates' : 'Exact'}</td>
+                <td style={{ color: 'var(--muted)' }}>{(r as { date_mode?: string }).date_mode === 'any' ? 'Any dates' : 'Exact'}</td>
                 <td>{r.active ? <Status tone="good">Active</Status> : <Status tone="neutral">Paused</Status>}</td>
               </tr>
             ))}
@@ -133,14 +133,14 @@ export default async function UserDetailPage({ params }: { params: Promise<{ id:
       {/* ── Activity ── */}
       <Panel title="Recent activity" sub="From the audit log">
         {recent.length === 0 ? (
-          <div className="py-6 text-center text-[12.5px] text-white/35">No recorded activity.</div>
+          <div className="py-6 text-center text-[12.5px]" style={{ color: 'var(--muted-2)' }}>No recorded activity.</div>
         ) : (
           <Table head={['When', 'Action', 'Entity']}>
             {recent.map((a, i) => (
               <tr key={i}>
-                <td className="text-white/50 whitespace-nowrap">{ago(a.occurred_at)}</td>
+                <td className="whitespace-nowrap" style={{ color: 'var(--muted)' }}>{ago(a.occurred_at)}</td>
                 <td className="font-mono text-[11.5px]">{a.action}</td>
-                <td className="text-white/45">{a.entity ?? '—'}</td>
+                <td style={{ color: 'var(--muted)' }}>{a.entity ?? '—'}</td>
               </tr>
             ))}
           </Table>
@@ -155,8 +155,8 @@ function Field({ label, value, missing, mono }: {
 }) {
   return (
     <div>
-      <dt className="ad-eyebrow text-white/40">{label}</dt>
-      <dd className={`mt-1 ${mono ? 'font-mono text-[12.5px]' : ''} ${value ? 'text-white/85' : 'text-white/30'}`}>
+      <dt className="ad-eyebrow">{label}</dt>
+      <dd className={`mt-1 ${mono ? 'font-mono text-[12.5px]' : ''}`} style={{ color: value ? 'var(--ink)' : 'var(--muted-2)' }}>
         {value || missing || '—'}
       </dd>
     </div>

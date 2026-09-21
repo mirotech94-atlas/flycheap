@@ -88,14 +88,18 @@ export function HotelsMap({
         const el = document.createElement('button');
         el.type = 'button';
         el.setAttribute('data-hotel-id', h.id);
+        // Real DOM elements (unlike a maplibre GL paint property below) render
+        // through the normal CSS cascade, so `var(--token)` resolves live —
+        // no getComputedStyle read needed here, and the marker re-themes
+        // automatically on a light/dark toggle. Radius 0, no shadow, per the
+        // editorial rule; no hex anywhere.
         el.style.cssText = [
-          'background: #0ea5e9',
-          'color: white',
-          'font: 600 11px/1 system-ui, sans-serif',
+          'background: var(--accent)',
+          'color: var(--on-accent)',
+          'font: 600 11px/1 var(--font-mono-ed)',
           'padding: 4px 7px',
-          'border-radius: 999px',
-          'border: 2px solid white',
-          'box-shadow: 0 1px 4px rgba(0,0,0,0.25)',
+          'border-radius: 0',
+          'border: 2px solid var(--panel-bg)',
           'cursor: pointer',
           'transform-origin: center',
           'transition: transform 120ms ease',
@@ -109,13 +113,13 @@ export function HotelsMap({
           popupRef.current = new maplibregl.Popup({ offset: 14, closeButton: true, closeOnClick: false })
             .setLngLat([h.lng, h.lat])
             .setHTML(`
-              <div style="font: 12px system-ui; min-width: 180px;">
-                <div style="font-weight:600; margin-bottom:2px;">${escapeHtml(h.name)}</div>
-                <div style="color:#64748b; font-size:11px;">${h.stars}★ · ${h.area}</div>
+              <div style="font: 12px var(--font-ui); min-width: 180px;">
+                <div style="font-weight:600; margin-bottom:2px; color: var(--ink);">${escapeHtml(h.name)}</div>
+                <div style="color: var(--muted); font-size:11px;">${h.stars}★ · ${h.area}</div>
                 <div style="margin-top:4px;">
-                  <span style="font-weight:700; color:#0ea5e9;">$${h.price}</span>
-                  <span style="color:#64748b;">/night</span>
-                  · <span style="color:#f59e0b;">⭐ ${h.rating}</span>
+                  <span style="font-weight:700; color: var(--accent);">$${h.price}</span>
+                  <span style="color: var(--muted);">/night</span>
+                  · <span style="color: var(--ink);">★ ${h.rating}</span>
                 </div>
               </div>
             `)
@@ -130,14 +134,21 @@ export function HotelsMap({
     return () => { alive = false; };
   }, [hotels]);
 
-  // Highlight selected / hovered markers.
+  // Highlight selected / hovered markers. Same live-cascade DOM element as
+  // above, so plain token references — no runtime read, no hex. Selected vs.
+  // hovered are distinguished by a color-mix of --accent (not a swap to
+  // --amber, which stays reserved for fares/deltas) plus the existing scale.
   useEffect(() => {
     for (const [id, marker] of markersRef.current.entries()) {
       const el: HTMLElement = marker.getElement();
       const isSel = id === selectedId;
       const isHover = id === hoveredId;
       el.style.transform = isSel || isHover ? 'scale(1.4)' : 'scale(1)';
-      el.style.background = isSel ? '#f59e0b' : isHover ? '#0284c7' : '#0ea5e9';
+      el.style.background = isSel
+        ? 'color-mix(in srgb, var(--accent) 70%, var(--ink))'
+        : isHover
+          ? 'color-mix(in srgb, var(--accent) 85%, var(--surface))'
+          : 'var(--accent)';
       el.style.zIndex = isSel ? '20' : isHover ? '10' : '1';
     }
   }, [selectedId, hoveredId]);
@@ -145,8 +156,7 @@ export function HotelsMap({
   return (
     <div
       ref={containerRef}
-      style={{ height, width: '100%', borderRadius: 12, overflow: 'hidden' }}
-      className="border"
+      style={{ height, width: '100%', border: '1px solid var(--rule)', overflow: 'hidden' }}
     />
   );
 }

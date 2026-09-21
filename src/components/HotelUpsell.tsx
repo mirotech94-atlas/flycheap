@@ -88,11 +88,10 @@ export function HotelUpsell({
   ));
 
   return (
-    <div className="card overflow-hidden relative bg-gradient-to-br from-cyan-50 to-white dark:from-cyan-950/30 dark:to-slate-900/40 border-cyan-200/60 dark:border-cyan-800/40">
-      <div className="absolute -top-12 -right-12 w-48 h-48 rounded-full bg-cyan-400/10 blur-3xl pointer-events-none" />
-      <div className="eyebrow text-cyan-700 dark:text-cyan-400">Where you sleep</div>
-      <h2 className="!mb-2 mt-1">Stay in {city} for {nights} {nights === 1 ? 'night' : 'nights'}</h2>
-      <div className="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+    <div className="ed-tile relative" style={{ borderColor: 'color-mix(in srgb, var(--accent) 40%, var(--rule))' }}>
+      <div className="ed-eyebrow" style={{ color: 'var(--accent)' }}>Where you sleep</div>
+      <h2 className="ed-h2 !mb-2 mt-1">Stay in {city} for {nights} {nights === 1 ? 'night' : 'nights'}</h2>
+      <div className="text-sm" style={{ color: 'var(--muted)' }}>
         {mode === 'hotel'
           ? <>Compare hotels in {city} for {checkIn} → {checkOut} ({adults} {adults === 1 ? 'adult' : 'adults'}). Cached prices from 70+ booking sites.</>
           : <>Whole homes and apartments in {city} for {checkIn} → {checkOut} ({adults} {adults === 1 ? 'adult' : 'adults'}).</>}
@@ -104,7 +103,7 @@ export function HotelUpsell({
               href={hotellookHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-primary inline-flex"
+              className="ed-btn ed-btn-primary inline-flex"
             >
               Search hotels in {city} →
             </a>
@@ -112,7 +111,7 @@ export function HotelUpsell({
               href={tripcomHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn btn-secondary inline-flex text-sm"
+              className="ed-btn ed-btn-secondary inline-flex text-sm"
               title="Trip.com often has the best Asia pricing"
             >
               or check Trip.com →
@@ -124,7 +123,7 @@ export function HotelUpsell({
               href={airbnbHref}
               target="_blank"
               rel="noopener sponsored"
-              className="btn btn-primary inline-flex"
+              className="ed-btn ed-btn-primary inline-flex"
             >
               Search Airbnb in {city} →
             </a>
@@ -132,27 +131,27 @@ export function HotelUpsell({
               href={vrboHref}
               target="_blank"
               rel="noopener sponsored"
-              className="btn btn-secondary inline-flex text-sm"
+              className="ed-btn ed-btn-secondary inline-flex text-sm"
               title="Vrbo often has more whole-home options for larger groups"
             >
               or check Vrbo →
             </a>
           </>
         )}
-        <Link href={otherStayHref} className="btn btn-secondary inline-flex text-sm" title={mode === 'hotel' ? 'Whole-home Airbnbs for these dates and guests' : 'Hotels for these dates and guests'}>
+        <Link href={otherStayHref} className="ed-btn ed-btn-secondary inline-flex text-sm" title={mode === 'hotel' ? 'Whole-home Airbnbs for these dates and guests' : 'Hotels for these dates and guests'}>
           {mode === 'hotel' ? 'Airbnbs →' : 'Hotels →'}
         </Link>
       </div>
       {transferHref && (
-        <div className="mt-3 pt-3 border-t border-cyan-200/50 dark:border-cyan-800/30 text-sm text-slate-600 dark:text-slate-400">
+        <div className="mt-3 pt-3 text-sm" style={{ borderTop: '1px solid var(--rule)', color: 'var(--muted)' }}>
           Landing at {destinationIata} on {checkIn}?{' '}
-          <a href={transferHref} target="_blank" rel="noopener noreferrer" className="font-semibold text-cyan-700 dark:text-cyan-400 underline underline-offset-2">
+          <a href={transferHref} target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2" style={{ color: 'var(--accent)' }}>
             Book a fixed-price airport transfer
           </a>{' '}
           — driver meets you, price agreed before you fly.
         </div>
       )}
-      <div className="text-[11px] text-slate-400 mt-2">
+      <div className="text-[11px] mt-2" style={{ color: 'var(--muted-2)' }}>
         {mode === 'hotel'
           ? 'Hotel links via Hotellook/Trip.com may earn us a commission at no cost to you.'
           : 'Airbnb and Vrbo searches are plain links prefilled with your dates — no commission.'}

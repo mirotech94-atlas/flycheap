@@ -31,60 +31,70 @@ export function DigestPreview() {
   }
 
   return (
-    <div className="card">
-      <div className="card-head">
+    <div className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow">Email digests &amp; database</div>
-          <h2 className="!mb-0">Digest preview &amp; admin</h2>
+          <div className="ed-eyebrow">Email digests &amp; database</div>
+          <h2 className="ed-panel-title">Digest preview &amp; admin</h2>
         </div>
       </div>
-      <p className="text-xs text-slate-500 mb-3">
+      <p className="ed-panel-note" style={{ marginBottom: 12 }}>
         Preview tomorrow&apos;s scheduled digest before it sends. Daily digest fires 9am ET; weekly anomaly summary
         (biggest fallers/risers vs 7 days ago) fires Sundays 8pm ET.
       </p>
 
       <div className="flex flex-wrap items-center gap-2 mb-3">
-        <div className="inline-flex rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div className="ed-seg">
           <button
             onClick={() => setKind('daily')}
-            className={`px-3 py-1.5 text-xs font-semibold ${kind === 'daily' ? 'bg-brand text-white' : 'bg-transparent text-slate-600 dark:text-slate-300'}`}
+            className={`ed-seg-btn ${kind === 'daily' ? 'active' : ''}`}
           >Daily 9am ET</button>
           <button
             onClick={() => setKind('weekly')}
-            className={`px-3 py-1.5 text-xs font-semibold border-l border-slate-200 dark:border-slate-700 ${kind === 'weekly' ? 'bg-brand text-white' : 'bg-transparent text-slate-600 dark:text-slate-300'}`}
+            className={`ed-seg-btn ${kind === 'weekly' ? 'active' : ''}`}
           >Weekly Sunday 8pm</button>
         </div>
-        <button onClick={() => setShow(s => !s)} className="btn btn-sm">
+        <button onClick={() => setShow(s => !s)} className="ed-btn ed-btn-secondary">
           {show ? 'Hide preview' : 'Show preview'}
         </button>
-        <a href={src} target="_blank" rel="noopener noreferrer" className="btn btn-sm">Open in new tab ↗</a>
-        <button onClick={sendNow} className="btn btn-sm btn-primary" disabled={sending}>
+        <a href={src} target="_blank" rel="noopener noreferrer" className="ed-btn ed-btn-secondary">Open in new tab ↗</a>
+        <button onClick={sendNow} className="ed-btn ed-btn-primary" disabled={sending}>
           {sending ? 'Sending…' : `Send ${kind} now`}
         </button>
-        {msg && <span className="text-xs text-slate-500">{msg}</span>}
+        {msg && <span className="ed-panel-note" style={{ margin: 0 }}>{msg}</span>}
       </div>
 
       {show && (
-        <iframe
-          src={src}
-          className="w-full h-[680px] rounded-lg border border-slate-200 dark:border-slate-700 bg-white"
-          title="Digest preview"
-        />
+        <div style={{ border: '1px solid var(--rule)', borderRadius: 0 }}>
+          <iframe
+            src={src}
+            className="w-full h-[680px]"
+            style={{ border: 0, borderRadius: 0 }}
+            title="Digest preview"
+          />
+          {/* The digest EMAIL is not themed — it stays light paper/dark ink
+              regardless of the portal's theme, same as every other template
+              in the email design system. This caption is the only editorial
+              chrome around it. */}
+          <div className="ed-mono" style={{ padding: '8px 12px', borderTop: '1px solid var(--rule)', color: 'var(--muted)' }}>
+            Rendered as recipients will see it — the email stays on its own light template regardless of portal theme
+          </div>
+        </div>
       )}
 
-      <div className="mt-6 pt-4 border-t border-slate-200/60 dark:border-slate-700">
+      <div className="mt-6 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
         <div className="flex items-center justify-between gap-3 flex-wrap">
           <div>
-            <div className="font-semibold text-sm text-slate-800 dark:text-slate-100">Database compaction</div>
-            <p className="text-xs text-slate-500 mt-0.5">
+            <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Database compaction</div>
+            <p className="ed-panel-note" style={{ margin: '2px 0 0' }}>
               Auto-runs nightly 3:30am ET. Click to run now — keeps last 30 days of detail, collapses older snapshots to one daily-min row.
             </p>
           </div>
-          <button onClick={compactNow} className="btn btn-sm" disabled={compacting}>
+          <button onClick={compactNow} className="ed-btn ed-btn-secondary" disabled={compacting}>
             {compacting ? 'Compacting…' : 'Compact now'}
           </button>
         </div>
-        {compactStats && <div className="mt-2 text-xs text-slate-500">{compactStats}</div>}
+        {compactStats && <div className="ed-panel-note" style={{ marginTop: 8 }}>{compactStats}</div>}
       </div>
     </div>
   );

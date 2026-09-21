@@ -9,6 +9,7 @@ import { LiveFeed } from './LiveFeed';
 import { LOCALES, LOCALE_COOKIE, resolveLocale, type Locale } from '@/lib/i18n/locales';
 import { getEarlyAccessDict, fill } from '@/lib/i18n/early-access';
 import { EarlyAccessForm } from './EarlyAccessForm';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export const dynamic = 'force-dynamic';
 
@@ -58,26 +59,27 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
   const formLabels = { placeholder: t.cta.placeholder, airport: t.cta.airport, button: t.cta.button, busy: t.cta.busy, fine: t.cta.fine, invited: t.cta.invited, err: t.cta.err, netErr: t.cta.netErr, doneA: t.cta.doneA, doneExisting: t.cta.doneExisting, doneOf: t.cta.doneOf, share: t.cta.share, joined: t.cta.joined, copy: t.cta.copy, copied: t.cta.copied, shareX: t.cta.shareX, shareWa: t.cta.shareWa, shareMail: t.cta.shareMail, shareText: t.cta.shareText, notYou: t.cta.notYou, fromAirport: t.cta.fromAirport, toAirport: t.cta.toAirport, watchReady: t.cta.watchReady };
 
   return (
-    <div className="dc" dir={L.dir} lang={locale} data-locale={locale}>
+    <div className="mk" dir={L.dir} lang={locale} data-locale={locale}>
       {L.font && <link rel="stylesheet" href={`https://fonts.googleapis.com/css2?family=${L.font}&display=swap`} />}
 
       {/* ===== Nav ===== */}
-      <header className="dc-nav">
-        <div className="dc-wrap dc-nav-in">
-          <Link href="/early-access" className="dc-logo" aria-label="FlyCheap">
+      <header className="mk-nav">
+        <div className="mk-wrap">
+          <Link href="/early-access" className="mk-brand" aria-label="FlyCheap">
             <Logo size={26} />
-            <span>flycheap</span>
+            <span className="mk-brand-name">flycheap</span>
           </Link>
-          <nav className="dc-links">
+          <nav className="mk-nav-links">
             <a href="#why">{t.nav.why}</a>
             <a href="#how">{t.nav.how}</a>
             <a href="#fit">{t.nav.who}</a>
           </nav>
-          <div className="dc-nav-right">
-            <Link href="/login" prefetch={false} className="dc-signin">{t.nav.signin}</Link>
-            <details className="dc-lang">
+          <div className="mk-nav-right">
+            <ThemeToggle />
+            <Link href="/login" prefetch={false} className="ed-btn ed-btn-secondary">{t.nav.signin}</Link>
+            <details className="mk-lang">
               <summary>{L.flag} {locale.toUpperCase()} <span className="chev">▾</span></summary>
-              <div className="dc-lang-menu">
+              <div className="mk-lang-menu">
                 {(Object.keys(LOCALES) as Locale[]).map(code => (
                   <a key={code} href={`/api/lang?set=${code}&next=${encodeURIComponent(nextPath)}`} className={code === locale ? 'on' : ''}>
                     <span>{LOCALES[code].flag}</span>{LOCALES[code].label}
@@ -85,21 +87,23 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
                 ))}
               </div>
             </details>
-            <a href="#join" className="dc-btn dc-btn-primary">{t.nav.cta}</a>
+            <a href="#join" className="ed-btn ed-btn-primary">{t.nav.cta}</a>
           </div>
         </div>
       </header>
 
       {/* ===== Hero ===== */}
-      <section className="dc-hero">
-        <RouteField className="dc-hero-sky" />
-        <div className="dc-wrap dc-center">
-          <div className="dc-pill fc-glass-pill"><span className="dot" />{t.hero.pill}</div>
-          <h1>{t.hero.h1a}<br /><span className="dc-accent">{t.hero.h1b}</span></h1>
-          <p className="dc-lede">{t.hero.sub}</p>
-          <div className="dc-actions">
-            <a href="#join" className="dc-btn dc-btn-primary dc-btn-lg">{t.hero.cta}</a>
-            <a href="#how" className="dc-btn dc-btn-ghost dc-btn-lg">{t.hero.secondary}</a>
+      <section className="mk-hero">
+        <RouteField className="mk-hero-sky" />
+        <div className="mk-wrap">
+          <div className="mk-hero-copy">
+            <div className="mk-hero-status"><span className="ed-dot" />{t.hero.pill}</div>
+            <h1 className="mk-h1">{t.hero.h1a}<br /><span>{t.hero.h1b}</span></h1>
+            <p className="mk-lede">{t.hero.sub}</p>
+            <div className="mk-hero-cta">
+              <a href="#join" className="ed-btn ed-btn-primary ed-btn-hero">{t.hero.cta}</a>
+              <a href="#how" className="ed-btn ed-btn-secondary ed-btn-hero">{t.hero.secondary}</a>
+            </div>
           </div>
 
           {/* Live feed (real data, rotating) */}
@@ -113,141 +117,141 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
       </section>
 
       {/* ===== Logos ===== */}
-      <section className="dc-logos">
-        <div className="dc-wrap dc-center">
-          <div className="dc-logos-label">{t.logos.data}</div>
-          <div className="dc-logos-row"><span>Travelpayouts</span><span>Aviasales</span><span>Duffel</span><span>SerpAPI</span><span>SearchAPI</span></div>
-          <div className="dc-logos-label" style={{ marginTop: 22 }}>{t.logos.book}</div>
-          <div className="dc-logos-row dim"><span>Google Flights</span><span>Kayak</span><span>Skyscanner</span><span>Momondo</span><span>Trip.com</span><span>Airline direct</span><span>Hotellook</span><span>Airbnb</span><span>Vrbo</span></div>
+      <section className="mk-logos">
+        <div className="mk-wrap">
+          <div className="mk-logos-label">{t.logos.data}</div>
+          <div className="mk-logos-row"><span>Travelpayouts</span><span>Aviasales</span><span>Duffel</span><span>SerpAPI</span><span>SearchAPI</span></div>
+          <div className="mk-logos-label" style={{ marginTop: 22 }}>{t.logos.book}</div>
+          <div className="mk-logos-row dim"><span>Google Flights</span><span>Kayak</span><span>Skyscanner</span><span>Momondo</span><span>Trip.com</span><span>Airline direct</span><span>Hotellook</span><span>Airbnb</span><span>Vrbo</span></div>
         </div>
       </section>
 
       {/* ===== Problem ===== */}
-      <section className="dc-section" id="why">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.problem.eyebrow}</div>
-          <h2>{t.problem.h2a}<br />{t.problem.h2b}</h2>
-          <p className="dc-sub">{t.problem.sub}</p>
-          <div className="dc-quotes">
-            {t.problem.quotes.map(q => <div className="dc-quote" key={q}>{q}</div>)}
+      <section className="mk-section" id="why">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.problem.eyebrow}</div>
+          <h2 className="mk-h2">{t.problem.h2a}<br />{t.problem.h2b}</h2>
+          <p className="mk-sub">{t.problem.sub}</p>
+          <div className="mk-tiles">
+            {t.problem.quotes.map(q => <div className="mk-tile" key={q}><div className="mk-quote">{q}</div></div>)}
           </div>
-          <p className="dc-close">{t.problem.closeA} <span className="dc-accent">{t.problem.closeB}</span></p>
+          <p className="mk-close">{t.problem.closeA} <span>{t.problem.closeB}</span></p>
         </div>
       </section>
 
       {/* ===== Difference ===== */}
-      <section className="dc-section">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.diff.eyebrow}</div>
-          <h2>{t.diff.h2a}<br />{t.diff.h2b}</h2>
-          <p className="dc-sub">{t.diff.sub}</p>
-          <div className="dc-grid3">
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.diff.eyebrow}</div>
+          <h2 className="mk-h2">{t.diff.h2a}<br />{t.diff.h2b}</h2>
+          <p className="mk-sub">{t.diff.sub}</p>
+          <div className="mk-features">
             {t.diff.cards.map(([h, d]) => (
-              <div className="dc-card dc-card-q" key={h}><div className="dc-qicon"><Icon k="q" /></div><h4>{h}</h4><p>{d}</p></div>
+              <div className="mk-feature" key={h}><div className="mk-feature-icon"><Icon k="q" /></div><h4>{h}</h4><p>{d}</p></div>
             ))}
           </div>
-          <p className="dc-close">{t.diff.closeA} <span className="dc-accent">{t.diff.closeB}</span></p>
+          <p className="mk-close">{t.diff.closeA} <span>{t.diff.closeB}</span></p>
         </div>
       </section>
 
       {/* ===== How it works ===== */}
-      <section className="dc-section" id="how">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.how.eyebrow}</div>
-          <h2>{t.how.h2}</h2>
-          <p className="dc-sub">{t.how.sub}</p>
-          <div className="dc-grid3">
+      <section className="mk-section" id="how">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.how.eyebrow}</div>
+          <h2 className="mk-h2">{t.how.h2}</h2>
+          <p className="mk-sub">{t.how.sub}</p>
+          <div className="mk-steps">
             {t.how.steps.map(([h, d], i) => (
-              <div className="dc-card dc-step" key={h}><div className="dc-step-n">0{i + 1}</div><h3>{h}</h3><p>{d}</p></div>
+              <div className="mk-step" key={h}><div className="mk-step-n">0{i + 1}</div><h3>{h}</h3><p>{d}</p></div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== Metric band ===== */}
-      <section className="dc-section dc-band">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow dim">{t.metric.eyebrow}</div>
-          <h2 className="big">{fill(t.metric.h2a, { fares: fmtCompact(m.snapshots) })}<br /><span className="dc-accent">{t.metric.h2b}</span></h2>
-          <p className="dc-sub">{fill(t.metric.sub, { routes: m.activeRoutes, alerts: m.alertsSent })}</p>
+      <section className="mk-section mk-band">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.metric.eyebrow}</div>
+          <h2 className="mk-h2 big">{fill(t.metric.h2a, { fares: fmtCompact(m.snapshots) })}<br /><span>{t.metric.h2b}</span></h2>
+          <p className="mk-sub">{fill(t.metric.sub, { routes: m.activeRoutes, alerts: m.alertsSent })}</p>
         </div>
       </section>
 
       {/* ===== Wrong call ===== */}
-      <section className="dc-section">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.wrong.eyebrow}</div>
-          <h2>{t.wrong.h2a}<br />{t.wrong.h2b}</h2>
-          <p className="dc-sub">{t.wrong.sub}</p>
-          <div className="dc-grid3">
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.wrong.eyebrow}</div>
+          <h2 className="mk-h2">{t.wrong.h2a}<br />{t.wrong.h2b}</h2>
+          <p className="mk-sub">{t.wrong.sub}</p>
+          <div className="mk-features">
             {t.wrong.cards.map(([h, d], i) => (
-              <div className="dc-card" key={h}><div className="dc-icon"><Icon k={WRONG_ICONS[i]} /></div><h4>{h}</h4><p>{d}</p></div>
+              <div className="mk-feature" key={h}><div className="mk-feature-icon"><Icon k={WRONG_ICONS[i]} /></div><h4>{h}</h4><p>{d}</p></div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== Modes ===== */}
-      <section className="dc-section">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.modes.eyebrow}</div>
-          <h2>{t.modes.h2a}<br />{t.modes.h2b}</h2>
-          <p className="dc-sub">{t.modes.sub}</p>
-          <div className="dc-grid3">
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.modes.eyebrow}</div>
+          <h2 className="mk-h2">{t.modes.h2a}<br />{t.modes.h2b}</h2>
+          <p className="mk-sub">{t.modes.sub}</p>
+          <div className="mk-features">
             {t.modes.cards.map(([h, d], i) => (
-              <div className="dc-card" key={h}><div className="dc-icon"><Icon k={MODE_ICONS[i]} /></div><div className="dc-mode-tag">{t.modes.tags[i]}</div><h4>{h}</h4><p>{d}</p></div>
+              <div className="mk-feature" key={h}><div className="mk-feature-icon"><Icon k={MODE_ICONS[i]} /></div><div className="mk-feature-tag">{t.modes.tags[i]}</div><h4>{h}</h4><p>{d}</p></div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== Sovereign / stats ===== */}
-      <section className="dc-section dc-band">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.sovereign.eyebrow}</div>
-          <h2>{t.sovereign.h2a}<br />{t.sovereign.h2b}</h2>
-          <p className="dc-sub">{t.sovereign.sub}</p>
-          <div className="dc-stats">
-            {t.sovereign.stats.map(([v, l]) => <div className="dc-stat" key={l}><div className="v">{v}</div><div className="l">{l}</div></div>)}
+      <section className="mk-section mk-band">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.sovereign.eyebrow}</div>
+          <h2 className="mk-h2">{t.sovereign.h2a}<br />{t.sovereign.h2b}</h2>
+          <p className="mk-sub">{t.sovereign.sub}</p>
+          <div className="ed-stats">
+            {t.sovereign.stats.map(([v, l]) => <div className="ed-stat" key={l}><div className="ed-stat-value">{v}</div><div className="ed-stat-label">{l}</div></div>)}
           </div>
         </div>
       </section>
 
       {/* ===== Coverage ===== */}
-      <section className="dc-section">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.coverage.eyebrow}</div>
-          <h2>{t.coverage.h2a}<br />{t.coverage.h2b}</h2>
-          <div className="dc-chips">
-            {t.coverage.chips.map(([h, d]) => <div className="dc-chip" key={h}><div className="h">✓ {h}</div><div className="d">{d}</div></div>)}
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.coverage.eyebrow}</div>
+          <h2 className="mk-h2">{t.coverage.h2a}<br />{t.coverage.h2b}</h2>
+          <div className="mk-tiles">
+            {t.coverage.chips.map(([h, d]) => <div className="mk-tile" key={h}><div className="mk-tile-h">✓ {h}</div><div className="mk-tile-d">{d}</div></div>)}
           </div>
         </div>
       </section>
 
       {/* ===== Why ===== */}
-      <section className="dc-section">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.why.eyebrow}</div>
-          <h2>{t.why.h2a}<br />{t.why.h2b}</h2>
-          <p className="dc-sub">{t.why.sub}</p>
-          <div className="dc-grid3">
+      <section className="mk-section">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.why.eyebrow}</div>
+          <h2 className="mk-h2">{t.why.h2a}<br />{t.why.h2b}</h2>
+          <p className="mk-sub">{t.why.sub}</p>
+          <div className="mk-features">
             {t.why.cards.map(([h, d], i) => (
-              <div className="dc-card" key={h}><div className="dc-icon"><Icon k={WHY_ICONS[i]} /></div><h4>{h}</h4><p>{d}</p></div>
+              <div className="mk-feature" key={h}><div className="mk-feature-icon"><Icon k={WHY_ICONS[i]} /></div><h4>{h}</h4><p>{d}</p></div>
             ))}
           </div>
         </div>
       </section>
 
       {/* ===== Fit ===== */}
-      <section className="dc-section" id="fit">
-        <div className="dc-wrap dc-center">
-          <div className="dc-eyebrow">{t.fit.eyebrow}</div>
-          <h2>{t.fit.h2}</h2>
-          <p className="dc-sub">{t.fit.sub}</p>
-          <div className="dc-grid-fit">
+      <section className="mk-section" id="fit">
+        <div className="mk-wrap">
+          <div className="ed-eyebrow">{t.fit.eyebrow}</div>
+          <h2 className="mk-h2">{t.fit.h2}</h2>
+          <p className="mk-sub">{t.fit.sub}</p>
+          <div className="mk-steps">
             {t.fit.cards.map(([h, who, ...tips], i) => (
-              <div className="dc-card dc-fit" key={h}>
-                <div className="dc-step-n">0{i + 1}</div>
+              <div className="mk-step" key={h}>
+                <div className="mk-step-n">0{i + 1}</div>
                 <h4>{h}</h4>
                 <p className="who">{who}</p>
                 <ul>{tips.map(tip => <li key={tip}>{tip}</li>)}</ul>
@@ -258,43 +262,43 @@ export default async function EarlyAccessPage({ searchParams }: { searchParams: 
       </section>
 
       {/* ===== CTA ===== */}
-      <section className="dc-section dc-cta-wrap" id="join">
-        <div className="dc-wrap">
-          <div className="dc-cta">
-            <h2>{t.cta.h2a}<br /><span className="dc-accent">{t.cta.h2b}</span></h2>
-            <p className="dc-sub">{t.cta.sub}</p>
+      <section className="mk-band mk-cta" id="join">
+        <div className="mk-wrap">
+          <div>
+            <h2 className="mk-h2">{t.cta.h2a}<br /><span>{t.cta.h2b}</span></h2>
+            <p className="mk-sub">{t.cta.sub}</p>
             <EarlyAccessForm initialRef={ref ?? ''} labels={formLabels} />
-            <div className="dc-cta-chips">{t.cta.chips.map(c => <span key={c}>✓ {c}</span>)}</div>
-            <p className="dc-consent">{t.cta.consent} <Link href="/privacy">Privacy</Link></p>
+            <div className="mk-cta-chips">{t.cta.chips.map(c => <span key={c}>✓ {c}</span>)}</div>
+            <p className="mk-consent">{t.cta.consent} <Link href="/privacy">Privacy</Link></p>
           </div>
         </div>
       </section>
 
       {/* ===== Footer ===== */}
-      <footer className="dc-footer">
-        <div className="dc-wrap">
-          <div className="dc-footer-grid">
-            <div className="dc-footer-brand">
-              <div className="dc-logo"><Logo size={22} /><span>flycheap</span></div>
+      <footer className="mk-footer">
+        <div className="mk-wrap">
+          <div className="mk-footer-grid">
+            <div className="mk-footer-brand">
+              <div className="mk-brand"><Logo size={22} /><span className="mk-brand-name">flycheap</span></div>
               <p>{t.footer.tag}</p>
-              <p className="dc-accent">{t.footer.sovereign}</p>
+              <p>{t.footer.sovereign}</p>
             </div>
             {t.footer.cols.map(col => {
               const [title, links] = col as [string, string[][]];
               return (
-                <div className="dc-footer-col" key={title}>
+                <div className="mk-footer-col" key={title}>
                   <h5>{title}</h5>
                   {links.map(([label, href]) => href.startsWith('#') || href.startsWith('mailto:') ? <a key={label} href={href}>{label}</a> : <Link key={label} href={href}>{label}</Link>)}
                 </div>
               );
             })}
           </div>
-          <div className="dc-footer-langs">
+          <div className="mk-footer-langs">
             {(Object.keys(LOCALES) as Locale[]).map(code => (
               <a key={code} href={`/api/lang?set=${code}&next=${encodeURIComponent(nextPath)}`} className={code === locale ? 'on' : ''}>{LOCALES[code].flag} {LOCALES[code].label}</a>
             ))}
           </div>
-          <div className="dc-footer-legal">
+          <div className="mk-footer-legal">
             <span>{t.footer.copyright}</span>
             <span><Link href="/terms">Terms</Link> · <Link href="/privacy">Privacy</Link></span>
           </div>

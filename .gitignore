@@ -3,6 +3,7 @@ node_modules
 .next.a
 .next.b
 .next.static-keep
+.next.verify
 .deploy-active-dist
 .deploy-deps-hash
 out
