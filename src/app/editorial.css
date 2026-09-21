@@ -760,6 +760,12 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 @media (max-width: 900px) { .ad-rail { position: static; width: auto; border-right: 0; border-bottom: 1px solid var(--rule); } .ad-main { margin-left: 0; } }
 
 /* ---- chrome support classes the brief's rule block above doesn't name --- */
+/* Below md (768px) the middle `.ad-crumb` cell (`hidden md:flex`) leaves the
+   DOM entirely, so the grid only has 2 items left and `.ad-right` auto-places
+   into the `1fr` column instead of the trailing `auto` one — margin-left:
+   auto keeps it pinned right in both layouts (a no-op in the 3-column case,
+   where it's already flush right). */
+.ad-right { margin-left: auto; }
 .ad-brand-slot { display: flex; align-items: center; }
 .ad-brand-mobile { font: 600 14px var(--font-ui); color: var(--panel-fg); }
 .ad-crumb-brand { color: color-mix(in srgb, var(--panel-fg) 62%, var(--panel-bg)); }
@@ -773,10 +779,17 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-rail-logout { width: 100%; text-align: left; background: none; border: 0; border-left: 2px solid transparent; cursor: pointer; font: inherit; }
 
 /* ---- generic remaps for admin pages not yet converted off .card/.kpi/
-   raw headings/slate utilities/<code> — kept until their own tasks land. */
-.ad-shell h1, .ad-shell h2, .ad-shell h3 { font-family: var(--font-serif); font-weight: 400; color: var(--ink); letter-spacing: -0.015em; }
-.ad-shell h1 { font-size: 2.05rem; line-height: 1.04; }
-.ad-shell h2 { font-size: 1.4rem; line-height: 1.1; }
+   raw headings/slate utilities/<code> — kept until their own tasks land.
+   `:not(.ed-h1)` / `:not(.ed-h2)` / `:not(.ad-table)` exclude the elements
+   ui.tsx itself renders: a bare `.ad-shell h1` selector (0,1,1) would
+   otherwise out-specify `.ed-h1` (0,1,0) and silently shrink PageHead's
+   title from 42px to 2.05rem, and `.ad-shell table thead th` (0,1,3) would
+   out-specify `.ad-table th` (0,1,1) and drop the --ink header rule ruling 3
+   asks for. Excluding by class sidesteps the specificity fight entirely
+   instead of trying to out-rank it. */
+.ad-shell h1:not(.ed-h1), .ad-shell h2:not(.ed-h2), .ad-shell h3 { font-family: var(--font-serif); font-weight: 400; color: var(--ink); letter-spacing: -0.015em; }
+.ad-shell h1:not(.ed-h1) { font-size: 2.05rem; line-height: 1.04; }
+.ad-shell h2:not(.ed-h2) { font-size: 1.4rem; line-height: 1.1; }
 .ad-shell h3 { font-size: 1.1rem; }
 .ad-shell .card, .ad-shell .kpi { background: var(--surface); border: 1px solid var(--rule); border-radius: 0; color: var(--ink); }
 .ad-shell .card-elevated { border-color: var(--accent); background: var(--surface); }
@@ -784,9 +797,9 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
 .ad-shell .card .text-2xl, .ad-shell .card .text-3xl, .ad-shell .tabular { font-family: var(--font-mono-ed); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 .ad-shell .kpi-label { color: var(--muted); } .ad-shell .kpi-value { color: var(--ink); } .ad-shell .kpi-sub { color: var(--muted); }
 .ad-shell .kpi-brand { background: var(--panel-bg); }
-.ad-shell table thead th { font-family: var(--font-mono-ed); color: var(--muted-2); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
-.ad-shell table tbody td { color: var(--ink-soft); border-color: var(--rule-soft); }
-.ad-shell table tbody tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
+.ad-shell table:not(.ad-table) thead th { font-family: var(--font-mono-ed); color: var(--muted-2); font-size: 9.5px; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; border-bottom: 1px solid var(--rule); padding-bottom: 8px; }
+.ad-shell table:not(.ad-table) tbody td { color: var(--ink-soft); border-color: var(--rule-soft); }
+.ad-shell table:not(.ad-table) tbody tr:hover td { background: color-mix(in srgb, var(--accent) 5%, transparent); }
 .ad-shell code { background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--accent); padding: 1px 5px; border-radius: 0; font-family: var(--font-mono-ed); font-size: 0.85em; }
 .ad-shell .text-slate-500, .ad-shell .text-slate-400, .ad-shell .text-slate-600 { color: var(--muted); }
 .ad-shell .text-slate-700, .ad-shell .text-slate-900, .ad-shell .text-slate-100, .ad-shell .text-slate-300 { color: var(--ink); }
