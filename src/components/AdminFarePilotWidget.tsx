@@ -11,12 +11,13 @@ import { AdminFarePilot } from './AdminFarePilot';
  * step-up) is enforced server-side in /api/admin/farepilot on every request,
  * so this is a pure presentation change.
  *
- * Trigger and panel reuse the same primitives as the client-facing
- * ChatWidget.tsx FAB (`ed-btn ed-btn-primary ed-fab` / `ed-widget-panel` /
- * `ed-widget-head*`) — the shapes are identical (floating launcher + docked
- * chat panel), just a different console. The trigger's visible text label
- * is dropped (was a variable-width pill, incompatible with a true 44×44
- * square button); the accessible name carries it instead via `aria-label`.
+ * Trigger and panel reuse the editorial button/panel primitives ( `ed-btn
+ * ed-btn-primary` / `ed-widget-panel` / `ed-widget-head*` — the panel is the
+ * same shape as the client-facing ChatWidget.tsx's docked chat panel, just a
+ * different console). Round 1 fix: the trigger keeps its visible "FarePilot"
+ * / "Close" label (a control's visible label must never disappear) — it is
+ * a 44px-tall pill with natural width, not the `ed-fab` 44×44 square
+ * ChatWidget's own icon-only FAB uses.
  */
 export function AdminFarePilotWidget({ totpEnabled }: { totpEnabled: boolean }) {
   const [open, setOpen] = useState(false);
@@ -49,9 +50,10 @@ export function AdminFarePilotWidget({ totpEnabled }: { totpEnabled: boolean }) 
         onClick={() => setOpen(o => !o)}
         aria-label="Open FarePilot Admin"
         aria-expanded={open}
-        className="ed-btn ed-btn-primary ed-fab fixed bottom-5 right-5 z-[60]"
+        className="ed-btn ed-btn-primary fixed bottom-5 right-5 z-[60] h-[44px]"
       >
         <span className="text-lg leading-none">🛩️</span>
+        <span className="hidden text-sm font-semibold sm:inline">{open ? 'Close' : 'FarePilot'}</span>
       </button>
     </>
   );

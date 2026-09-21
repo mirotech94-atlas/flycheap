@@ -961,7 +961,7 @@ html[data-theme] .ed-date-panel .rdp-day_button:hover:not(:disabled) { backgroun
    literal #E8A33D/[0.08] "current" tint (amber-as-decoration) with
    --surface-2 + an --accent border, per ruling 3 (amber reserved for
    data/"wait", not a selection state). */
-.ad-statuspick { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-size: 13px; border: 1px solid var(--rule-strong); background: var(--surface); color: var(--ink-soft); text-align: left; cursor: pointer; transition: opacity 120ms, border-color 120ms; }
+.ad-statuspick { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 8px 12px; font-size: 13px; border: 1px solid var(--rule-strong); border-radius: 0; background: var(--surface); color: var(--ink-soft); text-align: left; cursor: pointer; transition: opacity 120ms, border-color 120ms; }
 .ad-statuspick:hover { opacity: 0.8; }
 .ad-statuspick.active { background: var(--surface-2); border-color: var(--accent); color: var(--ink); cursor: default; }
 .ad-statuspick:disabled { cursor: default; }
