@@ -530,6 +530,16 @@ button.ed-chip, a.ed-chip, select.ed-chip, .ed-chip[role="button"] { cursor: poi
 button.ed-chip:hover, a.ed-chip:hover, select.ed-chip:hover, .ed-chip[role="button"]:hover { opacity: 0.8; }
 .ed-chip.active { background: var(--btn-bg); color: var(--btn-fg); border-color: var(--btn-bg); }
 
+/* Status chips (Support ticket list, task 2.11c) — three states an open/
+   in-progress/waiting/resolved ticket folds into. Text is mixed toward --ink
+   rather than used raw: raw --amber on its own 8% tint measures 4.16:1 in
+   light (below AA), and raw --muted on --surface-2 measures 4.18:1 (the same
+   failure .ed-tile.dim documents above) — see task-2.11c-report.md for the
+   four computed pairs (75%/65% mixes, both themes, all ≥5:1). */
+.ed-chip.status-open { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); border-color: color-mix(in srgb, var(--accent) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--accent) 75%, var(--ink)); }
+.ed-chip.status-waiting { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 40%, var(--rule-strong)); color: color-mix(in srgb, var(--amber) 65%, var(--ink)); }
+.ed-chip.status-closed { background: var(--surface-2); border-color: var(--rule-strong); color: var(--ink-soft); }
+
 /* Segmented view toggle (list / map). Accent for the active segment — a view
    switch, not a fare or a primary action. */
 .ed-seg { display: inline-flex; border: 1px solid var(--rule-strong); }

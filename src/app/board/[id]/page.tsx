@@ -104,7 +104,7 @@ export default async function WatchDetailPage({
             high={card.range30?.high ?? null}
           />
         ) : (
-          <p className="text-[13.5px] text-[var(--nc-on-dark-mute)]">
+          <p className="text-[13.5px] text-[var(--muted)]">
             {card.history.length === 1
               ? 'One day of history so far. The chart appears once there are two points to draw between.'
               : 'No price recorded yet. The first check usually lands within the hour.'}
@@ -167,7 +167,7 @@ export default async function WatchDetailPage({
         </FcPanel>
       ) : (
         <FcPanel title="The call, and why">
-          <p className="text-[13.5px] text-[var(--nc-on-dark-mute)]">
+          <p className="text-[13.5px] text-[var(--muted)]">
             We do not have a call on this route yet. {card.note}
           </p>
         </FcPanel>
@@ -185,12 +185,12 @@ export default async function WatchDetailPage({
           <input type="hidden" name="value" value={card.watch.isHomeRoute ? 'off' : 'on'} />
           <div className="flex items-start justify-between gap-4">
             <div>
-              <div className="text-[13px] text-[var(--nc-on-dark)]">
+              <div className="text-[13px] text-[var(--ink)]">
                 {card.watch.isHomeRoute
                   ? 'This is a route you fly every year.'
                   : 'Is this a route you fly every year?'}
               </div>
-              <p className="text-[11px] text-[var(--nc-on-dark-faint)] mt-0.5 max-w-prose">
+              <p className="text-[11px] text-[var(--muted-2)] mt-0.5 max-w-prose">
                 {card.watch.isHomeRoute
                   ? 'It never expires — we keep watching it between trips and tell you when next year’s fares open cheap.'
                   : 'Home routes never expire. We keep watching between trips instead of retiring the watch once these dates pass.'}
@@ -205,16 +205,16 @@ export default async function WatchDetailPage({
         {/* Per-watch channels. alertGate intersects this with the account's
             configured channels, so it can only narrow — it cannot conjure a
             channel the user has not set up. */}
-        <form action={setWatchChannels} className="mt-5 pt-4 border-t border-[var(--nc-rule)]">
+        <form action={setWatchChannels} className="mt-5 pt-4 border-t border-[var(--rule)]">
           <input type="hidden" name="watchId" value={card.id} />
-          <div className="text-[13px] text-[var(--nc-on-dark)]">Alert me about this route on</div>
-          <p className="text-[11px] text-[var(--nc-on-dark-faint)] mt-0.5 mb-2">
+          <div className="text-[13px] text-[var(--ink)]">Alert me about this route on</div>
+          <p className="text-[11px] text-[var(--muted-2)] mt-0.5 mb-2">
             Leave everything unticked to use your account default
             {selectable.length ? <> ({channelSentence(selectable as never)})</> : null}.
             The route you fly to see family can be louder than a speculative one.
           </p>
           {selectable.length === 0 ? (
-            <p className="text-[12px] text-[var(--nc-on-dark-mute)]">
+            <p className="text-[12px] text-[var(--muted)]">
               No alert channel is configured yet. Set one up in{' '}
               <Link href="/settings#alerts" className="underline underline-offset-2">Settings</Link>.
             </p>
@@ -252,7 +252,7 @@ export default async function WatchDetailPage({
           <Row label="Status">{card.status}</Row>
           <Row label="Price age">{card.verifiedLabel ?? 'Not verified'}</Row>
         </dl>
-        <p className="mt-4 text-[12px] text-[var(--nc-on-dark-faint)]">
+        <p className="mt-4 text-[12px] text-[var(--muted-2)]">
           <Link href="/searches" className="underline underline-offset-2">Manage this route</Link>
           {' · '}
           <Link href="/board" className="underline underline-offset-2">Back to the board</Link>
@@ -265,8 +265,8 @@ export default async function WatchDetailPage({
 function Row({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div>
-      <dt className="text-[11px] uppercase tracking-[0.09em] text-[var(--nc-on-dark-faint)]">{label}</dt>
-      <dd className="text-[var(--nc-on-dark)] mt-0.5">{children}</dd>
+      <dt className="text-[11px] uppercase tracking-[0.09em] text-[var(--muted-2)]">{label}</dt>
+      <dd className="text-[var(--ink)] mt-0.5">{children}</dd>
     </div>
   );
 }

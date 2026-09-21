@@ -55,7 +55,7 @@ export default async function BoardPage() {
           <div className="nc-board">
             {cards.map(c => <BoardCardView key={c.id} card={c} />)}
           </div>
-          <p className="text-[12px] text-[var(--nc-on-dark-faint)]">
+          <p className="text-[12px] text-[var(--muted-2)]">
             Add, pause or reorder routes on{' '}
             <Link href="/searches" className="underline underline-offset-2">your watchlist</Link>.
           </p>
