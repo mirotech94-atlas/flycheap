@@ -205,7 +205,7 @@ export function SvgGlobe({
             {isHub && (
               <text x={c.proj.x + 8} y={c.proj.y - 8}
                 fill={accent} fontSize="10"
-                fontFamily="JetBrains Mono, monospace"
+                style={{ fontFamily: 'var(--font-mono-ed)' }}
                 fontWeight="600" letterSpacing="0.1em">
                 {c.code}
               </text>

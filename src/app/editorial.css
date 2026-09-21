@@ -93,6 +93,18 @@ html[data-theme="dark"] {
   --font-mono-ed: var(--font-plex-mono, 'IBM Plex Mono'), ui-monospace, monospace;
 }
 
+/* Legacy font-variable names still read by the .fc-* dashboard rules in
+   globals.css (same shape as the --fc-* colour aliases above — re-point the
+   name, do not touch the call sites). */
+:root {
+  --font-sans: var(--font-ui);
+  --font-display: var(--font-serif);
+  --font-mono: var(--font-mono-ed);
+  --font-fc-display: var(--font-serif);
+  --font-fc-sans: var(--font-ui);
+  --font-cabin: var(--font-serif);
+}
+
 /* ---- Editorial primitives -------------------------------------------- */
 .ed-page { padding: 44px 48px 80px; background: var(--bg); color: var(--ink); font-family: var(--font-ui); font-size: 14px; line-height: 1.5; }
 @media (max-width: 720px) { .ed-page { padding: 28px 20px 64px; } }

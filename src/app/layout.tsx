@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { Inter, JetBrains_Mono, Plus_Jakarta_Sans, Fraunces, Manrope, Archivo, Public_Sans, Newsreader, IBM_Plex_Mono } from 'next/font/google';
+import { Public_Sans, Newsreader, IBM_Plex_Mono } from 'next/font/google';
 import './globals.css';
 import { GlobeProvider } from '@/lib/globeStore';
 import { contrastSafe, hexToRgbTriple, BRAND_GROUNDS } from '@/lib/brandContrast';
@@ -16,27 +16,10 @@ import { getRequestLocaleInfo } from '@/lib/i18n/server';
 import { getAppDict } from '@/lib/i18n/app';
 import { AppI18nProvider } from '@/lib/i18n/client';
 
-const inter = Inter({ subsets: ['latin'], variable: '--font-sans', display: 'swap' });
-const display = Plus_Jakarta_Sans({ subsets: ['latin'], variable: '--font-display', display: 'swap', weight: ['500','600','700','800'] });
-const mono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono', display: 'swap', weight: ['400', '500', '700'] });
-// Fraunces — distinctive, professional editorial serif (replaces Instrument Serif).
-// Variable axes default to WONK=0/SOFT=0 for a clean, executive cut; weights 400
-// (display headlines), 600 (emphasis), 900 (hero impact). Italic carries the gold accents.
-const fcDisplay = Fraunces({
-  subsets: ['latin'],
-  variable: '--font-fc-display',
-  display: 'swap',
-  weight: ['400', '600', '900'],
-  style: ['normal', 'italic'],
-});
-// Night-cabin display face: airport-signage width and weight. Used for route
-// codes and page titles so a departure board reads like one.
-const cabinDisplay = Archivo({
-  subsets: ['latin'], variable: '--font-cabin', display: 'swap',
-  weight: ['500', '600', '700', '800'],
-});
-const fcSans = Manrope({ subsets: ['latin'], variable: '--font-fc-sans', display: 'swap', weight: ['400','500','600','700'] });
-// Editorial redesign faces (docs/design/handoff/README.md "Type").
+// Editorial redesign faces (docs/design/handoff/README.md "Type") — the only
+// three faces the app serves. Legacy font-variable names (--font-sans,
+// --font-display, --font-mono, --font-fc-display, --font-fc-sans,
+// --font-cabin) are re-pointed to these in src/app/editorial.css.
 const publicSans = Public_Sans({ subsets: ['latin'], variable: '--font-public-sans', display: 'swap', weight: ['400', '500', '600', '700'] });
 const newsreader = Newsreader({ subsets: ['latin'], variable: '--font-newsreader', display: 'swap', weight: ['300', '400', '500'] });
 const plexMono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-plex-mono', display: 'swap', weight: ['400', '500'] });
@@ -126,7 +109,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   const t = getAppDict(locale);
 
   return (
-    <html lang={locale} dir={dir} data-theme={theme} className={`${theme === 'dark' ? 'dark ' : ''}${inter.variable} ${display.variable} ${mono.variable} ${fcDisplay.variable} ${fcSans.variable} ${cabinDisplay.variable} ${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
+    <html lang={locale} dir={dir} data-theme={theme} className={`${theme === 'dark' ? 'dark ' : ''}${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
         <style dangerouslySetInnerHTML={{ __html: brandStyle }} />
