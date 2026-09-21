@@ -43,14 +43,50 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
   const tickets = queries.listUserTickets(user.id, 50);
 
   return (
-    <div className="space-y-6" style={{ maxWidth: '64ch', margin: '0 auto' }}>
+    <div className="space-y-6">
       <div className="ed-eyebrow">Support</div>
       <FcPageHead
         title="Something not working? Tell us."
         lede="Open a ticket and we'll fix it fast. You'll get an email the moment we reply — and every ticket stays here so you can follow the whole thread."
       />
 
-      <section className="ed-panel">
+      {/* The page used to be a 64ch column centred in a very wide page, which
+          left the space either side of it empty. It now uses the width: the
+          thread list is the main column and the form sits beside it. */}
+      <div className="ed-support-grid">
+      <section>
+        <h2 className="ed-h2" style={{ marginBottom: 14 }}>Your tickets</h2>
+        {tickets.length === 0 ? (
+          <div className="ed-panel ed-empty">
+            <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>No tickets yet. When you open one, it&apos;ll show up here with our replies.</p>
+          </div>
+        ) : (
+          <div className="ed-ranked">
+            {tickets.map(t => (
+              <Link
+                key={t.id}
+                href={`/support/${t.ref}`}
+                className="ed-ranked-row"
+                style={{ gridTemplateColumns: '1fr auto', textDecoration: 'none', color: 'inherit' }}
+              >
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span className="ed-mono" style={{ letterSpacing: 0, textTransform: 'none', color: 'var(--muted-2)' }}>{t.ref}</span>
+                    <span className={`ed-chip status-${statusVariant(t.status)}`}>{STATUS_LABEL[t.status]}</span>
+                  </div>
+                  <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink)', marginTop: 4 }}>{t.subject}</div>
+                </div>
+                <div style={{ textAlign: 'right', color: 'var(--muted)', fontSize: 12 }}>
+                  <div>{t.message_count} msg{t.message_count === 1 ? '' : 's'}</div>
+                  <div style={{ fontSize: 11, marginTop: 2 }}>{ago(t.last_reply_at || t.updated_at)}</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="ed-panel ed-support-form">
         <h2 className="ed-h2">Open a ticket</h2>
         {error === 'limit' && (
           <p style={{ fontSize: 13, color: 'var(--red)', marginBottom: 12 }}>
@@ -82,39 +118,9 @@ export default async function SupportPage({ searchParams }: { searchParams: Prom
         </form>
       </section>
 
-      <section>
-        <h2 className="ed-h2" style={{ marginBottom: 14 }}>Your tickets</h2>
-        {tickets.length === 0 ? (
-          <div className="ed-panel" style={{ textAlign: 'center', padding: '40px 24px' }}>
-            <p style={{ fontSize: 13.5, color: 'var(--muted)' }}>No tickets yet. When you open one, it&apos;ll show up here with our replies.</p>
-          </div>
-        ) : (
-          <div className="ed-ranked">
-            {tickets.map(t => (
-              <Link
-                key={t.id}
-                href={`/support/${t.ref}`}
-                className="ed-ranked-row"
-                style={{ gridTemplateColumns: '1fr auto', textDecoration: 'none', color: 'inherit' }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <span className="ed-mono" style={{ letterSpacing: 0, textTransform: 'none', color: 'var(--muted-2)' }}>{t.ref}</span>
-                    <span className={`ed-chip status-${statusVariant(t.status)}`}>{STATUS_LABEL[t.status]}</span>
-                  </div>
-                  <div style={{ fontSize: 13.5, fontWeight: 500, color: 'var(--ink)', marginTop: 4 }}>{t.subject}</div>
-                </div>
-                <div style={{ textAlign: 'right', color: 'var(--muted)', fontSize: 12 }}>
-                  <div>{t.message_count} msg{t.message_count === 1 ? '' : 's'}</div>
-                  <div style={{ fontSize: 11, marginTop: 2 }}>{ago(t.last_reply_at || t.updated_at)}</div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        )}
-      </section>
+      </div>
 
-      <div className="ed-actions" style={{ justifyContent: 'center' }}>
+      <div className="ed-actions">
         <Link href="/" className="ed-btn ed-btn-secondary">← Back to dashboard</Link>
         <Link href="/status" className="ed-btn ed-btn-secondary">System status</Link>
       </div>
