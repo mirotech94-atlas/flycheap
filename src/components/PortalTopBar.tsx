@@ -105,7 +105,7 @@ export function PortalTopBar({
         // Guest shell — mirrors ClientSidebar's guest nav (marketing mini-shell
         // instead of the operational tabs): the "what is this" blurb, the four
         // marketing links, and the primary sign-in CTA.
-        <div className={`pt-tabs${open ? ' open' : ''}`}>
+        <div className={`pt-tabs pt-guest-nav${open ? ' open' : ''}`}>
           <p className="pt-guest">
             {nav.guestA}<strong>{nav.guestStrong}</strong>{nav.guestB}
           </p>
@@ -120,9 +120,12 @@ export function PortalTopBar({
       )}
 
       <div className="pt-right">
+        {user && (
+          <span className="pt-user ed-mono" title={user.email}>{user.name || user.email}</span>
+        )}
         {user && <span className="pt-tier ed-mono">{user.tier || 'free'}</span>}
         <ThemeToggle />
-        <LanguageMenu locale={locale} variant="sidebar" label={language} />
+        <LanguageMenu locale={locale} variant="editorial" label={language} />
         {user && isAdmin && (
           <a href={`https://${PUBLIC_ADMIN_HOST}/`} className="ed-btn ed-btn-secondary ed-mono">{nav.adminPortal}</a>
         )}

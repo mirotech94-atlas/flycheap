@@ -10,8 +10,11 @@ import { LOCALES, type Locale } from '@/lib/i18n/locales';
  * whole tree (html lang/dir, dictionaries) re-renders with the new locale.
  *
  * `variant`:
- *  - 'sidebar'  — dark chrome of the app sidebar footer (Tailwind, fc-* palette)
- *  - 'topbar'   — light marketing topbar on /welcome (fc-l-* classes)
+ *  - 'sidebar'   — dark chrome of the app sidebar footer (Tailwind, fc-* palette)
+ *  - 'topbar'    — light marketing topbar on /welcome (fc-l-* classes)
+ *  - 'editorial' — editorial design system (ed-lang-* classes, tokens only —
+ *                  used by PortalTopBar; ClientSidebar stays on 'sidebar'
+ *                  until Phase 3 retires it)
  */
 export function LanguageMenu({
   locale,
@@ -19,13 +22,30 @@ export function LanguageMenu({
   label = 'Language',
 }: {
   locale: Locale;
-  variant?: 'sidebar' | 'topbar';
+  variant?: 'sidebar' | 'topbar' | 'editorial';
   label?: string;
 }) {
   const pathname = usePathname() || '/';
   const nextPath = encodeURIComponent(pathname);
   const L = LOCALES[locale];
   const codes = Object.keys(LOCALES) as Locale[];
+
+  if (variant === 'editorial') {
+    return (
+      <details className="ed-lang">
+        <summary aria-label={label} title={label}>
+          <span aria-hidden>{L.flag}</span> {locale.toUpperCase()} <span aria-hidden>▾</span>
+        </summary>
+        <div className="ed-lang-menu" role="menu">
+          {codes.map(code => (
+            <a key={code} role="menuitem" href={`/api/lang?set=${code}&next=${nextPath}`} className={code === locale ? 'on' : ''}>
+              <span aria-hidden>{LOCALES[code].flag}</span>{LOCALES[code].label}
+            </a>
+          ))}
+        </div>
+      </details>
+    );
+  }
 
   if (variant === 'topbar') {
     return (
