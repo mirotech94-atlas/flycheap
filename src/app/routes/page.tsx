@@ -2,7 +2,7 @@ import Link from 'next/link';
 import { queries } from '@/lib/db';
 import { airportByCode } from '@/lib/airports';
 import { fmtUSD } from '@/lib/utils';
-import { getCityGradient } from '@/lib/cityGradients';
+import { FcPageHead, FcPanel } from '@/components/fc/PageKit';
 
 export const dynamic = 'force-static';
 export const revalidate = 3600;
@@ -36,120 +36,85 @@ export default function RoutesIndexPage() {
     return totalB - totalA;
   });
 
+  // Feature block: ranked bars. Bar length is the only measure this cache
+  // read supports (min_usd per route, no history/verdict) — each bar is
+  // relative to the most expensive tracked route in the list, fill stays
+  // --accent (no amber modifier: distinctRoutesInCache carries no buy/wait
+  // verdict, so nothing here signals "wait").
+  const maxPrice = routes.reduce((m, r) => Math.max(m, r.min_usd), 0);
+
   return (
-    <div className="space-y-8 motion-fade-in">
-      {/* HERO */}
-      <section className="relative rounded-3xl bg-brand-gradient text-white border border-slate-200/60 dark:border-slate-700/60 overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-[var(--nc-teal)]/20 blur-3xl" />
-          <div className="absolute -bottom-16 -left-16 w-72 h-72 rounded-full bg-brand-400/20 blur-3xl" />
-        </div>
-        <div className="relative px-8 py-10">
-          <div className="eyebrow !text-white/70 mb-1">All routes</div>
-          <h1 className="font-display font-extrabold text-3xl md:text-4xl tracking-tight">
-            Track any route,{' '}
-            <span className="text-[var(--nc-teal)]">real pricing, continuously refreshed</span>
-          </h1>
-          <p className="text-white/75 mt-2 max-w-xl text-sm md:text-base">
-            We poll Travelpayouts for every route below and cache the result. Click a route for cached cheapest
-            dates and a one-click booking shortcut.
-          </p>
-          <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-white/60">
-            <span>{routes.length} routes tracked</span>
-            <span className="hidden sm:inline text-white/30">·</span>
-            <span>Continuously refreshed</span>
-            <span className="hidden sm:inline text-white/30">·</span>
-            <span>
-              <Link href="/searches" className="underline underline-offset-2 hover:text-white transition">Add a route →</Link>
-            </span>
-          </div>
-        </div>
-      </section>
+    <div>
+      <div className="ed-eyebrow">All routes</div>
+      <FcPageHead
+        title="Track any route, real pricing, continuously refreshed"
+        lede="We poll Travelpayouts for every route below and cache the result. Click a route for cached cheapest dates and a one-click booking shortcut."
+        action={<Link href="/searches" className="ed-btn ed-btn-secondary">Add a route →</Link>}
+      />
+      <p className="ed-panel-note" style={{ marginTop: -18, marginBottom: 28 }}>
+        <span>{routes.length} routes tracked</span> · <span>Continuously refreshed</span>
+      </p>
 
       {sortedDestinations.length === 0 ? (
         /* ─── Empty state ─── */
-        <section className="grid sm:grid-cols-3 gap-4">
+        <div className="ed-tiles">
           {[
-            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start checking it immediately and keep going indefinitely — most often when it is close to departure or close to your target.', href: '/searches', cta: 'Add route →', grad: { from: '#0a3a6b', to: '#1a6ba0' } },
-            { title: 'Explore cheap deals', desc: 'Browse current deals from your home city with live price filters.', href: '/explore', cta: 'Browse deals →', grad: { from: '#0a5a3a', to: '#1a8b60' } },
-            { title: 'Search live fares', desc: 'Run a live multi-provider search across Aviasales, Google Flights, and more.', href: '/offers', cta: 'Search now →', grad: { from: '#5a3a0a', to: '#8b5a1a' } },
+            { title: 'Add a route to track', desc: 'Head to Tracked Searches to add a route. We start checking it immediately and keep going indefinitely — most often when it is close to departure or close to your target.', href: '/searches', cta: 'Add route →' },
+            { title: 'Explore cheap deals', desc: 'Browse current deals from your home city with live price filters.', href: '/explore', cta: 'Browse deals →' },
+            { title: 'Search live fares', desc: 'Run a live multi-provider search across Aviasales, Google Flights, and more.', href: '/offers', cta: 'Search now →' },
           ].map(c => (
-            <Link key={c.href} href={c.href}
-              className="group relative overflow-hidden rounded-2xl flex flex-col justify-end min-h-[160px] hover:-translate-y-1 hover:shadow-xl transition-all duration-300"
-            >
-              <div className="absolute inset-0" style={{ background: `linear-gradient(135deg, ${c.grad.from} 0%, ${c.grad.to} 100%)` }} />
-              <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '18px 18px' }} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
-              <div className="relative p-5">
-                <div className="text-white font-bold text-base font-display mb-1">{c.title}</div>
-                <p className="text-white/60 text-xs leading-relaxed">{c.desc}</p>
-                <div className="mt-3 text-white/50 text-[10px] group-hover:text-white/90 transition flex items-center gap-1 uppercase tracking-wider font-semibold">
-                  {c.cta}
-                </div>
-              </div>
+            <Link key={c.href} href={c.href} className="ed-tile">
+              <div className="ed-tile-value" style={{ fontSize: 16 }}>{c.title}</div>
+              <p className="ed-tile-meta">{c.desc}</p>
+              <span className="ed-btn ed-btn-tile">{c.cta}</span>
             </Link>
           ))}
-        </section>
+        </div>
       ) : (
-        /* ─── Route cards ─── */
-        <section className="space-y-6">
+        /* ─── Route groups, ranked bars per destination ─── */
+        <div style={{ display: 'grid', gap: 24 }}>
           {sortedDestinations.map(([dest, rs]) => {
             const dA = airportByCode(dest);
-            const grad = getCityGradient(dest);
             return (
-              <div key={dest}>
-                <div className="flex items-center gap-3 mb-3">
-                  {/* Destination gradient mini-badge */}
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0"
-                    style={{ background: `linear-gradient(135deg, ${grad.from} 0%, ${grad.to} 100%)` }}
-                  >
-                    <span className="text-white font-black text-xs font-mono">{dest}</span>
-                  </div>
-                  <div>
-                    <h2 className="text-base font-bold text-slate-900 dark:text-white font-display">
-                      {dA ? `${dA.city}, ${dA.country}` : dest}
-                    </h2>
-                    <span className="text-xs text-slate-400">{rs.length} origin{rs.length > 1 ? 's' : ''} · {rs.reduce((s, x) => s + x.deals, 0)} cached deals</span>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <FcPanel
+                key={dest}
+                title={dA ? `${dA.city}, ${dA.country}` : dest}
+                note={`${rs.length} origin${rs.length > 1 ? 's' : ''} · ${rs.reduce((s, x) => s + x.deals, 0)} cached deals`}
+              >
+                <div className="ed-ranked">
                   {rs.map(r => {
                     const oA = airportByCode(r.origin);
-                    const rGrad = getCityGradient(r.destination);
+                    const pct = maxPrice > 0 ? (r.min_usd / maxPrice) * 100 : 0;
                     return (
-                      <Link
-                        key={`${r.origin}-${r.destination}`}
-                        href={`/routes/${r.origin.toLowerCase()}-${r.destination.toLowerCase()}`}
-                        className="group relative overflow-hidden rounded-xl flex items-center gap-4 p-4 hover:-translate-y-0.5 hover:shadow-lg transition-all duration-200"
-                        style={{ background: `linear-gradient(135deg, ${rGrad.from} 0%, ${rGrad.to} 100%)` }}
-                      >
-                        <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle, white 1px, transparent 1px)', backgroundSize: '14px 14px' }} />
-                        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent" />
-                        <div className="relative flex-1 min-w-0">
-                          <div className="font-bold text-white text-sm">{r.origin} → {r.destination}</div>
-                          <div className="text-white/60 text-[10px] mt-0.5 truncate">
-                            {oA?.city ?? r.origin} to {dA?.city ?? r.destination}
+                      <div className="ed-ranked-row" key={`${r.origin}-${r.destination}`}>
+                        <div>
+                          <div className="ed-ranked-name" style={{ fontFamily: 'var(--font-mono-ed)' }}>{r.origin} → {r.destination}</div>
+                          <div className="ed-ranked-meta">
+                            {oA?.city ?? r.origin} to {dA?.city ?? r.destination} · {r.deals} cached
                           </div>
                         </div>
-                        <div className="relative text-right shrink-0">
-                          <div className="text-[#E8A33D] font-black text-base tabular">from {fmtUSD(r.min_usd)}</div>
-                          <div className="text-white/50 text-[9px] uppercase tracking-wide">{r.deals} cached</div>
-                        </div>
-                        <div className="relative text-white/30 group-hover:text-white/70 text-sm transition">›</div>
-                      </Link>
+                        <div className="ed-bar"><div className="ed-bar-fill" style={{ width: `${pct}%` }} /></div>
+                        <div className="ed-ranked-value">from {fmtUSD(r.min_usd)}</div>
+                        <Link
+                          className="ed-btn ed-btn-row"
+                          href={`/routes/${r.origin.toLowerCase()}-${r.destination.toLowerCase()}`}
+                        >
+                          ›
+                        </Link>
+                      </div>
                     );
                   })}
                 </div>
-              </div>
+              </FcPanel>
             );
           })}
-        </section>
+        </div>
       )}
 
-      <p className="text-xs text-slate-400 pt-4 border-t border-slate-200 dark:border-slate-800">
+      <hr className="ed-rule" style={{ margin: '32px 0 16px' }} />
+      <p className="ed-sub" style={{ margin: 0 }}>
         Don&apos;t see your route?{' '}
-        <Link href="/searches" className="text-brand-700 underline">Add a tracker on the Searches page</Link>
+        <Link href="/searches" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>Add a tracker on the Searches page</Link>
         {' '}and we&apos;ll start checking it straight away.
       </p>
     </div>
