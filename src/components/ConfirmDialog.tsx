@@ -71,28 +71,33 @@ export function ConfirmHost() {
       aria-modal="true"
       aria-labelledby="confirm-title"
       className="fixed inset-0 z-[70] flex items-center justify-center px-4 motion-fade-in no-print"
-      style={{ background: 'rgba(2,6,23,0.55)', backdropFilter: 'blur(4px)' }}
       onClick={(e) => { if (e.target === e.currentTarget) resolve(false); }}
     >
+      {/* Backdrop as its own layer (OnboardingWizard pattern — an opaque
+          token at reduced opacity, not a transparent-black mix). pointer-
+          events: none so a click anywhere on it still lands on this outer
+          flex container, which is what the onClick above checks against. */}
+      <div className="absolute inset-0" style={{ background: 'var(--ink)', opacity: 0.6, pointerEvents: 'none' }} />
+
       <div
-        className="w-full max-w-md rounded-2xl shadow-lift border border-slate-200 dark:border-slate-700 overflow-hidden"
-        style={{ background: 'var(--bg-card, #fff)' }}
+        className="relative w-full max-w-md overflow-hidden"
+        style={{ background: 'var(--surface)', border: '1px solid var(--rule-strong)', borderRadius: 0 }}
       >
         <div className="px-5 pt-5 pb-3">
-          <h2 id="confirm-title" className="text-lg font-bold text-slate-900 dark:text-slate-100 !mb-1">
+          <h2 id="confirm-title" className="ed-h2">
             {opts.title}
           </h2>
           {opts.description && (
-            <p className="text-sm text-slate-600 dark:text-slate-300">{opts.description}</p>
+            <p className="ed-panel-note" style={{ marginTop: 0 }}>{opts.description}</p>
           )}
           {needsTyping && (
             <label className="mt-4 block">
-              <span className="text-xs text-slate-500">Type <code className="font-mono">{opts.requireText}</code> to confirm:</span>
+              <span style={{ fontSize: 12, color: 'var(--muted)' }}>Type <code className="font-mono">{opts.requireText}</code> to confirm:</span>
               <input
                 autoFocus
                 value={typed}
                 onChange={(e) => setTyped(e.target.value)}
-                className="mt-1 w-full font-mono"
+                className="mt-1 ed-input font-mono"
               />
             </label>
           )}
@@ -102,7 +107,7 @@ export function ConfirmHost() {
             ref={cancelRef}
             type="button"
             onClick={() => resolve(false)}
-            className="btn btn-sm"
+            className="ed-btn ed-btn-secondary"
           >
             {opts.cancelLabel ?? 'Cancel'}
           </button>
@@ -110,7 +115,7 @@ export function ConfirmHost() {
             type="button"
             disabled={confirmDisabled}
             onClick={() => resolve(true)}
-            className={`btn btn-sm ${opts.destructive ? 'btn-danger' : 'btn-primary'}`}
+            className={`ed-btn ${opts.destructive ? 'ed-btn-danger' : 'ed-btn-primary'}`}
           >
             {opts.confirmLabel ?? 'Confirm'}
           </button>

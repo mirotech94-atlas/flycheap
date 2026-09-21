@@ -192,11 +192,15 @@ html[data-theme="dark"] {
 .ed-subpanel.green { border-color: var(--green); }
 .ed-subpanel.red { border-color: var(--red); }
 
-/* Stat accent modifier — an 8% amber wash per the tint ceiling, for the one
-   KPI in a row that is itself a fare (e.g. "cheapest right now"). The value
-   digits stay --ink regardless (amber digits measured under AA on a light
-   surface) — only the ground and border carry the amber signal. */
-.ed-stat.accent { background: color-mix(in srgb, var(--amber) 8%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
+/* Stat accent modifier — a 4% amber wash, for the one KPI in a row that is
+   itself a fare (e.g. "cheapest right now"). The value digits stay --ink
+   regardless (amber digits measured under AA on a light surface) — only the
+   ground and border carry the amber signal. At 8% the label/note in --muted
+   measured under 4.5:1 in both themes; dropping the tint to 4% and lifting
+   the label/note to --ink-soft on this modifier only clears it (see
+   tests/brandContrast.test.ts / task-2.9-report.md for the computed pairs). */
+.ed-stat.accent { background: color-mix(in srgb, var(--amber) 4%, var(--surface)); border-color: color-mix(in srgb, var(--amber) 45%, var(--rule)); }
+.ed-stat.accent .ed-stat-label, .ed-stat.accent .ed-stat-note { color: var(--ink-soft); }
 .ed-stat-note { font-size: 11.5px; line-height: 1.4; color: var(--muted); margin-top: 8px; }
 
 /* Empty state (PageKit's FcEmpty). */

@@ -55,7 +55,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/admin/page.tsx': 1,
   'src/app/admin/users/RowMenu.tsx': 1,
   'src/components/BookButton.tsx': 1,
-  'src/components/ConfirmDialog.tsx': 1,
   'src/components/LanguageMenu.tsx': 1,
 };
 

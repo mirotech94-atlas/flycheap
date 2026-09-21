@@ -38,20 +38,20 @@ export function SearchActions({
 
   return (
     <div className="flex gap-1 flex-wrap">
-      <button className="btn btn-sm" onClick={toggle} disabled={pending}>
+      <button className="ed-btn ed-btn-secondary" onClick={toggle} disabled={pending}>
         {active ? 'Pause' : 'Resume'}
       </button>
       {isSnoozed ? (
-        <button className="btn btn-sm" onClick={() => snooze(0)} disabled={pending} title={`Snoozed until ${snoozedUntil}`}>
+        <button className="ed-btn ed-btn-secondary" onClick={() => snooze(0)} disabled={pending} title={`Snoozed until ${snoozedUntil}`}>
           Wake 💤
         </button>
       ) : (
         <div className="flex gap-1">
-          <button className="btn btn-sm" onClick={() => snooze(7)}  disabled={pending} title="Mute alerts for 7 days">Snooze 7d</button>
-          <button className="btn btn-sm" onClick={() => snooze(30)} disabled={pending} title="Mute alerts for 30 days">30d</button>
+          <button className="ed-btn ed-btn-secondary" onClick={() => snooze(7)}  disabled={pending} title="Mute alerts for 7 days">Snooze 7d</button>
+          <button className="ed-btn ed-btn-secondary" onClick={() => snooze(30)} disabled={pending} title="Mute alerts for 30 days">30d</button>
         </div>
       )}
-      <button className="btn btn-sm btn-danger" onClick={del} disabled={pending}>
+      <button className="ed-btn ed-btn-danger" onClick={del} disabled={pending}>
         Delete
       </button>
     </div>
