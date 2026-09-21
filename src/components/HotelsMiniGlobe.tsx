@@ -17,18 +17,18 @@ export function HotelsMiniGlobe({ destination }: { destination: string }) {
   const hubCodes = Array.from(new Set([dest, ...ORIGIN_HUBS]));
 
   return (
-    <div className="card relative overflow-hidden" style={{ minHeight: 280 }}>
-      <div className="card-head">
+    <div className="ed-panel relative overflow-hidden" style={{ minHeight: 280 }}>
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-cyan-700">Where</div>
-          <h2 className="!mb-0">{dest}</h2>
+          <div className="ed-eyebrow">Where</div>
+          <h2 className="ed-panel-title">{dest}</h2>
         </div>
-        <div className="text-[10px] uppercase tracking-wide text-slate-400">Routes in</div>
+        <div className="ed-mono" style={{ color: 'var(--muted-2)' }}>Routes in</div>
       </div>
       <div className="relative" style={{ height: 220 }}>
         <SvgGlobe arcs={arcs} hubCodes={hubCodes} />
       </div>
-      <p className="text-[11px] text-slate-500 mt-2 text-center">
+      <p className="ed-panel-note" style={{ marginTop: 8, textAlign: 'center' }}>
         Top inbound hubs · highlighted arc = your most-flown origin
       </p>
     </div>

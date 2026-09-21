@@ -50,17 +50,13 @@ export function HotelsFilterRail({
   const snap = (v: number) => Math.max(25, Math.round(v / 25) * 25);
 
   return (
-    <aside
-      className="rounded-xl border p-4 space-y-5"
-      style={{ background: 'var(--bg-elevated)', borderColor: 'var(--border, rgba(148,163,184,0.25))', color: 'var(--text)' }}
-    >
+    <aside className="ed-panel space-y-5">
       <div className="flex items-center justify-between">
-        <div className="font-semibold text-sm" style={{ color: 'var(--text)' }}>Filters</div>
+        <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>Filters</div>
         <button
           type="button"
           onClick={onReset}
-          className="text-[11px] underline decoration-dotted"
-          style={{ color: 'var(--text-muted, #64748b)' }}
+          style={{ fontSize: 11, textDecoration: 'underline', color: 'var(--muted)' }}
         >
           Reset
         </button>
@@ -68,14 +64,14 @@ export function HotelsFilterRail({
 
       {/* Price range */}
       <div>
-        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text)' }}>
+        <div className="ed-label" style={{ marginBottom: 8 }}>
           Price per night
         </div>
-        <div className="text-[11px] tabular-nums mb-2" style={{ color: 'var(--text-muted, #64748b)' }}>
+        <div className="tabular-nums" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8 }}>
           ${state.priceMin} – ${state.priceMax >= bounds.max ? `${bounds.max}+` : state.priceMax}
         </div>
         <div className="space-y-1">
-          <label htmlFor={minId} className="block text-[10px]" style={{ color: 'var(--text-muted, #94a3b8)' }}>Min</label>
+          <label htmlFor={minId} className="block" style={{ fontSize: 10, color: 'var(--muted-2)' }}>Min</label>
           <input
             id={minId}
             type="range"
@@ -89,7 +85,7 @@ export function HotelsFilterRail({
             }}
             className="w-full"
           />
-          <label htmlFor={maxId} className="block text-[10px]" style={{ color: 'var(--text-muted, #94a3b8)' }}>Max</label>
+          <label htmlFor={maxId} className="block" style={{ fontSize: 10, color: 'var(--muted-2)' }}>Max</label>
           <input
             id={maxId}
             type="range"
@@ -108,7 +104,7 @@ export function HotelsFilterRail({
 
       {/* Stars */}
       <div>
-        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text)' }}>Star rating</div>
+        <div className="ed-label" style={{ marginBottom: 8 }}>Star rating</div>
         <div className="flex flex-wrap gap-1.5">
           {[1, 2, 3, 4, 5].map(s => {
             const active = state.stars.has(s);
@@ -117,12 +113,7 @@ export function HotelsFilterRail({
                 key={s}
                 type="button"
                 onClick={() => toggleStar(s)}
-                className="px-2 py-1 rounded-full text-[11px] border transition-colors"
-                style={{
-                  background: active ? 'var(--accent, #0ea5e9)' : 'transparent',
-                  color: active ? 'white' : 'var(--text)',
-                  borderColor: active ? 'var(--accent, #0ea5e9)' : 'var(--border, rgba(148,163,184,0.4))',
-                }}
+                className={`ed-chip${active ? ' active' : ''}`}
               >
                 {s}★
               </button>
@@ -133,17 +124,17 @@ export function HotelsFilterRail({
 
       {/* Amenities */}
       <div>
-        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text)' }}>Amenities</div>
+        <div className="ed-label" style={{ marginBottom: 8 }}>Amenities</div>
         <div className="flex flex-col gap-1">
           {ALL_AMENITIES.map(a => {
             const active = state.amenities.has(a.id);
             return (
-              <label key={a.id} className="flex items-center gap-2 text-[11px] cursor-pointer" style={{ color: 'var(--text)' }}>
+              <label key={a.id} className="flex items-center gap-2 cursor-pointer" style={{ fontSize: 11, color: 'var(--ink)' }}>
                 <input
                   type="checkbox"
                   checked={active}
                   onChange={() => toggleAmenity(a.id)}
-                  className="rounded"
+                  style={{ accentColor: 'var(--accent)' }}
                 />
                 <span>{a.label}</span>
               </label>
@@ -154,8 +145,8 @@ export function HotelsFilterRail({
 
       {/* Distance */}
       <div>
-        <div className="text-xs font-medium mb-2" style={{ color: 'var(--text)' }}>Distance from center</div>
-        <div className="text-[11px] tabular-nums mb-2" style={{ color: 'var(--text-muted, #64748b)' }}>
+        <div className="ed-label" style={{ marginBottom: 8 }}>Distance from center</div>
+        <div className="tabular-nums" style={{ fontSize: 11, color: 'var(--muted)', marginBottom: 8 }}>
           ≤ {state.maxDistanceKm} km
         </div>
         <input

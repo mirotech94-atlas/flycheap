@@ -134,18 +134,18 @@ export function HotelsSearchPanel(props: {
   ));
 
   return (
-    <div className="card card-feature">
-      <div className="card-head">
+    <div className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-cyan-700">Hotel search</div>
-          <h2 className="!mb-0">Find a place to stay</h2>
+          <div className="ed-eyebrow">Hotel search</div>
+          <h2 className="ed-panel-title">Find a place to stay</h2>
         </div>
-        <span className="badge badge-info">{nights} {nights === 1 ? 'night' : 'nights'}</span>
+        <span className="ed-chip">{nights} {nights === 1 ? 'night' : 'nights'}</span>
       </div>
 
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 items-end p-3 rounded-xl bg-slate-50/70 dark:bg-slate-900/40 border border-slate-200/70 dark:border-slate-800">
-        <label className="text-xs text-slate-500 col-span-2">
-          <span className="block mb-1">Destination</span>
+      <div className="ed-subpanel grid grid-cols-2 md:grid-cols-5 gap-2 items-end">
+        <label className="col-span-2">
+          <span className="ed-label">Destination</span>
           {/* Grouped dropdown: tracked routes first (so the user's pinned
               destinations are one click away), then curated resort/beach/
               city groups. Each <optgroup> is a discoverable section. */}
@@ -157,27 +157,27 @@ export function HotelsSearchPanel(props: {
           />
         </label>
 
-        <div className="text-xs text-slate-500">
-          <span className="block mb-1">Check-in</span>
+        <div>
+          <span className="ed-label">Check-in</span>
           <DatePopover label="" value={checkIn} onChange={setCheckIn} />
         </div>
 
-        <div className="text-xs text-slate-500">
-          <span className="block mb-1">Check-out</span>
+        <div>
+          <span className="ed-label">Check-out</span>
           <DatePopover label="" value={checkOut} onChange={setCheckOut} minDate={checkIn} />
         </div>
 
-        <div className="text-xs text-slate-500">
-          <span className="block mb-1">Guests</span>
+        <div>
+          <span className="ed-label">Guests</span>
           <HotelsGuestsPicker value={guests} onChange={setGuests} />
         </div>
 
-        <label className="text-xs text-slate-500 col-span-2 md:col-span-3">
-          <span className="block mb-1">Provider</span>
+        <label className="col-span-2 md:col-span-3">
+          <span className="ed-label">Provider</span>
           <select
             value={provider}
             onChange={e => setProvider(e.target.value as Provider)}
-            className="w-full rounded border border-slate-300 bg-white px-2 py-1 text-xs text-slate-700"
+            className="ed-input"
           >
             {(Object.keys(PROVIDER_LABELS) as Provider[]).map(p => (
               <option key={p} value={p}>{PROVIDER_LABELS[p]}</option>
@@ -190,19 +190,20 @@ export function HotelsSearchPanel(props: {
             href={url}
             target="_blank"
             rel="noopener noreferrer"
-            className="btn btn-primary text-xs w-full text-center"
+            className="ed-btn ed-btn-primary"
+            style={{ width: '100%', justifyContent: 'center' }}
           >
             Search on {PROVIDER_LABELS[provider]} →
           </a>
         </div>
       </div>
 
-      <p className="text-[11px] text-slate-400 mt-2">
+      <p className="ed-panel-note">
         Affiliate-tracked through <code>/go</code> when an affiliate ID is configured for the chosen provider. Booking.com falls back to a public deeplink until its affiliate ID is set.
         {' '}
         <Link
           href={`/airbnbs?destination=${encodeURIComponent(destination)}&checkIn=${encodeURIComponent(checkIn)}&checkOut=${encodeURIComponent(checkOut)}&adults=${encodeURIComponent(String(totalAdults))}`}
-          className="text-cyan-700 dark:text-cyan-400 underline underline-offset-2"
+          style={{ color: 'var(--accent)', textDecoration: 'underline', textUnderlineOffset: 2 }}
         >
           Airbnbs →
         </Link>

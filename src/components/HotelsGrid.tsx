@@ -122,7 +122,8 @@ function buildAreaHref(area: string, destination: string, checkIn: string, check
  * (map alongside list). When `layout="grid"`, a 3-column responsive grid.
  *
  * Card hover bubbles a hoveredId so the map can enlarge the matching marker.
- * When `selectedId` matches a card, it gets a gold outline + smooth scroll.
+ * When `selectedId` matches a card, it gets an accent outline (`.ed-tile.active`)
+ * + smooth scroll.
  */
 export function HotelsGrid({
   location,
@@ -149,14 +150,17 @@ export function HotelsGrid({
 }) {
   const cardRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
-  // Smooth-scroll selected card into view + briefly outline in gold.
+  // Smooth-scroll selected card into view + briefly outline it (accent, not
+  // amber — a selection highlight isn't a fare digit or a delta, so it
+  // doesn't get the reserved colour; `.ed-tile.active` is the same outline
+  // token every other selected tile in the app uses).
   useEffect(() => {
     if (!selectedId) return;
     const el = cardRefs.current.get(selectedId);
     if (el) {
       el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      el.classList.add('ring-2', 'ring-amber-400');
-      const t = window.setTimeout(() => el.classList.remove('ring-2', 'ring-amber-400'), 1800);
+      el.classList.add('active');
+      const t = window.setTimeout(() => el.classList.remove('active'), 1800);
       return () => window.clearTimeout(t);
     }
   }, [selectedId]);
@@ -164,23 +168,23 @@ export function HotelsGrid({
   const areas = AREAS_BY_CITY[location.toUpperCase()];
 
   return (
-    <div className="card">
-      <div className="card-head">
+    <div className="ed-panel">
+      <div className="ed-panel-head">
         <div>
-          <div className="eyebrow text-cyan-700">Stays in {location.toUpperCase()}</div>
-          <h2 className="!mb-0">Hotels</h2>
+          <div className="ed-eyebrow">Stays in {location.toUpperCase()}</div>
+          <h2 className="ed-panel-title">Hotels</h2>
         </div>
-        <div className="text-[11px] tabular" style={{ color: 'var(--text-muted, #64748b)' }}>
+        <div className="tabular" style={{ fontSize: 11, color: 'var(--muted)' }}>
           Showing {hotels.length} of {totalCount}
         </div>
       </div>
 
       {hotels.length === 0 ? (
-        <div className="text-xs py-8 text-center" style={{ color: 'var(--text-muted, #64748b)' }}>
+        <div className="py-8 text-center" style={{ fontSize: 12, color: 'var(--muted)' }}>
           No hotels match the current filters. Try widening the price range or unchecking some amenities.
         </div>
       ) : (
-        <div className={layout === 'list' ? 'space-y-2' : 'grid md:grid-cols-2 lg:grid-cols-3 gap-3'}>
+        <div className="ed-tiles" style={layout === 'list' ? { gridTemplateColumns: '1fr' } : undefined}>
           {hotels.map(h => (
             <div
               key={h.id}
@@ -188,32 +192,34 @@ export function HotelsGrid({
               onMouseEnter={() => onHoverHotel?.(h.id)}
               onMouseLeave={() => onHoverHotel?.(null)}
               onClick={() => onSelectHotel?.(h.id)}
-              className="rounded-lg border p-3 cursor-pointer transition-all hover:shadow-lift hover:-translate-y-0.5"
-              style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, rgba(148,163,184,0.3))' }}
+              className="ed-tile"
+              style={{ cursor: 'pointer' }}
             >
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <div className="font-display font-semibold text-sm leading-tight truncate" style={{ color: 'var(--text)' }}>
-                    {h.name} <span className="text-amber-500">· {h.stars}★</span>
+                  <div className="ed-tile-value truncate" style={{ fontSize: 15 }}>
+                    {h.name} <span style={{ color: 'var(--ink)' }}>· {h.stars}★</span>
                   </div>
-                  <div className="text-[11px]" style={{ color: 'var(--text-muted, #64748b)' }}>{h.area} · {h.distanceKm.toFixed(1)} km from center</div>
-                  <div className="text-[11px] italic mt-1" style={{ color: 'var(--text-muted, #64748b)' }}>&ldquo;{h.tagline}&rdquo;</div>
+                  <div className="ed-tile-meta">{h.area} · {h.distanceKm.toFixed(1)} km from center</div>
+                  <div className="ed-tile-meta" style={{ fontStyle: 'italic', marginTop: 4 }}>&ldquo;{h.tagline}&rdquo;</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="font-bold text-base tabular-nums" style={{ color: 'var(--text)' }}>${h.price}</div>
-                  <div className="text-[10px]" style={{ color: 'var(--text-muted, #64748b)' }}>/ night</div>
+                  <div className="tabular-nums" style={{ fontFamily: 'var(--font-serif)', fontWeight: 600, fontSize: 17, color: 'var(--ink)' }}>${h.price}</div>
+                  <div className="ed-tile-meta" style={{ fontSize: 10 }}>/ night</div>
                 </div>
               </div>
 
-              <div className="mt-2 flex items-center gap-2 text-[11px]">
-                <span className="text-amber-500">⭐ {h.rating.toFixed(1)}</span>
-                <span style={{ color: 'var(--text-muted, #64748b)' }}>({h.reviewCount.toLocaleString()} reviews)</span>
+              <div className="mt-2 flex items-center gap-2" style={{ fontSize: 11 }}>
+                {/* Amber at this weight/size measured 2.92:1 on --surface — below
+                    AA. Ink carries the value; the ★ glyph carries the meaning. */}
+                <span style={{ color: 'var(--ink)' }}>★ {h.rating.toFixed(1)}</span>
+                <span className="ed-tile-meta">({h.reviewCount.toLocaleString()} reviews)</span>
               </div>
 
               {h.amenities.length > 0 && (
                 <div className="mt-1.5 flex flex-wrap gap-1">
                   {h.amenities.slice(0, 4).map(a => (
-                    <span key={a} className="text-[10px] px-1.5 py-0.5 rounded" style={{ background: 'rgba(14,165,233,0.10)', color: 'var(--text-muted, #0369a1)' }}>{a}</span>
+                    <span key={a} className="ed-chip" style={{ padding: '2px 8px', fontSize: 10 }}>{a}</span>
                   ))}
                 </div>
               )}
@@ -226,13 +232,13 @@ export function HotelsGrid({
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={(e) => e.stopPropagation()}
-                    className="text-[10px] px-2 py-0.5 rounded border transition-colors hover:bg-cyan-50"
-                    style={{ borderColor: 'var(--border, rgba(148,163,184,0.4))', color: 'var(--text)' }}
+                    className="ed-btn ed-btn-tile"
+                    style={{ fontSize: 10, padding: '4px 8px' }}
                   >
-                    {q.label} <span className="font-semibold">${q.price}</span>
+                    {q.label} <span style={{ fontWeight: 600 }}>${q.price}</span>
                   </a>
                 ))}
-                <span className="ml-auto text-[10px]" style={{ color: 'var(--text-muted, #64748b)' }}>
+                <span className="ed-tile-meta ml-auto" style={{ fontSize: 10 }}>
                   Compare {h.providerQuotes.length} deals →
                 </span>
               </div>
@@ -242,20 +248,19 @@ export function HotelsGrid({
       )}
 
       {areas && areas.length > 0 && (
-        <div className="mt-5 pt-4 border-t" style={{ borderColor: 'var(--border, rgba(148,163,184,0.25))' }}>
-          <div className="eyebrow text-cyan-700 mb-2">Or browse by neighborhood</div>
-          <div className="grid md:grid-cols-3 gap-2">
+        <div className="mt-5 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
+          <div className="ed-eyebrow" style={{ marginBottom: 8 }}>Or browse by neighborhood</div>
+          <div className="ed-tiles">
             {areas.map(area => (
               <a
                 key={area.name}
                 href={buildAreaHref(area.query, location, checkIn, checkOut, guests)}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block p-2 rounded border text-xs hover:shadow-lift transition-all"
-                style={{ background: 'var(--bg-elevated, white)', color: 'var(--text)', borderColor: 'var(--border, rgba(148,163,184,0.3))' }}
+                className="ed-tile"
               >
-                <div className="font-semibold">{area.name}</div>
-                <div className="text-[10px]" style={{ color: 'var(--text-muted, #64748b)' }}>{area.vibe}</div>
+                <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>{area.name}</div>
+                <div className="ed-tile-meta">{area.vibe}</div>
               </a>
             ))}
           </div>

@@ -13,12 +13,12 @@ import type { FilterState } from './HotelsFilterRail';
  * controls for that category. Same URL params as the desktop rail — the
  * parent owns FilterState, so persistence is automatic.
  *
- * Active filters get a gold pill background (matches the existing
- * `ring-amber-400` accent used elsewhere). Inactive chips are neutral
- * tokens (--bg-elevated + --border). A "Clear all" chip appears on the
- * right whenever any filter is set.
+ * Active filters use `.ed-chip.active` (the `--btn-bg`/`--btn-fg` pair every
+ * other active chip in the app uses — amber stays reserved for fares/deltas,
+ * not filter state). Inactive chips are the plain `.ed-chip`. A "Clear all"
+ * chip appears on the right whenever any filter is set.
  *
- * Pure Tailwind — no headlessui / radix dep.
+ * Tailwind for layout only — colour/radius/shadow come from editorial.css.
  */
 type Category = 'price' | 'stars' | 'amenities' | 'distance';
 
@@ -91,13 +91,7 @@ export function HotelsFilterChipsMobile({
                 key={chip.id}
                 type="button"
                 onClick={() => setOpen(chip.id)}
-                className="shrink-0 px-3 py-1.5 rounded-full text-[11px] border transition-colors whitespace-nowrap"
-                style={{
-                  background: active ? 'rgba(245,158,11,0.18)' : 'var(--bg-elevated)',
-                  color: 'var(--text)',
-                  borderColor: active ? '#f59e0b' : 'var(--border, rgba(148,163,184,0.4))',
-                  fontWeight: active ? 600 : 400,
-                }}
+                className={`ed-chip shrink-0 whitespace-nowrap${active ? ' active' : ''}`}
               >
                 {active ? chip.activeLabel : chip.defaultLabel}
               </button>
@@ -107,12 +101,7 @@ export function HotelsFilterChipsMobile({
             <button
               type="button"
               onClick={onReset}
-              className="shrink-0 px-3 py-1.5 rounded-full text-[11px] border transition-colors whitespace-nowrap"
-              style={{
-                background: 'transparent',
-                color: 'var(--text-muted, #64748b)',
-                borderColor: 'var(--border, rgba(148,163,184,0.4))',
-              }}
+              className="ed-chip shrink-0 whitespace-nowrap"
             >
               Clear all
             </button>
@@ -130,15 +119,14 @@ export function HotelsFilterChipsMobile({
         >
           <div
             className="absolute inset-0"
-            style={{ background: 'rgba(15,23,42,0.55)', backdropFilter: 'blur(6px)' }}
+            style={{ background: 'color-mix(in srgb, var(--panel-bg) 55%, transparent)', backdropFilter: 'blur(6px)' }}
           />
           <div
-            className="relative w-full rounded-t-2xl p-5 max-h-[75vh] overflow-y-auto"
-            style={{ background: 'var(--bg-elevated)', color: 'var(--text)' }}
+            className="ed-panel relative w-full max-h-[75vh] overflow-y-auto"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-3">
-              <div className="font-semibold text-sm">
+              <div style={{ fontWeight: 600, fontSize: 13, color: 'var(--ink)' }}>
                 {open === 'price' && 'Price per night'}
                 {open === 'stars' && 'Star rating'}
                 {open === 'amenities' && 'Amenities'}
@@ -147,8 +135,7 @@ export function HotelsFilterChipsMobile({
               <button
                 type="button"
                 onClick={() => setOpen(null)}
-                className="text-xs underline decoration-dotted"
-                style={{ color: 'var(--text-muted, #64748b)' }}
+                style={{ fontSize: 12, textDecoration: 'underline', color: 'var(--muted)' }}
               >
                 Done
               </button>
@@ -156,10 +143,10 @@ export function HotelsFilterChipsMobile({
 
             {open === 'price' && (
               <div className="space-y-3">
-                <div className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted, #64748b)' }}>
+                <div className="tabular-nums" style={{ fontSize: 11, color: 'var(--muted)' }}>
                   ${state.priceMin} – ${state.priceMax >= bounds.max ? `${bounds.max}+` : state.priceMax}
                 </div>
-                <label className="block text-[10px]" style={{ color: 'var(--text-muted, #94a3b8)' }}>Min</label>
+                <label className="block" style={{ fontSize: 10, color: 'var(--muted-2)' }}>Min</label>
                 <input
                   type="range"
                   min={bounds.min}
@@ -172,7 +159,7 @@ export function HotelsFilterChipsMobile({
                   }}
                   className="w-full"
                 />
-                <label className="block text-[10px]" style={{ color: 'var(--text-muted, #94a3b8)' }}>Max</label>
+                <label className="block" style={{ fontSize: 10, color: 'var(--muted-2)' }}>Max</label>
                 <input
                   type="range"
                   min={bounds.min}
@@ -197,13 +184,7 @@ export function HotelsFilterChipsMobile({
                       key={s}
                       type="button"
                       onClick={() => toggleStar(s)}
-                      className="px-3 py-1.5 rounded-full text-xs border transition-colors"
-                      style={{
-                        background: active ? 'rgba(245,158,11,0.18)' : 'transparent',
-                        color: 'var(--text)',
-                        borderColor: active ? '#f59e0b' : 'var(--border, rgba(148,163,184,0.4))',
-                        fontWeight: active ? 600 : 400,
-                      }}
+                      className={`ed-chip${active ? ' active' : ''}`}
                     >
                       {s}★
                     </button>
@@ -221,13 +202,8 @@ export function HotelsFilterChipsMobile({
                       key={a.id}
                       type="button"
                       onClick={() => toggleAmenity(a.id)}
-                      className="px-3 py-2 rounded-lg text-xs border text-left transition-colors"
-                      style={{
-                        background: active ? 'rgba(245,158,11,0.18)' : 'transparent',
-                        color: 'var(--text)',
-                        borderColor: active ? '#f59e0b' : 'var(--border, rgba(148,163,184,0.4))',
-                        fontWeight: active ? 600 : 400,
-                      }}
+                      className={`ed-chip${active ? ' active' : ''}`}
+                      style={{ textAlign: 'left', justifyContent: 'flex-start' }}
                     >
                       {a.label}
                     </button>
@@ -238,7 +214,7 @@ export function HotelsFilterChipsMobile({
 
             {open === 'distance' && (
               <div className="space-y-3">
-                <div className="text-[11px] tabular-nums" style={{ color: 'var(--text-muted, #64748b)' }}>
+                <div className="tabular-nums" style={{ fontSize: 11, color: 'var(--muted)' }}>
                   ≤ {state.maxDistanceKm} km from center
                 </div>
                 <input
