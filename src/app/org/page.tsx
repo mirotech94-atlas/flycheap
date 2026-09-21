@@ -32,11 +32,11 @@ const REASON_LABEL: Record<QueueReason, string> = {
 
 /** Amber is the reading light: only the rows that want action carry it. */
 const REASON_TONE: Record<QueueReason, string> = {
-  'verdict-flipped-to-buy': 'nc-q-act',
-  'departing-unbooked': 'nc-q-soon',
-  'booking-unrecorded': 'nc-q-soon',
-  'target-unreachable': 'nc-q-quiet',
-  'group-inactive': 'nc-q-quiet',
+  'verdict-flipped-to-buy': 'act',
+  'departing-unbooked': 'soon',
+  'booking-unrecorded': 'soon',
+  'target-unreachable': 'quiet',
+  'group-inactive': 'quiet',
 };
 
 export default async function OrgHome() {
@@ -68,8 +68,8 @@ export default async function OrgHome() {
         lede={`${org.name} · ${groupCount} group${groupCount === 1 ? '' : 's'}, ${watchCount} watch${watchCount === 1 ? '' : 'es'}`}
         action={
           <div className="flex items-center gap-2">
-            <Link href="/org/reports" className="nc-btn-quiet">Reports</Link>
-            <Link href="/org/groups" className="nc-btn-quiet">Groups</Link>
+            <Link href="/org/reports" className="ed-btn ed-btn-secondary">Reports</Link>
+            <Link href="/org/groups" className="ed-btn ed-btn-secondary">Groups</Link>
           </div>
         }
       />
@@ -85,32 +85,32 @@ export default async function OrgHome() {
         </FcPanel>
       ) : (
         <FcPanel title="Queue" note="Work top-down and stop when it is empty">
-          <ul className="nc-queue">
+          <ul className="ed-queue">
             {items.map((it, i) => (
-              <li key={`${it.reason}-${it.watchId ?? 'g'}-${i}`} className={`nc-queue-row ${REASON_TONE[it.reason]}`}>
-                <div className="nc-queue-main">
-                  <span className="nc-queue-tag">{REASON_LABEL[it.reason]}</span>
-                  <span className="nc-queue-route">
+              <li key={`${it.reason}-${it.watchId ?? 'g'}-${i}`} className={`ed-queue-row ${REASON_TONE[it.reason]}`}>
+                <div className="ed-queue-main">
+                  <span className="ed-queue-tag">{REASON_LABEL[it.reason]}</span>
+                  <span className="ed-queue-route">
                     {it.route ?? it.groupName}
-                    {it.route && <span className="nc-queue-group"> · {it.groupName}</span>}
+                    {it.route && <span className="ed-queue-group"> · {it.groupName}</span>}
                   </span>
-                  <p className="nc-queue-detail">{it.detail}</p>
+                  <p className="ed-queue-detail">{it.detail}</p>
                 </div>
-                <div className="nc-queue-actions">
+                <div className="ed-queue-actions">
                   {/* Three actions inline, no navigation — an agent who has to
                       open a page to act will not act. */}
                   {it.watchId != null && (
                     <>
-                      <Link href={`/org/groups/${it.groupId}#w${it.watchId}`} className="nc-btn-quiet nc-btn-sm">
+                      <Link href={`/org/groups/${it.groupId}#w${it.watchId}`} className="ed-btn ed-btn-secondary ed-btn-sm">
                         Adjust target
                       </Link>
-                      <Link href={`/org/groups/${it.groupId}#w${it.watchId}`} className="nc-btn nc-btn-sm">
+                      <Link href={`/org/groups/${it.groupId}#w${it.watchId}`} className="ed-btn ed-btn-primary ed-btn-sm">
                         Mark booked
                       </Link>
                     </>
                   )}
                   {it.watchId == null && (
-                    <Link href={`/org/groups/${it.groupId}`} className="nc-btn-quiet nc-btn-sm">Open client</Link>
+                    <Link href={`/org/groups/${it.groupId}`} className="ed-btn ed-btn-secondary ed-btn-sm">Open client</Link>
                   )}
                 </div>
               </li>

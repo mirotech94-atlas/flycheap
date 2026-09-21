@@ -50,14 +50,14 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
       <FcPageHead
         title={group.name}
         lede={`${org?.name ?? ''}${group.contact_email ? ` · ${group.contact_email}` : ''}`}
-        action={<Link href="/org" className="nc-btn-quiet">Back to today</Link>}
+        action={<Link href="/org" className="ed-btn ed-btn-secondary">Back to today</Link>}
       />
 
       <FcPanel title="Watches" note="Mark booked here — it is what the savings report counts">
         {watches.length === 0 ? (
           <FcEmpty headline="No watches yet" body="Add a route for this client and it will appear here." />
         ) : (
-          <table className="nc-table">
+          <table className="ed-table">
             <thead>
               <tr>
                 <th>Route</th><th>Departs</th><th>Baseline</th><th>Target</th><th>Status</th><th></th>
@@ -69,7 +69,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
                 const booked = String(w.status ?? '') === 'booked';
                 return (
                   <tr key={wid} id={`w${wid}`}>
-                    <td className="nc-mono">{String(w.origin)} → {String(w.destination)}</td>
+                    <td style={{ fontFamily: 'var(--font-mono-ed)' }}>{String(w.origin)} → {String(w.destination)}</td>
                     <td>{String(w.depart_date ?? '—')}</td>
                     <td>
                       {/* Stated, never silently recomputed. */}
@@ -78,35 +78,37 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
                     <td><FcMoney usd={(w.target_amount ?? w.target_per_adult_usd) as number | null} muted /></td>
                     <td>
                       {booked
-                        ? <span className="nc-pill-good">booked <FcMoney usd={w.booked_amount_usd as number | null} /></span>
-                        : <span className="nc-pill-quiet">{String(w.status ?? 'active')}</span>}
+                        ? <span className="ed-chip status-ok">booked <FcMoney usd={w.booked_amount_usd as number | null} /></span>
+                        : <span className="ed-chip status-closed">{String(w.status ?? 'active')}</span>}
                     </td>
-                    <td className="nc-row-actions">
-                      {canEdit && !booked && (
-                        <form action={markBooked} className="nc-inline-form">
-                          <input type="hidden" name="groupId" value={groupId} />
-                          <input type="hidden" name="watchId" value={wid} />
-                          <input name="amount" type="number" step="1" min="1" required
-                                 placeholder="paid" aria-label="Amount paid" className="nc-input-sm" />
-                          <button type="submit" className="nc-btn nc-btn-sm">Mark booked</button>
-                        </form>
-                      )}
-                      {canEdit && booked && (
-                        <form action={unmarkBooked} className="nc-inline-form">
-                          <input type="hidden" name="groupId" value={groupId} />
-                          <input type="hidden" name="watchId" value={wid} />
-                          <button type="submit" className="nc-btn-quiet nc-btn-sm">Undo</button>
-                        </form>
-                      )}
-                      {canEdit && (
-                        <form action={adjustTarget} className="nc-inline-form">
-                          <input type="hidden" name="groupId" value={groupId} />
-                          <input type="hidden" name="watchId" value={wid} />
-                          <input name="amount" type="number" step="1" min="1" required
-                                 placeholder="target" aria-label="New target" className="nc-input-sm" />
-                          <button type="submit" className="nc-btn-quiet nc-btn-sm">Set target</button>
-                        </form>
-                      )}
+                    <td className="cta">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        {canEdit && !booked && (
+                          <form action={markBooked} className="inline-flex items-center gap-1.5">
+                            <input type="hidden" name="groupId" value={groupId} />
+                            <input type="hidden" name="watchId" value={wid} />
+                            <input name="amount" type="number" step="1" min="1" required
+                                   placeholder="paid" aria-label="Amount paid" className="ed-input-sm" />
+                            <button type="submit" className="ed-btn ed-btn-primary ed-btn-sm">Mark booked</button>
+                          </form>
+                        )}
+                        {canEdit && booked && (
+                          <form action={unmarkBooked} className="inline-flex items-center gap-1.5">
+                            <input type="hidden" name="groupId" value={groupId} />
+                            <input type="hidden" name="watchId" value={wid} />
+                            <button type="submit" className="ed-btn ed-btn-secondary ed-btn-sm">Undo</button>
+                          </form>
+                        )}
+                        {canEdit && (
+                          <form action={adjustTarget} className="inline-flex items-center gap-1.5">
+                            <input type="hidden" name="groupId" value={groupId} />
+                            <input type="hidden" name="watchId" value={wid} />
+                            <input name="amount" type="number" step="1" min="1" required
+                                   placeholder="target" aria-label="New target" className="ed-input-sm" />
+                            <button type="submit" className="ed-btn ed-btn-secondary ed-btn-sm">Set target</button>
+                          </form>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 );
@@ -121,22 +123,22 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
           <FcEmpty headline="Nothing to report yet" body="Savings appear once a watch has a baseline and a booking recorded against it." />
         ) : (
           <>
-            <div className="nc-savings-total">
-              <span className="nc-savings-label">Total saved</span>
-              <span className={savings.totalSavedUsd >= 0 ? 'nc-savings-amount' : 'nc-savings-amount nc-neg'}>
+            <div className="ed-savings-total">
+              <span className="ed-savings-label">Total saved</span>
+              <span className={savings.totalSavedUsd >= 0 ? 'ed-savings-amount' : 'ed-savings-amount ed-delta-down'}>
                 <FcMoney usd={savings.totalSavedUsd} />
               </span>
             </div>
             {savings.lines.length > 0 && (
-              <table className="nc-table">
+              <table className="ed-table">
                 <thead><tr><th>Route</th><th>Baseline</th><th>Paid</th><th>Saved</th></tr></thead>
                 <tbody>
                   {savings.lines.map(l => (
                     <tr key={l.watchId}>
-                      <td className="nc-mono">{l.route}</td>
+                      <td style={{ fontFamily: 'var(--font-mono-ed)' }}>{l.route}</td>
                       <td><FcMoney usd={l.baselineUsd} muted /></td>
                       <td><FcMoney usd={l.bookedUsd} muted /></td>
-                      <td className={l.savedUsd >= 0 ? '' : 'nc-neg'}>
+                      <td className={l.savedUsd >= 0 ? '' : 'ed-delta-down'}>
                         <FcMoney usd={l.savedUsd} /> ({l.savedPct.toFixed(0)}%)
                       </td>
                     </tr>
@@ -148,7 +150,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
               /* Listed, never dropped. A total that quietly omits the trips it
                  could not score stops being believed the first time a client
                  notices one missing. */
-              <p className="nc-note">
+              <p className="ed-panel-note">
                 Not counted: {savings.unscored.map(u => `${u.route} (${u.reason})`).join(' · ')}
               </p>
             )}
@@ -163,8 +165,8 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
         {boards.filter(b => !b.revoked_at).length === 0 ? (
           <FcEmpty headline="No board yet" body="A board is a read-only page showing this group's watches. No login, no settings, nothing else exposed." />
         ) : (
-          <table className="nc-table">
-            <thead><tr><th>Created</th><th>Expires</th><th>Views</th><th>Last seen</th><th></th></tr></thead>
+          <table className="ed-table">
+            <thead><tr><th>Created</th><th>Expires</th><th className="num">Views</th><th>Last seen</th><th></th></tr></thead>
             <tbody>
               {boards.filter(b => !b.revoked_at).map(b => (
                 <tr key={b.id}>
@@ -172,22 +174,22 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
                   <td>{b.expires_at ? b.expires_at.slice(0, 10) : 'never'}</td>
                   {/* "Knowing the client checked the board twice this week tells
                       them the relationship is alive." */}
-                  <td className="nc-mono">{b.view_count}</td>
+                  <td className="num">{b.view_count}</td>
                   <td>{b.last_viewed_at ? b.last_viewed_at.slice(0, 16) : '—'}</td>
-                  <td className="nc-row-actions">
+                  <td className="cta">
                     {canEdit && (
-                      <>
-                        <form action={rotateGroupBoard} className="nc-inline-form">
+                      <div className="flex items-center gap-1.5 flex-wrap justify-end">
+                        <form action={rotateGroupBoard} className="inline-flex items-center gap-1.5">
                           <input type="hidden" name="groupId" value={groupId} />
                           <input type="hidden" name="boardId" value={b.id} />
-                          <button type="submit" className="nc-btn-quiet nc-btn-sm">Rotate link</button>
+                          <button type="submit" className="ed-btn ed-btn-secondary ed-btn-sm">Rotate link</button>
                         </form>
-                        <form action={revokeGroupBoard} className="nc-inline-form">
+                        <form action={revokeGroupBoard} className="inline-flex items-center gap-1.5">
                           <input type="hidden" name="groupId" value={groupId} />
                           <input type="hidden" name="boardId" value={b.id} />
-                          <button type="submit" className="nc-btn-quiet nc-btn-sm">Revoke</button>
+                          <button type="submit" className="ed-btn ed-btn-secondary ed-btn-sm">Revoke</button>
                         </form>
-                      </>
+                      </div>
                     )}
                   </td>
                 </tr>
@@ -195,7 +197,7 @@ export default async function GroupDetail({ params }: { params: Promise<{ id: st
             </tbody>
           </table>
         )}
-        <p className="nc-note">
+        <p className="ed-panel-note">
           The board link is shown once when it is created and is never stored — only a hash of it is
           kept, so a copy of our database does not hand anyone your clients&rsquo; travel plans.
           Rotating issues a new link and kills the old one in the same action.

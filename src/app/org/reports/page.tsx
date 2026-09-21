@@ -37,7 +37,7 @@ export default async function OrgReportsPage() {
       <FcPageHead
         title="Monthly reports"
         lede={`${org.name} · ${counts.queued} awaiting review · ${counts.approved} approved, sending · ${counts.sent} sent`}
-        action={<Link href="/org" className="nc-btn-quiet">Today</Link>}
+        action={<Link href="/org" className="ed-btn ed-btn-secondary">Today</Link>}
       />
 
       {queued.length === 0 ? (
@@ -55,54 +55,54 @@ export default async function OrgReportsPage() {
             note="What you see here is exactly what the client receives. Losses and unscored trips are included on purpose."
             action={canApprove ? (
               <div className="flex items-center gap-2">
-                <button type="submit" className="nc-act">Approve selected</button>
-                <button type="submit" formAction={approveAllQueued} className="nc-act nc-act-primary">
+                <button type="submit" className="ed-btn ed-btn-secondary">Approve selected</button>
+                <button type="submit" formAction={approveAllQueued} className="ed-btn ed-btn-primary">
                   Approve all {queued.length}
                 </button>
               </div>
             ) : (
-              <span className="text-[12px] text-[var(--nc-on-dark-faint)]">Only an owner or admin can approve</span>
+              <span style={{ fontSize: 12, color: 'var(--muted-2)' }}>Only an owner or admin can approve</span>
             )}
           >
-            <ul className="nc-queue">
+            <ul className="ed-queue">
               {queued.map(r => {
                 const s = parseSummary(r);
                 const scored = s.lines.length;
                 const total = scored + s.unscored.length;
                 return (
-                  <li key={r.id} className="nc-queue-row nc-q-act">
-                    <div className="nc-queue-main">
+                  <li key={r.id} className="ed-queue-row act">
+                    <div className="ed-queue-main">
                       <div className="flex items-start gap-3">
                         {canApprove && (
                           <input type="checkbox" name="ids" value={r.id} className="mt-1" aria-label={`Select ${r.group_name}`} />
                         )}
                         <div className="min-w-0 flex-1">
-                          <span className="nc-queue-tag">{s.period.label}</span>
-                          <span className="nc-queue-route">
+                          <span className="ed-queue-tag">{s.period.label}</span>
+                          <span className="ed-queue-route">
                             {r.group_name}
-                            <span className="nc-queue-group">
+                            <span className="ed-queue-group">
                               {' · '}{r.to_email ? `to ${r.to_email}` : 'no contact email on this group — will be skipped'}
                             </span>
                           </span>
-                          <div className="nc-savings-total mt-2">
-                            <span className="nc-savings-label">Total saved</span>
-                            <span className={s.totalSavedUsd >= 0 ? 'nc-savings-amount' : 'nc-savings-amount nc-neg'}>
+                          <div className="ed-savings-total mt-2">
+                            <span className="ed-savings-label">Total saved</span>
+                            <span className={s.totalSavedUsd >= 0 ? 'ed-savings-amount' : 'ed-savings-amount ed-delta-down'}>
                               <FcMoney usd={s.totalSavedUsd} />
                             </span>
-                            <span className="text-[11.5px] text-[var(--nc-on-dark-faint)]">
+                            <span style={{ fontSize: 11.5, color: 'var(--muted-2)' }}>
                               {scored} of {total} trip{total === 1 ? '' : 's'} scored
                             </span>
                           </div>
                           {scored > 0 && (
-                            <table className="nc-table">
+                            <table className="ed-table">
                               <thead><tr><th>Route</th><th>Baseline</th><th>Paid</th><th>Saved</th></tr></thead>
                               <tbody>
                                 {s.lines.map(l => (
                                   <tr key={l.watchId}>
-                                    <td className="nc-mono">{l.route}</td>
+                                    <td style={{ fontFamily: 'var(--font-mono-ed)' }}>{l.route}</td>
                                     <td><FcMoney usd={l.baselineUsd} muted /></td>
                                     <td><FcMoney usd={l.bookedUsd} muted /></td>
-                                    <td className={l.savedUsd >= 0 ? '' : 'nc-neg'}>
+                                    <td className={l.savedUsd >= 0 ? '' : 'ed-delta-down'}>
                                       <FcMoney usd={l.savedUsd} /> ({l.savedPct.toFixed(0)}%)
                                     </td>
                                   </tr>
@@ -111,7 +111,7 @@ export default async function OrgReportsPage() {
                             </table>
                           )}
                           {s.unscored.length > 0 && (
-                            <p className="nc-note">
+                            <p className="ed-panel-note">
                               Not counted: {s.unscored.map(u => `${u.route} (${u.reason})`).join(' · ')}
                             </p>
                           )}
@@ -119,7 +119,7 @@ export default async function OrgReportsPage() {
                       </div>
                     </div>
                     {canApprove && (
-                      <div className="nc-queue-actions">
+                      <div className="ed-queue-actions">
                         {/* The row id is BOUND into the action, not a name/value
                             on the button: React stores its own
                             name="$ACTION_ID_…" on a button that carries a
@@ -127,10 +127,10 @@ export default async function OrgReportsPage() {
                             overwritten — the page hydrates with a mismatch and
                             the action reads id as null. .bind() is the
                             supported way to pass a per-row argument. */}
-                        <button type="submit" formAction={approveReport.bind(null, r.id)} className="nc-act">
+                        <button type="submit" formAction={approveReport.bind(null, r.id)} className="ed-btn ed-btn-secondary">
                           Approve
                         </button>
-                        <button type="submit" formAction={skipReport.bind(null, r.id)} className="nc-act nc-act-quiet">
+                        <button type="submit" formAction={skipReport.bind(null, r.id)} className="ed-btn ed-btn-quiet">
                           Skip
                         </button>
                       </div>
@@ -145,19 +145,19 @@ export default async function OrgReportsPage() {
 
       {recent.length > 0 && (
         <FcPanel title="Recent" note="Approved reports send within about fifteen minutes.">
-          <table className="nc-table">
+          <table className="ed-table">
             <thead><tr><th>Period</th><th>Group</th><th>Status</th><th>To</th></tr></thead>
             <tbody>
               {recent.map(r => (
                 <tr key={r.id}>
-                  <td className="nc-mono">{r.period_start.slice(0, 7)}</td>
+                  <td style={{ fontFamily: 'var(--font-mono-ed)' }}>{r.period_start.slice(0, 7)}</td>
                   <td>{r.group_name}</td>
                   <td>
-                    <span className={r.status === 'sent' ? 'nc-pill-good' : 'nc-pill-quiet'}>
+                    <span className={r.status === 'sent' ? 'ed-chip status-ok' : 'ed-chip status-closed'}>
                       {r.status}{r.skip_reason ? ` · ${r.skip_reason}` : ''}
                     </span>
                   </td>
-                  <td className="text-[var(--nc-on-dark-faint)]">{r.to_email ?? '—'}</td>
+                  <td style={{ color: 'var(--muted-2)' }}>{r.to_email ?? '—'}</td>
                 </tr>
               ))}
             </tbody>
