@@ -74,7 +74,6 @@ const ALLOWLIST: Record<string, number> = {
   'src/app/page.tsx': 2,
   'src/components/AdminFarePilotWidget.tsx': 2,
   'src/components/fc/RouteField.tsx': 2,
-  'src/components/FcTweaks.tsx': 2,
   'src/components/HotelsPriceChart.tsx': 2,
   'src/app/admin/page.tsx': 1,
   'src/app/admin/users/RowMenu.tsx': 1,

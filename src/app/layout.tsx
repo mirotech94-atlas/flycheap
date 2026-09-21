@@ -12,6 +12,7 @@ import { UserTelemetry } from '@/components/UserTelemetry';
 import { getActiveTenant } from '@/lib/tenant';
 import { getCurrentUser, isOwner } from '@/lib/auth';
 import { MARKETING_HOSTS } from '@/lib/hosts';
+import { readThemeCookie } from '@/lib/theme';
 import { getRequestLocaleInfo } from '@/lib/i18n/server';
 import { getAppDict } from '@/lib/i18n/app';
 import { AppI18nProvider } from '@/lib/i18n/client';
@@ -77,33 +78,12 @@ function shadeColor(hex: string, percent: number): string {
 
 const themeBoot = `
   try {
+    var t = (document.cookie.match(/(?:^|;\\s*)fc-theme=([^;]*)/) || [])[1];
+    if (t !== 'light') t = 'dark';
     var root = document.documentElement;
-    // Theme, applied before paint. CLAMPED to the themes that still exist.
-    //
-    // This used to apply whatever string localStorage held. The old FC dropdown
-    // could store 'ivory' or 'paper', and those values outlive the dropdown: a
-    // returning visitor still carrying one got it written onto <html> before
-    // paint, and because the dark class is only added for 'coal', the WHOLE
-    // app rendered in light mode until FcTweaks corrected it after hydration.
-    // A stale client value must never be able to pick a theme the app no
-    // longer ships.
-    var fcStored = localStorage.getItem('fc-theme');
-    var fcT = (fcStored === 'coal' || fcStored === 'cabin') ? fcStored : 'coal';
-    var fcA = localStorage.getItem('fc-accent') || 'gold';
-    root.setAttribute('data-fc-theme', fcT);
-    root.setAttribute('data-fc-accent', fcA);
-    // Both live themes are dark, so both flip Tailwind dark mode -- otherwise
-    // non-FC routes (Settings, Searches...) render light against a dark app.
-    // The else-branch is now unreachable given the clamp above; it is kept as
-    // the honest fallback if a light theme is ever reintroduced.
-    if (fcT === 'coal' || fcT === 'cabin') { root.classList.add('dark'); }
-    else {
-      var t = localStorage.getItem('egyptair-theme');
-      if (t === 'dark' || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
-        root.classList.add('dark');
-      }
-    }
-  } catch(e) {}
+    root.dataset.theme = t;
+    root.classList.toggle('dark', t === 'dark');
+  } catch (e) {}
 `;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
@@ -147,12 +127,13 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // header and pass it down so ClientChrome can render the landing bare.
   const hostNoPort = reqHost.split(':')[0];
   const isMarketingHost = MARKETING_HOSTS.has(hostNoPort);
+  const theme = readThemeCookie(hdrs.get('cookie'));
 
   const { locale, dir, font } = await getRequestLocaleInfo();
   const t = getAppDict(locale);
 
   return (
-    <html lang={locale} dir={dir} data-fc-theme="coal" data-fc-accent="gold" className={`dark ${inter.variable} ${display.variable} ${mono.variable} ${fcDisplay.variable} ${fcSans.variable} ${cabinDisplay.variable} ${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
+    <html lang={locale} dir={dir} data-theme={theme} className={`${theme === 'dark' ? 'dark ' : ''}${inter.variable} ${display.variable} ${mono.variable} ${fcDisplay.variable} ${fcSans.variable} ${cabinDisplay.variable} ${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
         <style dangerouslySetInnerHTML={{ __html: brandStyle }} />
