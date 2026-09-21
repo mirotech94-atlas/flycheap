@@ -15,7 +15,7 @@ export function Sparkline({
   showMinMax?: boolean;
 }) {
   if (data.length < 2) {
-    return <span className="text-[10px] text-slate-400 italic">no trend</span>;
+    return <span className="text-[10px] italic" style={{ color: 'var(--muted-2)' }}>no trend</span>;
   }
 
   const prices = data.map(d => d.price_per_adult_usd);
@@ -41,8 +41,10 @@ export function Sparkline({
   const last = points[points.length - 1];
   const first = points[0];
   const trendUp = last.price > first.price;
-  const stroke = trendUp ? '#dc2626' : '#059669';
-  const fill   = trendUp ? '#fee2e2' : '#d1fae5';
+  const stroke = trendUp ? 'var(--red)' : 'var(--green)';
+  const fill   = trendUp
+    ? 'color-mix(in srgb, var(--red) 15%, var(--surface))'
+    : 'color-mix(in srgb, var(--green) 15%, var(--surface))';
   const thresholdY = threshold != null ? pad + h - ((threshold - min) / range) * h : null;
 
   const pctChange = ((last.price - first.price) / first.price) * 100;
@@ -56,13 +58,13 @@ export function Sparkline({
         <path d={area} fill={fill} opacity="0.55" />
         {thresholdY != null && (
           <line x1={pad} x2={pad + w} y1={thresholdY} y2={thresholdY}
-                stroke="#94a3b8" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
+                stroke="var(--muted-2)" strokeWidth="1" strokeDasharray="2 2" opacity="0.6" />
         )}
         <path d={path} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        {showMinMax && <circle cx={lowPt.x} cy={lowPt.y} r="2.2" fill="#E8A33D" stroke="white" strokeWidth="1" />}
+        {showMinMax && <circle cx={lowPt.x} cy={lowPt.y} r="2.2" fill="var(--amber)" stroke="var(--surface)" strokeWidth="1" />}
         <circle cx={last.x} cy={last.y} r="2" fill={stroke} />
       </svg>
-      <span className={`text-[10px] tabular font-semibold ${trendUp ? 'text-red-600' : 'text-emerald-600'}`}>
+      <span className="text-[10px] tabular font-semibold" style={{ color: trendUp ? 'var(--red)' : 'var(--green)' }}>
         {sign}{pctChange.toFixed(0)}%
       </span>
     </span>
@@ -74,9 +76,9 @@ export function Sparkline({
     <span className="inline-flex flex-col items-end gap-0.5">
       {chart}
       <span className="flex items-center gap-2 text-[9.5px] font-mono tabular uppercase tracking-wide">
-        <span className="text-emerald-700 dark:text-emerald-400" title="30-day low">▼ {fmt(priceMin)}</span>
-        <span className="text-slate-300 dark:text-slate-600">·</span>
-        <span className="text-red-700 dark:text-red-400" title="30-day high">▲ {fmt(priceMax)}</span>
+        <span style={{ color: 'var(--green)' }} title="30-day low">▼ {fmt(priceMin)}</span>
+        <span style={{ color: 'var(--muted-2)' }}>·</span>
+        <span style={{ color: 'var(--red)' }} title="30-day high">▲ {fmt(priceMax)}</span>
       </span>
     </span>
   );

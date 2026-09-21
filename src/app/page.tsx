@@ -192,6 +192,15 @@ function shortMonthDay(iso: string): string {
   const d = new Date(iso + 'T00:00:00Z');
   return new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(d);
 }
+/** Normalise a price series into an `.ed-spark` path (0–100 × 0–20 viewBox). */
+function sparkPath(points: number[]): string {
+  if (points.length < 2) return '';
+  const min = Math.min(...points);
+  const range = Math.max(...points) - min || 1;
+  return points
+    .map((p, i) => `${i === 0 ? 'M' : 'L'}${((i / (points.length - 1)) * 100).toFixed(1)} ${(20 - ((p - min) / range) * 20).toFixed(1)}`)
+    .join(' ');
+}
 
 export default async function DashboardPage({ searchParams }: PageProps) {
   const params = await searchParams;
@@ -509,11 +518,16 @@ export default async function DashboardPage({ searchParams }: PageProps) {
   // current cheapest fare against that search's effective target.
   const routeHistories: Record<string, VerdictPoint[]> = {};
   const routeVerdicts: Record<string, Verdict> = {};
+  // Current cheapest-observed price (+ the search that produced it, for its
+  // depart/return dates) per route — hoisted here so the ranked-bars feature
+  // block can render a price and a real booking link without a second pass
+  // over allRows.
+  const routeCurrent: Record<string, { price: number; search: (typeof allRows)[number]['search'] }> = {};
   {
-    const byRoute = new Map<string, { days: Map<string, number>; current: number | null; threshold: number }>();
+    const byRoute = new Map<string, { days: Map<string, number>; current: number | null; threshold: number; search: (typeof allRows)[number]['search'] | null }>();
     for (const r of allRows) {
       const k = routeKey(r.search.origin, r.search.destination);
-      const agg = byRoute.get(k) ?? { days: new Map<string, number>(), current: null, threshold: r.threshold };
+      const agg = byRoute.get(k) ?? { days: new Map<string, number>(), current: null, threshold: r.threshold, search: null };
       for (const h of r.history) {
         const day = h.polled_at.slice(0, 10);
         const cur = agg.days.get(day);
@@ -522,6 +536,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       if (r.fare && (agg.current === null || r.fare.price_per_adult_usd < agg.current)) {
         agg.current = r.fare.price_per_adult_usd;
         agg.threshold = r.threshold;
+        agg.search = r.search;
       }
       byRoute.set(k, agg);
     }
@@ -533,6 +548,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       if (agg.current !== null) {
         const v = computeVerdict(series, agg.current, agg.threshold);
         if (v) routeVerdicts[k] = v;
+        if (agg.search) routeCurrent[k] = { price: agg.current, search: agg.search };
       }
     }
   }
@@ -605,87 +621,139 @@ export default async function DashboardPage({ searchParams }: PageProps) {
     };
   });
 
+  // Sparkline for the "cheapest right now" stat — the cheapest deal's own
+  // route history, already computed above (routeHistories); no new fetch.
+  const cheapestRouteKey = cheapestDeal ? routeKey(cheapestDeal.origin, cheapestDeal.destination) : null;
+  const cheapestSparkPoints = (cheapestRouteKey ? routeHistories[cheapestRouteKey] : undefined)?.map(h => h.price_per_adult_usd) ?? [];
+
   return (
-    <div className="fc-shell" data-fc-theme="cabin" data-fc-accent="gold">
+    <div className="fc-shell ed-dashboard" data-fc-theme="cabin" data-fc-accent="gold">
       {showWizard && <OnboardingWizard userEmail={sessionUser!.email} />}
       {/* First-run guided tour of every tab — self-triggers from the sign-up flag. */}
       <OnboardingTour />
 
-      {/* === Hero === */}
-      <section className="fc-hero">
-        <div className="fc-hero-grid">
-          <div>
-            <div className="fc-eyebrow">{t.eyebrow}</div>
-            {/* Background polling runs silently — no status pill in the hero. */}
-            <h1>
-              {fill(t.h1.pre, { price: fmtUSD(threshold) })}<em>{belowThresholdCount || 7}</em>{fill(t.h1.mid, { price: fmtUSD(threshold) })}
-              <span className="fc-strike">{t.h1.strike}</span>{t.h1.post}<em>{t.h1.em}</em>{t.h1.end}
-            </h1>
-            <p className="fc-hero-lede">
-              {t.lede}
-            </p>
-            <div className="fc-hero-cta">
-              {cheapestDeal ? (
-                <a
-                  className="fc-btn fc-btn-gold"
-                  href={trackedBook({
-                    origin: cheapestDeal.origin, destination: cheapestDeal.destination,
-                    departDate: cheapestDeal.outbound_date, returnDate: cheapestDeal.return_date,
-                    adults: userParty.adults, infants: userParty.infants,
-                    perAdultUsd: cheapestDeal.per_adult_usd,
-                    surface: 'dashboard-cheapest-card',
-                  })}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  {fill(t.bookCheapest, { price: fmtUSD(cheapestDeal.per_adult_usd) })}
-                </a>
-              ) : (
-                <Link className="fc-btn fc-btn-gold" href="/searches">{t.addFirst}</Link>
-              )}
-              <Link className="fc-btn fc-btn-ghost" href="/searches">{t.addWatch}</Link>
-            </div>
-            <div className="fc-hero-stats">
-              <div>
-                <div className="fc-hero-stat-label">{t.cheapestNow}</div>
-                <div className="fc-hero-stat-value">
-                  {cheapestDeal ? fmtUSD(cheapestDeal.per_adult_usd) : '—'}
-                  {cheapestDeal && medianDeal && (
-                    <span className={'delta ' + (cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? 'fc-delta-down' : 'fc-delta-up')}>
-                      {cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? '▼' : '▲'} {fmtUSD(Math.abs(medianDeal.per_adult_usd - cheapestDeal.per_adult_usd))}
-                    </span>
-                  )}
-                </div>
-              </div>
-              <div>
-                <div className="fc-hero-stat-label">{t.median}</div>
-                <div className="fc-hero-stat-value">
-                  {medianDeal ? fmtUSD(medianDeal.per_adult_usd) : '—'}
-                  <span className="delta fc-delta-flat">±</span>
-                </div>
-              </div>
-              <div>
-                <div className="fc-hero-stat-label">{t.destinations}</div>
-                <div className="fc-hero-stat-value">
-                  {new Set(allDeals.map(d => d.destination)).size}
-                  <span className="delta fc-delta-flat">{t.cities}</span>
-                </div>
-              </div>
-            </div>
+      {/* === Header === */}
+      <div className="ed-eyebrow">{t.eyebrow}</div>
+      {/* Background polling runs silently — no status pill in the header. */}
+      <h1 className="ed-h1">
+        {fill(t.h1.pre, { price: fmtUSD(threshold) })}<em>{belowThresholdCount || 7}</em>{fill(t.h1.mid, { price: fmtUSD(threshold) })}
+        <span className="fc-strike">{t.h1.strike}</span>{t.h1.post}<em>{t.h1.em}</em>{t.h1.end}
+      </h1>
+      <p className="ed-sub">
+        {t.lede}
+      </p>
+      <div className="ed-actions">
+        {cheapestDeal ? (
+          <a
+            className="ed-btn ed-btn-primary"
+            href={trackedBook({
+              origin: cheapestDeal.origin, destination: cheapestDeal.destination,
+              departDate: cheapestDeal.outbound_date, returnDate: cheapestDeal.return_date,
+              adults: userParty.adults, infants: userParty.infants,
+              perAdultUsd: cheapestDeal.per_adult_usd,
+              surface: 'dashboard-cheapest-card',
+            })}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {fill(t.bookCheapest, { price: fmtUSD(cheapestDeal.per_adult_usd) })}
+          </a>
+        ) : (
+          <Link className="ed-btn ed-btn-primary" href="/searches">{t.addFirst}</Link>
+        )}
+        <Link className="ed-btn ed-btn-secondary" href="/searches">{t.addWatch}</Link>
+      </div>
+      <hr className="ed-rule" />
+      <div className="ed-stats">
+        <div className="ed-stat">
+          <div className="ed-stat-label">{t.cheapestNow}</div>
+          <div className="ed-stat-value">
+            {cheapestDeal ? fmtUSD(cheapestDeal.per_adult_usd) : '—'}
+            {cheapestDeal && medianDeal && (
+              <span className={'ed-stat-delta ' + (cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? 'ed-delta-down' : 'ed-delta-up')}>
+                {cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? '▼' : '▲'} {fmtUSD(Math.abs(medianDeal.per_adult_usd - cheapestDeal.per_adult_usd))}
+              </span>
+            )}
           </div>
-          <div className="fc-hero-globe">
-            <div className="fc-globe-frame">
-              <span className="fc-corner tl" /><span className="fc-corner tr" />
-              <span className="fc-corner bl" /><span className="fc-corner br" />
-            </div>
-            <div className="fc-globe-tag tl">{fill(t.globeTl, { n: filteredDeals.length || 87 })}</div>
-            <div className="fc-globe-tag br">{fill(t.globeBr, { a: belowThresholdCount || 2, t: trackedRoutes.length })}</div>
-            <FcGlobe />
+          {cheapestSparkPoints.length >= 2 && (
+            <svg className="ed-spark" viewBox="0 0 100 20" preserveAspectRatio="none">
+              <path d={sparkPath(cheapestSparkPoints)} />
+            </svg>
+          )}
+        </div>
+        <div className="ed-stat">
+          <div className="ed-stat-label">{t.median}</div>
+          <div className="ed-stat-value">
+            {medianDeal ? fmtUSD(medianDeal.per_adult_usd) : '—'}
+            <span className="ed-stat-delta ed-delta-flat">±</span>
           </div>
         </div>
+        <div className="ed-stat">
+          <div className="ed-stat-label">{t.destinations}</div>
+          <div className="ed-stat-value">
+            {new Set(allDeals.map(d => d.destination)).size}
+            <span className="ed-stat-delta ed-delta-flat">{t.cities}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* === Feature block: ranked bars — where each tracked route sits in
+          its own 30-day range. Reuses routeHistories/routeVerdicts/routeCurrent
+          computed above from allRows; no second verdict computation. === */}
+      <h2 className="ed-h2">Where each route sits in its 30-day range</h2>
+      <div className="ed-ranked">
+        {trackedRoutes.map(r => {
+          const k = routeKey(r.origin, r.destination);
+          const verdict = routeVerdicts[k];
+          const cur = routeCurrent[k];
+          const pct = verdict ? verdict.positionInRange * 100 : 0;
+          const barClass = verdict?.verdict === 'wait' ? 'amber' : verdict?.verdict === 'buy' ? 'green' : '';
+          const bookHref = cur
+            ? trackedBook({
+                origin: r.origin, destination: r.destination,
+                departDate: cur.search.depart_date, returnDate: cur.search.return_date,
+                adults: cur.search.adults, infants: cur.search.infants,
+                perAdultUsd: cur.price,
+                surface: 'dashboard-tracked-table',
+              })
+            : '/searches';
+          return (
+            <div className="ed-ranked-row" key={k}>
+              <div>
+                <div className="ed-ranked-name">{r.origin} → {r.destination}</div>
+                <div className="ed-ranked-meta">{verdict ? `${verdict.label} · ${verdict.confidencePct}% confidence` : '—'}</div>
+              </div>
+              <div className="ed-bar"><div className={`ed-bar-fill ${barClass}`} style={{ width: `${pct}%` }} /></div>
+              <div className="ed-ranked-value">{cur ? fmtUSD(cur.price) : '—'}</div>
+              {cur ? (
+                <a className="ed-btn ed-btn-row" href={bookHref} target="_blank" rel="noopener noreferrer">Book →</a>
+              ) : (
+                <Link className="ed-btn ed-btn-row" href={bookHref}>Book →</Link>
+              )}
+            </div>
+          );
+        })}
+        {trackedRoutes.length === 0 && (
+          <div className="ed-ranked-row">
+            <div className="ed-ranked-name">{t.addFirst}</div>
+          </div>
+        )}
+      </div>
+
+      {/* === Live network + ticker — stay, restyled onto editorial tokens === */}
+      <section>
+        <div className="fc-hero-globe" style={{ border: '1px solid var(--rule)' }}>
+          <div className="fc-globe-frame">
+            <span className="fc-corner tl" /><span className="fc-corner tr" />
+            <span className="fc-corner bl" /><span className="fc-corner br" />
+          </div>
+          <div className="fc-globe-tag tl">{fill(t.globeTl, { n: filteredDeals.length || 87 })}</div>
+          <div className="fc-globe-tag br">{fill(t.globeBr, { a: belowThresholdCount || 2, t: trackedRoutes.length })}</div>
+          <FcGlobe />
+        </div>
         {/* Ticker tape */}
-        <div className="fc-ticker">
-          <div className="fc-ticker-tag">{t.ticker}</div>
+        <div className="fc-ticker" style={{ background: 'var(--surface-2)' }}>
+          <div className="fc-ticker-tag ed-mono">{t.ticker}</div>
           <div className="fc-ticker-tape">
             <div className="fc-ticker-track">
               {[...sortedDeals.slice(0, 10), ...sortedDeals.slice(0, 10)].map((d, i) => (
@@ -711,13 +779,13 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       {/* === Quick flight search (Kayak-style, between hero and KPIs) ===
           relative z-30 keeps the autocomplete dropdowns above the KPI strip,
           which paints later in the DOM and was overlapping them. */}
-      <section className="card p-6 space-y-3 motion-fade-in border-l-4 border-l-brand-700 relative z-30">
+      <section className="card p-6 space-y-3 motion-fade-in relative z-30" style={{ borderLeft: '4px solid var(--accent)' }}>
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="eyebrow">{t.quickEyebrow}</span>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">{t.quickSub}</p>
+            <span className="ed-eyebrow">{t.quickEyebrow}</span>
+            <p className="mt-0.5" style={{ color: 'var(--muted)', fontSize: 13 }}>{t.quickSub}</p>
           </div>
-          <Link href="/explore" className="text-xs text-brand-700 hover:underline font-medium shrink-0">{t.fullExplore}</Link>
+          <Link href="/explore" className="hover:underline font-medium shrink-0" style={{ fontSize: 12, color: 'var(--accent)' }}>{t.fullExplore}</Link>
         </div>
         <FlightSearchForm />
       </section>
@@ -745,14 +813,14 @@ export default async function DashboardPage({ searchParams }: PageProps) {
           unit: t.perAdult,
           sub: cheapestDeal ? `${cheapestDeal.origin} → ${cheapestDeal.destination} · ${shortMonthDay(cheapestDeal.outbound_date)}` : t.noDeals,
           trend: [820, 780, 720, 680, 650, 612, cheapestDeal ? Math.round(cheapestDeal.per_adult_usd) : 589],
-          trendColor: '#1f8a5b',
+          trendColor: 'var(--green)',
         },
         {
           label: t.kpiBelow,
           value: String(belowThresholdCount).padStart(2, '0'),
           sub: fill(t.kpiBelowSub, { n: filteredDeals.length }),
           trend: [0, 1, 1, 2, 3, 3, belowThresholdCount],
-          trendColor: 'var(--nc-amber, #E8A33D)',
+          trendColor: 'var(--amber)',
         },
       ]} />
 
@@ -760,9 +828,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <div className="fc-section">
         <div className="fc-section-head">
           <div>
-            <div className="fc-smallcaps">{t.dealsEyebrow}</div>
-            <h2 className="fc-section-title"><Em r={t.dealsTitle} /></h2>
-            <p className="fc-section-sub">
+            <div className="ed-eyebrow">{t.dealsEyebrow}</div>
+            <h2 className="ed-h2" style={{ marginTop: 10 }}><Em r={t.dealsTitle} /></h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 8, maxWidth: 540, lineHeight: 1.5 }}>
               {t.dealsSub}
             </p>
           </div>
@@ -801,9 +869,9 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       <div className="fc-section">
         <div className="fc-section-head">
           <div>
-            <div className="fc-smallcaps">{t.intelEyebrow}</div>
-            <h2 className="fc-section-title"><Em r={t.intelTitle} /></h2>
-            <p className="fc-section-sub">
+            <div className="ed-eyebrow">{t.intelEyebrow}</div>
+            <h2 className="ed-h2" style={{ marginTop: 10 }}><Em r={t.intelTitle} /></h2>
+            <p style={{ color: 'var(--muted)', fontSize: 14, marginTop: 8, maxWidth: 540, lineHeight: 1.5 }}>
               {t.intelSub}
             </p>
           </div>

@@ -86,8 +86,8 @@ function project(lat: number, lon: number, rotLon: number, cx: number, cy: numbe
 }
 
 export function FcGlobe({
-  accentColor = 'var(--nc-amber, #E8A33D)',
-  arcColor = 'var(--nc-teal, #6FB3C9)',
+  accentColor = 'var(--amber)',
+  arcColor = 'var(--accent)',
 }: { accentColor?: string; arcColor?: string }) {
   // rot drives the render, so it has to be state. The POINTER does not: it is
   // damped every frame and only read while drawing, so it lives in a ref and
@@ -204,27 +204,22 @@ export function FcGlobe({
       onPointerLeave={() => { ptr.current.tx = 0; ptr.current.ty = 0; }}
     >
       <defs>
-        <radialGradient id="fcSphereGrad" cx="35%" cy="32%" r="70%">
-          <stop offset="0%" stopColor="#1a3866" />
-          <stop offset="40%" stopColor="#0a2547" />
-          <stop offset="100%" stopColor="#020a1a" />
-        </radialGradient>
         <radialGradient id="fcGlowGrad" cx="50%" cy="50%" r="50%">
-          <stop offset="0%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".18" />
-          <stop offset="60%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity=".04" />
-          <stop offset="100%" stopColor="var(--nc-teal, #6FB3C9)" stopOpacity="0" />
+          <stop offset="0%" stopColor="var(--accent)" stopOpacity=".18" />
+          <stop offset="60%" stopColor="var(--accent)" stopOpacity=".04" />
+          <stop offset="100%" stopColor="var(--accent)" stopOpacity="0" />
         </radialGradient>
       </defs>
 
       <circle cx={cx} cy={cy} r={R + 22} fill="url(#fcGlowGrad)" />
-      <circle cx={cx} cy={cy} r={R} fill="url(#fcSphereGrad)" />
+      <circle cx={cx} cy={cy} r={R} fill="var(--surface)" />
 
       {[-60, -30, 0, 30, 60].map(off => {
         const phiRad = (off * Math.PI) / 180;
         const rx = R * Math.abs(Math.cos(phiRad));
         return (
           <ellipse key={`m${off}`} cx={cx} cy={cy} rx={rx} ry={R}
-            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
+            fill="none" stroke="var(--rule)" strokeWidth="0.5" />
         );
       })}
       {[-60, -30, 0, 30, 60].map(lat => {
@@ -233,11 +228,11 @@ export function FcGlobe({
         const rx = R * Math.cos(phi);
         return (
           <ellipse key={`p${lat}`} cx={cx} cy={cy + ry} rx={rx} ry={rx * 0.0001 + 0.5}
-            fill="none" stroke="var(--nc-rule, rgba(255,255,255,.10))" strokeWidth="0.5" />
+            fill="none" stroke="var(--rule)" strokeWidth="0.5" />
         );
       })}
       <line x1={cx - R} y1={cy} x2={cx + R} y2={cy}
-        stroke="var(--nc-rule-2, rgba(255,255,255,.18))" strokeWidth="0.6" strokeDasharray="3 5" />
+        stroke="var(--rule-strong)" strokeWidth="0.6" strokeDasharray="3 5" />
 
       {/* Proximity light. Vesper disturbs its orb by the ANGLE between the
           cursor and each point, with a smooth falloff; flattened to this
@@ -255,7 +250,7 @@ export function FcGlobe({
         return (
           <circle key={i} cx={p.x} cy={p.y}
             r={(p.front ? 1.2 : 0.8) + lit * 0.8}
-            fill={lit > 0.06 ? 'var(--nc-on-dark, #E9EDF5)' : arcColor}
+            fill={lit > 0.06 ? 'var(--ink)' : arcColor}
             fillOpacity={(p.front ? 0.55 : 0.18) + lit * 0.42} />
         );
       })}
@@ -272,9 +267,7 @@ export function FcGlobe({
           <g key="scan">
             {[24, 44, 68].map((r, i) => (
               <circle key={r} cx={hub.proj!.x} cy={hub.proj!.y} r={r} fill="none"
-                stroke={i === 1
-                  ? 'var(--nc-rule-2, rgba(255,255,255,.18))'
-                  : 'var(--nc-rule, rgba(255,255,255,.10))'}
+                stroke={i === 1 ? 'var(--rule-strong)' : 'var(--rule)'}
                 strokeWidth="0.6" />
             ))}
             <circle className="fc-globe-ping" cx={hub.proj!.x} cy={hub.proj!.y}
@@ -289,7 +282,6 @@ export function FcGlobe({
             stroke={a.hot ? accentColor : arcColor}
             strokeWidth={a.hot ? 1.6 : 1}
             strokeLinecap="round"
-            style={{ filter: a.hot ? `drop-shadow(0 0 4px ${accentColor})` : 'none' }}
             opacity={a.hot ? 1 : 0.4} />
           {/* The poll head. Kimi fills its lap by stroking the SAME path under an
               animated dash mask rather than moving a token along it, and that is
@@ -303,10 +295,7 @@ export function FcGlobe({
             strokeWidth={a.hot ? 2.4 : 1.7}
             strokeLinecap="round"
             strokeDasharray="0.1 1"
-            style={{
-              animationDelay: `${(a.i * 0.42).toFixed(2)}s`,
-              filter: a.hot ? `drop-shadow(0 0 5px ${accentColor})` : 'none',
-            }} />
+            style={{ animationDelay: `${(a.i * 0.42).toFixed(2)}s` }} />
         </g>
       ))}
 
@@ -320,8 +309,7 @@ export function FcGlobe({
               fill={isHub ? accentColor : arcColor}
               stroke={isHub ? accentColor : arcColor}
               strokeOpacity={0.4}
-              strokeWidth={isHub ? 3 : 2}
-              style={{ filter: isHub ? `drop-shadow(0 0 6px ${accentColor})` : 'none' }} />
+              strokeWidth={isHub ? 3 : 2} />
             {isHub && (
               <text x={c.proj.x + 8} y={c.proj.y - 8}
                 fill={accentColor} fontSize="10"
@@ -334,7 +322,7 @@ export function FcGlobe({
         );
       })}
 
-      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--nc-teal, #6FB3C9)" strokeOpacity={0.18} strokeWidth="0.8" />
+      <circle cx={cx} cy={cy} r={R} fill="none" stroke="var(--accent)" strokeOpacity={0.18} strokeWidth="0.8" />
     </svg>
   );
 }
