@@ -3,6 +3,7 @@ import { MODELS, complete, hasApiKey, isDryRun, pingModel } from '../shared/clie
 import { getInsightsSnapshot } from '../shared/data';
 import { startRun, finishRun } from '../shared/storage';
 import { BRAND_VOICE } from '../shared/voice';
+import { isConfigured as voiceConfigured, synthesize, speakable } from '@/lib/elevenlabs';
 import { sendOperatorBrief } from '@/lib/email';
 import type { InsightsResult } from '../shared/types';
 
@@ -49,9 +50,23 @@ export async function runInsights(): Promise<InsightsResult> {
       emailNote = 'AGENT_ADMIN_EMAIL not set — brief generated but not emailed';
     } else {
       const today = new Date().toISOString().slice(0, 10);
-      const res = await sendOperatorBrief({ to, subject: `FlyCheap ops brief — ${today}`, body: brief });
+      // Spoken brief — only when ElevenLabs is configured, never a reason for
+      // the email itself to fail: a narration error is noted and the text
+      // brief still goes out.
+      let audio: { filename: string; content: Buffer } | undefined;
+      let audioNote = '';
+      if (voiceConfigured() && !dryRun) {
+        try {
+          const spoken = await synthesize(speakable(brief), { model: 'eleven_multilingual_v2', format: 'mp3_22050_32', stability: 0.6 });
+          audio = { filename: `flycheap-ops-brief-${today}.mp3`, content: spoken.audio };
+          audioNote = ` · narrated (${Math.round(spoken.audio.length / 1024)} KB)`;
+        } catch (e) {
+          audioNote = ` · narration failed: ${(e as Error).message.slice(0, 80)}`;
+        }
+      }
+      const res = await sendOperatorBrief({ to, subject: `FlyCheap ops brief — ${today}`, body: brief, audio });
       emailed = res.ok;
-      emailNote = res.ok ? `emailed to ${to} (id=${res.id})` : `email failed: ${res.error}`;
+      emailNote = (res.ok ? `emailed to ${to} (id=${res.id})` : `email failed: ${res.error}`) + audioNote;
     }
 
     finishRun(runId, {
