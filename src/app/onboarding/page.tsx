@@ -231,7 +231,7 @@ export default function OnboardingPage() {
           <div className="flex items-center gap-4">
             <Link href="/" style={{ color: 'var(--panel-fg)' }}>Dashboard</Link>
             <Link href="/explore" style={{ color: 'var(--panel-fg)' }}>Explore</Link>
-            <a href="mailto:sales@fareintel.com" style={{ color: 'var(--panel-fg)' }}>Contact</a>
+            <a href="mailto:support@flycheap.live" style={{ color: 'var(--panel-fg)' }}>Contact</a>
           </div>
         </div>
       </footer>
