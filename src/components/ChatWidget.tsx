@@ -90,6 +90,13 @@ export function ChatWidget() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  // ElevenLabs path. `audioRef` is the <audio> that plays a synthesised reply;
+  // `recorderRef` captures the mic for Scribe. When the server answers 503
+  // (no key configured) `cloudVoice` flips to false for the session and both
+  // paths drop to the browser engines above — the pre-ElevenLabs behaviour.
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const recorderRef = useRef<MediaRecorder | null>(null);
+  const cloudVoiceRef = useRef<boolean>(true);
   const globe = useGlobe();
 
   useEffect(() => {
@@ -120,7 +127,11 @@ export function ChatWidget() {
 
   // Detect voice support once.
   useEffect(() => {
-    setVoiceSupported(!!getSpeechRecognition() && typeof window !== 'undefined' && !!window.speechSynthesis);
+    // Voice is on when EITHER engine can work: the cloud path needs only a
+    // microphone + MediaRecorder (Safari has no SpeechRecognition at all), the
+    // browser path needs SpeechRecognition + speechSynthesis.
+    const hasMic = typeof navigator !== 'undefined' && !!navigator.mediaDevices?.getUserMedia && typeof MediaRecorder !== 'undefined';
+    setVoiceSupported(hasMic || (!!getSpeechRecognition() && typeof window !== 'undefined' && !!window.speechSynthesis));
     // Trigger voices to load (some browsers populate async)
     if (typeof window !== 'undefined' && window.speechSynthesis) {
       window.speechSynthesis.getVoices();
@@ -130,10 +141,13 @@ export function ChatWidget() {
       if (typeof window !== 'undefined' && window.speechSynthesis) {
         window.speechSynthesis.cancel();
       }
+      audioRef.current?.pause();
+      recorderRef.current?.stream.getTracks().forEach(t => t.stop());
     };
   }, []);
 
-  function startRecording() {
+  /** Browser SpeechRecognition — the fallback when the cloud path is off. */
+  function startBrowserRecording() {
     const SR = getSpeechRecognition();
     if (!SR) return;
     if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
@@ -154,13 +168,69 @@ export function ChatWidget() {
     rec.start();
   }
 
+  /** ElevenLabs Scribe via MediaRecorder. Records one utterance; stop() (or
+   *  the 20s cap) uploads it to /api/voice/stt. A 503 means the server has no
+   *  key — remember that and use the browser engine from then on. */
+  async function startRecording() {
+    if (!cloudVoiceRef.current || typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+      startBrowserRecording();
+      return;
+    }
+    stopSpeaking();
+    let stream: MediaStream;
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    } catch {
+      startBrowserRecording();
+      return;
+    }
+    const mime = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg'].find(m => MediaRecorder.isTypeSupported(m)) || '';
+    const rec = new MediaRecorder(stream, mime ? { mimeType: mime } : undefined);
+    const chunks: BlobPart[] = [];
+    rec.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+    rec.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      setRecording(false);
+      globe.setListening(false);
+      const blob = new Blob(chunks, { type: rec.mimeType || 'audio/webm' });
+      if (blob.size < 1024) return; // a tap, not speech
+      globe.setStatusLine('// TRANSCRIBING');
+      try {
+        const form = new FormData();
+        form.append('audio', blob, 'speech.webm');
+        form.append('language', (document.documentElement.lang || 'en').slice(0, 2));
+        const res = await fetch('/api/voice/stt', { method: 'POST', body: form });
+        if (res.status === 503) { cloudVoiceRef.current = false; globe.setStatusLine('// LINK IDLE · STANDING BY'); return; }
+        const j = await res.json().catch(() => ({})) as { text?: string };
+        if (res.ok && j.text) send(j.text);
+        else globe.setStatusLine('// LINK IDLE · STANDING BY');
+      } catch {
+        globe.setStatusLine('// LINK IDLE · STANDING BY');
+      }
+    };
+    recorderRef.current = rec;
+    setRecording(true);
+    globe.setListening(true);
+    globe.setStatusLine('// LISTENING · MIC OPEN');
+    rec.start();
+    // Hard cap so a forgotten mic never uploads a minute of room noise.
+    setTimeout(() => { if (rec.state === 'recording') rec.stop(); }, 20_000);
+  }
+
   function stopRecording() {
+    if (recorderRef.current?.state === 'recording') { recorderRef.current.stop(); return; }
     recognitionRef.current?.stop();
     setRecording(false);
     globe.setListening(false);
   }
 
-  function speak(text: string) {
+  function stopSpeaking() {
+    if (typeof window !== 'undefined' && window.speechSynthesis) window.speechSynthesis.cancel();
+    if (audioRef.current) { audioRef.current.pause(); audioRef.current = null; }
+  }
+
+  /** Browser speechSynthesis — the fallback voice. */
+  function speakBrowser(text: string) {
     if (typeof window === 'undefined' || !window.speechSynthesis) return;
     window.speechSynthesis.cancel();
     const utter = new SpeechSynthesisUtterance(text);
@@ -177,6 +247,31 @@ export function ChatWidget() {
       globe.setStatusLine('// LINK IDLE · STANDING BY');
     };
     window.speechSynthesis.speak(utter);
+  }
+
+  /** ElevenLabs first. The reply is synthesised server-side (the key never
+   *  reaches the browser) and played through an <audio>; a 503 flips the
+   *  session to the browser voice, any other failure falls back once. */
+  async function speak(text: string) {
+    if (!cloudVoiceRef.current) { speakBrowser(text); return; }
+    stopSpeaking();
+    try {
+      const res = await fetch('/api/voice/tts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text }),
+      });
+      if (res.status === 503) { cloudVoiceRef.current = false; speakBrowser(text); return; }
+      if (!res.ok) { speakBrowser(text); return; }
+      const url = URL.createObjectURL(await res.blob());
+      const audio = new Audio(url);
+      audioRef.current = audio;
+      audio.onplay = () => { globe.setSpeaking(true); globe.setStatusLine('// CONCIERGE TRANSMITTING'); };
+      const done = () => { globe.setSpeaking(false); globe.setStatusLine('// LINK IDLE · STANDING BY'); URL.revokeObjectURL(url); };
+      audio.onended = done;
+      audio.onerror = done;
+      await audio.play();
+    } catch {
+      speakBrowser(text);
+    }
   }
 
   async function send(text: string) {
