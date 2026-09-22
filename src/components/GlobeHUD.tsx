@@ -110,7 +110,12 @@ export function GlobeHUD() {
     const t = setTimeout(() => setVisible(false), 5000);
     return () => clearTimeout(t);
   }, [speaking, listening]);
-  if (!visible) return null;
+  // NOTE: the `if (!visible) return null` used to sit HERE, above six more
+  // hooks. Hooks must run in the same order on every render, so the first
+  // time the HUD became visible (mic open) React saw more hooks than the
+  // render before and threw its hook-order error, taking the page down with "This
+  // page couldn't load". The early return now lives just before the JSX,
+  // after every hook has run. Same visible behaviour, no crash.
 
   // Fetch landmass topology once.
   useEffect(() => {
@@ -188,6 +193,8 @@ export function GlobeHUD() {
     () => (pulseRing ? [{ lat: pulseRing.lat, lng: pulseRing.lng }] : []),
     [pulseRing]
   );
+
+  if (!visible) return null;
 
   return (
     <aside
