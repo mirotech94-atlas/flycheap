@@ -50,6 +50,7 @@ function pickConciergeVoice(): SpeechSynthesisVoice | null {
 }
 
 const STORAGE_KEY = 'egyptair-chat-history-v1';
+const VOICE_PREF_KEY = 'fc-concierge-voice';
 
 const INITIAL: Msg[] = [{
   role: 'assistant',
@@ -84,7 +85,21 @@ export function ChatWidget() {
   const [pending, setPending] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [chipIndex, setChipIndex] = useState(0);
-  const [voiceMode, setVoiceMode] = useState(true); // TTS on/off
+  // Spoken replies are OFF unless the reader turns them on — Myron's call:
+  // read the answer, don't have it read to you. The 🔊 button flips it and the
+  // choice is remembered per browser. The mic (speech IN) is unaffected.
+  const [voiceMode, setVoiceMode] = useState(false);
+  useEffect(() => {
+    try { if (localStorage.getItem(VOICE_PREF_KEY) === 'on') setVoiceMode(true); } catch { /* private mode */ }
+  }, []);
+  function toggleVoiceMode() {
+    setVoiceMode(v => {
+      const next = !v;
+      try { localStorage.setItem(VOICE_PREF_KEY, next ? 'on' : 'off'); } catch { /* ignore */ }
+      if (!next) stopSpeaking();
+      return next;
+    });
+  }
   const [recording, setRecording] = useState(false);
   const [voiceSupported, setVoiceSupported] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -423,10 +438,10 @@ export function ChatWidget() {
             {voiceSupported && (
               <button
                 type="button"
-                onClick={() => setVoiceMode(v => !v)}
+                onClick={toggleVoiceMode}
                 className="ed-btn ed-chat-toggle"
                 style={voiceMode ? { background: 'var(--accent)', color: 'var(--on-accent)', borderColor: 'var(--accent)' } : { background: 'var(--surface)', color: 'var(--ink-soft)', borderColor: 'var(--rule-strong)' }}
-                title={voiceMode ? 'Voice replies on' : 'Voice replies off'}
+                title={voiceMode ? 'Voice replies on — click to read silently' : 'Voice replies off — click to hear replies'}
                 aria-pressed={voiceMode}
               >
                 {voiceMode ? '🔊' : '🔈'}
