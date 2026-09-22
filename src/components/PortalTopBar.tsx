@@ -6,19 +6,19 @@ import { useAppI18n } from '@/lib/i18n/client';
 import { Logo } from '@/components/Logo';
 import { LanguageMenu } from '@/components/LanguageMenu';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { PUBLIC_ADMIN_HOST, PUBLIC_MARKETING_HOST } from '@/lib/hosts';
+import { PUBLIC_MARKETING_HOST } from '@/lib/hosts';
 import { PortalSidebar } from '@/components/PortalSidebar';
 
 // The signed-in inventory moved to the left rail (PortalSidebar), which
 // mirrors the admin console's. What is left here is the guest shell: the
 // marketing mini-nav a signed-out visitor sees in place of the rail.
+// The client portal offers no route into the admin console — not even for the
+// owner. The console is reached by going to the admin host directly.
 export function PortalTopBar({
   user,
-  isAdmin = false,
   language = 'Language',
 }: {
   user: { email: string; name: string | null; tier?: string | null } | null;
-  isAdmin?: boolean;
   /** Localized label for the language switcher (a11y title). */
   language?: string;
 }) {
@@ -70,9 +70,6 @@ export function PortalTopBar({
         {user && <span className="pt-tier ed-mono">{user.tier || 'free'}</span>}
         <ThemeToggle />
         <LanguageMenu locale={locale} variant="editorial" label={language} />
-        {user && isAdmin && (
-          <a href={`https://${PUBLIC_ADMIN_HOST}/`} className="ed-btn ed-btn-secondary ed-mono">{nav.adminPortal}</a>
-        )}
         {user && (
           <button
             type="button"

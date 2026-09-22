@@ -665,6 +665,39 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         )}
         <Link className="ed-btn ed-btn-secondary" href="/searches">{t.addWatch}</Link>
       </div>
+
+        <div className="ed-stats">
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.cheapestNow}</div>
+            <div className="ed-stat-value">
+              {cheapestDeal ? fmtUSD(cheapestDeal.per_adult_usd) : '—'}
+              {cheapestDeal && medianDeal && (
+                <span className={'ed-stat-delta ' + (cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? 'ed-delta-down' : 'ed-delta-up')}>
+                  {cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? '▼' : '▲'} {fmtUSD(Math.abs(medianDeal.per_adult_usd - cheapestDeal.per_adult_usd))}
+                </span>
+              )}
+            </div>
+            {cheapestSparkPoints.length >= 2 && (
+              <svg className="ed-spark" viewBox="0 0 100 20" preserveAspectRatio="none">
+                <path d={sparkPath(cheapestSparkPoints)} />
+              </svg>
+            )}
+          </div>
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.median}</div>
+            <div className="ed-stat-value">
+              {medianDeal ? fmtUSD(medianDeal.per_adult_usd) : '—'}
+              <span className="ed-stat-delta ed-delta-flat">±</span>
+            </div>
+          </div>
+          <div className="ed-stat">
+            <div className="ed-stat-label">{t.destinations}</div>
+            <div className="ed-stat-value">
+              {new Set(allDeals.map(d => d.destination)).size}
+              <span className="ed-stat-delta ed-delta-flat">{t.cities}</span>
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="fc-hero-globe ed-brief-globe" style={{ border: '1px solid var(--rule)' }}>
@@ -679,38 +712,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </div>
 
       <hr className="ed-rule" />
-      <div className="ed-stats">
-        <div className="ed-stat">
-          <div className="ed-stat-label">{t.cheapestNow}</div>
-          <div className="ed-stat-value">
-            {cheapestDeal ? fmtUSD(cheapestDeal.per_adult_usd) : '—'}
-            {cheapestDeal && medianDeal && (
-              <span className={'ed-stat-delta ' + (cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? 'ed-delta-down' : 'ed-delta-up')}>
-                {cheapestDeal.per_adult_usd < medianDeal.per_adult_usd ? '▼' : '▲'} {fmtUSD(Math.abs(medianDeal.per_adult_usd - cheapestDeal.per_adult_usd))}
-              </span>
-            )}
-          </div>
-          {cheapestSparkPoints.length >= 2 && (
-            <svg className="ed-spark" viewBox="0 0 100 20" preserveAspectRatio="none">
-              <path d={sparkPath(cheapestSparkPoints)} />
-            </svg>
-          )}
-        </div>
-        <div className="ed-stat">
-          <div className="ed-stat-label">{t.median}</div>
-          <div className="ed-stat-value">
-            {medianDeal ? fmtUSD(medianDeal.per_adult_usd) : '—'}
-            <span className="ed-stat-delta ed-delta-flat">±</span>
-          </div>
-        </div>
-        <div className="ed-stat">
-          <div className="ed-stat-label">{t.destinations}</div>
-          <div className="ed-stat-value">
-            {new Set(allDeals.map(d => d.destination)).size}
-            <span className="ed-stat-delta ed-delta-flat">{t.cities}</span>
-          </div>
-        </div>
-      </div>
 
       {/* === Feature block: ranked bars — where each tracked route sits in
           its own 30-day range. Reuses routeHistories/routeVerdicts/routeCurrent
