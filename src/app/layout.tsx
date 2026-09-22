@@ -9,7 +9,7 @@ import { PortalTopBar } from '@/components/PortalTopBar';
 import { DeferredAppWidgets } from '@/components/DeferredAppWidgets';
 import { UserTelemetry } from '@/components/UserTelemetry';
 import { getActiveTenant } from '@/lib/tenant';
-import { getCurrentUser, isOwner } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
 import { MARKETING_HOSTS } from '@/lib/hosts';
 import { readThemeCookie } from '@/lib/theme';
 import { getRequestLocaleInfo } from '@/lib/i18n/server';
@@ -64,8 +64,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // Falls back to the default navy when the user hasn't set one.
   const user = await getActiveTenant();
   const sessionUser = await getCurrentUser();
-  // Owner-only — non-owner admins (support / ops) don't see the portal affordance.
-  const showAdminLink = isOwner(sessionUser);
   // Kept in step with tailwind's `brand.DEFAULT` on purpose -- these are two
   // separate literals for one idea ("the house blue"), and letting them drift
   // means `bg-brand/10` and the injected `.border-brand-500` stop matching.
@@ -129,7 +127,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         <ClientChrome adminHost={isAdminHost} marketingHost={isMarketingHost}>
           <PortalTopBar
             user={sessionUser ? { email: sessionUser.email, name: sessionUser.name, tier: sessionUser.tier } : null}
-            isAdmin={showAdminLink}
             language={t.common.language}
           />
         </ClientChrome>
