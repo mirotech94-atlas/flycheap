@@ -545,6 +545,10 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 .ed-support-form { position: sticky; top: 86px; }
 @media (max-width: 900px) { .ed-support-grid { grid-template-columns: minmax(0, 1fr); } .ed-support-form { position: static; } }
 
+/* The marketing site ships dark only, so it carries no light/dark control.
+   The portal and the admin console keep theirs. */
+html.mk-host .fc-theme-toggle { display: none; }
+
 /* Below the rail breakpoint the ☰ in the top bar owns it: closed by default
    so a phone opens on content, and it pushes the page rather than floating
    over it (same call the admin rail makes at this width). */
