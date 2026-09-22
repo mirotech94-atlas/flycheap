@@ -11,13 +11,51 @@ function basicAuth(): string {
   return 'Basic ' + Buffer.from(k + ':').toString('base64');
 }
 
-// Env uses STRIPE_PRICE_{PRO,ENT}_MONTHLY; older STRIPE_PRICE_PRO/ENTERPRISE
-// names are honored as fallbacks.
-function proPriceId(): string | undefined {
-  return process.env.STRIPE_PRICE_PRO_MONTHLY || process.env.STRIPE_PRICE_PRO;
+export type Plan = 'pro' | 'enterprise';
+export type Period = 'month' | 'year';
+
+/**
+ * Which env var holds each price.
+ *
+ * Env uses STRIPE_PRICE_{PRO,ENT}_{MONTHLY,YEARLY}; the older
+ * STRIPE_PRICE_PRO / STRIPE_PRICE_ENTERPRISE names are honoured as monthly
+ * fallbacks so an old deployment keeps working.
+ */
+const PRICE_ENV: Record<Plan, Record<Period, string[]>> = {
+  pro: {
+    month: ['STRIPE_PRICE_PRO_MONTHLY', 'STRIPE_PRICE_PRO'],
+    year:  ['STRIPE_PRICE_PRO_YEARLY'],
+  },
+  enterprise: {
+    month: ['STRIPE_PRICE_ENT_MONTHLY', 'STRIPE_PRICE_ENTERPRISE'],
+    year:  ['STRIPE_PRICE_ENT_YEARLY'],
+  },
+};
+
+/**
+ * The price to charge, and the period actually being charged.
+ *
+ * THE BUG THIS EXISTS TO CLOSE: the pricing page has a monthly/yearly switch
+ * and sends `?period=year`, but checkout only ever read `plan` — so every
+ * yearly purchase silently charged the MONTHLY price. Someone clicking
+ * "$79/year" was billed $9/month, and the two yearly price IDs configured in
+ * production were referenced nowhere in the codebase.
+ *
+ * Returns the period it resolved, which is not always the one asked for: if a
+ * yearly price is not configured we fall back to monthly rather than failing
+ * the sale, and the caller records what was really sold.
+ */
+export function priceIdFor(plan: Plan, period: Period): { priceId: string; period: Period } | null {
+  const pick = (p: Period) => PRICE_ENV[plan][p].map(k => process.env[k]).find(Boolean);
+  const wanted = pick(period);
+  if (wanted) return { priceId: wanted, period };
+  // Never fail a sale over a missing yearly price; charge monthly and say so.
+  const monthly = pick('month');
+  return monthly ? { priceId: monthly, period: 'month' } : null;
 }
-function enterprisePriceId(): string | undefined {
-  return process.env.STRIPE_PRICE_ENT_MONTHLY || process.env.STRIPE_PRICE_ENTERPRISE;
+
+function proPriceId(): string | undefined {
+  return PRICE_ENV.pro.month.map(k => process.env[k]).find(Boolean);
 }
 
 export function isStripeConfigured(): boolean {
@@ -34,16 +72,17 @@ export async function createProCheckoutSession(opts: {
   successUrl: string;
   cancelUrl: string;
   customerId?: string | null;
-  plan?: 'pro' | 'enterprise';
+  plan?: Plan;
+  period?: Period;
 }): Promise<{ ok: true; url: string; sessionId: string } | { ok: false; error: string }> {
   if (!isStripeConfigured()) {
     return { ok: false, error: 'Stripe not configured (STRIPE_SECRET_KEY / STRIPE_PRICE_PRO_MONTHLY missing).' };
   }
 
   const plan = opts.plan ?? 'pro';
-  const priceId = plan === 'enterprise'
-    ? (enterprisePriceId() || proPriceId()!)
-    : proPriceId()!;
+  const resolved = priceIdFor(plan, opts.period ?? 'month');
+  if (!resolved) return { ok: false, error: `No Stripe price configured for ${plan}.` };
+  const { priceId, period } = resolved;
 
   const form = new URLSearchParams();
   form.set('mode', 'subscription');
@@ -56,6 +95,12 @@ export async function createProCheckoutSession(opts: {
   else form.set('customer_email', opts.email);
   form.set('subscription_data[metadata][user_id]', String(opts.userId));
   form.set('subscription_data[metadata][plan]', plan);
+  // The period the customer was ACTUALLY charged for. Without it the webhook
+  // has no way to attribute revenue — it reads metadata.period and would
+  // record null for every subscription ever sold.
+  form.set('subscription_data[metadata][period]', period);
+  form.set('metadata[period]', period);
+  form.set('metadata[plan]', plan);
   form.set('allow_promotion_codes', 'true');
   // Stripe Tax is active on the account: with automatic_tax on, Stripe charges
   // tax only in jurisdictions where a registration exists and monitors

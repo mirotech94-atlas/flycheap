@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { PricingClient } from '@/components/PricingClient';
+import { isPaypalConfigured } from '@/lib/paypal';
 import { deliverableChannels } from '@/lib/channelHealth';
 import { planFeatures, tierChannels, channelSentence, POLLING_PROMISE, plural } from '@/lib/tierCopy';
 import { TIER_LIMITS } from '@/lib/db';
@@ -40,7 +41,17 @@ export default async function PricingPage() {
         </p>
       </div>
 
-      <PricingClient signedIn={Boolean(user)} currentTier={user?.tier ?? 'free'} bullets={bullets} />
+      {/* Offer PayPal only when it can actually take a payment. Its secret and
+          billing-plan ids are unset in production, so the button was visible,
+          clickable, and dead-ended on ?billing=paypal-not-configured — the
+          worst moment to disappoint someone is the one where they are trying
+          to pay. Same isConfigured-≠-enabled rule the alert channels follow. */}
+      <PricingClient
+        signedIn={Boolean(user)}
+        currentTier={user?.tier ?? 'free'}
+        bullets={bullets}
+        paypalEnabled={isPaypalConfigured()}
+      />
 
       <div className="ed-panel">
         <div className="ed-eyebrow">Comparison</div>

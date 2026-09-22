@@ -29,10 +29,12 @@ const MAX_ANNUAL_SAVINGS_PCT = Math.max(
 export type PlanBullets = Record<'free' | 'pro' | 'enterprise', PlanFeature[]>;
 
 
-export function PricingClient({ signedIn, currentTier, bullets }: {
+export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = false }: {
   signedIn: boolean;
   currentTier: string;
   bullets: PlanBullets;
+  /** False when PayPal has no credentials — then we do not offer it at all. */
+  paypalEnabled?: boolean;
 }) {
   const [period, setPeriod] = useState<Period>('month');
   const [cancelling, setCancelling] = useState(false);
@@ -149,9 +151,11 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
                     <a href={checkoutHref('stripe', plan)} className="ed-btn ed-btn-primary w-full justify-center text-center">
                       Subscribe with card →
                     </a>
-                    <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
-                      Subscribe with PayPal
-                    </a>
+                    {paypalEnabled && (
+                      <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
+                        Subscribe with PayPal
+                      </a>
+                    )}
                   </>
                 )}
               </div>
@@ -183,9 +187,11 @@ export function PricingClient({ signedIn, currentTier, bullets }: {
                     <a href={checkoutHref('stripe', plan)} className="ed-btn ed-btn-primary w-full justify-center text-center">
                       Subscribe with card →
                     </a>
-                    <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
-                      Subscribe with PayPal
-                    </a>
+                    {paypalEnabled && (
+                      <a href={checkoutHref('paypal', plan)} className="ed-btn ed-btn-secondary w-full justify-center text-center">
+                        Subscribe with PayPal
+                      </a>
+                    )}
                   </>
                 )}
               </div>
