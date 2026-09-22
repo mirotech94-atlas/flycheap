@@ -35,3 +35,17 @@ Every customer-facing number must be derived, never typed. Tier limits come from
 public stats from `public-metrics.ts`. Nine false public claims (invented provider counts,
 polling cadences, tier limits, payment methods) have been found and fixed already — audit copy
 for invented numbers whenever touching a page. `isConfigured` ≠ enabled.
+
+## Tools for this project
+
+Account-wide plugins and connectors are installed; these are the ones that serve FlyCheap.
+Recommend them when relevant and ignore the rest. Full map: memory `project-tooling-map`.
+
+- **Connectors** — Vercel (previews, runtime logs, env; prod still ships via
+  `deploy/deploy.sh`), Stripe (tiers, `TIER_LIMITS`), Gmail (Resend alert deliverability),
+  vidIQ (`social/`), Google Drive (design assets), Gamma (pitch decks), iOS Simulator
+  (`ios-app`).
+- **Plugins/skills** — `getlayers` (see the GetLayers section above), `frontend-design`,
+  `dataviz` for fare tables and history charts, `superpowers`.
+- **Not for FlyCheap** — Google Calendar, the Attendance/Guardian agents.
+- Slack plugin and Slack connector are duplicates; keep one enabled per session.
