@@ -30,7 +30,7 @@ export async function GET(req: NextRequest) {
   const email = (url.searchParams.get('e') ?? '').trim().toLowerCase();
   const token = url.searchParams.get('t') ?? '';
   if (!email || token !== unsubscribeToken(email)) {
-    return new Response(htmlPage('Invalid unsubscribe link', `That link is malformed or has expired. If you keep getting unwanted emails, contact support@fareintel.com.`, false), {
+    return new Response(htmlPage('Invalid unsubscribe link', `That link is malformed or has expired. If you keep getting unwanted emails, contact support@flycheap.live.`, false), {
       status: 400, headers: { 'Content-Type': 'text/html; charset=utf-8' },
     });
   }
