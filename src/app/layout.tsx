@@ -50,6 +50,9 @@ const themeBoot = `
   try {
     var t = (document.cookie.match(/(?:^|;\\s*)fc-theme=([^;]*)/) || [])[1];
     if (t !== 'light') t = 'dark';
+    // Dark-only on the marketing host: the server already rendered dark, so
+    // honouring a light cookie here would repaint the page a moment later.
+    if (document.documentElement.classList.contains('mk-host')) t = 'dark';
     var root = document.documentElement;
     root.dataset.theme = t;
     root.classList.toggle('dark', t === 'dark');
@@ -103,13 +106,17 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   // header and pass it down so ClientChrome can render the landing bare.
   const hostNoPort = reqHost.split(':')[0];
   const isMarketingHost = MARKETING_HOSTS.has(hostNoPort);
-  const theme = readThemeCookie(hdrs.get('cookie'));
+  // The marketing site is dark only — Myron's call. Forcing it here rather
+  // than hiding the control alone means a visitor who set light elsewhere
+  // (the cookie is shared across the hosts) still gets the intended look,
+  // and the portal keeps its choice.
+  const theme = isMarketingHost ? 'dark' : readThemeCookie(hdrs.get('cookie'));
 
   const { locale, dir, font } = await getRequestLocaleInfo();
   const t = getAppDict(locale);
 
   return (
-    <html lang={locale} dir={dir} data-theme={theme} className={`${theme === 'dark' ? 'dark ' : ''}${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
+    <html lang={locale} dir={dir} data-theme={theme} className={`${theme === 'dark' ? 'dark ' : ''}${isMarketingHost ? 'mk-host ' : ''}${publicSans.variable} ${newsreader.variable} ${plexMono.variable}`}>
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
         <style dangerouslySetInnerHTML={{ __html: brandStyle }} />
