@@ -39,12 +39,17 @@ export async function POST(req: NextRequest) {
       };
       const userId = Number(s.client_reference_id) || Number(s.metadata?.user_id);
       const plan = s.metadata?.plan === 'enterprise' ? 'enterprise' : 'pro';
+      const period = s.metadata?.period === 'year' ? 'year' : 'month';
       if (userId && s.customer) {
         queries.setUserStripe(userId, String(s.customer), s.subscription ?? null);
         queries.setUserTier(userId, plan, 'active');
+        // Record WHAT was sold. The PayPal branch has always done this; the
+        // Stripe branch did not, so every Stripe subscription was stored with
+        // a null provider and period — unattributable in the revenue admin.
+        queries.setSubscriptionMeta(userId, { provider: 'stripe', period });
         queries.clearFoundingPeriod(userId);
         void notifyBillingToSlack('subscription_started', userId, {
-          provider: 'stripe', plan, period: s.metadata?.period ?? null,
+          provider: 'stripe', plan, period,
           amount: fmtMinorAmount(s.amount_total, s.currency), source: 'Stripe checkout',
         });
       }
@@ -70,6 +75,9 @@ export async function POST(req: NextRequest) {
         const prevRenews = queries.getUserById(userId)?.subscription_renews_at ?? null;
         queries.setUserTier(userId, tier, sub.status, renewsIso);
         queries.setUserStripe(userId, sub.customer, sub.id);
+        if (sub.metadata?.period === 'year' || sub.metadata?.period === 'month') {
+          queries.setSubscriptionMeta(userId, { provider: 'stripe', period: sub.metadata.period });
+        }
         if (sub.status === 'active' && renewsIso && prevRenews && Date.parse(renewsIso) > Date.parse(prevRenews) + 60_000) {
           void notifyBillingToSlack('payment_received', userId, {
             provider: 'stripe', plan, when: `renews ${renewsIso.slice(0, 10)}`, source: 'Stripe renewal',

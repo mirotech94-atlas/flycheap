@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { createProCheckoutSession, isStripeConfigured } from '@/lib/stripe';
+import { createProCheckoutSession, isStripeConfigured, type Period } from '@/lib/stripe';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,6 +24,9 @@ export async function GET(req: NextRequest) {
 
   const rawPlan = req.nextUrl.searchParams.get('plan');
   const plan: 'pro' | 'enterprise' = rawPlan === 'enterprise' ? 'enterprise' : 'pro';
+  // The pricing page's monthly/yearly switch sends ?period=year. This route
+  // used to ignore it, so a yearly purchase was charged the monthly price.
+  const period: Period = req.nextUrl.searchParams.get('period') === 'year' ? 'year' : 'month';
 
   const r = await createProCheckoutSession({
     userId: user.id,
@@ -32,6 +35,7 @@ export async function GET(req: NextRequest) {
     successUrl: `${baseUrl}/settings?billing=success`,
     cancelUrl:  `${baseUrl}/settings?billing=canceled`,
     plan,
+    period,
   });
   if (!r.ok) return NextResponse.redirect(`${baseUrl}/settings?billing=error&msg=${encodeURIComponent(r.error)}`);
   return NextResponse.redirect(r.url, 303);
