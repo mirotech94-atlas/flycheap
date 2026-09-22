@@ -534,9 +534,15 @@ label.ed-toggle-row, .ed-toggle-label { cursor: pointer; }
 /* The executive brief reads left-to-right: the headline and its actions, then
    the live globe beside them. Below 1100px the globe drops under the copy
    rather than squeezing it. */
-.ed-brief { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 32px; align-items: start; }
-.ed-brief-globe { min-height: 320px; }
-@media (max-width: 1100px) { .ed-brief { grid-template-columns: minmax(0, 1fr); } .ed-brief-globe { min-height: 260px; } }
+.ed-brief { display: grid; grid-template-columns: minmax(0, 1fr) minmax(320px, 420px); gap: 32px; align-items: stretch; }
+/* The globe takes its height from the column beside it rather than setting
+   its own: with `align-items: start` and a fixed 460px globe, the copy ran
+   out after ~250px and left a hole under it. Stretching means the two
+   columns always end level. */
+.ed-brief-globe { min-height: 300px; height: 100%; }
+.ed-brief-copy .ed-stats { margin-bottom: 0; margin-top: auto; }
+.ed-brief-copy { display: flex; flex-direction: column; gap: 0; }
+@media (max-width: 1100px) { .ed-brief { grid-template-columns: minmax(0, 1fr); } .ed-brief-globe { min-height: 260px; height: auto; } }
 
 /* Support: the thread list is the main column, the "open a ticket" form sits
    beside it. Previously a 64ch column centred in a full-width page, with the
