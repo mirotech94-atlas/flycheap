@@ -296,7 +296,7 @@ export function ChatWidget() {
         setMsgs([...next, { role: 'assistant', content: reply }]);
         if (j.hud) globe.recordFlightHud(j.hud);
         else globe.reactToReply(reply);
-        if (voiceMode) speak(reply);
+        if (voiceMode) void speak(reply).catch(() => { /* speak() already falls back internally */ });
       }
     } catch (e) {
       setErr((e as Error).message);
@@ -435,7 +435,11 @@ export function ChatWidget() {
             {voiceSupported && (
               <button
                 type="button"
-                onClick={recording ? stopRecording : startRecording}
+                // startRecording is async; a bare async handler hands React a
+                // promise whose rejection is unhandled. Wrap it so any failure
+                // (mic refused, recorder unavailable) lands as a reset, never
+                // as a page-level error.
+                onClick={() => { if (recording) { stopRecording(); return; } startRecording().catch(() => { setRecording(false); globe.setListening(false); globe.setStatusLine('// LINK IDLE · STANDING BY'); }); }}
                 disabled={pending}
                 className="ed-btn ed-chat-mic disabled:opacity-40"
                 style={recording ? { background: 'var(--red)', color: 'var(--on-accent)', borderColor: 'var(--red)' } : { background: 'var(--surface)', color: 'var(--ink-soft)', borderColor: 'var(--rule-strong)' }}
