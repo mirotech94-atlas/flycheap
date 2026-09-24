@@ -62,3 +62,14 @@ Desktop.ini
 # matched by PATTERN so the next one is covered without editing this file.
 # (git's `*` matches a leading dot, so `.pol-preview` is included.)
 /*-preview/
+
+# Local safety copies, not source. `backups/` holds source tarballs taken
+# before a risky prod pull, and a `.bak` is whatever a script looked like
+# before it was edited — both are useful on this machine and meaningless in
+# the repo, where they would ship a second, stale copy of a deploy script.
+/backups/
+*.bak
+
+# `tsc --noEmit` incremental cache. Regenerated on every typecheck, ~400KB of
+# churn, and it encodes absolute paths from whoever ran it last.
+*.tsbuildinfo
