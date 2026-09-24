@@ -9,7 +9,7 @@
  *   # or, with tsx:
  *   npx tsx scripts/run-job.mjs poll
  *
- * Subcommands: poll | digest | weekly | monthly | six-month | annual | best-deals | bg-poll | route-intel | compact | commissions
+ * Subcommands: poll | digest | weekly | monthly | six-month | annual | best-deals | bg-poll | route-intel | fare-model | compact | commissions
  *              | agent-curator | agent-insights | agent-revenue | agent-social-poster | agent-digest | agent-storyteller | agent-social-drain
  *
  * In-process node-cron in src/lib/cron.ts continues to fire unless you set
@@ -149,6 +149,18 @@ async function main() {
         const { runRouteIntelForAllUsers } = await import('../src/lib/routeIntel.ts');
         const r = await runRouteIntelForAllUsers();
         console.log(`[route-intel ${t}] users=${r.users} withProse=${r.withProse} errors=${r.errors}`);
+      });
+      break;
+    }
+    case 'fare-model': {
+      await withJobLock('fare-model', async () => {
+        // Nightly: replay every route's snapshot history into labelled examples,
+        // train the fare decision network, and keep it only if it beats the
+        // rules on routes it never saw. Reads fare_snapshots, writes one
+        // settings row. A few seconds on 24 routes.
+        const { runFareModelTraining } = await import('../src/lib/nn/train.ts');
+        const r = await runFareModelTraining();
+        console.log(`[fare-model ${t}] ${r.ok ? 'ok' : 'skipped'} examples=${r.examples} routes=${r.searches} model=${(r.testAccuracy*100).toFixed(1)}% rules=${(r.rulesAccuracy*100).toFixed(1)}% accepted=${r.accepted} — ${r.reason}`);
       });
       break;
     }

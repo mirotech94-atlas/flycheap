@@ -25,7 +25,8 @@ import {
   type Watch, type WatchRow, type WatchStatus, type FarePricing,
   type TargetBasis,
 } from './watch';
-import { computeVerdict, type Verdict, type VerdictPoint } from './verdict';
+import { type Verdict, type VerdictPoint } from './verdict';
+import { decide } from './nn';
 import {
   explainVerdict, routeFamily, type TrackRecord, type VerdictAnatomy,
 } from './verdictAnatomy';
@@ -166,7 +167,7 @@ export function composeCard(input: BoardCardInput): BoardCard {
   // scored against. Mixing the basis in here would move every verdict on every
   // family watch.
   const verdict = fare
-    ? computeVerdict(input.history, fare.perAdultUsd, input.thresholdPerAdult)
+    ? decide(input.history, fare.perAdultUsd, input.thresholdPerAdult, { departDate: input.row.depart_date ?? null })
     : null;
 
   const track = input.track

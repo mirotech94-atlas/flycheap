@@ -1,6 +1,6 @@
 import 'server-only';
 import { queries } from './db';
-import { computeVerdict } from './verdict';
+import { decide } from './nn';
 import { buildWorkQueue, buildSavingsReport, type WatchInput, type QueueItem } from './workQueue';
 import { groupsForOrg, getGroup } from './org';
 
@@ -35,7 +35,7 @@ export function loadOrgQueue(orgId: number): {
     const latest = queries.latestFare(id);
     const target = num(r, 'target_amount') ?? num(r, 'target_per_adult_usd');
     const v = latest && history.length
-      ? computeVerdict(history, latest.price_per_adult_usd, target ?? 0)
+      ? decide(history, latest.price_per_adult_usd, target ?? 0, { departDate: str(r, 'depart_date') ?? null })
       : null;
 
     return {
