@@ -16,6 +16,11 @@ const SECTION_LABEL: Record<string, string> = {
   '/admin/farepilot':    'FarePilot',
   '/admin/integrations': 'Integrations',
   '/admin/settings':     'Settings',
+  '/admin/trust':        'Fare truth',
+  '/admin/economics':    'Economics',
+  '/admin/funnel':       'Funnel',
+  '/admin/model':        'Fare model',
+  '/admin/tickets':      'Support tickets',
 };
 
 export function AdminBreadcrumb() {

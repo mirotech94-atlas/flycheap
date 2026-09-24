@@ -19,6 +19,7 @@ const NAV: NavGroup[] = [
     { href: '/admin/trust',     label: 'Fare truth', icon: 'trust',   hint: 'Alert-to-click delta, dead fares, verdict accuracy' },
     { href: '/admin/economics', label: 'Economics',  icon: 'economics', hint: 'Poll cost against commission earned' },
     { href: '/admin/funnel',    label: 'Funnel',     icon: 'funnel',  hint: 'Alert to click to booking to chain' },
+    { href: '/admin/model',     label: 'Fare model', icon: 'model',   hint: 'The neural network\'s verdict on every client route' },
   ] },
   { group: 'Commercial', items: [
     { href: '/admin/revenue', label: 'Revenue',      icon: 'revenue', hint: 'Earnings, balance and forecast' },
@@ -43,7 +44,7 @@ const NAV: NavGroup[] = [
 type IconKey =
   | 'overview' | 'revenue' | 'affiliate' | 'signups' | 'users' | 'clicks' | 'integrations'
   | 'queue' | 'health' | 'errors' | 'settings' | 'logout' | 'back' | 'tickets'
-  | 'trust' | 'economics' | 'funnel';
+  | 'trust' | 'economics' | 'funnel' | 'model';
 
 function Icon({ kind }: { kind: IconKey }) {
   const p = {
@@ -59,6 +60,8 @@ function Icon({ kind }: { kind: IconKey }) {
     case 'economics':    return <svg {...p}><path d="M12 4v16" /><path d="M5 8h14" /><path d="M5 8l-2.5 5a3 3 0 005 0L5 8z" /><path d="M19 8l-2.5 5a3 3 0 005 0L19 8z" /></svg>;
     // A narrowing funnel.
     case 'funnel':       return <svg {...p}><path d="M3 4h18l-7 8v7l-4 2v-9L3 4z" /></svg>;
+    // Three nodes feeding one: the shape of a small network.
+    case 'model':        return <svg {...p}><circle cx="5" cy="6" r="2" /><circle cx="5" cy="12" r="2" /><circle cx="5" cy="18" r="2" /><circle cx="19" cy="12" r="2.5" /><path d="M7 6l10 5M7 12h9.5M7 18l10-5" /></svg>;
     case 'affiliate':    return <svg {...p}><path d="M12 3v18" /><path d="M16.5 7.5a3.5 3.5 0 00-3.5-3H10a3 3 0 000 6h4a3 3 0 010 6h-3.2a3.5 3.5 0 01-3.4-3" /></svg>;
     case 'errors':       return <svg {...p}><path d="M12 9v4M12 17h.01" /><path d="M10.3 3.9L2.4 17.5A2 2 0 004.1 20.5h15.8a2 2 0 001.7-3L13.7 3.9a2 2 0 00-3.4 0z" /></svg>;
     case 'revenue':      return <svg {...p}><path d="M4 19V5M4 19h16" /><path d="M8 16v-4M12 16V8M16 16v-6M20 16v-9" /></svg>;
