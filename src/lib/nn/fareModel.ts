@@ -3,11 +3,16 @@
  * and how it learns from FlyCheap's own history.
  *
  * THE QUESTION IT ANSWERS
- *   "Given this route's recent prices and today's fare, will a cheaper fare
- *    show up in the next 7 days?"  Three answers, as probabilities:
- *      buy   — no, this is about as good as it gets: book it
- *      wait  — yes, and by enough to matter: hold off
- *      hold  — it's a coin flip: keep watching
+ *   "Given this route's recent prices and today's fare, will a meaningfully
+ *    cheaper fare show up in the next 7 days?"  Two answers, as probabilities:
+ *      wait  — yes, by enough to matter: hold off
+ *      buy   — no: book it
+ *   It used to have a third, "hold", for drops too small to matter. In 131
+ *   days of history that was 85 decisions out of 1,117 — too rare to learn
+ *   (13% precision) and, for the traveller, not a different action from
+ *   "buy": a fare that will only wobble by a couple of percent is one you
+ *   book. So hold folds into buy. The rules may still say "hold" on screen
+ *   when a price is mid-range with no trend; that is their call to make.
  *
  * WHY 7 DAYS
  *   `verdict_calls` already scores every live verdict at 7 and 14 days
@@ -33,9 +38,9 @@
 import type { VerdictPoint } from '@/lib/verdict';
 import { Network, fitScaler, applyScaler, type NetworkWeights, type Scaler } from './network';
 
-export const FARE_MODEL_VERSION = 1;
+export const FARE_MODEL_VERSION = 2;
 
-export const CLASSES = ['buy', 'wait', 'hold'] as const;
+export const CLASSES = ['buy', 'wait'] as const;
 export type FareClass = (typeof CLASSES)[number];
 
 /** The horizon the label is measured over. Matches verdict_calls.correct_7d. */
@@ -151,16 +156,12 @@ export function featurize(input: FeatureInput): FeatureVector | null {
  * What actually happened. `minAfter` is the lowest price seen in the
  * HORIZON_DAYS after the decision (the same number verdict_calls records).
  *   wait  — a drop of at least MEANINGFUL_DROP_PCT followed
- *   buy   — nothing cheaper followed at all (within 1%, so a $2 wobble on a
- *           $900 fare does not count against a correct buy)
- *   hold  — something cheaper appeared, but not by enough to have mattered
+ *   buy   — it did not: nothing cheaper, or only a wobble too small to act on
  */
 export function labelFor(priceAtCall: number, minAfter: number | null): FareClass | null {
   if (minAfter == null || !Number.isFinite(minAfter) || priceAtCall <= 0) return null;
   const dropPct = ((priceAtCall - minAfter) / priceAtCall) * 100;
-  if (dropPct >= MEANINGFUL_DROP_PCT) return 'wait';
-  if (dropPct <= 1) return 'buy';
-  return 'hold';
+  return dropPct >= MEANINGFUL_DROP_PCT ? 'wait' : 'buy';
 }
 
 export function oneHot(c: FareClass): number[] {
@@ -192,7 +193,8 @@ export type FareModel = {
 export type Example = {
   features: FeatureVector;
   label: FareClass;
-  /** What the existing rules said at that moment, for the comparison. */
+  /** What the existing rules said at that moment, for the comparison. A
+   *  rules "hold" counts as "buy" here, matching how the label folds it. */
   rulesVerdict: FareClass | null;
   route: string;
   asOf: string;
@@ -229,9 +231,8 @@ export function trainFareModel(examples: Example[], opts: TrainOptions = {}): Fa
   const X = train.map(e => applyScaler(scaler, e.features));
   const Y = train.map(e => oneHot(e.label));
 
-  // Class weights: "hold" is usually the majority. Without weighting the
-  // network learns to say hold for everything and scores well on nothing
-  // that matters. Weight each class inversely to its frequency.
+  // Class weights: buy outnumbers wait. Without weighting the network drifts
+  // toward the majority answer. Weight each class inversely to its frequency.
   const counts = CLASSES.map(c => train.filter(e => e.label === c).length || 1);
   const weights = counts.map(c => train.length / (CLASSES.length * c));
   const W = train.map(e => weights[CLASSES.indexOf(e.label)]);

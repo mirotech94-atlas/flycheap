@@ -83,7 +83,8 @@ export function buildExamples(): { examples: Example[]; searches: number; skippe
       // poller feeds them, so the comparison is fair.
       const daily = dailySeries(window);
       const rv = computeVerdict(daily, current, current);
-      examples.push({ features, label, rulesVerdict: (rv?.verdict as FareClass | undefined) ?? null, route, asOf });
+      const rulesAsClass: FareClass | null = rv ? (rv.verdict === 'wait' ? 'wait' : 'buy') : null;
+      examples.push({ features, label, rulesVerdict: rulesAsClass, route, asOf });
       made++;
     }
     if (made) used++; else skipped++;
