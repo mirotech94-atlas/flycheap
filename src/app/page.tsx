@@ -22,7 +22,8 @@ import { FcLiveFeed } from '@/components/FcLiveFeed';
 import { providerStatuses } from '@/lib/providers';
 import { FcMistakeRadar } from '@/components/FcMistakeRadar';
 import { FcRouteDna } from '@/components/FcRouteDna';
-import { computeVerdict, routeKey, type Verdict, type VerdictPoint } from '@/lib/verdict';
+import { routeKey, type Verdict, type VerdictPoint } from '@/lib/verdict';
+import { decide } from '@/lib/nn';
 import { FcFareCalendar } from '@/components/FcFareCalendar';
 import { FcCarbonLedger } from '@/components/FcCarbonLedger';
 import { HotelUpsell } from '@/components/HotelUpsell';
@@ -546,7 +547,7 @@ export default async function DashboardPage({ searchParams }: PageProps) {
         .map(([polled_at, price_per_adult_usd]) => ({ polled_at, price_per_adult_usd }));
       routeHistories[k] = series;
       if (agg.current !== null) {
-        const v = computeVerdict(series, agg.current, agg.threshold);
+        const v = decide(series, agg.current, agg.threshold, { departDate: agg.search?.depart_date ?? null });
         if (v) routeVerdicts[k] = v;
         if (agg.search) routeCurrent[k] = { price: agg.current, search: agg.search };
       }

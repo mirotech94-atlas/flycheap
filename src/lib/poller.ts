@@ -13,7 +13,7 @@ import {
   detectWindowClosing, windowClosingMessage,
 } from './alertDetectors';
 import { recordVerdictCall } from './verdictScoring';
-import { computeVerdict } from './verdict';
+import { decide } from './nn';
 import { allocate, allocatorMode, dueForPoll } from './pollBudget';
 import type { ProviderId } from './providers/types';
 
@@ -442,7 +442,7 @@ async function finishPoll(
   // The last verdict BEFORE this poll — read first, because recordVerdictCall
   // below is about to write today's and we need the previous one to spot a flip.
   const previousVerdict = queries.lastVerdictFor(search.id) as 'buy' | 'wait' | 'hold' | null;
-  const v = computeVerdict(history, summary.price_per_adult_usd, threshold);
+  const v = decide(history, summary.price_per_adult_usd, threshold, { departDate: search.depart_date });
 
   try {
     if (v) {

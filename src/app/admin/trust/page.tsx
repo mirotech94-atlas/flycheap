@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { getCurrentUser, isAdmin as isAdminUser } from '@/lib/auth';
 import { trustMetrics, HARD_DELTA_THRESHOLD_PCT } from '@/lib/analytics';
 import { APP_URL } from '@/lib/hosts';
+import { loadFareModel, lastTrainingRun, FEATURE_NAMES } from '@/lib/nn';
 import {
   PageHead, SectionHead, Kpi, Panel, Status, Table, fmtInt, ago,
   type Tone,
@@ -176,6 +177,67 @@ export default async function TrustPage() {
               ))}
             </Table>
           )}
+        </Panel>
+      </div>
+
+      <SectionHead
+        title="Fare decision model"
+        sub="A small neural network trained nightly on our own polling history — it may override a rules verdict only when it is confident"
+      />
+      <div className="grid gap-3 lg:grid-cols-2 mb-6">
+        <Panel title="Current model" sub="Every number here is measured on routes the model never trained on">
+          {(() => {
+            const model = loadFareModel();
+            const run = lastTrainingRun();
+            if (!model) {
+              return (
+                <p className="ad-note">
+                  No model accepted yet.{' '}
+                  {run ? `Last training run (${ago(run.at)}): ${run.reason}` : 'The nightly fare-model job has not run.'}
+                  {' '}Until then every verdict is the rules alone.
+                </p>
+              );
+            }
+            const m = model.metrics;
+            const lift = (m.testAccuracy - m.rulesAccuracyOnTest) * 100;
+            return (
+              <div className="space-y-2 text-sm">
+                <div className="flex items-baseline gap-4">
+                  <div><div className="ed-stat-label">Model · held-out</div><div className="ed-stat-value" style={{ fontSize: 28 }}>{(m.testAccuracy * 100).toFixed(0)}%</div></div>
+                  <div><div className="ed-stat-label">Rules · same examples</div><div className="ed-stat-value" style={{ fontSize: 28 }}>{(m.rulesAccuracyOnTest * 100).toFixed(0)}%</div></div>
+                  <div><div className="ed-stat-label">Lift</div><div className="ed-stat-value" style={{ fontSize: 28, color: lift > 0 ? 'var(--green)' : 'var(--red)' }}>{lift > 0 ? '+' : ''}{lift.toFixed(0)} pts</div></div>
+                </div>
+                <table className="ed-table" style={{ marginTop: 8 }}>
+                  <thead><tr><th>Verdict</th><th className="num">Precision</th><th className="num">Recall</th><th className="num">Held-out n</th></tr></thead>
+                  <tbody>
+                    {(['buy', 'wait', 'hold'] as const).map(c => (
+                      <tr key={c}><td>{c}</td><td className="num">{(m.perClass[c].precision * 100).toFixed(0)}%</td><td className="num">{(m.perClass[c].recall * 100).toFixed(0)}%</td><td className="num">{m.perClass[c].support}</td></tr>
+                    ))}
+                  </tbody>
+                </table>
+                <p className="ad-note">
+                  Trained {ago(model.trainedAt)} on {fmtInt(m.trainExamples)} replayed decisions, tested on {fmtInt(m.testExamples)} from held-out routes.
+                  Precision: of the times it said this, how often it was right. Recall: of the times this was the answer, how often it said so.
+                </p>
+              </div>
+            );
+          })()}
+        </Panel>
+        <Panel title="How it decides" sub="Plain arithmetic over prices that were really polled">
+          <p className="ad-note" style={{ marginBottom: 8 }}>
+            The question is the one this page scores: will a cheaper fare appear within 7 days? The
+            rules always run first. The network gets a vote only when the route has 14+ days of
+            history, and may override the rules only at 70%+ probability with a 25-point margin
+            over its runner-up. Otherwise it just nudges the confidence figure.
+          </p>
+          <div className="ed-stat-label" style={{ marginBottom: 4 }}>Inputs</div>
+          <div className="ed-mono" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', lineHeight: 1.7, color: 'var(--muted)' }}>
+            {FEATURE_NAMES.join(' · ')}
+          </div>
+          <p className="ad-note" style={{ marginTop: 8 }}>
+            A new model replaces the old one only if it beats the rules by 2+ points on routes it never saw.
+            Set <span className="ed-code">FARE_MODEL=off</span> to run on the rules alone.
+          </p>
         </Panel>
       </div>
 
