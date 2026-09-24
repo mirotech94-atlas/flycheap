@@ -31,6 +31,49 @@ const TP_MARKER = process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARK
  * documented marker (the public one we shipped with) only if the env var
  * is missing on a fresh deploy.
  */
+/**
+ * Travelpayouts click hosts. One marker pool covers all of them, so the list
+ * lives here rather than inline in /go — two copies drift, and a host missing
+ * from one copy means a link that goes out unattributed while the click log
+ * claims it was attributed.
+ */
+export const TP_HOSTS: readonly string[] = [
+  'aviasales.com', 'www.aviasales.com',
+  'hotellook.com', 'www.hotellook.com', 'search.hotellook.com',
+  'wayaway.io', 'www.wayaway.io',
+  'aviasales.tpk.lu', 'tpk.lu', 'www.tpk.lu',
+];
+
+export function isTpHost(host: string): boolean {
+  return TP_HOSTS.includes(host.toLowerCase().replace(/\.$/, ''));
+}
+
+/**
+ * The exact dotted marker string Travelpayouts receives, or null when this
+ * destination is not a Travelpayouts host.
+ *
+ * Travelpayouts carries sub-ids as dotted suffixes on the marker, in the
+ * scheme's order: sub_id (surface/product/alert type), sub_id2 (route), then
+ * sub_id3 (the opaque click token). A social post marker, when one rode along,
+ * sits first so per-post reporting keeps working.
+ *
+ * Pure and exported because /go needs the SAME string twice — once to attach
+ * to the outbound URL and once to record on the click row. Building it in two
+ * places is how the log ends up describing a link that was never sent.
+ */
+export function tpMarkerChain(opts: {
+  host: string;
+  baseMarker?: string | null;
+  postMarker?: string | null;
+  subId?: string | null;
+  subId2?: string | null;
+  token?: string | null;
+}): string | null {
+  if (!opts.baseMarker || !isTpHost(opts.host)) return null;
+  return [opts.baseMarker, opts.postMarker, opts.subId, opts.subId2, opts.token]
+    .filter(Boolean).join('.');
+}
+
 export function travelpayoutsReferralUrl(): string {
   const marker = TP_MARKER ?? '727998';
   return `https://www.travelpayouts.com/?marker=${marker}`;

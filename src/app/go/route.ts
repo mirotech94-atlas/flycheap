@@ -6,7 +6,7 @@ import { isBotUserAgent } from '@/lib/botDetect';
 import {
   isValidSurface, isValidProvider,
   cjProviderForHost, cjTemplateFor, cjWrap,
-  tpBrandLink, type TpBrand,
+  tpBrandLink, tpMarkerChain, type TpBrand,
 } from '@/lib/affiliate';
 import { decodeSubId } from '@/lib/partnerLink';
 
@@ -212,7 +212,10 @@ export async function GET(req: Request) {
         return_date: url.searchParams.get('ret'),
         per_adult_usd: null,
         provider: brand,
-        marker: null,
+        // Brand links are prebuilt TP click URLs from TP_LINK_* env templates,
+        // so the marker is already inside `dest`. Read it back rather than
+        // storing null and losing the attribution record.
+        marker: (() => { try { return new URL(dest).searchParams.get('marker'); } catch { return null; } })(),
         ip: brandIp === 'unknown' ? brandIp
           : brandIp.includes(':') ? brandIp.split(':').slice(0, 3).join(':') + '::/48'
           : brandIp.split('.').length === 4 ? brandIp.split('.').slice(0, 3).join('.') + '.0/24'
@@ -329,6 +332,21 @@ export async function GET(req: Request) {
   // alert->click->book conversion answerable.
   const clickCtx = readClickContext(url);
   const { sub_id2: _sub2, ...clickRow } = clickCtx;
+
+  // The marker Travelpayouts will receive, built ONCE here and reused at the
+  // attach site below. It used to be built only at attach time, after this
+  // insert had already run, so every click row logged a social sub-id or null
+  // while the outbound link was correctly attributed — the log described a
+  // different link from the one that was sent. An explicit ?marker already on
+  // the destination wins (the attach never overwrites one), so read that first.
+  const markerChain = target.searchParams.get('marker') ?? tpMarkerChain({
+    host: target.hostname,
+    baseMarker: process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER,
+    postMarker,
+    subId: clickCtx.sub_id,
+    subId2: clickCtx.sub_id2,
+    token,
+  });
   const originParamEarly = url.searchParams.get('origin');
   const destParamEarly = url.searchParams.get('destination');
 
@@ -344,7 +362,7 @@ export async function GET(req: Request) {
       return_date: url.searchParams.get('ret'),
       per_adult_usd: safeFloat(perRaw),
       provider: providerParam,
-      marker: postMarker,
+      marker: markerChain ?? postMarker,
       ip: truncIp(rawIp),
       user_agent: req.headers.get('user-agent') ?? null,
       surface: surfaceParam,
@@ -432,23 +450,12 @@ export async function GET(req: Request) {
   const cjTemplate = cjProvider ? cjTemplateFor(cjProvider) : null;
 
   // Travelpayouts marker — applies to aviasales.com, hotellook.com,
-  // wayaway.io, tpk.lu (all share marker pool). When a per-post social
-  // marker rode along (cookie or query), it becomes the sub-id.
-  const tpMarker = process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER;
-  const tpHosts = [
-    'aviasales.com', 'www.aviasales.com',
-    'hotellook.com', 'www.hotellook.com', 'search.hotellook.com',
-    'wayaway.io', 'www.wayaway.io',
-    'aviasales.tpk.lu', 'tpk.lu', 'www.tpk.lu',
-  ];
-  if (tpMarker && tpHosts.includes(host) && !target.searchParams.has('marker')) {
-    // Travelpayouts carries sub-ids as dotted suffixes on the marker. Order is
-    // the scheme's: sub_id (surface/product/alert type), sub_id2 (route), then
-    // sub_id3 (the opaque click token). A social post marker, when one rode
-    // along, sits first so the existing per-post reporting keeps working.
-    const finalMarker = [tpMarker, postMarker, clickCtx.sub_id, clickCtx.sub_id2, token]
-      .filter(Boolean).join('.');
-    target.searchParams.set('marker', finalMarker);
+  // wayaway.io, tpk.lu (all share one marker pool). When a per-post social
+  // marker rode along (cookie or query), it becomes the first sub-id. The host
+  // list and the dotted scheme live in lib/affiliate.ts, and this is the exact
+  // string the click row above recorded, so log and link cannot drift.
+  if (markerChain && !target.searchParams.has('marker')) {
+    target.searchParams.set('marker', markerChain);
   }
 
   // Per-network sub-id slots (Trip.com, Booking, Expedia, Skyscanner).
