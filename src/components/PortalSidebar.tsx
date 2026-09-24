@@ -43,6 +43,7 @@ function buildSections(nav: AppNavDict): Section[] {
       { href: '/guides', label: nav.guides, icon: 'guides' },
       { href: '/routes', label: nav.routes, icon: 'routes' },
       { href: '/searches', label: nav.searches, icon: 'searches' },
+      { href: '/model', label: 'Model', icon: 'model' },
       { href: '/support', label: 'Support', icon: 'support' },
     ] },
     { group: null, items: [
@@ -60,7 +61,7 @@ function isItemActive(pathname: string, href: string): boolean {
 type IconKey =
   | 'board' | 'dashboard' | 'explore' | 'hotels' | 'rentals' | 'offers'
   | 'integrations' | 'pricing' | 'guides' | 'routes' | 'searches' | 'support'
-  | 'settings';
+  | 'settings' | 'model';
 
 function Icon({ kind }: { kind: IconKey }) {
   const p = {
@@ -80,6 +81,7 @@ function Icon({ kind }: { kind: IconKey }) {
     case 'guides':       return <svg {...p}><path d="M4 4h7a3 3 0 013 3v13a2.5 2.5 0 00-2.5-2.5H4V4z" /><path d="M20 4h-4a3 3 0 00-3 3v13a2.5 2.5 0 012.5-2.5H20V4z" /></svg>;
     case 'routes':       return <svg {...p}><circle cx="6" cy="18" r="2.5" /><circle cx="18" cy="6" r="2.5" /><path d="M8.5 17C13 16 16 13 17 8.5" /></svg>;
     case 'searches':     return <svg {...p}><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></svg>;
+    case 'model':        return <svg {...p}><circle cx="5" cy="6" r="2" /><circle cx="5" cy="12" r="2" /><circle cx="5" cy="18" r="2" /><circle cx="19" cy="12" r="2.5" /><path d="M7 6l10 5M7 12h9.5M7 18l10-5" /></svg>;
     case 'support':      return <svg {...p}><path d="M21 12a9 9 0 10-3.2 6.9L21 21l-1-4.2A8.9 8.9 0 0021 12z" /><path d="M9.5 9.5a2.5 2.5 0 114 2c-.8.6-1.5 1-1.5 2" /><path d="M12 17h.01" /></svg>;
     case 'settings':     return <svg {...p}><circle cx="12" cy="12" r="3" /><path d="M19 12a7 7 0 00-.13-1.3l2-1.5-2-3.4-2.3 1a7 7 0 00-2.2-1.3l-.35-2.5h-3.9l-.35 2.5a7 7 0 00-2.2 1.3l-2.3-1-2 3.4 2 1.5A7 7 0 005 12c0 .44.05.87.13 1.3l-2 1.5 2 3.4 2.3-1a7 7 0 002.2 1.3l.35 2.5h3.9l.35-2.5a7 7 0 002.2-1.3l2.3 1 2-3.4-2-1.5c.08-.43.13-.86.13-1.3z" /></svg>;
   }

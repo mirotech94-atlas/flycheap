@@ -10,7 +10,7 @@ const SESSION_COOKIE = 'fareintel_session';
 // Routes the middleware will redirect to /login when no session cookie is present.
 // Everything else (welcome, login, share/[token], explore, all /api routes) is public —
 // auth-sensitive APIs do their own check inside the route handler.
-const PROTECTED_PREFIXES = ['/searches', '/settings', '/onboarding'];
+const PROTECTED_PREFIXES = ['/searches', '/settings', '/onboarding', '/model'];
 
 // Admin subdomain host. Requests to https://admin.flycheap.live/<path>
 // are rewritten internally to /admin/<path> so the admin portal can live on
