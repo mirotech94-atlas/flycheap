@@ -24,6 +24,8 @@ import type { Verdict, VerdictKind, VerdictPoint } from '@/lib/verdict';
 import { featurize, predictFare, type FareModel, type FareClass } from './fareModel';
 
 export const OVERRIDE_MIN_PROB = 0.70;
+/** With two classes a 70% top implies a 40-point margin, so this is a
+ *  floor that only matters if a third class ever returns. */
 export const OVERRIDE_MIN_MARGIN = 0.25;
 
 export type BlendSource = 'rules' | 'model-agrees' | 'model-override' | 'rules-only-no-model' | 'rules-only-thin-history';
@@ -66,7 +68,10 @@ export function blendVerdict(
   const [top, topP] = ranked[0];
   const margin = topP - ranked[1][1];
 
-  if (top === rules.verdict) {
+  // A rules "hold" and a model "buy" are the same advice (see fareModel.ts),
+  // so they count as agreement and the rules' wording stands.
+  const rulesAsClass: FareClass = rules.verdict === 'wait' ? 'wait' : 'buy';
+  if (top === rulesAsClass) {
     // Agreement: the confidence figure moves toward what the network thinks.
     const conf = Math.round(Math.max(rules.confidencePct, Math.min(95, 55 + topP * 40)));
     return { ...base, confidencePct: conf, source: 'model-agrees', modelProbs: probs };
@@ -76,9 +81,7 @@ export function blendVerdict(
     const pct = Math.round(topP * 100);
     const reason = top === 'wait'
       ? `Our model puts a ${pct}% chance on a cheaper fare within 7 days, based on how this route has moved. ${rules.reason}`
-      : top === 'buy'
-      ? `Our model puts a ${pct}% chance on this being the low for the next 7 days. ${rules.reason}`
-      : `Our model reads the next 7 days as a coin flip (${pct}% hold). ${rules.reason}`;
+      : `Our model puts a ${pct}% chance on this being the low for the next 7 days. ${rules.reason}`;
     return {
       ...base,
       verdict: top,
@@ -94,6 +97,6 @@ export function blendVerdict(
 
   // Disagreement without enough conviction to override: keep the rules'
   // verdict, but be honest that the picture is mixed.
-  const conf = Math.round(Math.max(55, rules.confidencePct - Math.round((1 - probs[rules.verdict]) * 20)));
+  const conf = Math.round(Math.max(55, rules.confidencePct - Math.round((1 - probs[rulesAsClass]) * 20)));
   return { ...base, confidencePct: conf, source: 'rules', modelProbs: probs };
 }

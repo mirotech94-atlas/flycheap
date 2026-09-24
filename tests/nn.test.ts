@@ -61,9 +61,10 @@ describe('fare features and labels', () => {
 
   it('labels from what actually happened next', () => {
     expect(labelFor(1000, 900)).toBe('wait');   // 10% drop followed
+    expect(labelFor(1000, 970)).toBe('wait');   // 3% — the floor for "meaningful"
     expect(labelFor(1000, 1000)).toBe('buy');   // nothing cheaper
     expect(labelFor(1000, 995)).toBe('buy');    // $5 wobble is not a reason to wait
-    expect(labelFor(1000, 980)).toBe('hold');   // 2% — cheaper, not meaningfully
+    expect(labelFor(1000, 980)).toBe('buy');    // 2% — cheaper, not meaningfully: you book it
     expect(labelFor(1000, null)).toBeNull();
   });
 });
@@ -86,7 +87,7 @@ describe('training on a learnable pattern', () => {
     expect(model.metrics.testExamples).toBeGreaterThan(0);
     expect(model.metrics.testAccuracy).toBeGreaterThan(0.8);
     const p = predictFare(model, examples[0].features);
-    expect(Math.abs(p.buy + p.wait + p.hold - 1)).toBeLessThan(1e-6);
+    expect(Math.abs(p.buy + p.wait - 1)).toBeLessThan(1e-6);
   });
 });
 
@@ -102,26 +103,47 @@ describe('blend', () => {
   it('only overrides when the model is confident, and says so in the reason', () => {
     const hist = series(Array.from({ length: 20 }, (_, i) => 600 - i * 5));
     const rules = computeVerdict(hist, 505, 550)!;
-    const fake = (probs: [number, number, number]) => ({
+    const fake = (probs: [number, number]) => ({
       version: 1, trainedAt: '', featureNames: FEATURE_NAMES,
       scaler: { mean: new Array(FEATURE_NAMES.length).fill(0), std: new Array(FEATURE_NAMES.length).fill(1) },
-      network: { spec: { inputs: FEATURE_NAMES.length, layers: [{ size: 3, activation: 'softmax' as const }] },
-        weights: [Array.from({ length: 3 }, () => new Array(FEATURE_NAMES.length).fill(0))],
+      network: { spec: { inputs: FEATURE_NAMES.length, layers: [{ size: 2, activation: 'softmax' as const }] },
+        weights: [Array.from({ length: 2 }, () => new Array(FEATURE_NAMES.length).fill(0))],
         biases: [probs.map(p => Math.log(p))] },
       metrics: { trainExamples: 0, testExamples: 0, testAccuracy: 0, rulesAccuracyOnTest: 0, epochs: 0, finalLoss: 0,
-        perClass: { buy: { precision: 0, recall: 0, support: 0 }, wait: { precision: 0, recall: 0, support: 0 }, hold: { precision: 0, recall: 0, support: 0 } } },
+        perClass: { buy: { precision: 0, recall: 0, support: 0 }, wait: { precision: 0, recall: 0, support: 0 } } },
     });
     // Rules say buy on this falling series; a confident "wait" model overrides.
     expect(rules.verdict).toBe('buy');
-    const strong = blendVerdict(rules, fake([0.1, 0.85, 0.05]), { history: hist, asOf: '2026-09-20T12:00:00Z' });
+    const strong = blendVerdict(rules, fake([0.15, 0.85]), { history: hist, asOf: '2026-09-20T12:00:00Z' });
     expect(strong.source).toBe('model-override');
     expect(strong.verdict).toBe('wait');
     expect(strong.reason).toMatch(/85% chance/);
     // A lukewarm model does not.
-    const weak = blendVerdict(rules, fake([0.4, 0.45, 0.15]), { history: hist, asOf: '2026-09-20T12:00:00Z' });
+    const weak = blendVerdict(rules, fake([0.45, 0.55]), { history: hist, asOf: '2026-09-20T12:00:00Z' });
     expect(weak.source).toBe('rules');
     expect(weak.verdict).toBe('buy');
     expect(weak.confidencePct).toBeLessThan(rules.confidencePct + 1);
     expect(OVERRIDE_MIN_PROB).toBeGreaterThan(0.5);
+  });
+
+  it('treats a rules "hold" and a model "buy" as agreement — same advice, no override', () => {
+    // A flat mid-range series: the rules say hold.
+    // Mid-range, no trend, and the threshold near the price so it is not
+    // "30% above target" either — the one combination the rules call hold.
+    const flat = series(Array.from({ length: 20 }, (_, i) => 700 + [0, 40, -40, 20, -20][i % 5]));
+    const rules = computeVerdict(flat, 705, 690)!;
+    expect(rules.verdict).toBe('hold');
+    const fake = (probs: [number, number]) => ({
+      version: 2, trainedAt: '', featureNames: FEATURE_NAMES,
+      scaler: { mean: new Array(FEATURE_NAMES.length).fill(0), std: new Array(FEATURE_NAMES.length).fill(1) },
+      network: { spec: { inputs: FEATURE_NAMES.length, layers: [{ size: 2, activation: 'softmax' as const }] },
+        weights: [Array.from({ length: 2 }, () => new Array(FEATURE_NAMES.length).fill(0))], biases: [probs.map(p => Math.log(p))] },
+      metrics: { trainExamples: 0, testExamples: 0, testAccuracy: 0, rulesAccuracyOnTest: 0, epochs: 0, finalLoss: 0,
+        perClass: { buy: { precision: 0, recall: 0, support: 0 }, wait: { precision: 0, recall: 0, support: 0 } } },
+    });
+    const b = blendVerdict(rules, fake([0.9, 0.1]), { history: flat, asOf: '2026-09-20T12:00:00Z' });
+    expect(b.source).toBe('model-agrees');
+    expect(b.verdict).toBe('hold');           // the rules' wording stands
+    expect(b.reason).toBe(rules.reason);
   });
 });

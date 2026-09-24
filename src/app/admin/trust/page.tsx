@@ -210,7 +210,7 @@ export default async function TrustPage() {
                 <table className="ed-table" style={{ marginTop: 8 }}>
                   <thead><tr><th>Verdict</th><th className="num">Precision</th><th className="num">Recall</th><th className="num">Held-out n</th></tr></thead>
                   <tbody>
-                    {(['buy', 'wait', 'hold'] as const).map(c => (
+                    {(['buy', 'wait'] as const).map(c => (
                       <tr key={c}><td>{c}</td><td className="num">{(m.perClass[c].precision * 100).toFixed(0)}%</td><td className="num">{(m.perClass[c].recall * 100).toFixed(0)}%</td><td className="num">{m.perClass[c].support}</td></tr>
                     ))}
                   </tbody>
@@ -225,10 +225,11 @@ export default async function TrustPage() {
         </Panel>
         <Panel title="How it decides" sub="Plain arithmetic over prices that were really polled">
           <p className="ad-note" style={{ marginBottom: 8 }}>
-            The question is the one this page scores: will a cheaper fare appear within 7 days? The
-            rules always run first. The network gets a vote only when the route has 14+ days of
-            history, and may override the rules only at 70%+ probability with a 25-point margin
-            over its runner-up. Otherwise it just nudges the confidence figure.
+            The question is the one this page scores: will a fare at least 3% cheaper appear within
+            7 days? Two answers — wait if yes, buy if no; a wobble too small to act on counts as buy.
+            The rules always run first. The network gets a vote only when the route has 14+ days of
+            history, and may override the rules only at 70%+ probability. Otherwise it just nudges
+            the confidence figure. A rules "hold" and a model "buy" are the same advice.
           </p>
           <div className="ed-stat-label" style={{ marginBottom: 4 }}>Inputs</div>
           <div className="ed-mono" style={{ fontSize: 11, letterSpacing: 0, textTransform: 'none', lineHeight: 1.7, color: 'var(--muted)' }}>
