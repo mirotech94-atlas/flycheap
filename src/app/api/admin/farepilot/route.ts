@@ -76,7 +76,7 @@ export async function POST(req: Request) {
     stepUpJustGranted = true;
   }
   const stepUpOk = totpEnabled && (stepUpJustGranted || stepUpValid(token));
-  const ctx: AdminToolCtx = { adminUserId: me.id, stepUpOk };
+  const ctx: AdminToolCtx = { adminUserId: me.id, stepUpOk, stepUpAvailable: totpEnabled };
 
   // Multi-provider failover chain from the registry (src/lib/ai/providers.ts):
   // free tiers first (Groq's two models have separate daily buckets), then any

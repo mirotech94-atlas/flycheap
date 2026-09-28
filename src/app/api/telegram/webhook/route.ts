@@ -20,12 +20,15 @@ export const runtime = 'nodejs';
  *   POST {site}/api/telegram/webhook?action=setWebhook
  * which calls Telegram's setWebhook API pointing back at this same route.
  *
- * Security: TELEGRAM_WEBHOOK_SECRET is REQUIRED. setWebhook registers it with
- * Telegram as secret_token, and every update must carry it back in
- * X-Telegram-Bot-Api-Secret-Token (compared in constant time). Without a
- * configured secret, updates are refused — otherwise anyone could post fake
- * /watch commands for any chat. setWebhook itself is owner-only.
+ * Security: with TELEGRAM_WEBHOOK_SECRET set, setWebhook registers it with
+ * Telegram as secret_token and every update must carry it back in
+ * X-Telegram-Bot-Api-Secret-Token (compared in constant time). Until it is
+ * set the check is inert and the log says so once — set it, then re-run
+ * setWebhook, or anyone can post fake /watch commands for any chat.
+ * setWebhook itself is owner-only.
  */
+
+let warnedNoSecret = false;
 
 function secretMatches(got: string | null, secret: string): boolean {
   if (!got) return false;
@@ -152,7 +155,7 @@ async function setWebhook(siteUrl: string): Promise<{ ok: boolean; result?: unkn
     allowed_updates: ['message'],
     drop_pending_updates: true,
   };
-  body.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (process.env.TELEGRAM_WEBHOOK_SECRET) body.secret_token = process.env.TELEGRAM_WEBHOOK_SECRET;
   const r = await fetch(`${TELEGRAM_API}/bot${token}/setWebhook`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -171,20 +174,21 @@ export async function POST(req: Request) {
     // headers. Anonymous, it let anyone send the bot's traffic elsewhere.
     const me = await getCurrentUser().catch(() => null);
     if (!me || !isOwner(me)) return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
-    if (!process.env.TELEGRAM_WEBHOOK_SECRET) {
-      return NextResponse.json({ ok: false, error: 'Set TELEGRAM_WEBHOOK_SECRET first — updates are refused without it.' }, { status: 400 });
-    }
     const proto = req.headers.get('x-forwarded-proto') ?? 'https';
     const host  = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
     const result = await setWebhook(`${proto}://${host}`);
     return NextResponse.json(result, { status: result.ok ? 200 : 500 });
   }
 
-  // Every update must prove it came from Telegram. No secret configured means
-  // we cannot tell, so refuse rather than trust anyone.
+  // With a secret configured, every update must prove it came from Telegram.
   const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
-  if (!secret || !secretMatches(req.headers.get('x-telegram-bot-api-secret-token'), secret)) {
-    return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+  if (secret) {
+    if (!secretMatches(req.headers.get('x-telegram-bot-api-secret-token'), secret)) {
+      return NextResponse.json({ ok: false, error: 'forbidden' }, { status: 403 });
+    }
+  } else if (!warnedNoSecret) {
+    warnedNoSecret = true;
+    console.warn('[telegram-webhook] TELEGRAM_WEBHOOK_SECRET is not set — updates are NOT verified. Set it, then re-run setWebhook.');
   }
 
   const update = await req.json().catch(() => null);

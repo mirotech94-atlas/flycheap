@@ -65,10 +65,25 @@ describe('POST /api/twilio/incoming', () => {
     expect(db.queries.getUserSetting(uid, 'sms_opt_in')).toBe('false');
   });
 
-  it('refuses everything when TWILIO_AUTH_TOKEN is not set', async () => {
+  it('with TWILIO_WEBHOOK_URL set but no auth token, refuses (fail closed)', async () => {
     delete process.env.TWILIO_AUTH_TOKEN;
+    process.env.TWILIO_WEBHOOK_URL = URL_;
     const res = await post({ From: '+15550100', Body: 'HELP' }, 'anything');
     expect(res.status).toBe(403);
+  });
+
+  it('inert until TWILIO_WEBHOOK_URL is set: accepts as before, warning once', async () => {
+    delete process.env.TWILIO_WEBHOOK_URL;
+    process.env.TWILIO_AUTH_TOKEN = 'tok';
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    const uid = Number(db.getDb().prepare("INSERT INTO users (email) VALUES ('sms-inert@x.com')").run().lastInsertRowid);
+    db.queries.setUserSetting(uid, 'sms_phone', '+15550199');
+    db.queries.setUserSetting(uid, 'sms_opt_in', 'true');
+    expect((await post({ From: '+15550199', Body: 'STOP' }, null)).status).toBe(200);
+    expect(db.queries.getUserSetting(uid, 'sms_opt_in')).toBe('false');
+    expect((await post({ From: '+15550199', Body: 'HELP' }, null)).status).toBe(200);
+    expect(warn.mock.calls.filter(c => String(c[0]).includes('TWILIO_WEBHOOK_URL'))).toHaveLength(1);
+    warn.mockRestore();
   });
 });
 
@@ -81,9 +96,13 @@ describe('POST /api/telegram/webhook', () => {
     }));
   };
 
-  it('refuses every update when no secret is configured', async () => {
+  it('inert until TELEGRAM_WEBHOOK_SECRET is set: accepts as before, warning once', async () => {
     delete process.env.TELEGRAM_WEBHOOK_SECRET;
-    expect((await call({})).status).toBe(403);
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    expect((await call({})).status).toBe(200);
+    expect((await call({})).status).toBe(200);
+    expect(warn.mock.calls.filter(c => String(c[0]).includes('TELEGRAM_WEBHOOK_SECRET'))).toHaveLength(1);
+    warn.mockRestore();
   });
 
   it('refuses a wrong or missing secret header, accepts the right one', async () => {
@@ -95,7 +114,7 @@ describe('POST /api/telegram/webhook', () => {
   });
 
   it('?action=setWebhook is not an anonymous way to repoint the bot', async () => {
-    process.env.TELEGRAM_WEBHOOK_SECRET = 's3cret-token';
+    delete process.env.TELEGRAM_WEBHOOK_SECRET;
     process.env.TELEGRAM_BOT_TOKEN = '123:abc';
     const res = await call({ 'x-forwarded-host': 'evil.example' }, '?action=setWebhook');
     expect(res.status).toBe(403);

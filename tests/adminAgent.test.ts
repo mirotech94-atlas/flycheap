@@ -38,6 +38,33 @@ describe('FarePilot tools + gate', () => {
     expect((await gated.runAdminTool('app_health', {}, NOSTEP)).is_error).toBeFalsy();
   });
 
+  it('with no authenticator configured (stepUpAvailable: false), SQL and commands run without a code', async () => {
+    delete process.env.FAREPILOT_REQUIRE_STEPUP;
+    vi.resetModules();
+    const t = await import('@/lib/adminAgentTools');
+    const { calls, runner } = fakeRunner();
+    const noTotp = { ...NOSTEP, stepUpAvailable: false, runner };
+    const s = await t.runAdminTool('sql_query', { sql: 'SELECT 7 AS seven' }, noTotp);
+    expect(s.needs_step_up).toBeFalsy();
+    expect(s.content).toContain('"seven": 7');
+    expect((await t.runAdminTool('run_command', { command: 'uptime' }, noTotp)).needs_step_up).toBeFalsy();
+    expect(calls).toHaveLength(1);
+    // ...but it is still read-only and allowlisted.
+    expect((await t.runAdminTool('sql_query', { sql: 'DELETE FROM users' }, noTotp)).is_error).toBe(true);
+    expect((await t.runAdminTool('run_command', { command: 'echo x' }, noTotp)).is_error).toBe(true);
+    expect(t.stepUpRequired({ stepUpAvailable: false })).toBe(false);
+    expect(t.stepUpRequired({ stepUpAvailable: true })).toBe(true);
+    expect(t.adminSystemPrompt(false)).toMatch(/do NOT need an authenticator code/);
+    expect(t.adminSystemPrompt(true)).toMatch(/STEP_UP_REQUIRED/);
+  });
+
+  it('with an authenticator configured (stepUpAvailable: true), a code is required', async () => {
+    const { runner, calls } = fakeRunner();
+    const r = await tools.runAdminTool('run_command', { command: 'uptime' }, { ...NOSTEP, stepUpAvailable: true, runner });
+    expect(r.needs_step_up).toBe(true);
+    expect(calls).toHaveLength(0);
+  });
+
   it('FAREPILOT_REQUIRE_STEPUP=0 is the explicit opt-out', async () => {
     process.env.FAREPILOT_REQUIRE_STEPUP = '0';
     vi.resetModules();
