@@ -56,7 +56,7 @@ export function ToasterProvider({ children }: { children: React.ReactNode }) {
 
   const push = useCallback((t: Omit<Toast, 'id'> & { id?: number }): number => {
     const id = t.id ?? (++seqRef.current);
-    const full: Toast = { kind: 'info', durationMs: 4200, ...t, id };
+    const full: Toast = { durationMs: 4200, ...t, kind: t.kind ?? 'info', id };
     setToasts(prev => [...prev, full]);
     if (full.durationMs && full.durationMs > 0) {
       const tm = setTimeout(() => dismiss(id), full.durationMs);

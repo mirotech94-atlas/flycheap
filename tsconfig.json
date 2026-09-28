@@ -42,6 +42,9 @@
   "exclude": [
     "node_modules",
     "mobile",
+    // The native shell has its own toolchain (@capacitor/cli lives in its own
+    // package, not this one), so the web typecheck never resolves its config.
+    "ios-app",
     "src.before-resync-bak",
     // Dead pre-rename snapshot. Next never routes it (the app dir is src/app),
     // it ships nothing, and typechecking it only reports drift against the
