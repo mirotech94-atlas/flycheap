@@ -304,7 +304,9 @@ export function ChatWidget() {
         body: JSON.stringify({ messages: next.map(m => ({ role: m.role, content: m.content })) }),
       });
       const j = await res.json() as ChatResponse;
-      if (!res.ok) {
+      if (res.status === 401) {
+        setErr('Sign in to use the concierge — it works on your own routes and settings.');
+      } else if (!res.ok) {
         setErr(j.error || `HTTP ${res.status}`);
       } else {
         const reply = j.reply || '(no reply)';
