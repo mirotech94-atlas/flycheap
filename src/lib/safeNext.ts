@@ -15,7 +15,6 @@ export function safeNextPath(raw: string | null | undefined): string {
   if (typeof raw !== 'string') return '';
   const n = raw;
   if (!n.startsWith('/') || n.startsWith('//')) return '';
-  // eslint-disable-next-line no-control-regex
   if (/[\\\u0000-\u001f\u007f]/.test(n)) return '';
   try {
     const base = 'https://next-check.invalid';
