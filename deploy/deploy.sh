@@ -185,7 +185,7 @@ case "$ACTIVE_DIST" in
 esac
 echo "==> Active build: $ACTIVE_DIST → building into $TARGET_DIST (live dir stays up)"
 
-# Deps-change detection: `npm install` renames node_modules/next, which fails
+# Deps-change detection: `npm ci` replaces node_modules/next, which fails
 # (ENOTEMPTY) while `next start` holds it open — the ONLY reason we stop the
 # service. A code-only deploy (unchanged lockfile) skips install and stays up.
 DEPS_FILE="$STATE_DIR/deps-hash"
@@ -207,14 +207,14 @@ echo "==> Dependencies changed since last deploy: $DEPS_CHANGED"
 # -------------------------------------------------------------------------
 # 3. INSTALL + BUILD as the service user so file ownership stays sane.
 # -------------------------------------------------------------------------
-# Only stop the service when deps actually change (npm install must rename
+# Only stop the service when deps actually change (npm ci must replace
 # node_modules/next, impossible while `next start` holds it open). A code-only
 # deploy keeps the service RUNNING and serving $ACTIVE_DIST throughout — the
 # build writes a DIFFERENT dir, so there is no build-window outage.
 WAS_ACTIVE=no
 if systemctl is-active --quiet egyptair; then WAS_ACTIVE=yes; fi
 if [ "$DEPS_CHANGED" = "yes" ] && [ "$WAS_ACTIVE" = "yes" ]; then
-  echo "==> Deps changed — stopping service for npm install (brief downtime THIS deploy only)"
+  echo "==> Deps changed — stopping service for npm ci (brief downtime THIS deploy only)"
   systemctl stop egyptair
 fi
 
@@ -276,15 +276,21 @@ if [ "${FREE_KB:-0}" -lt 2097152 ]; then
   echo "    free now: $(df -h --output=avail / | tail -1 | tr -d ' ')"
 fi
 
-# `npm ci` is faster + deterministic but breaks hard on any lockfile drift.
-# Today's app evolves the lockfile faster than we can keep prod in lock-step,
-# so prefer `npm install` which auto-heals drift. Add `--prefer-offline` to
-# use the cached tarballs when possible (faster, fewer registry hits).
+# `npm ci`: install exactly what package-lock.json pins, and fail loudly if
+# package.json and the lockfile disagree. `npm install` "healed" drift by
+# resolving fresh versions on the production box, so what shipped was never
+# what CI tested. If this fails, fix the lockfile in git, not on the server.
+# `npm ci` deletes node_modules, so carry the build cache across it: a cold
+# build needs ~5GB and can OOM this box (see below).
 if [ "$DEPS_CHANGED" = "yes" ]; then
-  echo "==> Installing deps as $APP_USER (lockfile changed)"
-  sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
+  echo "==> Installing deps as $APP_USER with npm ci (lockfile changed)"
+  BUILD_CACHE_KEEP="$APP_DIR/.node_modules-cache.keep"
+  as_app rm -rf "$BUILD_CACHE_KEEP"
+  if [ -d "$APP_DIR/node_modules/.cache" ]; then as_app mv "$APP_DIR/node_modules/.cache" "$BUILD_CACHE_KEEP"; fi
+  as_app npm ci --no-audit --no-fund --prefer-offline
+  if [ -d "$BUILD_CACHE_KEEP" ]; then as_app mv "$BUILD_CACHE_KEEP" "$APP_DIR/node_modules/.cache"; fi
 else
-  echo "==> Skipping npm install — lockfile unchanged (service stays up)"
+  echo "==> Skipping npm ci — lockfile unchanged (service stays up)"
 fi
 
 # DO NOT wipe node_modules/.cache here — Next's Turbopack cache makes builds
@@ -410,7 +416,7 @@ fi
 # -------------------------------------------------------------------------
 # 6. SUCCESS — clean up the backup so we don't keep growing disk usage.
 # -------------------------------------------------------------------------
-# Record the deps hash so the next code-only deploy can skip npm install and
+# Record the deps hash so the next code-only deploy can skip npm ci and
 # stay fully up. Retire the legacy in-place .next once we're safely running
 # from a color dir (the first zero-downtime deploy migrates off it); KEEP the
 # previous color dir — it's the rollback and the next build's target.

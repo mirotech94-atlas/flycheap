@@ -29,7 +29,7 @@ test:
       - .npm/
   script:
     - node --version && npm --version
-    # `npm install` (not `npm ci`): this repo intentionally lets the lockfile
-    # drift, matching deploy.sh, so a strict ci install would fail spuriously.
-    - npm install --no-audit --no-fund --prefer-offline --cache .npm
+    # `npm ci`: install exactly the lockfile, and fail if package.json and
+    # package-lock.json disagree — the same install deploy.sh does.
+    - npm ci --no-audit --no-fund --prefer-offline --cache .npm
     - npm test
