@@ -32,10 +32,10 @@ path_is_root_only() {
     p="$(dirname -- "$p")"
   done
 }
-SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
-if [ "$(id -u)" -eq 0 ] && ! path_is_root_only "$SELF"; then
+SELF="$(readlink -f -- "${BASH_SOURCE[0]:-/dev/stdin}")"
+if [ "$(id -u)" -eq 0 ] && [ -f "$SELF" ] && ! path_is_root_only "$SELF"; then
   echo "REFUSED: $SELF is not root-only all the way up to /. Run the installed copy:" >&2
-  echo "  install -o root -g root -m 0755 $APP_DIR/deploy/quick-rebuild.sh $INSTALLED_PATH && $INSTALLED_PATH" >&2
+  echo "  $INSTALLED_PATH   (copy it there from a trusted checkout, not from this tree)" >&2
   exit 5
 fi
 

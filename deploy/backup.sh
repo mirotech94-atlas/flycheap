@@ -25,15 +25,19 @@ path_is_root_only() {
   done
 }
 # The backup only reads the app's DB and writes into the app's own data dir,
-# both owned by the app user. So when started as root (cron / the backup
-# unit), check where this file came from, then drop to the app user before
-# touching anything: a symlinked data/backups can then only point at files
-# the app user could already write.
+# both owned by the app user, so when started as root (cron / the backup
+# unit) it drops to the app user before touching anything: a symlinked
+# data/backups can then only point at files the app user could already write.
+#
+# Being RUN as root from an app-writable path is only fixed by pointing cron
+# and egyptair-backup.service at $INSTALLED_PATH. This copy can't enforce that
+# (a tampered copy would not carry the check), so it warns loudly rather than
+# refusing: skipping backups would make things worse, not safer.
 if [ "$(id -u)" -eq 0 ]; then
   SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
-  if ! path_is_root_only "$SELF"; then
-    echo "REFUSED: $SELF is not root-only. Install: install -o root -g root -m 0755 $SELF $INSTALLED_PATH" >&2
-    exit 5
+  if ! path_is_root_only "$SELF" 2>/dev/null; then
+    echo "WARNING: $SELF is writable by a non-root user; point cron and egyptair-backup.service at $INSTALLED_PATH" >&2
+    logger -t fareintel-backup "WARNING: started as root from app-writable $SELF; repoint to $INSTALLED_PATH" || true
   fi
   exec runuser -u "$APP_USER" -- /bin/bash "$SELF" "$@"
 fi

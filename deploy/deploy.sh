@@ -66,13 +66,20 @@ path_is_root_only() {
     p="$(dirname -- "$p")"
   done
 }
-SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
-if ! path_is_root_only "$SELF"; then
-  echo "==> REFUSED: $SELF is not root-only all the way up to /." >&2
-  echo "    Install and run the root-owned copy instead:" >&2
-  echo "      install -o root -g root -m 0755 $APP_DIR/deploy/deploy.sh $INSTALLED_PATH" >&2
-  echo "      DEPLOY_OWNER_TOKEN=… $INSTALLED_PATH" >&2
-  exit 5
+SRC="${BASH_SOURCE[0]:-}"
+if [ -n "$SRC" ] && [ -f "$SRC" ]; then
+  SELF="$(readlink -f -- "$SRC")"
+  if ! path_is_root_only "$SELF"; then
+    echo "==> REFUSED: $SELF is not root-only all the way up to /." >&2
+    echo "    Run the root-owned copy instead (copy it there from a trusted checkout," >&2
+    echo "    not from this app-owned tree, whenever deploy.sh changes):" >&2
+    echo "      DEPLOY_OWNER_TOKEN=… $INSTALLED_PATH" >&2
+    exit 5
+  fi
+else
+  # Fed on stdin (`bash -s`): the code came from the invoking root shell, not
+  # from a file the app user could have swapped. sudoers never runs it so.
+  echo "==> Script read from stdin — path ownership check not applicable"
 fi
 
 install -d -o root -g root -m 0700 "$STATE_DIR"
