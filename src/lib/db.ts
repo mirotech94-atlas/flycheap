@@ -1356,6 +1356,24 @@ export function limitsForUser(
   return base;
 }
 
+const TIER_ORDER = ['free', 'pro', 'enterprise'] as const;
+const TIER_LABEL: Record<string, string> = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' };
+
+/**
+ * Why this user may not add another tracked route, or null if they may. Shared
+ * by the web and mobile APIs so neither can drift from TIER_LIMITS; every
+ * number in the message is read from it, never typed.
+ */
+export function routeLimitError(
+  user: { id: number; tier?: string | null; subscription_status?: string | null },
+): string | null {
+  const limit = limitsForUser(user).maxRoutes;
+  if (queries.countActiveSearchesForUser(user.id) < limit) return null;
+  const next = TIER_ORDER.find(t => TIER_LIMITS[t].maxRoutes > limit);
+  const upsell = next ? ` ${TIER_LABEL[next]} tracks up to ${TIER_LIMITS[next].maxRoutes}.` : '';
+  return `You're at your plan's limit of ${limit} tracked routes.${upsell}`;
+}
+
 export type UserRow = {
   id: number;
   email: string;

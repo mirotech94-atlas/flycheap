@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
-import { queries, TIER_LIMITS, limitsForUser } from '@/lib/db';
+import { queries, limitsForUser, routeLimitError } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 export async function GET() {
@@ -30,6 +30,11 @@ export async function POST(req: Request) {
   const body = await req.json().catch(() => ({}));
   const parsed = PostSchema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
+
+  // Same cap the mobile API enforces; without it the web API let any account
+  // track unlimited routes, each one a paid provider poll on a schedule.
+  const overLimit = routeLimitError(user);
+  if (overLimit) return NextResponse.json({ error: overLimit, upgrade: '/pricing' }, { status: 403 });
 
   const mode = parsed.data.date_mode;
   // "Any dates" scans a whole window instead of one date pair — materially more
