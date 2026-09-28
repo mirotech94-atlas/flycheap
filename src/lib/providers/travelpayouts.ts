@@ -44,7 +44,7 @@ async function fetchOneWayMonth(
     currency: 'usd', limit: '1000', page: '1', one_way: 'true', token,
   });
   const url = `${ENDPOINT}?${params}`;
-  const res = await fetch(url, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
+  const res = await fetch(url, { signal: AbortSignal.timeout(60_000), cache: 'no-store' });
   const text = await res.text();
   if (!res.ok) return { ok: false as const, error: `${res.status} ${text.slice(0, 200)}`, status: res.status, totalPulled: 0 };
   const j = JSON.parse(text) as { success?: boolean; data?: TPLeg[]; error?: string };
@@ -123,7 +123,7 @@ export const travelpayoutsProvider: FlightProvider = {
         trip_class: '0', currency: 'usd', token,
       });
       try {
-        const res2 = await fetch(`${LATEST_ENDPOINT}?${params}`, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
+        const res2 = await fetch(`${LATEST_ENDPOINT}?${params}`, { signal: AbortSignal.timeout(60_000), cache: 'no-store' });
         const txt2 = await res2.text();
         if (res2.ok) {
           const j2 = JSON.parse(txt2) as { data?: Array<{
