@@ -5,6 +5,7 @@ import { conciergeScope, buildToolset, type Toolset } from '@/lib/conciergeTools
 import { buildFlightHudPayload } from '@/lib/flightHud';
 import { getCurrentUser, isOwner } from '@/lib/auth';
 import { queries } from '@/lib/db';
+import { clientIp } from '@/lib/adminGuard';
 import { llmProvider } from '@/lib/llmProvider';
 
 export const maxDuration = 60;
@@ -17,6 +18,11 @@ const Schema = z.object({
 });
 
 const MAX_ITERATIONS = 6;
+/** Per provider call. Under maxDuration, with room for a failover. */
+const PROVIDER_TIMEOUT_MS = 25_000;
+/** Unauthenticated calls per client IP per hour. They never reach a model
+ *  (no user, no concierge), but each still costs a session lookup. */
+const ANON_LIMIT = { n: 20, windowSec: 3600 };
 
 type ChatMsg = { role: 'user' | 'assistant'; content: string };
 type ToolCallLog = Array<{ name: string; input: unknown; result_preview: string }>;
@@ -31,7 +37,7 @@ async function runAnthropicLoop(
 ): Promise<LoopResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: 'ANTHROPIC_API_KEY not set' };
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: PROVIDER_TIMEOUT_MS, maxRetries: 1 });
   const messages: Anthropic.MessageParam[] = userMessages.map(m => ({ role: m.role, content: m.content }));
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
@@ -95,11 +101,17 @@ async function runOpenAICompatLoop(
   ];
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
-    const res = await fetch(`${opts.baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: opts.model, max_tokens: 2048, messages, tools: oaTools }),
-    });
+    let res: Response;
+    try {
+      res = await fetch(`${opts.baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ model: opts.model, max_tokens: 2048, messages, tools: oaTools }),
+        signal: AbortSignal.timeout(PROVIDER_TIMEOUT_MS),
+      });
+    } catch (e) {
+      return { ok: false, error: `${opts.provider}: ${(e as Error).message}` };
+    }
     if (!res.ok) {
       const body = await res.text().catch(() => '');
       return { ok: false, error: `${opts.provider} API ${res.status}: ${body.slice(0, 200)}` };
@@ -137,6 +149,11 @@ export async function POST(req: Request) {
   const me = await getCurrentUser().catch(() => null);
   const scope = conciergeScope(me, isOwner);
   if (scope === 'anonymous' || !me) {
+    // Metered per client IP (last proxy hop — the first X-Forwarded-For entry
+    // is whatever the client wrote), so the endpoint cannot be hammered.
+    if (!queries.rateLimitCheck('chat_anon_ip', clientIp(req.headers), ANON_LIMIT.n, ANON_LIMIT.windowSec)) {
+      return NextResponse.json({ error: 'Too many requests — give it a moment.' }, { status: 429 });
+    }
     return NextResponse.json({ error: 'Sign in to use the concierge.' }, { status: 401 });
   }
   if (scope === 'user' && !queries.rateLimitCheck('concierge', String(me.id), 30, 300)) {
@@ -187,7 +204,13 @@ export async function POST(req: Request) {
     ));
   }
   if (attempts.length === 0) {
-    return NextResponse.json({ error: 'No AI provider configured (set ANTHROPIC_API_KEY, GROQ_API_KEY, OPENAI_API_KEY, OPENROUTER_API_KEY, or GEMINI_API_KEY)' }, { status: 500 });
+    // Never tell a caller which keys exist.
+    console.error('[chat] no AI provider configured');
+    return NextResponse.json({
+      reply: 'The assistant is not available right now. Your dashboard, alerts and fare tracking are unaffected.',
+      stop_reason: 'end_turn',
+      provider: 'offline',
+    });
   }
 
   const errors: string[] = [];
