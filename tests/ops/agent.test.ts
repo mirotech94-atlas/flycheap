@@ -5,6 +5,9 @@ import { bootTempDb } from '../helpers/tempDb';
 let db: Awaited<ReturnType<typeof bootTempDb>>;
 let agent: typeof import('@/lib/ops/agent');
 beforeAll(async () => { db = await bootTempDb(); agent = await import('@/lib/ops/agent'); });
+// The founder's Slack user id. Gated approvals come only from ids listed here.
+process.env.OPS_APPROVER_SLACK_USER_IDS = 'UFOUNDER, UCOFOUNDER';
+const FOUNDER = 'UFOUNDER';
 
 const calls: Array<[string, string[]]> = [];
 const runner = async (file: string, args: string[]) => { calls.push([file, args]); return { ok: true, code: 0, stdout: `ran ${args.join(' ')}`, stderr: '' }; };
@@ -198,9 +201,9 @@ describe('loops', () => {
       [{ type: 'tool_use', id: 't1', name: 'redeploy', input: {} }],
       [{ type: 'text', text: 'Redeployed.', citations: null }],
     ] as unknown as Array<Anthropic.Message['content']>);
-    const r = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [{ role: 'assistant', content: 'I propose redeploy' }], 'go', { ...deps(), client });
+    const r = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [{ role: 'assistant', content: 'I propose redeploy' }], 'go', { ...deps(), client }, FOUNDER);
     expect(r.text).toBe('Redeployed.');
-    expect(calls.map(c => c[1].join(' '))).toEqual(['/usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh']);
+    expect(calls.map(c => c[1].join(' '))).toEqual(['/usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /usr/local/sbin/flycheap-deploy']);
     expect(db.queries.incidentById(row.id)?.status).toBe('fixing');
   });
   it('a pending proposal is approvable only by the very next human reply', async () => {
@@ -208,7 +211,7 @@ describe('loops', () => {
     db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');
     calls.length = 0;
     const textOnlyClient = scripted([[{ type: 'text', text: 'Here are the logs.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
-    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'show me the logs first', { ...deps(), client: textOnlyClient });
+    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'show me the logs first', { ...deps(), client: textOnlyClient }, FOUNDER);
     expect(r1.text).toBe('Here are the logs.');
     expect(calls).toEqual([]);
     const cleared = db.queries.incidentById(row.id)!;
@@ -219,7 +222,7 @@ describe('loops', () => {
     // proposal, handleThreadReply passes approvedProposal: null and no
     // "[system] approved" message, so nothing gated ever runs.
     const secondClient = scripted([[{ type: 'text', text: 'Nothing pending to approve.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
-    const r2 = await agent.handleThreadReply(cleared, [], 'go', { ...deps(), client: secondClient });
+    const r2 = await agent.handleThreadReply(cleared, [], 'go', { ...deps(), client: secondClient }, FOUNDER);
     expect(r2.text).toBe('Nothing pending to approve.');
     expect(calls).toEqual([]);
     expect(db.queries.incidentById(row.id)?.status).toBe('open');
@@ -232,7 +235,7 @@ describe('loops', () => {
     // (e.g. it decided to ask a follow-up instead). The proposal must be
     // consumed regardless — approval or not — so it can't be replayed.
     const textOnlyClient = scripted([[{ type: 'text', text: 'One moment.', citations: null }]] as unknown as Array<Anthropic.Message['content']>);
-    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: textOnlyClient });
+    const r1 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: textOnlyClient }, FOUNDER);
     expect(r1.text).toBe('One moment.');
     expect(calls).toEqual([]);
     expect(db.queries.incidentById(row.id)?.last_action).toBeNull();
@@ -247,9 +250,46 @@ describe('loops', () => {
       [{ type: 'tool_use', id: 't2', name: 'redeploy', input: {} }],
       [{ type: 'text', text: 'Deployed.', citations: null }],
     ] as unknown as Array<Anthropic.Message['content']>);
-    const r2 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: deployClient });
+    const r2 = await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: deployClient }, FOUNDER);
     expect(r2.text).toBeTruthy();
     expect(calls).toEqual([]);
+  });
+  it('"go" from anyone but a listed approver approves nothing, even in the right thread', async () => {
+    const deployClient = () => scripted([
+      [{ type: 'tool_use', id: 't3', name: 'redeploy', input: {} }],
+      [{ type: 'text', text: 'Deployed.', citations: null }],
+    ] as unknown as Array<Anthropic.Message['content']>);
+    for (const who of ['USTRANGER', '', null, undefined]) {
+      const { row } = db.queries.upsertIncident(`err:who:${String(who)}`, 'err', 't');
+      db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');
+      calls.length = 0;
+      await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client: deployClient() }, who);
+      expect(calls, String(who)).toEqual([]);
+    }
+  });
+  it('with no approver list configured, gated actions cannot be approved at all', async () => {
+    const saved = process.env.OPS_APPROVER_SLACK_USER_IDS;
+    delete process.env.OPS_APPROVER_SLACK_USER_IDS;
+    try {
+      expect(agent.isOpsApprover(FOUNDER)).toBe(false);
+      const { row } = db.queries.upsertIncident('err:noenv', 'err', 't');
+      db.queries.setIncidentStatus(row.id, 'needs_human', 'PROPOSAL:{"tool":"redeploy","input":{},"reason":"fix"}');
+      calls.length = 0;
+      const client = scripted([
+        [{ type: 'tool_use', id: 't4', name: 'redeploy', input: {} }],
+        [{ type: 'text', text: 'Deployed.', citations: null }],
+      ] as unknown as Array<Anthropic.Message['content']>);
+      await agent.handleThreadReply(db.queries.incidentById(row.id)!, [], 'go', { ...deps(), client }, FOUNDER);
+      expect(calls).toEqual([]);
+    } finally {
+      process.env.OPS_APPROVER_SLACK_USER_IDS = saved;
+    }
+  });
+  it('isOpsApprover matches exact ids from the comma list', () => {
+    expect(agent.isOpsApprover('UFOUNDER')).toBe(true);
+    expect(agent.isOpsApprover('UCOFOUNDER')).toBe(true);
+    expect(agent.isOpsApprover('UFOUND')).toBe(false);
+    expect(agent.isOpsApprover('ufounder')).toBe(false);
   });
 });
 
