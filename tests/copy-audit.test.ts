@@ -84,6 +84,48 @@ describe('no customer-facing page promises a polling cadence', () => {
   });
 });
 
+describe('no customer-facing page claims an airline count it cannot measure', () => {
+  /**
+   * "1,000+ airlines" was on eleven pages, the nav guest line, the share card,
+   * the PWA manifest and three locale dictionaries. It is a metasearch
+   * catalogue number nothing in this codebase reads; the only enabled provider
+   * is Travelpayouts and only ~50 distinct carrier codes appear in recorded
+   * fares. The measurable figure is `airlinesSeen` in public-metrics.ts — use
+   * that on a dynamic page, or say "airline fares" with no number at all.
+   *
+   * Digits next to the word "airline(s)" catch the typed claim whatever the
+   * thousands separator, and the Hindi/Chinese forms it was translated into.
+   */
+  // A number (any thousands separator, incl. the French narrow space), then
+  // the word for airline in every shipped locale, on the SAME line — a count
+  // that happens to end a line above the word "airline" is not a claim.
+  const NUM = '\\d[\\d,._ \\u00a0\\u202f]*\\+?[ \\t\\u00a0\\u202f]*(多)?(家)?[ \\t]*';
+  const BANNED = [
+    new RegExp(NUM + '(airlines?|carriers?|aerol[ií]neas|compagnies?|companhias|fluggesellschaften)\\b', 'i'),
+    new RegExp(NUM + '(航空公司|एयरलाइन|شرك(ة|ات) طيران|авиакомпани|航空会社|항공사)'),
+    /\b(thousands?|hundreds?)\s+of\s+(airlines|carriers)\b/i,
+  ];
+
+  it('holds across every page, component and locale dictionary', () => {
+    const offences: string[] = [];
+    // The manifest and the OG route are not in customerFacingFiles() but ship
+    // to customers as the install prompt and the share card; include them.
+    const files = [
+      ...customerFacingFiles(),
+      join(SRC, 'app/manifest.ts'),
+      join(SRC, 'app/api/og/route.ts'),
+    ];
+    for (const file of files) {
+      const text = prose(readFileSync(file, 'utf8'));
+      for (const re of BANNED) {
+        const m = re.exec(text);
+        if (m) offences.push(`${file.slice(SRC.length)} → "${m[0].trim()}"`);
+      }
+    }
+    expect(offences).toEqual([]);
+  });
+});
+
 describe('no customer-facing page advertises a channel we cannot send on', () => {
   /**
    * Slack is the internal ops channel and is in no tier's channel list.

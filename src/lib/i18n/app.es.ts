@@ -10,7 +10,7 @@ export const es: AppDict = {
     home: 'Inicio', flights: 'Vuelos', profile: 'Perfil',
     tagline: 'Inteligencia de tarifas', toggle: 'Mostrar/ocultar navegación',
     signIn: 'Iniciar sesión', signInArrow: 'Iniciar sesión →', signOut: 'Cerrar sesión', adminPortal: 'Portal de administración →',
-    guestA: 'FlyCheap vigila ', guestStrong: 'más de 1.000 aerolíneas', guestB: ' las 24 horas y te avisa en cuanto una tarifa baja de tu umbral.',
+    guestA: 'FlyCheap vigila ', guestStrong: 'tarifas de aerolíneas', guestB: ' las 24 horas y te avisa en cuanto una tarifa baja de tu umbral.',
     whatIs: '¿Qué es FlyCheap?', exploreDeals: 'Explorar ofertas',
   },
 
@@ -47,7 +47,7 @@ export const es: AppDict = {
     hero: {
       pill: 'En vivo · {providers} proveedores de datos · {fares} tarifas registradas',
       h1: [['Las tarifas ', 'más baratas', ','], ['vigiladas ', 'por ti', '.']],
-      lede: 'FlyCheap vigila cada ruta que te importa en más de 1.000 aerolíneas, 24/7. Te avisamos en cuanto una tarifa baja de tu umbral, o cae claramente por debajo de su mediana de 7 días. Deja de refrescar webs de vuelos.',
+      lede: 'FlyCheap vigila cada ruta que te importa en aerolíneas de todo el mundo, 24/7. Te avisamos en cuanto una tarifa baja de tu umbral, o cae claramente por debajo de su mediana de 7 días. Deja de refrescar webs de vuelos.',
       ctaEarly: 'Acceso anticipado →', ctaDemo: '▶ Ver la demo en vivo',
       statSnapshots: 'Capturas de tarifas registradas', live: 'en vivo', statCadence: 'Frecuencia de sondeo', min: 'min',
       statFree: 'Gratis para siempre', noCard: 'sin tarjeta', statProviders: 'Proveedores de datos sondeados',
@@ -61,7 +61,7 @@ export const es: AppDict = {
       sub: 'La mayoría refresca webs de vuelos durante horas y aun así reserva en el momento equivocado. FlyCheap vigila sin parar y te dice exactamente cuándo comprar.',
       steps: [
         { tag: 'Añade una ruta · 30 segundos', title: ['Dinos ', 'dónde', ', ', 'cuándo', ' y tu ', 'objetivo', '.'], desc: 'Elige origen y destino, ventanas de fechas opcionales, número de viajeros y el precio por adulto que te encantaría. Eso es todo: sin tarjeta ni asistente de configuración.' },
-        { tag: 'Sondeamos · Cada 30 minutos', title: ['Vigilamos ', 'más de 1.000 aerolíneas', ' mientras duermes.'], desc: 'Nuestro motor lanza cada búsqueda a Travelpayouts, Duffel y Google Flights (vía SerpAPI y SearchAPI) en paralelo, elige la oferta válida más barata en cada ciclo y la guarda en tu historial de tarifas.' },
+        { tag: 'Sondeamos · Cada 30 minutos', title: ['Vigilamos ', 'tarifas de aerolíneas', ' mientras duermes.'], desc: 'Nuestro motor lanza cada búsqueda a Travelpayouts, Duffel y Google Flights (vía SerpAPI y SearchAPI) en paralelo, elige la oferta válida más barata en cada ciclo y la guarda en tu historial de tarifas.' },
         { tag: 'Tú compras · En el momento justo', title: ['En cuanto baja una tarifa, recibes un ', 'aviso', '.'], desc: 'Dos disparadores: cruce de umbral (por debajo de tu objetivo) y anomalía (≥ 10 % bajo la mediana de 7 días). Email por defecto; SMS y Telegram a un toque en Pro. Haz clic y reserva directo.' },
       ],
       screen1: { route: 'ruta:', depart: 'salida:', ret: 'vuelta:', party: 'viajeros:', target: 'objetivo:', retVal: '+14 días', partyVal: '4 ad. + 1 bebé', targetVal: '$800/adulto' },
@@ -111,7 +111,7 @@ export const es: AppDict = {
       eyebrow: 'Preguntas frecuentes',
       title: ['Preguntas, ', 'respondidas', '.'],
       items: [
-        { q: '¿De dónde salen los datos de precios?', a: 'Agregamos Travelpayouts (la red de metabúsqueda de Aviasales, con más de 1.000 aerolíneas), Duffel y Google Flights vía SerpAPI y SearchAPI. Cada captura de tarifa lleva su fuente, así ves exactamente de dónde viene un precio.' },
+        { q: '¿De dónde salen los datos de precios?', a: 'Agregamos Travelpayouts (la red de metabúsqueda de Aviasales), Duffel y Google Flights vía SerpAPI y SearchAPI. Cada captura de tarifa lleva su fuente, así ves exactamente de dónde viene un precio.' },
         { q: '¿Qué tan frescos son los datos?', a: 'Las rutas vigiladas se sondean cada 5–30 minutos (configurable por ruta en Pro). El análisis de mejores ofertas a 12 meses se actualiza cada 12 horas. La página Explorar consulta cachés en vivo en cada petición.' },
         { q: '¿Qué rutas y aerolíneas puedo vigilar?', a: 'Cualquier par de aeropuertos del mundo: introduce dos códigos IATA (JFK → LHR, LAX → BKK, EWR → DXB…) y vigilamos todas las aerolíneas que cubren nuestros proveedores, low-cost incluidas. También puedes agrupar orígenes cercanos (JFK + EWR) en una sola ruta.' },
         { q: '¿Cobran comisión por reservar?', a: 'Nunca. No somos una agencia de viajes. Los enlaces de reserva te llevan a Aviasales, Kayak, Google Flights o directamente a la aerolínea, y completas la compra allí.' },
@@ -161,7 +161,7 @@ export const es: AppDict = {
     pollerTitle: 'El sondeador en segundo plano revisa cada vigilancia activa cada ~30 minutos; los sondeos bajo demanda se lanzan al instante cuando abres una ruta sin caché.',
     pollerPill: '🤖 Sondeador en segundo plano activo: revisando rutas cada 30 minutos.',
     h1: { pre: 'Hemos encontrado ', mid: ' ida y vuelta por menos de {price} que ', strike: 'tu agente de viajes', post: ' ', em: 'pasó por alto', end: '.' },
-    lede: 'FlyCheap vigila más de 1.000 aerolíneas las 24 horas y te avisa en cuanto una tarifa de tu ruta baja del umbral. Se acabó refrescar Google Flights a las 2 de la mañana.',
+    lede: 'FlyCheap vigila tarifas de aerolíneas las 24 horas y te avisa en cuanto una tarifa de tu ruta baja del umbral. Se acabó refrescar Google Flights a las 2 de la mañana.',
     bookCheapest: 'Reservar la más barata → {price}', addFirst: 'Añade tu primera ruta →', addWatch: 'Añadir una vigilancia',
     cheapestNow: 'Más barato ahora', median: 'Mediana de la caché', destinations: 'Destinos activos', cities: 'ciudades',
     rankedTitle: 'Dónde se sitúa cada ruta en su rango de 30 días', bookArrow: 'Reservar →',
@@ -179,6 +179,6 @@ export const es: AppDict = {
     intelEyebrow: 'Patrón + Calendario + Huella',
     intelTitle: ['', 'Inteligencia', ' de ruta'],
     intelSub: 'La tarjeta de patrón te dice cuándo es más barata esta ruta. El calendario muestra cada ventana barata. El registro de carbono mantiene el viaje honesto.',
-    footerTag: 'FlyCheap · Sondeando más de 1.000 aerolíneas · ', status: 'Estado', privacy: 'Privacidad', about: 'Acerca de',
+    footerTag: 'FlyCheap · Sondeando tarifas de aerolíneas · ', status: 'Estado', privacy: 'Privacidad', about: 'Acerca de',
   },
 };

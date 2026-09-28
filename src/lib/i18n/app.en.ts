@@ -20,7 +20,7 @@ export const en = {
     home: 'Home', flights: 'Flights', profile: 'Profile',
     tagline: 'Fare intelligence', toggle: 'Toggle navigation',
     signIn: 'Log in', signInArrow: 'Log in →', signOut: 'Sign out', adminPortal: 'Admin portal →',
-    guestA: 'FlyCheap watches ', guestStrong: '1,000+ airlines', guestB: ' around the clock and alerts you the moment a fare drops below your threshold.',
+    guestA: 'FlyCheap watches ', guestStrong: 'airline fares worldwide', guestB: ' around the clock and alerts you the moment a fare drops below your threshold.',
     whatIs: 'What is FlyCheap?', exploreDeals: 'Explore deals',
   },
 
@@ -57,7 +57,7 @@ export const en = {
     hero: {
       pill: 'Live · {providers} data providers · {fares} fares recorded',
       h1: [['The ', 'cheapest', ' fares,'], ['monitored ', 'for you', '.']] as Rich[],
-      lede: 'FlyCheap watches every route you care about across 1,000+ airlines, 24/7. We tell you the moment a fare drops below your threshold — or significantly under its 7-day median. Stop refreshing flight sites.',
+      lede: 'FlyCheap watches every route you care about across airlines worldwide, 24/7. We tell you the moment a fare drops below your threshold — or significantly under its 7-day median. Stop refreshing flight sites.',
       ctaEarly: 'Get early access →', ctaDemo: '▶ Watch the live demo',
       statSnapshots: 'Fare snapshots recorded', live: 'live', statCadence: 'Polling cadence', min: 'min',
       statFree: 'Free forever', noCard: 'no card', statProviders: 'Data providers polled',
@@ -71,7 +71,7 @@ export const en = {
       sub: 'Most people refresh flight sites for hours and still book at the wrong time. FlyCheap watches forever and tells you exactly when to buy.',
       steps: [
         { tag: 'Add a route · 30 seconds', title: ['Tell us ', 'where', ', ', 'when', ', and your ', 'target', '.'] as Rich, desc: 'Pick origin and destination, optional date windows, party size, and the per-adult price you’d love. That’s it — no credit card, no onboarding wizard.' },
-        { tag: 'We watch · Continuously', title: ['We watch ', '1,000+ airlines', ' while you sleep.'] as Rich, desc: 'Our engine fans each search out to Travelpayouts, Duffel, and Google Flights (via SerpAPI and SearchAPI) in parallel — picking the cheapest valid offer every cycle and writing it to your fare history.' },
+        { tag: 'We watch · Continuously', title: ['We watch ', 'airline fares', ' while you sleep.'] as Rich, desc: 'Our engine fans each search out to Travelpayouts, Duffel, and Google Flights (via SerpAPI and SearchAPI) in parallel — picking the cheapest valid offer every cycle and writing it to your fare history.' },
         { tag: 'You buy · The right moment', title: ['The instant a fare drops, you get a ', 'ping', '.'] as Rich, desc: 'Two triggers: threshold-cross (below your target) and anomaly (≥ 10% under 7-day median). Email by default; SMS and Telegram one toggle away on Pro. Click through to book direct.' },
       ],
       screen1: { route: 'route:', depart: 'depart:', ret: 'return:', party: 'party:', target: 'target:', retVal: '+14 days', partyVal: '4 ad + 1 inf', targetVal: '$800/adult' },
@@ -120,7 +120,7 @@ export const en = {
       eyebrow: 'Frequently asked',
       title: ['Questions, ', 'answered', '.'] as Rich,
       items: [
-        { q: 'Where does the pricing data come from?', a: 'We aggregate from Travelpayouts (the Aviasales metasearch network covering 1,000+ airlines), Duffel, and Google Flights via SerpAPI and SearchAPI. Every fare snapshot is tagged with its source so you can see exactly where a price came from.' },
+        { q: 'Where does the pricing data come from?', a: 'We aggregate from Travelpayouts (the Aviasales metasearch network), Duffel, and Google Flights via SerpAPI and SearchAPI. Every fare snapshot is tagged with its source so you can see exactly where a price came from.' },
         { q: 'How fresh is the data?', a: 'We check your tracked routes continuously, and check the ones that matter most — close to departure, close to your target, or moving fast — most often. The 12-month best-deals scan refreshes on its own schedule. The Explore page hits live caches on each request.' },
         { q: 'Which routes and airlines can I track?', a: 'Any airport pair in the world — enter two IATA codes (JFK → LHR, LAX → BKK, EWR → DXB…) and we watch every airline our providers cover, low-cost carriers included. You can also group nearby origins (JFK + EWR) into one route.' },
         { q: 'Do you charge a booking fee?', a: 'Never. We are not a travel agency. Booking links route you to Aviasales, Kayak, Google Flights, or the airline directly — you complete the purchase there.' },
@@ -171,7 +171,7 @@ export const en = {
     pollerPill: '🤖 Background poller active — checking your routes continuously.',
     // Rendered as: pre <em>{n}</em> mid <strike>strike</strike> post <em>em</em> end
     h1: { pre: 'We’ve found ', mid: ' sub-{price} round-trips ', strike: 'your travel agent', post: ' ', em: 'missed', end: '.' },
-    lede: 'FlyCheap watches 1,000+ airlines around the clock — and tells you the moment a fare on your route drops below threshold. No more refreshing Google Flights at 2 AM.',
+    lede: 'FlyCheap watches airline fares around the clock — and tells you the moment a fare on your route drops below threshold. No more refreshing Google Flights at 2 AM.',
     bookCheapest: 'Book cheapest → {price}', addFirst: 'Add your first route →', addWatch: 'Add a new watch',
     cheapestNow: 'Cheapest right now', median: 'Median across cache', destinations: 'Destinations live', cities: 'cities',
     rankedTitle: 'Where each route sits in its 30-day range', bookArrow: 'Book →',
@@ -189,7 +189,7 @@ export const en = {
     intelEyebrow: 'Pattern + Calendar + Footprint',
     intelTitle: ['Route ', 'intelligence', ''] as Rich,
     intelSub: 'The pattern card tells you when this route is cheapest. The calendar shows every cheap window. The carbon ledger keeps the trip honest.',
-    footerTag: 'FlyCheap · Polling 1,000+ airlines · ', status: 'Status', privacy: 'Privacy', about: 'About',
+    footerTag: 'FlyCheap · Polling airline fares · ', status: 'Status', privacy: 'Privacy', about: 'About',
   },
 };
 export type AppDict = typeof en;

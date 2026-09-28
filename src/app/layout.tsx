@@ -26,7 +26,7 @@ const plexMono = IBM_Plex_Mono({ subsets: ['latin'], variable: '--font-plex-mono
 
 export const metadata: Metadata = {
   title: 'FlyCheap — Executive Dashboard',
-  description: 'Cheap flights, monitored for you. Track 1,000+ airlines, get email alerts when fares drop.',
+  description: 'Cheap flights, monitored for you. Track airline fares worldwide, get email alerts when fares drop.',
   applicationName: 'FlyCheap',
   appleWebApp: {
     capable: true,

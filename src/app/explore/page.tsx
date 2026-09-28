@@ -6,6 +6,7 @@ import { SatelliteExploreMap } from '@/components/SatelliteExploreMap';
 import { ExploreDestinationCard } from '@/components/ExploreDestinationCard';
 import { ExploreRankedList, type ExploreOption } from '@/components/ExploreRankedList';
 import { DealSlideshow } from '@/components/DealSlideshow';
+import { getPublicMetrics } from '@/lib/public-metrics';
 import { StayHeroSlide } from '@/components/StayHeroSlide';
 import { bookingLink } from '@/lib/affiliate';
 import { placePhoto } from '@/lib/places';
@@ -24,6 +25,9 @@ function firstParam(value: string | string[] | undefined): string | undefined {
 }
 
 export default async function ExplorePage({ searchParams }: PageProps) {
+  // Derived, never typed: distinct carriers seen in our own fare data.
+  const pm = getPublicMetrics();
+  const airlinesTitle = pm.airlinesSeen > 0 ? `${pm.airlinesSeen} airlines seen in live fares` : 'Airlines worldwide, priced live';
   const params = await searchParams;
   const origin = (firstParam(params?.from) ?? 'NYC').toUpperCase();
   const maxBudget = Number(firstParam(params?.maxPrice) ?? '500');
@@ -146,8 +150,8 @@ export default async function ExplorePage({ searchParams }: PageProps) {
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
                 </svg>
               ),
-              title: '1,000+ airlines tracked',
-              sub: 'Aviasales global network, refreshed continuously',
+              title: airlinesTitle,
+              sub: 'Priced from the Aviasales network, refreshed continuously',
             },
             {
               icon: (
@@ -328,7 +332,7 @@ export default async function ExplorePage({ searchParams }: PageProps) {
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--accent)' }}>
               <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
             </svg>
-            <h3 className="ed-tile-value" style={{ fontSize: 16 }}>1,000+ airlines tracked</h3>
+            <h3 className="ed-tile-value" style={{ fontSize: 16 }}>{airlinesTitle}</h3>
             <p className="ed-tile-meta">Legacy carriers, low-cost and regional, priced from the Aviasales network and refreshed continuously.</p>
           </div>
           <div className="ed-tile">

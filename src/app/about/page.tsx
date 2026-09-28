@@ -27,7 +27,7 @@ export default function AboutPage() {
             Built so families stop <em>overpaying</em> for flights.
           </h1>
           <p className="ed-sub" style={{ maxWidth: 680 }}>
-            FlyCheap is a private fare-watching dashboard that polls 1,000+ airlines
+            FlyCheap is a private fare-watching dashboard that polls airline fares
             through live partner APIs and alerts you the moment a price drops below your target.
             Here is exactly how it works, who runs it, and how it makes money.
           </p>
@@ -100,7 +100,7 @@ export default function AboutPage() {
               <ul style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>
                   <strong><a href={travelpayoutsReferralUrl()} target="_blank" rel="noopener noreferrer">Travelpayouts</a></strong>
-                  {' '}— the affiliate network behind Aviasales (1,000+ airline flight metasearch), Hotellook
+                  {' '}— the affiliate network behind Aviasales (flight metasearch), Hotellook
                   (hotel comparison), and WayAway (cashback flights). Our primary data source for fare polling.
                 </li>
                 <li>
