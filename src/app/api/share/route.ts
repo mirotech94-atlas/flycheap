@@ -1,57 +1,34 @@
 import { NextResponse } from 'next/server';
-import crypto from 'node:crypto';
-import { queries, limitsForUser } from '@/lib/db';
+import { queries } from '@/lib/db';
 import { getCurrentUser } from '@/lib/auth';
 
 export const dynamic = 'force-dynamic';
 
 /**
- * Guard for every method here. This endpoint previously had NO auth at all —
- * an anonymous caller could read the household share token (exposing the
- * shared dashboard) or rotate/delete it (breaking it for everyone).
- * Household sharing is also a paid capability.
+ * RETIRED. This handed any Pro user the single install-wide `share_token`,
+ * and /share/<that token> rendered every user's watches. The share page no
+ * longer honours it; per-group boards (/org → a group → Boards) replace it,
+ * each scoped to its creator's watches, hashed, expiring and revocable.
+ *
+ * GET/POST answer 410 so an old client sees why; DELETE still clears the
+ * stored value so nothing usable lingers in settings.
  */
-async function guard(): Promise<{ ok: true } | { ok: false; res: NextResponse }> {
-  const user = await getCurrentUser();
-  if (!user) {
-    return { ok: false, res: NextResponse.json({ error: 'sign in required' }, { status: 401 }) };
-  }
-  if (!limitsForUser(user).familyShare) {
-    return {
-      ok: false,
-      res: NextResponse.json(
-        { error: 'Household sharing is a Pro feature.', upgrade: '/pricing' },
-        { status: 402 },
-      ),
-    };
-  }
-  return { ok: true };
-}
-
-function ensureToken(): string {
-  let t = queries.getSetting('share_token') ?? '';
-  if (!t) {
-    t = crypto.randomBytes(18).toString('base64url');
-    queries.setSetting('share_token', t);
-  }
-  return t;
-}
+const GONE = {
+  error: 'The single family share link has been retired. Create a board for a group under /org instead.',
+  boards: '/org',
+};
 
 export async function GET() {
-  const g = await guard(); if (!g.ok) return g.res;
-  return NextResponse.json({ token: ensureToken() });
+  return NextResponse.json(GONE, { status: 410 });
 }
 
 export async function POST() {
-  const g = await guard(); if (!g.ok) return g.res;
-  // Rotate
-  const fresh = crypto.randomBytes(18).toString('base64url');
-  queries.setSetting('share_token', fresh);
-  return NextResponse.json({ token: fresh });
+  return NextResponse.json(GONE, { status: 410 });
 }
 
 export async function DELETE() {
-  const g = await guard(); if (!g.ok) return g.res;
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: 'sign in required' }, { status: 401 });
   queries.setSetting('share_token', '');
   return NextResponse.json({ ok: true });
 }

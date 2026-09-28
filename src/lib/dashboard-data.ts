@@ -15,17 +15,26 @@ export function loadDashboard(opts?: {
   threshold?: number;
   limit?: number;
   includeHistory?: boolean;
+  /** With userId: leave out watches filed under a different group. */
+  groupId?: number;
 }): DashboardRow[] {
   const threshold = opts?.threshold ?? parseFloat(
     (opts?.userId && queries.getUserSetting(opts.userId, 'alert_threshold_per_adult_usd')) ||
     queries.getSetting('alert_threshold_per_adult_usd') || '900'
   );
   const includeHistory = opts?.includeHistory ?? true;
-  const searches = opts?.userId
+  const all = opts?.userId
     ? queries.listActiveSearchesForUser(opts.userId)
     : opts?.limit
       ? queries.listActiveSearchesPreview(opts.limit)
       : queries.listActiveSearches();
+  const groupId = opts?.groupId;
+  const searches = groupId === undefined
+    ? all
+    : all.filter(s => {
+        const g = (s as { group_id?: number | null }).group_id;
+        return g === null || g === undefined || g === groupId;
+      });
   const ids = searches.map(s => s.id);
   const latestBySearch = new Map<number, FareRow>();
   const historyBySearch = new Map<number, Array<{ polled_at: string; price_per_adult_usd: number }>>();

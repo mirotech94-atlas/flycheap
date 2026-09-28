@@ -202,3 +202,54 @@ describe('the monetization boundary', () => {
     expect(org.mistakeFaresGoToAgentFirst(null)).toBe(false);
   });
 });
+
+describe('a board shows only its creator’s watches', () => {
+  const addWatch = (userId: number, origin: string, groupId: number | null = null) => {
+    const r = dbmod.queries.insertSearch({
+      origin, destination: 'CAI', depart_date: '2027-01-10', return_date: '2027-01-20',
+      adults: 1, infants: 0, user_id: userId,
+    } as Parameters<typeof dbmod.queries.insertSearch>[0]);
+    const id = Number(r.lastInsertRowid);
+    if (groupId !== null) dbmod.getDb().prepare('UPDATE searches SET group_id = ? WHERE id = ?').run(groupId, id);
+    return id;
+  };
+  const user = (email: string) => Number(dbmod.getDb().prepare('INSERT INTO users (email) VALUES (?)').run(email).lastInsertRowid);
+
+  it('never includes another user’s routes', () => {
+    const alice = user(`alice-${Date.now()}@x.com`);
+    const bob = user(`bob-${Date.now()}@x.com`);
+    const mine = addWatch(alice, 'JFK');
+    const theirs = addWatch(bob, 'BOS');
+    const { token } = boards.createBoard({ groupId, createdBy: alice });
+    const ids = boards.boardRows(boards.resolveBoard(token)!).map(r => r.search.id);
+    expect(ids).toContain(mine);
+    expect(ids).not.toContain(theirs);
+  });
+
+  it('leaves out the creator’s watches filed under a different group', () => {
+    const agent = user(`agent-${Date.now()}@x.com`);
+    const otherGroup = org.createGroup({ orgId: org.getGroup(groupId)!.org_id, name: 'Client B' }).id;
+    const forA = addWatch(agent, 'EWR', groupId);
+    const forB = addWatch(agent, 'IAD', otherGroup);
+    const { token } = boards.createBoard({ groupId, createdBy: agent });
+    const ids = boards.boardRows(boards.resolveBoard(token)!).map(r => r.search.id);
+    expect(ids).toContain(forA);
+    expect(ids).not.toContain(forB);
+  });
+
+  it('a board with no recorded creator shows nothing (fails closed)', () => {
+    const { token } = boards.createBoard({ groupId, createdBy: null });
+    expect(boards.boardRows(boards.resolveBoard(token)!)).toEqual([]);
+  });
+});
+
+describe('push devices', () => {
+  it('a user can only unregister their own device token', () => {
+    const q = dbmod.queries;
+    q.upsertPushDevice('ExponentPushToken[victim]', 1, 'ios');
+    expect(q.deletePushDeviceForUser('ExponentPushToken[victim]', 999).changes).toBe(0);
+    expect(q.listPushDevicesForUser(1).map(d => d.token)).toContain('ExponentPushToken[victim]');
+    expect(q.deletePushDeviceForUser('ExponentPushToken[victim]', 1).changes).toBe(1);
+    expect(q.listPushDevicesForUser(1).map(d => d.token)).not.toContain('ExponentPushToken[victim]');
+  });
+});
