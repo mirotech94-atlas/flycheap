@@ -66,7 +66,7 @@ async function runAnthropicLoop(
     }
     messages.push({ role: 'user', content: results });
   }
-  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500, executed };
+  return { ok: false, error: GAVE_UP_MSG, status: 500, executed };
 }
 
 /* ─── OpenAI-compatible loop — covers Groq (primary) AND OpenAI (same wire format) ─── */
@@ -120,12 +120,28 @@ async function runOpenAICompatLoop(
       messages.push({ role: 'tool', tool_call_id: c.id, content: r.content });
     }
   }
-  return { ok: false, error: 'FarePilot couldn’t complete that — try rephrasing.', status: 500, executed };
+  return { ok: false, error: GAVE_UP_MSG, status: 500, executed };
 }
 
 /** Message shown when a write already landed and we refuse to replay it. */
 const PARTIAL_WRITE_MSG =
   'Part of that went through before the AI provider failed. I stopped rather than risk doing it twice — check your routes, then try again.';
+const GAVE_UP_MSG = 'FarePilot couldn’t complete that — try rephrasing.';
+const UNAVAILABLE_MSG = 'FarePilot is unavailable right now — please try again shortly.';
+/** The only error strings a client may see; they are ours, not a provider's. */
+const CLIENT_SAFE = new Set([PARTIAL_WRITE_MSG, GAVE_UP_MSG, UNAVAILABLE_MSG]);
+
+/**
+ * Map a loop error to what the app shows. Provider errors carry key
+ * fragments, request ids, org/billing state and model names; those go to the
+ * server log and error_log, and the client gets one plain sentence.
+ */
+function clientError(err: string, userId: number): string {
+  if (CLIENT_SAFE.has(err)) return err;
+  console.error('[v1/chat] provider failure:', err);
+  try { queries.logError({ source: 'v1-chat', message: 'provider failure', userId, context: { error: err.slice(0, 500) } }); } catch { /* best-effort */ }
+  return UNAVAILABLE_MSG;
+}
 
 function buildAttempts(system: string, userMessages: ChatMsg[], userId: number, baseUrl: string): Array<() => Promise<LoopResult>> {
   // Ordered failover chain from the shared registry (src/lib/ai/providers.ts):
@@ -193,9 +209,9 @@ export async function POST(req: Request) {
             if (result.ok) break;
             if (result.executed) { result = { ok: false, error: PARTIAL_WRITE_MSG, status: 502 }; break; }
           }
-          controller.enqueue(encoder.encode(result.ok ? result.reply : `⚠️ ${result.error}`));
+          controller.enqueue(encoder.encode(result.ok ? result.reply : `⚠️ ${clientError(result.error, user.id)}`));
         } catch (e) {
-          try { controller.enqueue(encoder.encode(`\n\n⚠️ ${(e as Error).message}`)); } catch { /* closed */ }
+          try { controller.enqueue(encoder.encode(`\n\n⚠️ ${clientError((e as Error).message, user.id)}`)); } catch { /* closed */ }
         } finally {
           controller.close();
         }
@@ -214,5 +230,5 @@ export async function POST(req: Request) {
     // A tool already wrote something — replaying on the next provider would do it twice.
     if (last.executed) return NextResponse.json({ error: PARTIAL_WRITE_MSG }, { status: 502 });
   }
-  return NextResponse.json({ error: last.ok ? '' : last.error }, { status: last.ok ? 200 : last.status });
+  return NextResponse.json({ error: last.ok ? '' : clientError(last.error, user.id) }, { status: last.ok ? 200 : last.status });
 }
