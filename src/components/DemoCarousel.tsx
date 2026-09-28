@@ -84,7 +84,7 @@ const SLIDES: Array<{ tag: string; title: string; body: string; svg: React.React
         <rect x="171" y="155" width="137" height="8" fill="var(--amber)" />
         <rect x="308" y="155" width="137" height="8" fill="var(--red)" />
         <circle cx="55" cy="159" r="7" fill="var(--green)" stroke="var(--surface)" strokeWidth="2" />
-        <text x="240" y="180" fontSize="8" fill="var(--muted)" textAnchor="middle">you're at the 5th percentile</text>
+        <text x="240" y="180" fontSize="8" fill="var(--muted)" textAnchor="middle">you&rsquo;re at the 5th percentile</text>
         {/* Stats row */}
         {[['TREND','-8%','var(--green)'],['MEDIAN','$1,150',''],['VS TGT','-4%','var(--green)']].map(([l, v, c], i) => (
           <g key={i} transform={`translate(${40 + i * 145} 215)`}>

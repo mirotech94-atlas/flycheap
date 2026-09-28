@@ -150,7 +150,7 @@ export function FareCalendar({
       </div>
 
       <div className="ed-panel-note" style={{ marginTop: 8 }}>
-        Numbers in cells are price ÷ 100 (e.g. "9" ≈ $900). Click any day → filter the deals table to that month + origin.
+        Numbers in cells are price ÷ 100 (e.g. &ldquo;9&rdquo; ≈ $900). Click any day → filter the deals table to that month + origin.
       </div>
     </div>
   );

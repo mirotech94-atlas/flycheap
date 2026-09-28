@@ -12,6 +12,7 @@ type RefreshState = {
 };
 
 declare global {
+  // eslint-disable-next-line no-var -- `declare global` requires var
   var __flycheapBestDealsRefresh: RefreshState | undefined;
 }
 

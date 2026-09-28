@@ -10,6 +10,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const dbPath = path.join(DATA_DIR, 'fares.db');
 
 declare global {
+  // eslint-disable-next-line no-var -- `declare global` requires var
   var __egyptairDb: Database.Database | undefined;
 }
 
