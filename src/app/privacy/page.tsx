@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 };
 
 export default function PrivacyPage() {
-  const lastUpdated = '2026-09-27';
+  const lastUpdated = '2026-09-28';
   const providers = enabledFareProviders();
   const providerList = providers.labels.length ? listOf(providers.labels) : 'the fare providers enabled at the time';
   const ai = configuredAiProviders();

@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: 'Terms of service, subscription, refund and cancellation policy, and affiliate disclosure for FlyCheap.',
 };
 
-const EFFECTIVE = 'September 6, 2026';
+const EFFECTIVE = 'September 28, 2026';
 
 type Derived = { processors: string; proMo: number; proYr: number; entMo: number; entYr: number };
 
