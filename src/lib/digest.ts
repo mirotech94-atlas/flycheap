@@ -10,9 +10,31 @@ import { emailFrame, emailMasthead, emailFooter, emailButton, emailEyebrow, EMAI
 
 const QUOTA_PER_MONTH = 9999; // Travelpayouts is essentially unmetered for affiliates
 
-function quickChart(config: object, width = 480, height = 280): string {
-  const json = JSON.stringify(config);
-  return `https://quickchart.io/chart?bkg=white&w=${width}&h=${height}&c=${encodeURIComponent(json)}`;
+/**
+ * A small bar list, inline SVG. Replaces the remote doughnut and pie images
+ * the digest used to embed: those were an outbound request to a third party
+ * the moment the mail was opened, and the wrong form — a pie asks the eye to
+ * compare angles, and "party total by origin" is a magnitude per category,
+ * which a bar answers at a glance.
+ *
+ * Single series, one hue, value labelled directly, square ends (the editorial
+ * system has no radius). Gmail strips inline <svg>, so every caller prints the
+ * same numbers as a ruled table beneath it — the chart is never the only copy.
+ */
+function barListSvg(rows: Array<{ label: string; value: number; color?: string; text?: string }>, opts: { width?: number; title: string }): string {
+  if (rows.length === 0) return '';
+  const W = opts.width ?? 268, ROW = 22, LABEL = 64, VALUE = 74, PAD = 2;
+  const H = rows.length * ROW;
+  const max = Math.max(1, ...rows.map(r => r.value));
+  const track = W - LABEL - VALUE;
+  const bars = rows.map((r, i) => {
+    const y = i * ROW + PAD;
+    const w = r.value > 0 ? Math.max(2, Math.round((r.value / max) * track)) : 0;
+    return `<text x="0" y="${y + 13}" font-family="${T.MONO}" font-size="11" fill="${T.MUTED_2}">${escapeHtml(r.label)}</text>`
+      + `<rect x="${LABEL}" y="${y + 3}" width="${w}" height="${ROW - PAD * 2 - 6}" fill="${r.color ?? T.ACCENT}"/>`
+      + `<text x="${W}" y="${y + 13}" text-anchor="end" font-family="${T.MONO}" font-size="11" fill="${T.INK}">${escapeHtml(r.text ?? String(r.value))}</text>`;
+  }).join('');
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;max-width:100%;height:auto" role="img" aria-label="${escapeHtml(opts.title)}">${bars}</svg>`;
 }
 
 type DigestRow = {
@@ -74,39 +96,31 @@ export function buildDigestHtml(
   const recentAlerts = queries.recentAlerts(5);
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
 
-  // Pie chart 1: total party cost by origin (current cheapest)
+  // Chart 1: total party cost by origin (current cheapest) — one hue, a bar per origin.
   const byOrigin: Record<string, number> = {};
   for (const r of rows) {
     if (r.fare) byOrigin[r.search.origin] = (byOrigin[r.search.origin] ?? 0) + r.fare.total_price_usd;
   }
-  const originLabels = Object.keys(byOrigin);
-  const originPie = quickChart({
-    type: 'doughnut',
-    data: {
-      labels: originLabels,
-      datasets: [{
-        data: originLabels.map(o => Math.round(byOrigin[o])),
-        backgroundColor: [T.ACCENT, T.AMBER, T.INK, T.MUTED],
-      }],
-    },
-    options: { plugins: { title: { display: true, text: 'Party total by origin (USD)' } } },
-  });
+  const originRows = Object.entries(byOrigin)
+    .sort((a, b) => b[1] - a[1])
+    .map(([label, value]) => ({ label, value: Math.round(value), text: fmtUSD(value) }));
+  const originChart = barListSvg(originRows, { title: 'Party total by origin, USD' });
 
-  // Pie chart 2: under vs over target by search (per-route target honored — matches the dashboard)
+  // Chart 2: searches under / over target / no data — status colours, the word beside each.
   const under = rows.filter(r => r.fare && r.fare.price_per_adult_usd < effectiveTarget(r.search, threshold)).length;
   const over = rows.filter(r => r.fare && r.fare.price_per_adult_usd >= effectiveTarget(r.search, threshold)).length;
   const noData = rows.filter(r => !r.fare).length;
-  const thresholdPie = quickChart({
-    type: 'pie',
-    data: {
-      labels: [`Below threshold (${under})`, `Above (${over})`, `No data (${noData})`],
-      datasets: [{
-        data: [under, over, noData],
-        backgroundColor: [T.GREEN, T.RED, T.MUTED],
-      }],
-    },
-    options: { plugins: { title: { display: true, text: `Searches vs $${threshold}/adult threshold` } } },
-  });
+  const statusRows = [
+    { label: 'below', value: under, color: T.GREEN },
+    { label: 'above', value: over, color: T.RED },
+    { label: 'no data', value: noData, color: T.MUTED },
+  ];
+  const statusChart = barListSvg(statusRows, { title: `Searches against the ${fmtUSD(threshold)} per-adult threshold` });
+  const legend = (items: Array<{ label: string; text: string }>) =>
+    `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:6px">${items.map(i =>
+      `<tr><td style="${TDM};${NUM};font-size:11px;padding:4px 0">${escapeHtml(i.label)}</td><td style="${TD};${NUM};font-size:11px;padding:4px 0;text-align:right">${escapeHtml(i.text)}</td></tr>`).join('')}</table>`;
+  const originLegend = legend(originRows.map(r => ({ label: r.label, text: r.text })));
+  const statusLegend = legend(statusRows.map(r => ({ label: r.label, text: String(r.value) })));
 
   // Best deals across the year (from the 12-month scan cache), filtered to <= maxDisplay.
   const maxDisplay = parseFloat(queries.getSetting('max_display_per_adult_usd') ?? '1200');
@@ -213,9 +227,9 @@ export function buildDigestHtml(
       <tbody>${fareTableRows || `<tr><td colspan="6" style="${EMPTY}">No active searches.</td></tr>`}</tbody>
     </table>
 
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:18px"><tr>
-      <td width="50%" style="padding-right:6px"><img src="${originPie}" alt="Party total by origin" style="max-width:100%;border:1px solid ${T.LINE};display:block"/></td>
-      <td width="50%" style="padding-left:6px"><img src="${thresholdPie}" alt="Threshold breakdown" style="max-width:100%;border:1px solid ${T.LINE};display:block"/></td>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:22px"><tr valign="top">
+      <td width="50%" style="padding-right:12px">${emailEyebrow('Party total by origin')}<div style="margin-top:8px">${originChart}</div>${originLegend}</td>
+      <td width="50%" style="padding-left:12px;border-left:1px solid ${T.LINE_CARD}">${emailEyebrow(`Searches vs ${fmtUSD(threshold)} target`)}<div style="margin-top:8px">${statusChart}</div>${statusLegend}</td>
     </tr></table>
 
     <div style="${H2}">Recent alerts (last 5)</div>
