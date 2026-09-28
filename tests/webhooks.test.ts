@@ -154,4 +154,21 @@ describe('POST /api/billing/webhook (Stripe)', () => {
     expect(await replay.json()).toMatchObject({ duplicate: true });
     expect(db.queries.getUserById(uid)?.tier).toBe('free'); // not re-upgraded
   });
+
+  it('a replayed period-end cancellation is not re-applied after the user resubscribes', async () => {
+    process.env.STRIPE_WEBHOOK_SECRET = SECRET;
+    const uid = Number(db.getDb().prepare("INSERT INTO users (email, tier) VALUES ('stripe-period@x.com','pro')").run().lastInsertRowid);
+    const payload = JSON.stringify({
+      id: 'evt_period_end_1', type: 'customer.subscription.updated',
+      data: { object: { id: 'sub_p', customer: 'cus_p', status: 'active', cancel_at_period_end: true,
+        current_period_end: Math.floor(Date.now() / 1000) + 86400 * 10, metadata: { user_id: String(uid), plan: 'pro' } } },
+    });
+    expect((await deliver(payload)).status).toBe(200);
+    expect(db.queries.getUserById(uid)?.subscription_status).toBe('cancel_at_period_end');
+
+    db.queries.setUserTier(uid, 'pro', 'active', null); // they changed their mind
+    const replay = await deliver(payload);
+    expect(await replay.json()).toMatchObject({ duplicate: true });
+    expect(db.queries.getUserById(uid)?.subscription_status).toBe('active');
+  });
 });
