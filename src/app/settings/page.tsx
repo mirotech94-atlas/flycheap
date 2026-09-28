@@ -77,7 +77,12 @@ export default async function SettingsPage() {
                   <span className="ed-dot muted" aria-hidden />Trial complete
                 </span>
               )}
-              {user.subscription_status && !['founding_free', 'upgrade_due'].includes(user.subscription_status) && <span className="ed-chip">{user.subscription_status}</span>}
+              {user.subscription_status === 'cancel_at_period_end' && (
+                <span className="ed-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+                  <span className="ed-dot muted" aria-hidden />Cancellation scheduled
+                </span>
+              )}
+              {user.subscription_status && !['founding_free', 'upgrade_due', 'cancel_at_period_end'].includes(user.subscription_status) && <span className="ed-chip">{user.subscription_status}</span>}
             </div>
             <h2 className="ed-h2" style={{ fontSize: 19, marginTop: 6 }}>{user.email}</h2>
             <p className="ed-panel-note" style={{ marginTop: 4 }}>
@@ -90,6 +95,11 @@ export default async function SettingsPage() {
             {user.subscription_status === 'founding_free' && user.trial_ends_at && (
               <p className="text-xs mt-1" style={{ color: 'var(--green)' }}>
                 Founding trial — the basic capabilities are free for your first 3 months, until {new Date(user.trial_ends_at.replace(' ', 'T') + (user.trial_ends_at.endsWith('Z') ? '' : 'Z')).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Upgrade to Pro or Enterprise whenever you want more.
+              </p>
+            )}
+            {user.subscription_status === 'cancel_at_period_end' && user.subscription_renews_at && (
+              <p className="text-xs mt-1" style={{ color: 'var(--ink-soft)' }}>
+                Your subscription will not renew. You keep {user.tier === 'enterprise' ? 'Enterprise' : 'Pro'} until {new Date(user.subscription_renews_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}, then your account moves to Free with nothing deleted. Re-subscribe any time from <a href="/pricing">Pricing</a>.
               </p>
             )}
             {user.subscription_status === 'upgrade_due' && (

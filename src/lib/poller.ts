@@ -698,6 +698,14 @@ export async function pollAll(): Promise<PollResult[]> {
       await sendUpgradeNudgeEmail(u.email);
     }
   } catch (e) { console.error('[poll] founding-period sweep failed:', (e as Error).message); }
+  // Cancellations whose paid period has run out → Free. Stripe's deleted
+  // webhook usually beats this; for PayPal it is the only path.
+  try {
+    for (const u of queries.dueScheduledCancellations()) {
+      queries.finishScheduledCancellation(u.id);
+      console.log(`[poll] scheduled cancellation finished: user ${u.id} ${u.tier} → free`);
+    }
+  } catch (e) { console.error('[poll] cancellation sweep failed:', (e as Error).message); }
   const searches = queries.listActiveSearches();
 
   // Score every route, band it, and spend the budget top-down. See pollBudget.ts

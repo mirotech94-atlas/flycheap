@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     case 'customer.subscription.updated':
     case 'customer.subscription.created': {
       const sub = event.data.object as {
-        id: string; customer: string; status: string;
+        id: string; customer: string; status: string; cancel_at_period_end?: boolean;
         current_period_end?: number; metadata?: Record<string, string>;
       };
       // Subscriptions opened through our checkout carry user_id metadata, but
@@ -70,10 +70,14 @@ export async function POST(req: NextRequest) {
         const renewsIso = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null;
         const plan = sub.metadata?.plan === 'enterprise' ? 'enterprise' : 'pro';
         const tier = (sub.status === 'active' || sub.status === 'trialing') ? plan : 'free';
+        // A scheduled cancellation keeps the paid tier until period end; the
+        // status records that so Settings can show the end date and the poll
+        // sweep can finish it if the deleted webhook is late.
+        const status = tier !== 'free' && sub.cancel_at_period_end ? 'cancel_at_period_end' : sub.status;
         // Stripe renewals arrive as subscription.updated; post only when the
         // period end actually moves forward so metadata-only updates stay quiet.
         const prevRenews = queries.getUserById(userId)?.subscription_renews_at ?? null;
-        queries.setUserTier(userId, tier, sub.status, renewsIso);
+        queries.setUserTier(userId, tier, status, renewsIso);
         queries.setUserStripe(userId, sub.customer, sub.id);
         if (sub.metadata?.period === 'year' || sub.metadata?.period === 'month') {
           queries.setSubscriptionMeta(userId, { provider: 'stripe', period: sub.metadata.period });
@@ -92,11 +96,15 @@ export async function POST(req: NextRequest) {
       // Stripe's own billing portal silently leaves the user on a paid tier.
       const userId = Number(sub.metadata?.user_id) || (findUserByStripeCustomer(sub.customer)?.id ?? 0);
       if (userId) {
-        // The in-app Cancel button already dropped the tier and posted; only
-        // post here when Stripe is the first to tell us (e.g. portal cancel).
-        const wasPaid = (queries.getUserById(userId)?.tier ?? 'free') !== 'free';
+        // A cancellation scheduled from the app already posted when it was
+        // scheduled; post here only when Stripe is the first to tell us
+        // (e.g. a portal cancel).
+        const cur = queries.getUserById(userId);
+        const wasPaid = (cur?.tier ?? 'free') !== 'free';
+        const wasScheduled = cur?.subscription_status === 'cancel_at_period_end';
         queries.setUserTier(userId, 'free', 'canceled', null);
-        if (wasPaid) void notifyBillingToSlack('cancelled', userId, { provider: 'stripe', source: 'Stripe webhook' });
+        queries.setSubscriptionMeta(userId, { provider: null, period: null });
+        if (wasPaid && !wasScheduled) void notifyBillingToSlack('cancelled', userId, { provider: 'stripe', source: 'Stripe webhook' });
       }
       break;
     }

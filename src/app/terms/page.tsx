@@ -37,7 +37,7 @@ const sections = (d: Derived): Array<{ id: string; h: string; body: React.ReactN
   },
   {
     id: 'refunds', h: '5 · Cancellation and refunds',
-    body: <>Cancel at any time with <em>Downgrade to Free now</em> on the <Link href="/pricing">Pricing page</Link> — one click, no retention calls. Cancellation takes effect immediately: your account moves to Free, routes above the Free limit are paused, and paid-only alert channels stop. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved, and you can re-subscribe at any time. Charges already billed are non-refundable. If you believe you were billed in error, or cancelled early in a period by mistake, email <a href="mailto:sales@flycheap.live">sales@flycheap.live</a> within 7 days of the charge and we will make it right.</>,
+    body: <>Cancel at any time with <em>Downgrade to Free</em> on the <Link href="/pricing">Pricing page</Link> — one click, no retention calls. Your subscription then simply does not renew: you keep your paid plan until the end of the period you have already paid for, and on that date your account moves to Free, routes above the Free limit are paused, and paid-only alert channels stop. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved, and you can re-subscribe at any time. Because you keep what you paid for, charges already billed are not refunded. If you believe you were billed in error, email <a href="mailto:sales@flycheap.live">sales@flycheap.live</a> within 7 days of the charge and we will make it right.</>,
   },
   {
     id: 'failed-payment', h: '6 · Failed payments',
