@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { safeNextPath } from '@/lib/safeNext';
 import { en, type LoginFormDict } from '@/lib/i18n/app.en';
 
 type Tab = 'login' | 'signup';
@@ -12,7 +13,9 @@ const LS_EMAIL = 'fc_last_email';
 
 export function LoginForm({ t = en.login.form, adminOnly = false }: { t?: LoginFormDict; adminOnly?: boolean }) {
   const params = useSearchParams();
-  const next = params?.get('next') || '/';
+  // Assigned to window.location.href below, so an unchecked value is both an
+  // open redirect and (with `javascript:`) script execution on our origin.
+  const next = safeNextPath(params?.get('next')) || '/';
   const initialError = params?.get('error');
 
   const [tab, setTab] = useState<Tab>('login');

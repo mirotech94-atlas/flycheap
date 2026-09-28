@@ -4,6 +4,7 @@ import {
   getCurrentUser, checkDeviceToken, startSession, setDeviceToken,
   isOwner, isAdminHost, endSession,
 } from '@/lib/auth';
+import { safeNextPath } from '@/lib/safeNext';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -21,14 +22,6 @@ export const runtime = 'nodejs';
  * has already proven ownership of the account at least once.
  */
 
-// Only ever redirect to a same-origin path — never an attacker-supplied absolute
-// or protocol-relative URL.
-function safeNext(raw: string | null): string {
-  const n = (raw ?? '').trim();
-  if (!n.startsWith('/') || n.startsWith('//')) return '';
-  return n;
-}
-
 export async function GET(req: Request) {
   const h = await headers();
   const host = h.get('x-forwarded-host') ?? h.get('host') ?? '';
@@ -37,7 +30,8 @@ export async function GET(req: Request) {
   const adminPortal = isAdminHost(host);
 
   const url = new URL(req.url);
-  const next = safeNext(url.searchParams.get('next')) || (adminPortal ? '/admin' : '/');
+  // Only ever a same-origin path (see lib/safeNext.ts for why `/\evil.com` fails).
+  const next = safeNextPath(url.searchParams.get('next')) || (adminPortal ? '/admin' : '/');
   const dest = new URL(next, base);
   const marketing = new URL('https://flycheap.live/');
   const freshLogin = new URL(`/login?fresh=1&next=${encodeURIComponent(next)}`, base);

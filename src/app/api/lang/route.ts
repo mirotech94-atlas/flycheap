@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { isLocale, LOCALE_COOKIE } from '@/lib/i18n/locales';
+import { safeNextPath } from '@/lib/safeNext';
 
 export const dynamic = 'force-dynamic';
 
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export function GET(req: NextRequest) {
   const set = req.nextUrl.searchParams.get('set');
   const nextPath = req.nextUrl.searchParams.get('next') || '/';
-  const safeNext = nextPath.startsWith('/') && !nextPath.startsWith('//') ? nextPath : '/';
+  const safeNext = safeNextPath(nextPath) || '/';
   const proto = req.headers.get('x-forwarded-proto') ?? 'https';
   const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? 'flycheap.live';
   const res = NextResponse.redirect(`${proto}://${host}${safeNext}`, 303);
