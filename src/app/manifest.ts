@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'FlyCheap',
     short_name: 'FlyCheap',
-    description: 'Cheap flights, monitored for you. Track 1,000+ airlines worldwide.',
+    description: 'Cheap flights, monitored for you. Track airline fares worldwide.',
     start_url: '/',
     display: 'standalone',
     background_color: '#0B1220',

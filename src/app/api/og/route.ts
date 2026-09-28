@@ -99,7 +99,7 @@ export async function GET() {
     </text>
     <!-- Sub -->
     <text x="80" y="470" font-family="system-ui,Helvetica" font-size="22" font-weight="500" fill="rgba(255,255,255,.75)">
-      Track 1,000+ airlines · email when fares drop · explore worldwide
+      Track airline fares · email when fares drop · explore worldwide
     </text>
     <!-- Stats row — derived, see the note at the top of this file -->
     <g transform="translate(80 530)">

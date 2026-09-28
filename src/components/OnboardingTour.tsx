@@ -24,7 +24,7 @@ type Step = {
 const STEPS: Step[] = [
   {
     title: 'Welcome to FlyCheap 👋',
-    body: 'You\'re in. Here\'s a 45-second tour of every tab and how things work. We monitor 1,000+ airlines around the clock and ping you the moment a fare drops below your target. Hit Skip any time.',
+    body: 'You\'re in. Here\'s a 45-second tour of every tab and how things work. We monitor airline fares around the clock and ping you the moment a fare drops below your target. Hit Skip any time.',
     placement: 'center',
   },
   {

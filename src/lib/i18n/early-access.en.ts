@@ -4,7 +4,7 @@ export const en = {
   hero: {
     pill: 'AI-native fare intelligence — founding-member access',
     h1a: 'Overpaying for flights', h1b: 'stops here.',
-    sub: 'The cheap fare shows up at 2 AM and is gone by breakfast. FlyCheap watches 1,000+ airlines on every route you care about — and pings you the moment a price drops below your number, with a buy-or-wait verdict.',
+    sub: 'The cheap fare shows up at 2 AM and is gone by breakfast. FlyCheap watches airline fares on every route you care about — and pings you the moment a price drops below your number, with a buy-or-wait verdict.',
     cta: 'Get early access', secondary: 'See how it works',
   },
   feed: { title: 'Live fare feed', live: 'LIVE', empty: 'Scanning routes…', typical: 'vs typical', at: 'at typical', foot: 'Cheapest round-trip found per route · refreshed every poll', lastPoll: 'last poll {n} min ago', tagLow: 'LOW', tagDrop: 'DROP' },
@@ -68,7 +68,7 @@ export const en = {
     consent: 'By requesting access you agree to receive one email when your seat opens and the alerts you set up. No marketing lists, no third parties — unsubscribe anytime.',
     fine: 'One email when your seat opens. Nothing else.', invited: 'Invited by a friend ✓', err: 'Something went wrong — try again.', netErr: 'Network error — please try again.',
     doneA: 'You’re on the list', doneExisting: 'You’re already on the list', doneOf: 'of {total} founding members · check your inbox', share: 'Every friend who joins with your link moves you up 5 spots', joined: '{n} joined so far', copy: 'Copy link', copied: 'Copied ✓', shareX: 'Share on X', shareWa: 'WhatsApp', shareMail: 'Email',
-    notYou: "Not you? Join with a different email", shareText: 'I just joined the FlyCheap early-access list — it watches 1,000+ airlines and pings you the moment a fare drops. Grab a spot:',
+    notYou: "Not you? Join with a different email", shareText: 'I just joined the FlyCheap early-access list — it watches airline fares and pings you the moment a fare drops. Grab a spot:',
   },
   footer: { tag: 'Fare intelligence that watches every route you care about — and tells you the moment to book.', sovereign: 'Founding members get in first.', cols: [['Platform', [['Why FlyCheap', '#why'], ['How it works', '#how'], ['Live demo', '/demo'], ['Pricing', '/welcome#pricing'], ['Early access', '#join']]], ['Resources', [['About & docs', '/about'], ['Guides', '/guides'], ['Status', '/status'], ['Trial terms', '/trial-terms']]], ['Company', [['Log in', '/login'], ['Contact', '/contact'], ['Contact sales', 'mailto:sales@flycheap.live']]], ['Legal', [['Terms of service', '/terms'], ['Privacy policy', '/privacy'], ['Refunds', '/terms#refunds']]]], copyright: '© 2026 FlyCheap · Operated by Myron Mekhael, New York · All rights reserved', language: 'Language' },
 };

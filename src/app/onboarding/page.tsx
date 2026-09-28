@@ -7,10 +7,10 @@ export const dynamic = 'force-static';
 
 export const metadata: Metadata = {
   title: 'FlyCheap — Cheap flights, monitored for you',
-  description: 'AI-powered flight intelligence. Track 1,000+ airlines, get alerts when fares drop, and explore worldwide deals from your home city.',
+  description: 'AI-powered flight intelligence. Track airline fares worldwide, get alerts when fares drop, and explore deals from your home city.',
   openGraph: {
     title: 'FlyCheap — Cheap flights, monitored for you',
-    description: 'Track 1,000+ airlines, get alerts when fares drop, explore worldwide deals.',
+    description: 'Track airline fares worldwide, get alerts when fares drop, explore deals.',
     url: 'https://my.flycheap.live/onboarding',
     siteName: 'FlyCheap',
     images: [{ url: 'https://my.flycheap.live/api/og', width: 1200, height: 630, alt: 'FlyCheap dashboard' }],
@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'FlyCheap — Cheap flights, monitored for you',
-    description: 'Track 1,000+ airlines, get alerts when fares drop, explore worldwide deals.',
+    description: 'Track airline fares worldwide, get alerts when fares drop, explore deals.',
     images: ['https://my.flycheap.live/api/og'],
   },
 };
@@ -48,7 +48,7 @@ export default function OnboardingPage() {
       {/* HERO */}
       <section className="px-6 pt-16 pb-14" style={{ maxWidth: '72rem', margin: '0 auto' }}>
         <span className="ed-eyebrow" style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
-          <span className="ed-dot" /> Live · 1,000+ airlines tracked · refreshed continuously
+          <span className="ed-dot" /> Live · airline fares worldwide · refreshed continuously
         </span>
 
         <h1 className="ed-h1" style={{ fontSize: 'clamp(38px, 5.5vw, 64px)', maxWidth: '18ch' }}>
@@ -56,7 +56,7 @@ export default function OnboardingPage() {
         </h1>
 
         <p className="ed-sub" style={{ fontSize: 17, maxWidth: '60ch' }}>
-          FlyCheap watches every route you care about across 1,000+ airlines, 24/7. Get an email
+          FlyCheap watches every route you care about across airlines worldwide, around the clock. Get an email
           the moment a fare drops below your target — or significantly under its 7-day median.
           Built originally for executive families, now for everyone.
         </p>
@@ -69,10 +69,11 @@ export default function OnboardingPage() {
         {/* Stat strip */}
         <div className="ed-stats" style={{ maxWidth: 640, marginTop: 24 }}>
           {[
-            { v: '1,000+', l: 'Airlines tracked' },
+            // Numbers here must be derivable; this page is force-static, so it
+            // carries only claims that hold by construction (no provider or
+            // airline counts — those live on the dynamic pages via public-metrics).
             { v: '24/7', l: 'Continuous polling' },
             { v: '$0', l: 'Free forever tier' },
-            { v: '4', l: 'Live data providers' },
           ].map(s => (
             <div className="ed-stat" key={s.l}>
               <div className="ed-stat-label">{s.l}</div>
@@ -189,7 +190,7 @@ export default function OnboardingPage() {
 
         <div className="mt-10 space-y-3">
           {[
-            { q: 'Where does the pricing data come from?', a: 'We aggregate from Travelpayouts (the Aviasales metasearch network covering 1,000+ airlines), Duffel, and Google Flights via SerpAPI and SearchAPI. Every fare snapshot is tagged with its source.' },
+            { q: 'Where does the pricing data come from?', a: 'We aggregate from Travelpayouts (the Aviasales metasearch network), Duffel, and Google Flights via SerpAPI and SearchAPI. Every fare snapshot is tagged with its source.' },
             { q: 'How fresh is the data?', a: 'We check your tracked routes continuously, and check the ones that matter most — close to departure, close to your target, or moving fast — most often. Every price we show you carries the time it was last verified. The Explore page hits live caches on each request.' },
             { q: 'Can I track airlines other than EgyptAir?', a: 'Yes — toggle off the "EgyptAir only" filter on the Offers page and search any airline. The default is set per route in Settings.' },
             { q: 'Do I need credit-card-level data to book?', a: 'No — we never touch payments. Booking links route you to Aviasales / Kayak / Google Flights / the airline directly, where you complete the purchase.' },

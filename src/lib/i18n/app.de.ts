@@ -10,7 +10,7 @@ export const de: AppDict = {
     home: 'Start', flights: 'Flüge', profile: 'Profil',
     tagline: 'Tarif-Intelligenz', toggle: 'Navigation ein-/ausblenden',
     signIn: 'Anmelden', signInArrow: 'Anmelden →', signOut: 'Abmelden', adminPortal: 'Admin-Portal →',
-    guestA: 'FlyCheap überwacht ', guestStrong: 'über 1.000 Airlines', guestB: ' rund um die Uhr und alarmiert dich, sobald ein Tarif unter deine Schwelle fällt.',
+    guestA: 'FlyCheap überwacht ', guestStrong: 'Airline-Tarife', guestB: ' rund um die Uhr und alarmiert dich, sobald ein Tarif unter deine Schwelle fällt.',
     whatIs: 'Was ist FlyCheap?', exploreDeals: 'Angebote entdecken',
   },
 
@@ -47,7 +47,7 @@ export const de: AppDict = {
     hero: {
       pill: 'Live · {providers} Datenanbieter · {fares} erfasste Tarife',
       h1: [['Die ', 'günstigsten', ' Tarife,'], ['überwacht ', 'für dich', '.']],
-      lede: 'FlyCheap überwacht jede Strecke, die dir wichtig ist, über 1.000 Airlines hinweg – rund um die Uhr. Wir melden uns, sobald ein Tarif unter deine Schwelle oder deutlich unter seinen 7-Tage-Median fällt. Schluss mit dem Aktualisieren von Flugseiten.',
+      lede: 'FlyCheap überwacht jede Strecke, die dir wichtig ist, Airlines weltweit hinweg – rund um die Uhr. Wir melden uns, sobald ein Tarif unter deine Schwelle oder deutlich unter seinen 7-Tage-Median fällt. Schluss mit dem Aktualisieren von Flugseiten.',
       ctaEarly: 'Frühzugang sichern →', ctaDemo: '▶ Live-Demo ansehen',
       statSnapshots: 'Erfasste Tarif-Snapshots', live: 'live', statCadence: 'Abfrageintervall', min: 'Min',
       statFree: 'Für immer kostenlos', noCard: 'ohne Karte', statProviders: 'Abgefragte Datenanbieter',
@@ -61,7 +61,7 @@ export const de: AppDict = {
       sub: 'Die meisten aktualisieren stundenlang Flugseiten und buchen trotzdem zum falschen Zeitpunkt. FlyCheap überwacht unermüdlich und sagt dir genau, wann du kaufen solltest.',
       steps: [
         { tag: 'Strecke hinzufügen · 30 Sekunden', title: ['Sag uns ', 'wohin', ', ', 'wann', ' und deinen ', 'Zielpreis', '.'], desc: 'Wähle Start und Ziel, optionale Datumsfenster, Reisegruppe und den Preis pro Erwachsenem, den du dir wünschst. Das war’s – keine Kreditkarte, kein Einrichtungsassistent.' },
-        { tag: 'Wir fragen ab · Alle 30 Minuten', title: ['Wir überwachen ', 'über 1.000 Airlines', ', während du schläfst.'], desc: 'Unsere Engine schickt jede Suche parallel an Travelpayouts, Duffel und Google Flights (über SerpAPI und SearchAPI), wählt in jedem Zyklus das günstigste gültige Angebot und schreibt es in deine Tarifhistorie.' },
+        { tag: 'Wir fragen ab · Alle 30 Minuten', title: ['Wir überwachen ', 'Airline-Tarife', ', während du schläfst.'], desc: 'Unsere Engine schickt jede Suche parallel an Travelpayouts, Duffel und Google Flights (über SerpAPI und SearchAPI), wählt in jedem Zyklus das günstigste gültige Angebot und schreibt es in deine Tarifhistorie.' },
         { tag: 'Du kaufst · Im richtigen Moment', title: ['Sobald ein Tarif fällt, bekommst du einen ', 'Ping', '.'], desc: 'Zwei Auslöser: Schwellenunterschreitung (unter deinem Ziel) und Anomalie (≥ 10 % unter dem 7-Tage-Median). Standardmäßig per E-Mail; SMS und Telegram mit einem Schalter auf Pro. Durchklicken und direkt buchen.' },
       ],
       screen1: { route: 'strecke:', depart: 'hinflug:', ret: 'rückflug:', party: 'reisende:', target: 'ziel:', retVal: '+14 Tage', partyVal: '4 Erw. + 1 Kleinkind', targetVal: '$800/Erw.' },
@@ -111,7 +111,7 @@ export const de: AppDict = {
       eyebrow: 'Häufige Fragen',
       title: ['Fragen, ', 'beantwortet', '.'],
       items: [
-        { q: 'Woher kommen die Preisdaten?', a: 'Wir aggregieren Travelpayouts (das Aviasales-Metasuchnetz mit über 1.000 Airlines), Duffel und Google Flights über SerpAPI und SearchAPI. Jeder Tarif-Snapshot trägt seine Quelle, sodass du genau siehst, woher ein Preis stammt.' },
+        { q: 'Woher kommen die Preisdaten?', a: 'Wir aggregieren Travelpayouts (das Aviasales-Metasuchnetz), Duffel und Google Flights über SerpAPI und SearchAPI. Jeder Tarif-Snapshot trägt seine Quelle, sodass du genau siehst, woher ein Preis stammt.' },
         { q: 'Wie aktuell sind die Daten?', a: 'Überwachte Strecken werden alle 5–30 Minuten abgefragt (auf Pro pro Strecke einstellbar). Der 12-Monats-Scan der besten Angebote aktualisiert sich alle 12 Stunden. Die Entdecken-Seite greift bei jeder Anfrage auf Live-Caches zu.' },
         { q: 'Welche Strecken und Airlines kann ich überwachen?', a: 'Jedes Flughafenpaar der Welt – gib zwei IATA-Codes ein (JFK → LHR, LAX → BKK, EWR → DXB …) und wir beobachten jede Airline, die unsere Anbieter abdecken, Billigflieger eingeschlossen. Du kannst auch nahe Abflughäfen (JFK + EWR) zu einer Strecke bündeln.' },
         { q: 'Verlangt ihr eine Buchungsgebühr?', a: 'Nie. Wir sind kein Reisebüro. Buchungslinks führen dich zu Aviasales, Kayak, Google Flights oder direkt zur Airline – dort schließt du den Kauf ab.' },
@@ -161,7 +161,7 @@ export const de: AppDict = {
     pollerTitle: 'Der Hintergrund-Poller prüft jede aktive Beobachtung etwa alle 30 Minuten; On-Demand-Abfragen starten sofort, wenn du eine nicht gecachte Strecke öffnest.',
     pollerPill: '🤖 Hintergrund-Poller aktiv – Strecken werden alle 30 Minuten geprüft.',
     h1: { pre: 'Wir haben ', mid: ' Hin- und Rückflüge unter {price} gefunden, die ', strike: 'dein Reisebüro', post: ' ', em: 'übersehen hat', end: '.' },
-    lede: 'FlyCheap überwacht über 1.000 Airlines rund um die Uhr – und meldet sich, sobald ein Tarif auf deiner Strecke unter die Schwelle fällt. Kein Aktualisieren von Google Flights um 2 Uhr nachts mehr.',
+    lede: 'FlyCheap überwacht Airline-Tarife rund um die Uhr – und meldet sich, sobald ein Tarif auf deiner Strecke unter die Schwelle fällt. Kein Aktualisieren von Google Flights um 2 Uhr nachts mehr.',
     bookCheapest: 'Günstigsten buchen → {price}', addFirst: 'Erste Strecke hinzufügen →', addWatch: 'Neue Beobachtung anlegen',
     cheapestNow: 'Jetzt am günstigsten', median: 'Median im Cache', destinations: 'Aktive Ziele', cities: 'Städte',
     rankedTitle: 'Wo jede Strecke in ihrer 30-Tage-Spanne liegt', bookArrow: 'Buchen →',
@@ -179,6 +179,6 @@ export const de: AppDict = {
     intelEyebrow: 'Muster + Kalender + Fußabdruck',
     intelTitle: ['Strecken-', 'Intelligenz', ''],
     intelSub: 'Die Musterkarte zeigt, wann diese Strecke am günstigsten ist. Der Kalender zeigt jedes günstige Fenster. Das CO₂-Buch hält die Reise ehrlich.',
-    footerTag: 'FlyCheap · Über 1.000 Airlines werden abgefragt · ', status: 'Status', privacy: 'Datenschutz', about: 'Über uns',
+    footerTag: 'FlyCheap · Airline-Tarife werden abgefragt · ', status: 'Status', privacy: 'Datenschutz', about: 'Über uns',
   },
 };

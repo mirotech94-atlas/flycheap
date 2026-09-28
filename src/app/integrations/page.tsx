@@ -140,7 +140,7 @@ export default async function IntegrationsPage() {
       <div className="ed-eyebrow">Integrations</div>
       <FcPageHead
         title="Slack & Telegram — open to everyone"
-        lede="FlyCheap’s deal alerts and support channels. Pick where you want them — we watch 1,000+ airlines every day; you choose how the alerts reach you."
+        lede="FlyCheap’s deal alerts and support channels. Pick where you want them — we watch airline fares every day; you choose how the alerts reach you."
       />
 
       {/* Channel tiles — one per channel (platform × alerts/support), alerts

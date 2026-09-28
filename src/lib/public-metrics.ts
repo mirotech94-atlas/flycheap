@@ -11,6 +11,7 @@ export type PublicMetrics = {
   snapshots: number;          // total fare snapshots recorded
   activeRoutes: number;       // searches currently being polled
   routePairs: number;         // distinct origin→destination pairs in the 12-month scan
+  airlinesSeen: number;       // distinct IATA carrier codes observed in recorded fares (not a provider's catalogue claim)
   alertsSent: number;
   providersConfigured: string[];
   providersTotal: number;
@@ -26,7 +27,7 @@ export type PublicMetrics = {
 };
 
 const EMPTY: PublicMetrics = {
-  snapshots: 0, activeRoutes: 0, routePairs: 0, alertsSent: 0,
+  snapshots: 0, activeRoutes: 0, routePairs: 0, airlinesSeen: 0, alertsSent: 0,
   providersConfigured: [], providersTotal: 0, lastPollAgoMin: null,
   cheapest: null, ticker: [], topDeals: [], recentAlerts: [],
 };
@@ -40,6 +41,18 @@ export function getPublicMetrics(): PublicMetrics {
     const activeRoutes = one<{ n: number }>('SELECT COUNT(*) AS n FROM searches WHERE active = 1').n;
     const routePairs = one<{ n: number }>('SELECT COUNT(DISTINCT origin || destination) AS n FROM best_deals_cache').n;
     const alertsSent = one<{ n: number }>(`SELECT COUNT(*) AS n FROM alerts_sent WHERE status = 'sent'`).n;
+    // Airlines are counted from the carrier prefix of flight numbers we have
+    // actually recorded. The old copy claimed "1,000+ airlines" — a metasearch
+    // catalogue figure nothing in this codebase could measure or stand behind.
+    // Empty flight numbers (some Travelpayouts rows) simply do not count.
+    const airlinesSeen = one<{ n: number }>(`
+      WITH c AS (
+        SELECT UPPER(SUBSTR(TRIM(outbound_flight_no), 1, 2)) AS k FROM fare_snapshots WHERE LENGTH(TRIM(outbound_flight_no)) >= 3
+        UNION SELECT UPPER(SUBSTR(TRIM(return_flight_no), 1, 2)) FROM fare_snapshots WHERE LENGTH(TRIM(return_flight_no)) >= 3
+        UNION SELECT UPPER(SUBSTR(TRIM(outbound_flight_no), 1, 2)) FROM best_deals_cache WHERE LENGTH(TRIM(outbound_flight_no)) >= 3
+        UNION SELECT UPPER(SUBSTR(TRIM(return_flight_no), 1, 2)) FROM best_deals_cache WHERE LENGTH(TRIM(return_flight_no)) >= 3
+      ) SELECT COUNT(*) AS n FROM c WHERE k GLOB '[A-Z0-9][A-Z0-9]'
+    `).n;
     const lastPoll = one<{ t: string | null }>('SELECT MAX(polled_at) AS t FROM fare_snapshots').t;
     const lastPollAgoMin = lastPoll ? Math.max(0, Math.round((Date.now() - new Date(lastPoll.replace(' ', 'T') + 'Z').getTime()) / 60000)) : null;
 
@@ -106,7 +119,7 @@ export function getPublicMetrics(): PublicMetrics {
     }));
 
     return {
-      snapshots, activeRoutes, routePairs, alertsSent,
+      snapshots, activeRoutes, routePairs, airlinesSeen, alertsSent,
       providersConfigured, providersTotal: provs.length, lastPollAgoMin,
       cheapest, ticker, topDeals, recentAlerts,
     };

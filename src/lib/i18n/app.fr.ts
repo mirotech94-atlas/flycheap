@@ -10,7 +10,7 @@ export const fr: AppDict = {
     home: 'Accueil', flights: 'Vols', profile: 'Profil',
     tagline: 'Intelligence tarifaire', toggle: 'Afficher/masquer la navigation',
     signIn: 'Se connecter', signInArrow: 'Se connecter →', signOut: 'Se déconnecter', adminPortal: 'Portail admin →',
-    guestA: 'FlyCheap surveille ', guestStrong: 'plus de 1 000 compagnies', guestB: ' 24h/24 et vous alerte dès qu’un tarif passe sous votre seuil.',
+    guestA: 'FlyCheap surveille ', guestStrong: 'les tarifs des compagnies', guestB: ' 24h/24 et vous alerte dès qu’un tarif passe sous votre seuil.',
     whatIs: 'Qu’est-ce que FlyCheap ?', exploreDeals: 'Explorer les offres',
   },
 
@@ -47,7 +47,7 @@ export const fr: AppDict = {
     hero: {
       pill: 'En direct · {providers} fournisseurs de données · {fares} tarifs enregistrés',
       h1: [['Les tarifs ', 'les moins chers', ','], ['surveillés ', 'pour vous', '.']],
-      lede: 'FlyCheap surveille chaque trajet qui compte pour vous sur plus de 1 000 compagnies, 24h/24. Nous vous prévenons dès qu’un tarif passe sous votre seuil, ou nettement sous sa médiane à 7 jours. Arrêtez de rafraîchir les sites de vols.',
+      lede: 'FlyCheap surveille chaque trajet qui compte pour vous sur des compagnies du monde entier, 24h/24. Nous vous prévenons dès qu’un tarif passe sous votre seuil, ou nettement sous sa médiane à 7 jours. Arrêtez de rafraîchir les sites de vols.',
       ctaEarly: 'Accès anticipé →', ctaDemo: '▶ Voir la démo en direct',
       statSnapshots: 'Relevés tarifaires enregistrés', live: 'direct', statCadence: 'Cadence de sondage', min: 'min',
       statFree: 'Gratuit à vie', noCard: 'sans carte', statProviders: 'Fournisseurs de données sondés',
@@ -61,7 +61,7 @@ export const fr: AppDict = {
       sub: 'La plupart des gens rafraîchissent des sites de vols pendant des heures et réservent quand même au mauvais moment. FlyCheap surveille sans relâche et vous dit exactement quand acheter.',
       steps: [
         { tag: 'Ajoutez un trajet · 30 secondes', title: ['Dites-nous ', 'où', ', ', 'quand', ' et votre ', 'prix cible', '.'], desc: 'Choisissez origine et destination, des fenêtres de dates facultatives, le nombre de voyageurs et le prix par adulte dont vous rêvez. C’est tout : pas de carte bancaire, pas d’assistant de configuration.' },
-        { tag: 'Nous sondons · Toutes les 30 minutes', title: ['Nous surveillons ', 'plus de 1 000 compagnies', ' pendant que vous dormez.'], desc: 'Notre moteur envoie chaque recherche à Travelpayouts, Duffel et Google Flights (via SerpAPI et SearchAPI) en parallèle, retient l’offre valide la moins chère à chaque cycle et l’écrit dans votre historique tarifaire.' },
+        { tag: 'Nous sondons · Toutes les 30 minutes', title: ['Nous surveillons ', 'les tarifs des compagnies', ' pendant que vous dormez.'], desc: 'Notre moteur envoie chaque recherche à Travelpayouts, Duffel et Google Flights (via SerpAPI et SearchAPI) en parallèle, retient l’offre valide la moins chère à chaque cycle et l’écrit dans votre historique tarifaire.' },
         { tag: 'Vous achetez · Au bon moment', title: ['Dès qu’un tarif baisse, vous recevez une ', 'alerte', '.'], desc: 'Deux déclencheurs : franchissement de seuil (sous votre cible) et anomalie (≥ 10 % sous la médiane à 7 jours). E-mail par défaut ; SMS et Telegram à un clic sur Pro. Cliquez pour réserver en direct.' },
       ],
       screen1: { route: 'trajet :', depart: 'départ :', ret: 'retour :', party: 'voyageurs :', target: 'cible :', retVal: '+14 jours', partyVal: '4 ad. + 1 bébé', targetVal: '$800/adulte' },
@@ -111,7 +111,7 @@ export const fr: AppDict = {
       eyebrow: 'Questions fréquentes',
       title: ['Vos questions, ', 'nos réponses', '.'],
       items: [
-        { q: 'D’où viennent les données de prix ?', a: 'Nous agrégeons Travelpayouts (le réseau de métarecherche d’Aviasales couvrant plus de 1 000 compagnies), Duffel et Google Flights via SerpAPI et SearchAPI. Chaque relevé tarifaire porte sa source : vous voyez exactement d’où vient un prix.' },
+        { q: 'D’où viennent les données de prix ?', a: 'Nous agrégeons Travelpayouts (le réseau de métarecherche d’Aviasales), Duffel et Google Flights via SerpAPI et SearchAPI. Chaque relevé tarifaire porte sa source : vous voyez exactement d’où vient un prix.' },
         { q: 'Les données sont-elles fraîches ?', a: 'Les trajets suivis sont sondés toutes les 5 à 30 minutes (réglable par trajet sur Pro). Le scan des meilleures offres sur 12 mois est actualisé toutes les 12 heures. La page Explorer interroge des caches en direct à chaque requête.' },
         { q: 'Quels trajets et compagnies puis-je suivre ?', a: 'N’importe quelle paire d’aéroports au monde : saisissez deux codes IATA (JFK → LHR, LAX → BKK, EWR → DXB…) et nous surveillons toutes les compagnies couvertes par nos fournisseurs, low-cost incluses. Vous pouvez aussi regrouper des origines proches (JFK + EWR) en un seul trajet.' },
         { q: 'Prenez-vous des frais de réservation ?', a: 'Jamais. Nous ne sommes pas une agence de voyages. Les liens de réservation vous renvoient vers Aviasales, Kayak, Google Flights ou directement la compagnie : vous finalisez l’achat là-bas.' },
@@ -161,7 +161,7 @@ export const fr: AppDict = {
     pollerTitle: 'Le sondeur en arrière-plan examine chaque veille active toutes les ~30 minutes ; les sondages à la demande partent immédiatement quand vous ouvrez un trajet non mis en cache.',
     pollerPill: '🤖 Sondeur en arrière-plan actif : vérification des trajets toutes les 30 minutes.',
     h1: { pre: 'Nous avons trouvé ', mid: ' allers-retours sous {price} que ', strike: 'votre agent de voyages', post: ' a ', em: 'manqués', end: '.' },
-    lede: 'FlyCheap surveille plus de 1 000 compagnies 24h/24 et vous prévient dès qu’un tarif sur votre trajet passe sous le seuil. Fini de rafraîchir Google Flights à 2 h du matin.',
+    lede: 'FlyCheap surveille les tarifs des compagnies 24h/24 et vous prévient dès qu’un tarif sur votre trajet passe sous le seuil. Fini de rafraîchir Google Flights à 2 h du matin.',
     bookCheapest: 'Réserver le moins cher → {price}', addFirst: 'Ajoutez votre premier trajet →', addWatch: 'Ajouter une veille',
     cheapestNow: 'Le moins cher maintenant', median: 'Médiane du cache', destinations: 'Destinations actives', cities: 'villes',
     rankedTitle: 'Où se situe chaque trajet dans sa fourchette de 30 jours', bookArrow: 'Réserver →',
@@ -179,6 +179,6 @@ export const fr: AppDict = {
     intelEyebrow: 'Tendance + Calendrier + Empreinte',
     intelTitle: ['', 'Intelligence', ' de trajet'],
     intelSub: 'La carte de tendance vous dit quand ce trajet est le moins cher. Le calendrier montre chaque créneau bon marché. Le registre carbone garde le voyage honnête.',
-    footerTag: 'FlyCheap · Sondage de plus de 1 000 compagnies · ', status: 'État', privacy: 'Confidentialité', about: 'À propos',
+    footerTag: 'FlyCheap · Sondage des tarifs des compagnies · ', status: 'État', privacy: 'Confidentialité', about: 'À propos',
   },
 };

@@ -66,7 +66,7 @@ export function FcBestDealsTable({ rows, totalMonitored }: { rows?: FcDealRow[];
     <div className="fc-card">
       <div className="fc-card-head">
         <div>
-          <div className="fc-smallcaps">12-Month opportunity scan · 1,000+ airlines</div>
+          <div className="fc-smallcaps">12-Month opportunity scan · airlines worldwide</div>
           <h2 className="fc-card-title">Best fares <em>worldwide</em></h2>
         </div>
         <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>

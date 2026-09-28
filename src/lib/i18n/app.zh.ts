@@ -10,7 +10,7 @@ export const zh: AppDict = {
     home: '首页', flights: '航班', profile: '我的',
     tagline: '票价情报', toggle: '切换导航',
     signIn: '登录', signInArrow: '登录 →', signOut: '退出登录', adminPortal: '管理后台 →',
-    guestA: 'FlyCheap 全天候监控 ', guestStrong: '1,000 多家航空公司', guestB: '，票价一跌破你的阈值立即提醒。',
+    guestA: 'FlyCheap 全天候监控 ', guestStrong: '各航空公司的票价', guestB: '，票价一跌破你的阈值立即提醒。',
     whatIs: 'FlyCheap 是什么？', exploreDeals: '探索优惠',
   },
 
@@ -47,7 +47,7 @@ export const zh: AppDict = {
     hero: {
       pill: '实时 · {providers} 个数据源 · 已记录 {fares} 条票价',
       h1: [['', '最低票价', '，'], ['为你', '持续监控', '。']],
-      lede: 'FlyCheap 全天候监控 1,000 多家航空公司上你关心的每一条航线。票价一跌破你的阈值——或明显低于 7 日中位数——我们立即告诉你。别再刷新机票网站了。',
+      lede: 'FlyCheap 全天候监控各航空公司上你关心的每一条航线。票价一跌破你的阈值——或明显低于 7 日中位数——我们立即告诉你。别再刷新机票网站了。',
       ctaEarly: '获取抢先体验 →', ctaDemo: '▶ 观看实时演示',
       statSnapshots: '已记录票价快照', live: '实时', statCadence: '轮询频率', min: '分钟',
       statFree: '永久免费', noCard: '无需银行卡', statProviders: '轮询的数据源',
@@ -61,7 +61,7 @@ export const zh: AppDict = {
       sub: '大多数人刷新机票网站几个小时，最后还是在错误的时间下单。FlyCheap 永不停歇地监控，并准确告诉你何时购买。',
       steps: [
         { tag: '添加航线 · 30 秒', title: ['告诉我们', '去哪', '、', '何时', '，以及你的', '目标价', '。'], desc: '选择出发地和目的地、可选的日期区间、出行人数，以及你期望的每成人价格。就这样——无需信用卡，没有引导流程。' },
-        { tag: '我们轮询 · 每 30 分钟', title: ['你睡觉时，我们监控', '1,000 多家航空公司', '。'], desc: '我们的引擎把每次搜索并行发往 Travelpayouts、Duffel 和 Google Flights（通过 SerpAPI 与 SearchAPI），每个周期选出最便宜的有效报价并写入你的票价历史。' },
+        { tag: '我们轮询 · 每 30 分钟', title: ['你睡觉时，我们监控', '各航空公司的票价', '。'], desc: '我们的引擎把每次搜索并行发往 Travelpayouts、Duffel 和 Google Flights（通过 SerpAPI 与 SearchAPI），每个周期选出最便宜的有效报价并写入你的票价历史。' },
         { tag: '你下单 · 恰到好处的时机', title: ['票价一跌，你就收到', '提醒', '。'], desc: '两种触发：跌破阈值（低于你的目标）和异常（比 7 日中位数低 ≥ 10%）。默认邮件；Pro 用户一键开启短信和 Telegram。点击直接预订。' },
       ],
       screen1: { route: '航线：', depart: '出发：', ret: '返回：', party: '人数：', target: '目标：', retVal: '+14 天', partyVal: '4 成人 + 1 婴儿', targetVal: '$800/成人' },
@@ -111,7 +111,7 @@ export const zh: AppDict = {
       eyebrow: '常见问题',
       title: ['问题，', '解答', '。'],
       items: [
-        { q: '票价数据从哪里来？', a: '我们聚合 Travelpayouts（覆盖 1,000 多家航空公司的 Aviasales 元搜索网络）、Duffel，以及通过 SerpAPI 和 SearchAPI 获取的 Google Flights。每条票价快照都标注来源，你能清楚看到价格出自哪里。' },
+        { q: '票价数据从哪里来？', a: '我们聚合 Travelpayouts（Aviasales 元搜索网络）、Duffel，以及通过 SerpAPI 和 SearchAPI 获取的 Google Flights。每条票价快照都标注来源，你能清楚看到价格出自哪里。' },
         { q: '数据有多新？', a: '监控航线每 5–30 分钟轮询一次（Pro 可按航线配置）。12 个月最佳优惠扫描每 12 小时刷新。探索页每次请求都读取实时缓存。' },
         { q: '我可以监控哪些航线和航空公司？', a: '全球任意机场对——输入两个 IATA 代码（JFK → LHR、LAX → BKK、EWR → DXB……），我们监控数据源覆盖的所有航空公司，包括廉航。你还可以把邻近出发地（JFK + EWR）合并为一条航线。' },
         { q: '你们收取预订费吗？', a: '从不。我们不是旅行社。预订链接会带你去 Aviasales、Kayak、Google Flights 或航空公司官网——你在那里完成购买。' },
@@ -161,7 +161,7 @@ export const zh: AppDict = {
     pollerTitle: '后台轮询器约每 30 分钟扫描一次所有活跃监控；打开未缓存航线时会立即触发按需轮询。',
     pollerPill: '🤖 后台轮询器运行中——每 30 分钟检查航线。',
     h1: { pre: '我们找到了 ', mid: ' 张低于 {price} 的往返机票，', strike: '你的旅行社', post: '', em: '错过了', end: '。' },
-    lede: 'FlyCheap 全天候监控 1,000 多家航空公司——你航线上的票价一跌破阈值就立即告诉你。再也不用凌晨 2 点刷新 Google Flights。',
+    lede: 'FlyCheap 全天候监控各航空公司的票价——你航线上的票价一跌破阈值就立即告诉你。再也不用凌晨 2 点刷新 Google Flights。',
     bookCheapest: '预订最低价 → {price}', addFirst: '添加你的第一条航线 →', addWatch: '添加新监控',
     cheapestNow: '当前最低价', median: '缓存中位数', destinations: '在线目的地', cities: '座城市',
     rankedTitle: '每条航线在其 30 天区间中的位置', bookArrow: '预订 →',
@@ -179,6 +179,6 @@ export const zh: AppDict = {
     intelEyebrow: '规律 + 日历 + 碳足迹',
     intelTitle: ['航线', '情报', ''],
     intelSub: '规律卡片告诉你这条航线何时最便宜。日历展示每一个低价窗口。碳账本让旅程保持诚实。',
-    footerTag: 'FlyCheap · 轮询 1,000 多家航空公司 · ', status: '状态', privacy: '隐私', about: '关于',
+    footerTag: 'FlyCheap · 轮询各航空公司票价 · ', status: '状态', privacy: '隐私', about: '关于',
   },
 };

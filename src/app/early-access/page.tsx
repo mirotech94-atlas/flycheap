@@ -15,7 +15,7 @@ export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Early access — FlyCheap',
-  description: 'Overpaying for flights stops here. FlyCheap watches 1,000+ airlines on your routes and pings you the moment a fare drops — founding members get in first.',
+  description: 'Overpaying for flights stops here. FlyCheap watches airline fares on your routes and pings you the moment a fare drops — founding members get in first.',
   openGraph: {
     title: 'FlyCheap — overpaying for flights stops here',
     description: 'Founding-member early access: a 3-month free trial, then upgrade to Pro or Enterprise only if you want more.',
