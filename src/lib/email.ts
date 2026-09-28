@@ -7,7 +7,7 @@ import { classifyAlert, type AlertKind } from './alertKind';
 import { verifiedAgeLabel } from './fareAge';
 import type { SearchRow, FareRow } from './db';
 import { APP_URL } from './hosts';
-import { emailFrame, emailMasthead, emailFooter, EMAIL_TOKENS, kindAccent } from './emailLayout';
+import { emailFrame, emailMasthead, emailFooter, emailEyebrow, emailButton, emailFareButton, EMAIL_TOKENS, kindAccent } from './emailLayout';
 
 export type AlertEmailContext = {
   /** Route's "normal" price — 7-day median (same number the anomaly detector uses). */
@@ -87,11 +87,11 @@ function sparklineSvg(history: Array<{ day: string; price: number }>, current: n
   const minIdx = pts.indexOf(Math.min(...pts));
   const tY = threshold >= lo && threshold <= hi ? y(threshold) : null;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block;max-width:100%;height:auto" role="img" aria-label="30-day price history">
-    <path d="${area}" fill="#b8912f" fill-opacity="0.22"/>
-    ${tY != null ? `<line x1="${pad}" x2="${W - pad}" y1="${tY.toFixed(1)}" y2="${tY.toFixed(1)}" stroke="#697181" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
-    <path d="${line}" fill="none" stroke="#0a2e57" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    <circle cx="${x(minIdx).toFixed(1)}" cy="${y(pts[minIdx]).toFixed(1)}" r="3.5" fill="#b8912f" stroke="#fff" stroke-width="1.5"/>
-    <circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(pts[pts.length - 1]).toFixed(1)}" r="3.5" fill="#0a2e57" stroke="#fff" stroke-width="1.5"/>
+    <path d="${area}" fill="${EMAIL_TOKENS.ACCENT}" fill-opacity="0.10"/>
+    ${tY != null ? `<line x1="${pad}" x2="${W - pad}" y1="${tY.toFixed(1)}" y2="${tY.toFixed(1)}" stroke="${EMAIL_TOKENS.MUTED}" stroke-width="1" stroke-dasharray="3 3"/>` : ''}
+    <path d="${line}" fill="none" stroke="${EMAIL_TOKENS.ACCENT}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    <circle cx="${x(minIdx).toFixed(1)}" cy="${y(pts[minIdx]).toFixed(1)}" r="3.5" fill="${EMAIL_TOKENS.AMBER}" stroke="#FFFFFF" stroke-width="1.5"/>
+    <circle cx="${x(pts.length - 1).toFixed(1)}" cy="${y(pts[pts.length - 1]).toFixed(1)}" r="3.5" fill="${EMAIL_TOKENS.INK}" stroke="#FFFFFF" stroke-width="1.5"/>
   </svg>`;
 }
 
@@ -107,6 +107,31 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
 
   const resend = new Resend(apiKey);
   const from = process.env.RESEND_FROM || 'onboarding@resend.dev';
+  const { subject, html, text, unsubLink } = await renderFareAlert(input);
+
+  try {
+    const result = await resend.emails.send({
+      from, to: input.to, subject, html, text,
+      headers: {
+        // RFC 8058: one-click unsubscribe in Gmail / Apple Mail / Outlook.
+        'List-Unsubscribe': `<${unsubLink}>`,
+        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+      },
+    });
+    if (result.error) return { ok: false, error: result.error.message };
+    return { ok: true, id: result.data?.id ?? '' };
+  } catch (e) {
+    return { ok: false, error: (e as Error).message };
+  }
+}
+
+/**
+ * The alert, rendered but not sent — subject, HTML, plain text and the
+ * unsubscribe link the headers need. Pure apart from the unsubscribe URL
+ * (a signed token), so a preview or a test can look at exactly what a
+ * customer would receive.
+ */
+export async function renderFareAlert(input: AlertEmailInput): Promise<{ subject: string; html: string; text: string; unsubLink: string }> {
   const { unsubscribeUrl } = await import('@/app/api/unsubscribe/route');
   const unsubLink = unsubscribeUrl(input.to, SITE);
 
@@ -201,98 +226,90 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     ?? null;
   const verifiedBySuffix = input.verifiedAt ? ' against a second provider' : '';
 
-    // Mistake amber is darkened for TEXT use: #b8912f was 2.95:1 on white, below AA
-  // even for the 13px pill. Hue preserved, lightness moved until it clears 4.5
-  // (same derivation as the white-label tenant ink). The button fill keeps the
-  // lighter #b8912f, which is legible against its own dark ink at 5.91.
-  const accent = isMistake ? '#8a6b1e' : isDrop ? '#b91c1c' : '#0e6240';
-  const accentBg = isMistake ? '#fdf6e3' : isDrop ? '#fef2f2' : '#f0fdf4';
-  const mono = "font-family:'JetBrains Mono',SFMono-Regular,Menlo,Consolas,monospace";
+  // Colour carries status only. The fare itself is set in FARE_TEXT — the
+  // amber-derived ink the site uses for a fare as text (amber is a fill, never
+  // text on a light surface). The delta is green because a drop is good news;
+  // a mistake fare keeps the fare colour and says what it is in words.
+  const T = EMAIL_TOKENS;
+  const deltaColor = T.GREEN;
+  const mono = `font-family:${T.MONO}`;
+  const sans = `font-family:${T.SANS}`;
+  const label = (text: string) => emailEyebrow(text);
+  const block = (inner: string, opts: { recessed?: boolean } = {}) =>
+    `<div style="background:${opts.recessed ? T.SURFACE_2 : T.CARD};border-top:1px solid ${T.LINE};border-bottom:1px solid ${T.LINE};padding:16px 0;margin:0 0 18px">${inner}</div>`;
   const preheader = `${route} ${datesLine} · ${headlinePrice}`;
 
   const flexRows = ctx.flexDates.map(f =>
-    `<tr><td style="padding:4px 0;color:#475569">${fmtDow(f.depart)} → ${fmtDow(f.return)}${nightsBetween(f.depart, f.return) ? ` · ${nightsBetween(f.depart, f.return)} nights` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:#0a2e57;${mono}">${fmtUSD(f.price)}</td></tr>`
+    `<tr><td style="padding:7px 0;border-top:1px solid ${T.LINE_CARD};color:${T.INK_SOFT};${sans}">${fmtDow(f.depart)} → ${fmtDow(f.return)}${nightsBetween(f.depart, f.return) ? ` · ${nightsBetween(f.depart, f.return)} nights` : ''}</td><td style="padding:7px 0;border-top:1px solid ${T.LINE_CARD};text-align:right;font-weight:500;color:${T.INK};${mono}">${fmtUSD(f.price)}</td></tr>`
   ).join('');
 
-  // Chrome swap: the same navy masthead + serif headline + ivory ground +
-  // footer as every other FlyCheap email, wrapped around the existing rich
-  // data cards (price, sparkline, dates, book CTA, stays). The semantic accent
-  // (mistake=gold / drop=red / target=green) stays — it encodes the buy signal.
+  // The same masthead and footer as every other FlyCheap email, around the
+  // alert's own data blocks: route, the fare, the last 30 days, the dates that
+  // work, the action, then where to stay. Rules separate blocks; the fare is
+  // the one loud thing on the page.
   const tagLabel = isMistake ? 'Mistake fare' : isDrop ? 'Price drop' : 'Below target';
   const bodyInner = `
-    <div style="padding:28px 24px 6px">
-      <div style="font-family:${EMAIL_TOKENS.SERIF};font-size:14px;font-style:italic;color:${accent};margin:0 0 8px">${tagLabel}</div>
-      <h1 style="font-family:${EMAIL_TOKENS.SERIF};font-size:30px;line-height:1.12;font-weight:700;color:${EMAIL_TOKENS.INK};margin:0 0 6px">${route}</h1>
-      <div style="font-family:${EMAIL_TOKENS.SANS};font-size:14px;color:${EMAIL_TOKENS.SLATE};margin:0 0 4px">${datesLine} · ${search.adults} adult${search.adults !== 1 ? 's' : ''}${search.infants ? ` + ${search.infants} infant${search.infants !== 1 ? 's' : ''}` : ''}</div>
-    </div>
-    <div style="padding:0 24px 8px">
-      <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-left:4px solid ${accent};border-radius:12px;padding:16px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;${mono}">${normal ? 'Normal price → now' : 'Now · per adult'}</div>
-        <div style="margin-top:6px;line-height:1.1">
-          ${normal ? `<span style="font-size:20px;color:#697181;text-decoration:line-through;${mono}">${fmtUSD(normal)}</span> <span style="color:#697181;font-size:18px">→</span> ` : ''}
-          <span style="font-size:36px;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</span>
-          ${pctBelowNormal != null && pctBelowNormal > 0 ? `<span style="display:inline-block;margin-left:8px;background:${accentBg};color:${accent};font-weight:700;font-size:13px;padding:3px 8px;border-radius:999px;${mono}">−${pctBelowNormal.toFixed(0)}%</span>` : ''}
-        </div>
-        ${verifiedLine ? `<div style="font-size:12px;color:#0e6240;margin-top:8px;${mono}">✓ ${esc(verifiedLine)}${verifiedBySuffix}</div>` : ''}
-        <div style="color:#475569;font-size:13px;margin-top:8px">
-          per adult · your target ${fmtUSD(thresholdPerAdult)}${normal ? ` · 7-day median ${fmtUSD(normal)}` : ''}<br>
-          <span style="color:#0a1426;font-weight:600">${esc(lastAlertLine)}</span><br>
-          party total <strong>${fmtUSD(fare.total_price_usd)}</strong> · base ${fmtUSD(fare.base_price_usd)} + taxes/fees ${fmtUSD(fare.taxes_fees_usd)}
-        </div>
-      </div>
+    <div style="background:${T.CARD};padding:28px 32px 4px">
+      ${label(tagLabel)}
+      <h1 style="font-family:${T.SERIF};font-size:34px;line-height:1.1;font-weight:400;letter-spacing:-.02em;color:${T.INK};margin:8px 0 6px">${route}</h1>
+      <div style="${sans};font-size:14px;color:${T.MUTED};margin:0 0 20px">${datesLine} · ${search.adults} adult${search.adults !== 1 ? 's' : ''}${search.infants ? ` + ${search.infants} infant${search.infants !== 1 ? 's' : ''}` : ''}</div>
 
-      ${hist30 ? `
-      <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:8px;${mono}">Last 30 days · daily low per adult</div>
-        ${spark}
-        <div style="display:flex;justify-content:space-between;font-size:11px;letter-spacing:.06em;text-transform:uppercase;margin-top:6px;${mono}">
-          <span style="color:#0e6240;font-weight:700">▼ ${fmtUSD(hist30.low)} low</span>
-          <span style="color:#697181">${hist30.days} polled days</span>
-          <span style="color:#9a3d1f;font-weight:700">▲ ${fmtUSD(hist30.high)} high</span>
+      ${block(`
+        ${label(normal ? 'Normal price → now · per adult' : 'Now · per adult')}
+        <div style="margin-top:8px;line-height:1">
+          ${normal ? `<span style="font-family:${T.SERIF};font-size:22px;color:${T.MUTED};text-decoration:line-through">${fmtUSD(normal)}</span> <span style="color:${T.MUTED};font-size:18px">→</span> ` : ''}
+          <span style="font-family:${T.SERIF};font-size:46px;letter-spacing:-.02em;color:${T.FARE_TEXT}">${fmtUSD(now)}</span>
+          ${pctBelowNormal != null && pctBelowNormal > 0 ? `<span style="display:inline-block;margin-left:10px;${mono};font-size:13px;font-weight:500;color:${deltaColor}">−${pctBelowNormal.toFixed(0)}% vs 7-day median</span>` : ''}
         </div>
-      </div>` : ''}
+        ${verifiedLine ? `<div style="${mono};font-size:12px;color:${T.GREEN};margin-top:10px">✓ ${esc(verifiedLine)}${verifiedBySuffix}</div>` : ''}
+        <div style="${sans};color:${T.INK_SOFT};font-size:13px;line-height:1.6;margin-top:10px">
+          your target ${fmtUSD(thresholdPerAdult)}${normal ? ` · 7-day median ${fmtUSD(normal)}` : ''}<br>
+          <span style="color:${T.INK};font-weight:600">${esc(lastAlertLine)}</span><br>
+          party total <span style="${mono};font-weight:500;color:${T.INK}">${fmtUSD(fare.total_price_usd)}</span> · base ${fmtUSD(fare.base_price_usd)} + taxes/fees ${fmtUSD(fare.taxes_fees_usd)}
+        </div>`)}
 
-      ${input.nearby ? `<div style="background:#fff8e6;border:1px solid #e8a33d;border-radius:12px;padding:12px 16px;margin:0 0 16px;font-size:13px;color:#5a4410">
-        <strong>Heads up — these are not the dates you're tracking.</strong><br>
+      ${hist30 ? block(`
+        ${label('Last 30 days · daily low per adult')}
+        <div style="margin-top:10px">${spark}</div>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:6px;${mono};font-size:11px;letter-spacing:.06em;text-transform:uppercase">
+          <tr><td style="color:${T.GREEN};font-weight:500">▼ ${fmtUSD(hist30.low)} low</td><td align="center" style="color:${T.MUTED_2}">${hist30.days} polled days</td><td align="right" style="color:${T.RED};font-weight:500">▲ ${fmtUSD(hist30.high)} high</td></tr>
+        </table>`) : ''}
+
+      ${input.nearby ? `<div style="background:${T.SURFACE_2};border-left:2px solid ${T.INK};padding:12px 16px;margin:0 0 18px;${sans};font-size:13px;line-height:1.6;color:${T.INK}">
+        <strong>These are not the dates you are tracking.</strong><br>
         You track <strong>${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}</strong>, and we have no fare cached for those days.
-        The price below is for <strong>${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}</strong>.
+        The price above is for <strong>${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}</strong>.
       </div>` : ''}
 
-      <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:6px;${mono}">Dates that work</div>
-        <table style="width:100%;border-collapse:collapse;font-size:14px">
-          <tr><td style="padding:4px 0;font-weight:700;color:#0a1426">${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}${nights ? ` · ${nights} nights` : ''}${fare.outbound_flight_no ? ` · ${esc(fare.outbound_flight_no)}${fare.return_flight_no ? ` / ${esc(fare.return_flight_no)}` : ''}` : ''}</td><td style="padding:4px 0;text-align:right;font-weight:700;color:${accent};${mono}">${fmtUSD(now)}</td></tr>
+      ${block(`
+        ${label('Dates that work')}
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:14px;margin-top:6px">
+          <tr><td style="padding:7px 0;font-weight:600;color:${T.INK};${sans}">${fmtDow(fareDepart)} → ${fmtDow(fareReturn)}${nights ? ` · ${nights} nights` : ''}${fare.outbound_flight_no ? ` · <span style="${mono};font-weight:400">${esc(fare.outbound_flight_no)}${fare.return_flight_no ? ` / ${esc(fare.return_flight_no)}` : ''}</span>` : ''}</td><td style="padding:7px 0;text-align:right;font-weight:500;color:${T.FARE_TEXT};${mono}">${fmtUSD(now)}</td></tr>
           ${flexRows}
         </table>
-        ${ctx.flexDates.length ? `<div style="font-size:11px;color:#697181;margin-top:6px">Nearby dates from our cache priced within 5% of this fare (±3 days).</div>` : ''}
-      </div>
+        ${ctx.flexDates.length ? `<div style="${sans};font-size:12px;color:${T.MUTED};margin-top:8px">Nearby date pairs from our cache (±3 days) priced within 5% of this fare.</div>` : ''}`)}
 
-      ${isMistake ? `
-      <div style="background:#fdf6e3;border:1px solid rgba(212,175,55,.5);border-radius:12px;padding:12px 16px;margin:0 0 16px;font-size:14px;color:#7c5c10">
-        <strong>✦ This looks like a pricing error.</strong> Fares like this get pulled within hours, and <strong>airlines do sometimes cancel these tickets after they are issued</strong>. Book a refundable option where you can, and don't make non-refundable plans around it until the airline confirms. We'd rather tell you that than let you find out later.
+      ${isMistake ? `<div style="background:${T.SURFACE_2};border-left:2px solid ${T.FARE_TEXT};padding:12px 16px;margin:0 0 18px;${sans};font-size:14px;line-height:1.6;color:${T.INK}">
+        <strong style="color:${T.FARE_TEXT}">This looks like a pricing error.</strong> Fares like this get pulled within hours, and <strong>airlines do sometimes cancel these tickets after they are issued</strong>. Book a refundable option where you can, and don't make non-refundable plans around it until the airline confirms. We'd rather tell you that than let you find out later.
       </div>` : ''}
 
-      <p style="margin:0 0 8px">
-        <a href="${bookUrl}" style="display:inline-block;background:#b8912f;color:#061a35;padding:13px 24px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Book this fare →</a>
-      </p>
-      <div style="font-size:12px;color:#697181;margin:0 0 16px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
+      <div style="margin:4px 0 8px">${emailFareButton('Book this fare', bookUrl)}</div>
+      <div style="${sans};font-size:12px;color:${T.MUTED};margin:0 0 22px">Opens Aviasales with these exact dates pre-filled. No booking fee — ever.</div>
 
-      <!-- Where to stay. Given a card of its own rather than the inline text
-           link it used to be: this lands at the moment the traveller has just
-           decided to commit to these dates, which is the only moment a stay
-           search is genuinely useful to them. The fare above stays the single
-           primary action (gold); this is deliberately the secondary weight. -->
-      <div style="background:#fff;border:1px solid rgba(10,20,38,.10);border-radius:12px;padding:14px 18px;margin:0 0 16px">
-        <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#697181;margin-bottom:4px;${mono}">Where to stay · ${esc(stayCity)}</div>
-        <div style="font-size:13px;color:#475569;margin-bottom:12px">${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''} · ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'} — dates already filled in.</div>
-        <a href="${staysHotelUrl}" style="display:inline-block;background:#0a2e57;color:#fff;padding:10px 20px;border-radius:9px;text-decoration:none;font-weight:700;font-size:14px">Find hotels in ${esc(stayCity)} →</a>
-        <a href="${staysAirbnbUrl}" style="display:inline-block;margin-left:14px;color:#0a2e57;font-weight:600;font-size:13px;text-decoration:underline">Vacation homes</a>
-      </div>
-      ${insuranceUrl ? `<div style="font-size:13px;color:#33405a;margin:-12px 0 20px">Booking a non-refundable fare? <a href="${insuranceUrl}" style="color:#0a2e57;font-weight:600">Compare trip insurance</a> — covers cancellation and medical abroad.</div>` : ''}
-
+      <!-- Where to stay. Its own ruled block rather than an inline text link:
+           this lands at the moment the traveller has just decided to commit to
+           these dates, the only moment a stay search is useful. The fare above
+           stays the single primary action (amber); this is deliberately the
+           secondary weight (ink). -->
+      ${block(`
+        ${label(`Where to stay · ${stayCity}`)}
+        <div style="${sans};font-size:13px;color:${T.INK_SOFT};margin:6px 0 12px">${fmtDow(search.depart_date)} → ${fmtDow(search.return_date)}${nights ? ` · ${nights} nights` : ''} · ${search.adults} ${search.adults === 1 ? 'adult' : 'adults'} — dates already filled in.</div>
+        ${emailButton(`Find hotels in ${stayCity}`, staysHotelUrl)}
+        <a href="${staysAirbnbUrl}" style="display:inline-block;margin-left:14px;color:${T.ACCENT};font-weight:600;font-size:13px;text-decoration:underline;${sans}">Vacation homes</a>`)}
+      ${insuranceUrl ? `<div style="${sans};font-size:13px;color:${T.INK_SOFT};margin:-6px 0 22px">Booking a non-refundable fare? <a href="${insuranceUrl}" style="color:${T.ACCENT};font-weight:600;text-decoration:underline">Compare trip insurance options</a>.</div>` : ''}
     </div>`;
-  const alertFooterNote = `Snapshot ${fmtDateTime(fare.polled_at)} · fares move — verify at checkout. &nbsp;&middot;&nbsp; <a href="${manageUrl}" style="color:${EMAIL_TOKENS.SLATE};text-decoration:underline">Manage this watch</a>`;
-  const html = emailFrame(preheader, emailMasthead() + bodyInner + emailFooter({ appUrl: SITE, unsubUrl: unsubLink, note: alertFooterNote }));
+  const alertFooterNote = `Snapshot ${fmtDateTime(fare.polled_at)} · fares move — verify at checkout. &nbsp;&nbsp; <a href="${manageUrl}" style="color:${T.MUTED};text-decoration:underline">Manage this watch</a>`;
+  const html = emailFrame(preheader, emailMasthead('Fare alert') + bodyInner + emailFooter({ appUrl: SITE, unsubUrl: unsubLink, note: alertFooterNote }));
 
   const text = [
     `${tag.replace(/[✦📉✈️]\s*/g, '')} — ${route}`,
@@ -321,7 +338,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     `Book: ${bookUrl}`,
     `Stay in ${stayCity} — hotels: ${staysHotelUrl}`,
     `Stay in ${stayCity} — Airbnb: ${staysAirbnbUrl}`,
-    insuranceUrl ? `Trip insurance (cancellation + medical abroad): ${insuranceUrl}` : '',
+    insuranceUrl ? `Compare trip insurance options: ${insuranceUrl}` : '',
     '',
     verifiedLine ? `${verifiedLine}${verifiedBySuffix}.` : '',
     `Snapshot ${fmtDateTime(fare.polled_at)}. Fares move — verify at checkout.`,
@@ -329,20 +346,7 @@ export async function sendFareAlert(input: AlertEmailInput): Promise<{ ok: true;
     `Unsubscribe: ${unsubLink}`,
   ].filter(l => l !== undefined).join('\n').replace(/\n{3,}/g, '\n\n');
 
-  try {
-    const result = await resend.emails.send({
-      from, to: input.to, subject, html, text,
-      headers: {
-        // RFC 8058: one-click unsubscribe in Gmail / Apple Mail / Outlook.
-        'List-Unsubscribe': `<${unsubLink}>`,
-        'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
-      },
-    });
-    if (result.error) return { ok: false, error: result.error.message };
-    return { ok: true, id: result.data?.id ?? '' };
-  } catch (e) {
-    return { ok: false, error: (e as Error).message };
-  }
+  return { subject, html, text, unsubLink };
 }
 
 /**
@@ -403,25 +407,23 @@ export async function sendDigestEmail(input: {
   const resend = new Resend(apiKey);
   const from = process.env.RESEND_FROM || 'onboarding@resend.dev';
   const T = EMAIL_TOKENS;
-  const cards = input.deals.map(d => `
-    <div style="background:#fff;border:1px solid ${T.LINE_CARD};border-radius:10px;padding:16px 18px;margin:0 0 12px">
-      <div style="font-family:${T.SANS};font-size:13px;color:${T.SLATE}">${d.route} · ${d.dates}</div>
-      <div style="font-family:${T.SERIF};font-size:19px;font-weight:700;color:${T.INK};margin:3px 0 6px">${d.headline} — ${d.price}</div>
-      <div style="font-family:${T.SANS};font-size:14px;line-height:1.55;color:${T.INK};margin-bottom:14px">${d.blurb}</div>
-      <a href="${d.bookUrl}" style="display:inline-block;background:${T.NAVY};border-top:2px solid ${T.GOLD};color:#fff;padding:10px 20px;border-radius:6px;text-decoration:none;font-family:${T.SANS};font-weight:600;font-size:14px">See this fare</a>
+  const cards = input.deals.map((d, i) => `
+    <div style="border-top:1px solid ${i ? T.LINE_CARD : T.LINE};padding:16px 0">
+      <div style="font-family:${T.MONO};font-size:11px;letter-spacing:.08em;color:${T.MUTED_2}">${d.route} · ${d.dates}</div>
+      <div style="font-family:${T.SERIF};font-size:22px;letter-spacing:-.01em;color:${T.INK};margin:4px 0 6px">${d.headline} — <span style="color:${T.FARE_TEXT}">${d.price}</span></div>
+      <div style="font-family:${T.SANS};font-size:14px;line-height:1.55;color:${T.INK_SOFT};margin-bottom:12px">${d.blurb}</div>
+      ${emailButton('See this fare', d.bookUrl)}
     </div>`).join('');
   const bodyInner = `
-    <div style="padding:30px 24px 6px">
-      <div style="font-family:${T.SERIF};font-size:14px;font-style:italic;color:${kindAccent('alert')};margin:0 0 10px">Fare digest</div>
-      <h1 style="font-family:${T.SERIF};font-size:26px;line-height:1.16;font-weight:700;color:${T.INK};margin:0 0 14px">Fresh fares for you.</h1>
-      <p style="font-family:${T.SANS};font-size:15px;line-height:1.62;color:${T.INK};margin:0">${input.intro}</p>
-    </div>
-    <div style="padding:8px 24px 4px">
+    <div style="background:${T.CARD};padding:30px 32px 6px">
+      <h1 style="font-family:${T.SERIF};font-size:30px;line-height:1.15;font-weight:400;letter-spacing:-.02em;color:${T.INK};margin:0 0 14px">Fresh fares for you.</h1>
+      <p style="font-family:${T.SANS};font-size:15px;line-height:1.6;color:${T.INK};margin:0 0 18px">${input.intro}</p>
       ${cards}
-      ${input.outro ? `<p style="font-family:${T.SANS};font-size:14px;line-height:1.6;color:${T.SLATE};margin:12px 0 0">${input.outro}</p>` : ''}
+      ${input.outro ? `<p style="font-family:${T.SANS};font-size:14px;line-height:1.6;color:${T.MUTED};margin:16px 0 0;border-top:1px solid ${T.LINE};padding-top:14px">${input.outro}</p>` : ''}
     </div>`;
   const html = emailFrame(input.preheader || input.intro,
-    emailMasthead() + bodyInner + emailFooter({ appUrl: SITE, note: "You're getting this because you track these routes on FlyCheap. Fares change fast — verify before booking." }));
+    emailMasthead('Fare digest') + bodyInner + emailFooter({ appUrl: SITE, note: "You're getting this because you track these routes on FlyCheap. Fares change fast — verify before booking." }));
+  void kindAccent;
   try {
     const result = await resend.emails.send({ from, to: input.to, subject: input.subject, html });
     if (result.error) return { ok: false, error: result.error.message };

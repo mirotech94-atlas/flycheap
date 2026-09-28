@@ -86,7 +86,7 @@ export function welcomeQuickStartEmail(o: { appUrl: string; unsubUrl?: string })
 export function waitlistPositionEmail(o: { position: number; shareUrl: string; referralBoost: number; demoUrl: string; appUrl?: string }): BuiltEmail {
   const hero = `
     <div style="margin:0 0 16px">
-      <div style="font-family:${T.SERIF};font-size:52px;font-weight:700;color:${T.INK};line-height:1">#${o.position}</div>
+      <div style="font-family:${T.SERIF};font-size:52px;font-weight:400;letter-spacing:-.02em;color:${T.INK};line-height:1">#${o.position}</div>
       <div style="font-family:${T.SANS};font-size:13px;color:${T.SLATE};margin-top:2px">your place on the early-access list</div>
     </div>`;
   return {
@@ -99,7 +99,7 @@ export function waitlistPositionEmail(o: { position: number; shareUrl: string; r
       body: [
         hero,
         p(`We're onboarding founding members in small waves so everyone gets a real welcome. Want to skip ahead? Every friend who joins with your link moves you up <strong style="color:${T.INK}">${o.referralBoost} spots</strong>.`),
-        `<div style="font-family:${T.MONO};font-size:13px;color:${T.NAVY};background:${T.PAPER};border:1px solid ${T.LINE};border-radius:6px;padding:11px 14px;margin:0 0 4px;word-break:break-all">${esc(o.shareUrl)}</div>`,
+        `<div style="font-family:${T.MONO};font-size:13px;color:${T.INK};background:${T.SURFACE_2};border:1px solid ${T.LINE};padding:11px 14px;margin:0 0 4px;word-break:break-all">${esc(o.shareUrl)}</div>`,
         `<div style="margin:14px 0 4px">${emailButton('Watch the 4-minute demo', o.demoUrl)}</div>`,
         emailNote("Didn't sign up? Ignore this email and you'll never hear from us again."),
       ].join(''),
@@ -110,7 +110,7 @@ export function waitlistPositionEmail(o: { position: number; shareUrl: string; r
 /** Magic-link sign-in — the primary button is the link; mobile gets a scheme fallback. */
 export function signInLinkEmail(o: { link: string; minutes: number; mobileFallbackHref?: string; appUrl?: string }): BuiltEmail {
   const fallback = o.mobileFallbackHref
-    ? `<div style="margin:12px 0 0"><a href="${o.mobileFallbackHref.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="display:inline-block;background:${T.PAPER};border:1px solid ${T.LINE};color:${T.NAVY};text-decoration:none;font-family:${T.SANS};font-size:13px;font-weight:600;padding:10px 20px;border-radius:6px">Open in the FlyCheap app</a></div>`
+    ? `<div style="margin:12px 0 0"><a href="${o.mobileFallbackHref.replace(/&/g, '&amp;').replace(/"/g, '&quot;')}" style="display:inline-block;background:${T.CARD};border:1px solid ${T.RULE_STRONG};color:${T.INK_SOFT};text-decoration:none;font-family:${T.SANS};font-size:13px;font-weight:600;padding:10px 16px">Open in the FlyCheap app</a></div>`
     : '';
   return {
     subject: 'Sign in to FlyCheap',
