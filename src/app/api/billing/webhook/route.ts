@@ -28,8 +28,29 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'invalid signature' }, { status: 400 });
   }
 
-  const event = JSON.parse(raw) as StripeEvent;
+  let event: StripeEvent;
+  try { event = JSON.parse(raw) as StripeEvent; } catch { return NextResponse.json({ error: 'bad payload' }, { status: 400 }); }
+  if (!event?.id || typeof event.id !== 'string') return NextResponse.json({ error: 'missing event id' }, { status: 400 });
 
+  // Stripe delivers at least once and retries on any non-2xx, and a signed
+  // event can be replayed within the signature tolerance. Record the id
+  // first; a repeat is acknowledged without being applied again (which would
+  // otherwise, say, re-upgrade an account after a later cancellation).
+  if (!queries.recordWebhookEvent(event.id, 'stripe')) {
+    return NextResponse.json({ received: true, duplicate: true });
+  }
+  try {
+    await handleEvent(event);
+  } catch (e) {
+    // Let Stripe's retry run: forget the id, answer 5xx.
+    queries.forgetWebhookEvent(event.id, 'stripe');
+    console.error('[stripe-webhook] handler failed:', (e as Error).message);
+    return NextResponse.json({ error: 'handler failed' }, { status: 500 });
+  }
+  return NextResponse.json({ received: true });
+}
+
+async function handleEvent(event: StripeEvent): Promise<void> {
   switch (event.type) {
     case 'checkout.session.completed': {
       const s = event.data.object as {
@@ -140,6 +161,4 @@ export async function POST(req: NextRequest) {
       // Ignore other events for now
       break;
   }
-
-  return NextResponse.json({ received: true });
 }

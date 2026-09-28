@@ -1,4 +1,5 @@
 import { queries } from '@/lib/db';
+import { verifyTwilioSignature } from '@/lib/twilioSignature';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,36 @@ function twiml(message: string | null): Response {
   return new Response(xml, { headers: { 'Content-Type': 'text/xml; charset=utf-8' } });
 }
 
+/** The public URL Twilio calls. Set TWILIO_WEBHOOK_URL to exactly what is in
+ *  the Twilio console; otherwise rebuild it from the proxy's forwarded headers. */
+function publicUrl(req: Request): string {
+  const configured = process.env.TWILIO_WEBHOOK_URL?.trim();
+  if (configured) return configured;
+  const u = new URL(req.url);
+  const proto = req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':', '');
+  const host = req.headers.get('x-forwarded-host') ?? req.headers.get('host') ?? u.host;
+  return `${proto}://${host}${u.pathname}${u.search}`;
+}
+
+const forbidden = () => new Response('Forbidden', { status: 403 });
+
 export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
-  if (!form) return twiml(null);
+  if (!form) return forbidden();
+
+  // Only Twilio may drive this: an unsigned STOP/START would let anyone flip
+  // a user's SMS subscription by knowing their phone number. No auth token
+  // configured means we cannot tell, so refuse.
+  const params: Record<string, string[]> = {};
+  for (const [k, v] of form.entries()) (params[k] ??= []).push(typeof v === 'string' ? v : '');
+  if (!verifyTwilioSignature({
+    authToken: process.env.TWILIO_AUTH_TOKEN,
+    url: publicUrl(req),
+    params,
+    signature: req.headers.get('x-twilio-signature'),
+  })) {
+    return forbidden();
+  }
 
   const from = String(form.get('From') ?? '').trim();
   const bodyRaw = String(form.get('Body') ?? '').trim();

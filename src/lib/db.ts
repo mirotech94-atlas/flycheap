@@ -2016,6 +2016,9 @@ export const queries = {
     ).run(id, source);
     return r.changes === 1;
   },
+  /** Undo recordWebhookEvent when processing failed, so the sender's retry runs. */
+  forgetWebhookEvent: (id: string, source: string) =>
+    getDb().prepare(`DELETE FROM webhook_events WHERE id = ? AND source = ?`).run(id, source),
 
   // -------- SSE cursors --------
   maxSnapshotId: (): number | null => {
