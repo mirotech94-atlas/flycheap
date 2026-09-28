@@ -1,7 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getDb, queries } from '@/lib/db';
 import { providerStatuses } from '@/lib/providers';
-import { APP_VERSION } from '@/lib/version';
 
 export const dynamic = 'force-dynamic';
 
@@ -9,6 +8,14 @@ export const dynamic = 'force-dynamic';
 // monitor (UptimeRobot, BetterStack, internal Slack bot, etc.).
 // Returns HTTP 200 even when subsystems are degraded so monitors can branch
 // on `ok` rather than HTTP code; 503 only when the DB itself is unreachable.
+//
+// It is PUBLIC, so it never carries raw exception text (paths, SQLite errors,
+// provider messages) or the build version — both are reconnaissance. The raw
+// error goes to the server log instead.
+
+function logCheckError(check: string, e: unknown) {
+  console.error(`[health] ${check} check failed:`, (e as Error)?.message ?? e);
+}
 
 export async function GET() {
   const started = Date.now();
@@ -20,9 +27,10 @@ export async function GET() {
     const r = (getDb().prepare('SELECT COUNT(*) as n FROM users').get() as { n: number });
     checks.database = { ok: true, ms: Date.now() - t, detail: `${r.n} users` };
   } catch (e) {
+    logCheckError('database', e);
     return NextResponse.json({
       ok: false,
-      checks: { database: { ok: false, detail: (e as Error).message } },
+      checks: { database: { ok: false, detail: 'database unreachable' } },
     }, { status: 503 });
   }
 
@@ -41,7 +49,7 @@ export async function GET() {
     } else {
       checks.last_poll = { ok: false, detail: 'no poll yet' };
     }
-  } catch (e) { checks.last_poll = { ok: false, detail: (e as Error).message }; }
+  } catch (e) { logCheckError('last_poll', e); checks.last_poll = { ok: false, detail: 'check failed' }; }
 
   // 3. Provider configuration (data sources available)
   try {
@@ -91,7 +99,6 @@ export async function GET() {
   const allOk = Object.values(checks).every(c => c.ok);
   return NextResponse.json({
     ok: allOk,
-    version: APP_VERSION,
     uptime_sec: Math.round(process.uptime()),
     checked_at: new Date().toISOString(),
     duration_ms: Date.now() - started,
