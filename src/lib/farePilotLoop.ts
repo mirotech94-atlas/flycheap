@@ -25,6 +25,23 @@ export function forModel(content: string): string {
     : `${content.slice(0, MODEL_TOOL_RESULT_CHARS)}\n…[truncated ${content.length - MODEL_TOOL_RESULT_CHARS} chars — narrow the query if you need the rest]`;
 }
 
+const KNOWN_TOOLS: ReadonlySet<string> = new Set(ADMIN_TOOLS.map(t => t.name));
+
+/**
+ * Wrap a tool result for the model. Tool output is attacker-reachable (client
+ * emails, error text, row values), so it must not be able to END the wrapper:
+ * a row containing `</untrusted_data>` followed by fake instructions would
+ * otherwise read as if it came from outside the data block. Every `<` and `>`
+ * inside is entity-escaped, so the only tags left are the two written here,
+ * and the tool= attribute is a known tool name or "unknown", never
+ * model-controlled text.
+ */
+export function wrapUntrusted(toolName: string, content: string): string {
+  const tool = KNOWN_TOOLS.has(toolName) ? toolName : 'unknown';
+  const body = forModel(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<untrusted_data tool="${tool}">\n${body}\n</untrusted_data>`;
+}
+
 type OAMsg =
   | { role: 'system' | 'user' | 'assistant'; content: string }
   | { role: 'assistant'; content: string | null; tool_calls: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> }
@@ -108,7 +125,7 @@ export async function runLoop(
       else if (PRIVILEGED_TOOLS.has(c.function.name)) executed = true;
       toolCalls.push({ name: c.function.name, input, result_preview: r.content.slice(0, 300) });
       // Everything a tool returns is untrusted data, never instructions.
-      messages.push({ role: 'tool', tool_call_id: c.id, content: `<untrusted_data tool="${c.function.name}">\n${forModel(r.content)}\n</untrusted_data>` });
+      messages.push({ role: 'tool', tool_call_id: c.id, content: wrapUntrusted(c.function.name, r.content) });
     }
   }
 
