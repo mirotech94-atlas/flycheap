@@ -2,13 +2,49 @@ import Link from 'next/link';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import { travelpayoutsReferralUrl } from '@/lib/affiliate';
 import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
+import { getPublicMetrics } from '@/lib/public-metrics';
+import { deliverableChannels } from '@/lib/channelHealth';
+import { tierChannels, channelSentence } from '@/lib/tierCopy';
+import { isPaypalConfigured } from '@/lib/paypal';
+import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
+import { TIER_LIMITS } from '@/lib/db';
+
+// Every number and every "we use X" on this page is read from the running
+// system (public-metrics, channelHealth, TIER_LIMITS, env gates), so the page
+// is rendered per request rather than baked at build time.
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'About & Docs — FlyCheap',
   description: 'Why we built FlyCheap, how the fare engine works, and how we make money.',
 };
 
+const PROVIDER_LABEL: Record<string, string> = {
+  travelpayouts: 'Travelpayouts (Aviasales)', amadeus: 'Amadeus', duffel: 'Duffel', kiwi: 'Kiwi',
+  serpapi: 'Google Flights via SerpAPI', searchapi: 'Google Flights via SearchAPI',
+};
+const listOf = (xs: string[]) => xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+
 export default function AboutPage() {
+  // Derived, never typed. `providersConfigured` is the ENABLED-and-keyed set,
+  // not the integrations that merely exist — see public-metrics.ts.
+  const m = getPublicMetrics();
+  const enabled = m.providersConfigured.map(id => PROVIDER_LABEL[id] ?? id);
+  const providerSentence = enabled.length > 0
+    ? `Each time it wakes it fans the routes that are due out to the fare providers enabled right now — ${listOf(enabled)} — and the cheapest valid offer wins.`
+    : 'Each time it wakes it fans the routes that are due out to the enabled fare providers, and the cheapest valid offer wins.';
+  const fanout = enabled.length > 1
+    ? `${enabled.length} providers are enabled today and every search hits all of them in parallel.`
+    : m.providersTotal > 0
+      ? `${m.providersTotal} provider integrations are built in; the ones enabled in Settings are searched in parallel and the cheapest valid offer wins.`
+      : 'The provider integrations enabled in Settings are searched in parallel and the cheapest valid offer wins.';
+  const deliverable = deliverableChannels();
+  const paidChannels = channelSentence(tierChannels('pro', deliverable));
+  const freeChannels = channelSentence(tierChannels('free', deliverable));
+  const sessionDays = Math.round(COOKIE_MAX_AGE_SEC / 86_400);
+  const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
+  const billing = isPaypalConfigured() ? 'Stripe and PayPal' : 'Stripe';
+  const freeRoutes = TIER_LIMITS.free.maxRoutes;
   return (
     <div className="mk mk-bleed">
       <PublicTopbar
@@ -38,8 +74,8 @@ export default function AboutPage() {
               <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>How it works</h3>
               <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 10 }}>
                 <li><strong>Pick a route + dates.</strong> Add JFK→CAI on July 7, or anything else — any 3-letter IATA pair works.</li>
-                <li><strong>A scheduler runs continuously.</strong> Each time it wakes it fans the routes that are due out to Travelpayouts (Aviasales), Duffel, and Google Flights via SerpAPI and SearchAPI in parallel. Cheapest result wins. How often a given route is due depends on how much it matters — close to departure, close to your target, or moving fast means more often.</li>
-                <li><strong>Three alert kinds, instant.</strong> Threshold-cross (below your target), price-drop (≥ N% below the 7-day median), and the mistake-fare detector (≥ 3σ below the 30-day mean — the genuine glitches that get pulled within 90 minutes).</li>
+                <li><strong>A scheduler runs continuously.</strong> {providerSentence} How often a given route is due depends on how much it matters — close to departure, close to your target, or moving fast means more often.</li>
+                <li><strong>Two alert triggers.</strong> Threshold-cross (the fare lands at or below your target) and price-drop (the fare falls more than your drop percentage below the route&apos;s own recent median — you set the percentage in Settings). Alerts go out by {freeChannels} on Free and by {paidChannels} on paid plans.</li>
                 <li><strong>You decide when to book.</strong> We never charge cards. Every deal links straight to the airline / OTA.</li>
               </ol>
             </div>
@@ -48,11 +84,10 @@ export default function AboutPage() {
               <div className="ed-eyebrow">02</div>
               <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>What makes it different</h3>
               <ul style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 10 }}>
-                <li><strong>Multi-provider fan-out.</strong> One search hits four live data providers in parallel. Cheaper than any single OTA quote.</li>
-                <li><strong>Mistake-fare detector.</strong> Statistical anomaly detection over your route&apos;s real history — the kind of fares that disappear in under an hour.</li>
-                <li><strong>Buy / Hold / Wait recommender.</strong> Per-search z-score + 14-day trend slope. We don&apos;t just show the price; we tell you whether to act.</li>
-                <li><strong>Ask FarePilot.</strong> Voice + chat concierge with full read access to your dashboard. &ldquo;Cheapest week in August under $700/adult?&rdquo; — she queries and answers.</li>
-                <li><strong>Flex ±3 days.</strong> Every tracked search shows the cheapest pairing within a 3-day window on either side — often saves hundreds.</li>
+                <li><strong>Provider fan-out.</strong> {fanout} Every fare snapshot is tagged with the provider it came from.</li>
+                <li><strong>Buy / Hold / Wait verdict.</strong> Plain rules over your route&apos;s own history (where today&apos;s fare sits against its median, and which way it is trending) blended with a small model trained nightly on our polling data. Every verdict shows its inputs on the <Link href="/model">Model</Link> page.</li>
+                <li><strong>Ask FarePilot.</strong> Voice + chat concierge with read access to your dashboard. &ldquo;Cheapest week in August under $700/adult?&rdquo; — it queries your data and answers.</li>
+                <li><strong>Date windows.</strong> A watch can be an exact pair of dates or a departure window with a range of trip lengths; we price the pairings inside it and surface the cheapest.</li>
                 <li><strong>Calendar export.</strong> One click drops the cheapest fare&apos;s outbound + return + a 24h reminder into your iCal.</li>
               </ul>
             </div>
@@ -61,14 +96,15 @@ export default function AboutPage() {
               <div className="ed-eyebrow">03</div>
               <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>Who we are</h3>
               <p>
-                Built and run by a small team out of New York. The original use case was an annual
+                Built and run by Myron Mekhael, sole proprietor, in New York. The original use case was an annual
                 family trip to Cairo where we kept missing the good fares; the watchlist + alerting
                 layer became valuable enough to share, so here it is.
               </p>
               <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
-                No banner ads. No selling your data. No third-party tracking pixels. The only outbound
-                calls we make are to the airline / OTA APIs the deals come from. We do earn affiliate
-                commission on bookings — see <a href="#affiliate-partners">how we make money</a> below.
+                No banner ads. No selling your data. No third-party tracking pixels — usage analytics are
+                first-party. The <Link href="/privacy">Privacy Policy</Link> names every outside service
+                that sees any of your data (fare providers, email, billing, the AI assistant). We do earn
+                affiliate commission on bookings — see <a href="#affiliate-partners">how we make money</a> below.
               </p>
             </div>
 
@@ -77,9 +113,9 @@ export default function AboutPage() {
               <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>Privacy &amp; security</h3>
               <ul style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>Code-based sign-in only — no passwords stored.</li>
-                <li>Cookies are <code className="ed-code">httpOnly</code> + <code className="ed-code">Secure</code> + <code className="ed-code">SameSite=Lax</code>; sessions auto-rotate every 30 days.</li>
-                <li>Every admin action is recorded in an audit log (who / what / when / diff / IP).</li>
-                <li>No credit card data ever touches our servers — Stripe and PayPal handle billing entirely.</li>
+                <li>Cookies are <code className="ed-code">httpOnly</code> + <code className="ed-code">Secure</code> + <code className="ed-code">SameSite=Lax</code>; a session expires after {sessionDays} days, and an optional device cookie lets you skip the code for {deviceDays} days.</li>
+                <li>Admin actions are recorded in an audit log (who / what / when / old and new values / IP).</li>
+                <li>No credit card data ever touches our servers — {billing} handle{isPaypalConfigured() ? '' : 's'} billing entirely.</li>
               </ul>
             </div>
 
@@ -87,7 +123,7 @@ export default function AboutPage() {
               <div className="ed-eyebrow">05</div>
               <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>How we make money — affiliate partnerships</h3>
               <p>
-                FlyCheap&apos;s free tier is genuinely free. Beyond subscriptions, we partner with a handful
+                FlyCheap&apos;s free tier is genuinely free ({freeRoutes} tracked routes, no card). Beyond subscriptions, we partner with a handful
                 of established travel booking sites — when you click a <strong>&ldquo;Book →&rdquo;</strong> button
                 and complete a booking on their site, they pay us a small commission.
               </p>
