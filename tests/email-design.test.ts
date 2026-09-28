@@ -10,6 +10,7 @@ process.env.TELEGRAM_BOT_TOKEN ||= 'test';
 const { EMAIL_TOKENS, renderEmail } = await import('@/lib/emailLayout');
 const { welcomeQuickStartEmail, signInCodeEmail, ticketReplyEmail } = await import('@/lib/emailTemplates');
 const { upgradeNudgeEmail } = await import('@/lib/billing-emails');
+const { renderSavingsReportEmail } = await import('@/lib/reportQueue');
 
 /**
  * Every email wears the site's editorial system: its tokens, its three faces,
@@ -24,6 +25,7 @@ const SAMPLES: Record<string, string> = {
   ticket: ticketReplyEmail({ ref: 'FC-1234', replyBody: 'Done.\n\nThanks.', threadUrl: 'https://my.flycheap.live/support/FC-1234' }).html,
   nudge: upgradeNudgeEmail().html,
   bare: renderEmail({ kind: 'notice', preheader: 'p', headline: 'h', body: '<p>b</p>' }),
+  report: renderSavingsReportEmail({ orgName: 'Kingsway Travel', summary: { groupId: 1, groupName: 'Wedding', periodStart: '2026-08-01', periodEnd: '2026-08-31', period: { start: '2026-08-01', end: '2026-08-31', label: 'August 2026' }, lines: [{ watchId: 1, route: 'JFK → CAI', baselineUsd: 1000, bookedUsd: 820, savedUsd: 180, savedPct: 18 }], totalSavedUsd: 180, unscored: [] } }).html,
 };
 
 const RETIRED = ['#0a2e57', '#154a86', '#b8912f', '#f6f2e9', '#e6dfce', '#d4af37', '#061a35', '#0a1426', '#faf7ef'];

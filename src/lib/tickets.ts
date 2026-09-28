@@ -37,18 +37,24 @@ export async function notifyOperatorNewTicket(t: {
     try {
       const { supportFrom } = await import('./senders');
       const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-      const html = `
-        <div style="font-family:-apple-system,Segoe UI,sans-serif;max-width:600px;margin:auto;padding:24px;color:#0f172a">
-          <h2 style="color:#0a2e57;margin:0 0 4px">New ticket ${esc(t.ref)}</h2>
-          <p style="margin:0 0 12px;color:#475569">${esc(t.subject)}</p>
-          <table style="width:100%;border-collapse:collapse;margin:0 0 12px;font-size:14px">
-            <tr><td style="padding:5px 0;color:#64748b;width:110px">From</td><td style="padding:5px 0"><strong>${esc(t.name)}</strong> &lt;${esc(t.email)}&gt;</td></tr>
-            ${t.who ? `<tr><td style="padding:5px 0;color:#64748b">Account</td><td style="padding:5px 0">${esc(t.who)}</td></tr>` : ''}
-            ${t.ip ? `<tr><td style="padding:5px 0;color:#64748b">IP</td><td style="padding:5px 0;font-family:monospace">${esc(t.ip)}</td></tr>` : ''}
-          </table>
-          <div style="background:#f8fafc;border-left:3px solid #0a2e57;padding:14px;border-radius:6px;white-space:pre-wrap">${esc(t.body)}</div>
-          <p style="margin:16px 0 0"><a href="${adminThreadUrl(t.ref)}" style="color:#0a2e57;font-weight:600">Open ${esc(t.ref)} in the admin queue →</a></p>
-        </div>`;
+      const { renderEmail, emailRows, emailButton, EMAIL_TOKENS: T } = await import('./emailLayout');
+      const html = renderEmail({
+        kind: 'support',
+        appUrl: APP_URL,
+        preheader: `New ticket ${t.ref}: ${t.subject}`,
+        headline: `New ticket ${t.ref}`,
+        body: [
+          `<p style="font-family:${T.SANS};font-size:15px;line-height:1.6;color:${T.INK};margin:0 0 14px">${esc(t.subject)}</p>`,
+          emailRows([
+            ['From', `${esc(t.name)} &lt;${esc(t.email)}&gt;`],
+            ...(t.who ? [['Account', esc(t.who)] as [string, string]] : []),
+            ...(t.ip ? [['IP', esc(t.ip)] as [string, string]] : []),
+          ]),
+          `<div style="margin:16px 0;padding:12px 16px;background:${T.SURFACE_2};border-left:2px solid ${T.INK};font-family:${T.SANS};font-size:14px;line-height:1.6;color:${T.INK};white-space:pre-wrap">${esc(t.body)}</div>`,
+          `<div style="margin:6px 0 0">${emailButton(`Open ${t.ref} in the admin queue`, adminThreadUrl(t.ref))}</div>`,
+        ].join(''),
+        footerNote: 'Internal notice — every new support ticket reaches the operator this way.',
+      });
       await new Resend(apiKey).emails.send({
         from: supportFrom('FlyCheap Support'), to, replyTo: t.email,
         subject: `[${t.ref}] ${t.subject}`, html,

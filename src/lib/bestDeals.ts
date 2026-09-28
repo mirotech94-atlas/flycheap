@@ -328,6 +328,13 @@ async function refreshOneDestination(
   }
 }
 
+/**
+ * The party the 12-month scan prices its party totals for when a caller does
+ * not say. Exported so the digest's Book links quote the same party the cache
+ * row was priced for, instead of a second typed 4+1 that could drift.
+ */
+export const DEFAULT_PARTY = { adults: 4, infants: 1 } as const;
+
 // Public API: refresh user-tracked destinations.
 export async function refreshBestDeals(opts: RefreshOpts = {}): Promise<RefreshResult[]> {
   const token = process.env.TRAVELPAYOUTS_TOKEN;
@@ -336,8 +343,8 @@ export async function refreshBestDeals(opts: RefreshOpts = {}): Promise<RefreshR
   const monthsAhead = opts.monthsAhead ?? 12;
   const minTripDays = opts.minTripDays ?? 7;
   const maxTripDays = opts.maxTripDays ?? 62;
-  const partyAdults = opts.partyAdults ?? 4;
-  const partyInfants = opts.partyInfants ?? 1;
+  const partyAdults = opts.partyAdults ?? DEFAULT_PARTY.adults;
+  const partyInfants = opts.partyInfants ?? DEFAULT_PARTY.infants;
   const reprice = opts.reprice ?? false;
 
   // Discover destinations + origins from tracked searches if caller didn't supply.

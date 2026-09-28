@@ -5,6 +5,8 @@ import { alertsFrom, ADDR } from './senders';
 import { getOrg, groupsForOrg } from './org';
 import { loadGroupSavings } from './orgQueue';
 import { renewalSummary, type SavingsReport } from './workQueue';
+import { emailFrame, emailMasthead, emailFooter, emailEyebrow, EMAIL_TOKENS as T } from './emailLayout';
+import { APP_URL } from './hosts';
 
 /**
  * Monthly savings reports: review, then send.
@@ -89,10 +91,11 @@ export function parseSummary(row: ReportSendRow): QueuedSummary {
 // The email
 // ---------------------------------------------------------------------------
 
-const INK = '#0a1426';
-const MUTE = '#5b6678';
-const RULE = 'rgba(10,20,38,.10)';
-const LINK = '#0a3a6b';
+// The client report wears the same shell as every FlyCheap email; the money
+// column is set in the fare ink, losses in red — colour carries status only.
+const INK = T.INK;
+const MUTE = T.MUTED;
+const RULE = T.LINE_CARD;
 const money = (n: number) => `$${Math.round(n).toLocaleString('en-US')}`;
 const esc = (s: string) => s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
 
@@ -120,18 +123,20 @@ export function renderSavingsReportEmail(input: {
     tripsScored: scored, tripsUnscored: s.unscored.length,
   });
 
+  const TH = `text-align:left;padding:8px 6px;border-bottom:1px solid ${T.INK};font-family:${T.MONO};font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:${T.MUTED_2}`;
+  const TD = `padding:9px 6px;border-bottom:1px solid ${RULE};font-family:${T.SANS};font-size:14px;color:${INK};vertical-align:top`;
   const rows = s.lines.map(l => `
     <tr>
-      <td style="padding:8px 6px;border-bottom:1px solid ${RULE};font-family:'JetBrains Mono',monospace;font-size:13px">${esc(l.route)}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid ${RULE};text-align:right;color:${MUTE}">${money(l.baselineUsd)}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid ${RULE};text-align:right;color:${MUTE}">${money(l.bookedUsd)}</td>
-      <td style="padding:8px 6px;border-bottom:1px solid ${RULE};text-align:right;font-weight:600;color:${l.savedUsd >= 0 ? INK : '#9a2f2f'}">
+      <td style="${TD};font-family:${T.MONO};font-size:13px">${esc(l.route)}</td>
+      <td style="${TD};text-align:right;font-family:${T.MONO};color:${MUTE}">${money(l.baselineUsd)}</td>
+      <td style="${TD};text-align:right;font-family:${T.MONO};color:${MUTE}">${money(l.bookedUsd)}</td>
+      <td style="${TD};text-align:right;font-family:${T.MONO};font-weight:500;color:${l.savedUsd >= 0 ? T.FARE_TEXT : T.RED}">
         ${l.savedUsd < 0 ? '−' : ''}${money(Math.abs(l.savedUsd))} (${l.savedPct < 0 ? '−' : ''}${Math.abs(l.savedPct).toFixed(0)}%)
       </td>
     </tr>`).join('');
 
   const unscored = s.unscored.length
-    ? `<p style="font-size:13px;line-height:1.6;color:${MUTE};margin:16px 0 0">
+    ? `<p style="font-family:${T.SANS};font-size:13px;line-height:1.6;color:${MUTE};margin:16px 0 0">
          <strong style="color:${INK}">Not counted</strong> — ${s.unscored.map(u => `${esc(u.route)} (${esc(u.reason)})`).join(' · ')}.
          These are listed rather than dropped: a total that quietly leaves out the trips it could not
          score is not a total you can rely on.
@@ -139,32 +144,32 @@ export function renderSavingsReportEmail(input: {
     : '';
 
   const coverage = rs.coveragePct != null
-    ? `<p style="font-size:13px;color:${MUTE};margin:6px 0 0">Based on ${scored} of ${total} trips${rs.coveragePct < 100 ? ` (${Math.round(rs.coveragePct)}% coverage)` : ''}.</p>`
+    ? `<p style="font-family:${T.SANS};font-size:13px;color:${MUTE};margin:6px 0 0">Based on ${scored} of ${total} trips${rs.coveragePct < 100 ? ` (${Math.round(rs.coveragePct)}% coverage)` : ''}.</p>`
     : '';
 
-  const html = `
-  <div style="font-family:Manrope,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:auto;padding:24px;color:${INK};background:#faf7ef">
-    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;font-family:'JetBrains Mono',monospace">${esc(who)} · ${esc(s.period.label)}</div>
-    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:6px 0 4px">${esc(s.groupName)}: ${s.totalSavedUsd >= 0 ? 'saved' : 'net'} ${s.totalSavedUsd < 0 ? '−' : ''}${money(Math.abs(s.totalSavedUsd))}</h1>
+  const html = emailFrame(`${s.groupName}: ${s.totalSavedUsd >= 0 ? 'saved' : 'net'} ${money(Math.abs(s.totalSavedUsd))} in ${s.period.label}`,
+    emailMasthead('Savings report')
+    + `<div style="background:${T.CARD};padding:28px 32px">
+    ${emailEyebrow(`${who} · ${s.period.label}`)}
+    <h1 style="font-family:${T.SERIF};font-weight:400;font-size:30px;line-height:1.12;letter-spacing:-.02em;color:${INK};margin:8px 0 4px">${esc(s.groupName)}: ${s.totalSavedUsd >= 0 ? 'saved' : 'net'} <span style="color:${s.totalSavedUsd >= 0 ? T.FARE_TEXT : T.RED}">${s.totalSavedUsd < 0 ? '−' : ''}${money(Math.abs(s.totalSavedUsd))}</span></h1>
     ${coverage}
-    <p style="font-size:14px;line-height:1.6;color:${MUTE};margin:14px 0 18px">
+    <p style="font-family:${T.SANS};font-size:14px;line-height:1.6;color:${MUTE};margin:14px 0 18px">
       Savings are measured against the fare on the day each trip was requested — captured once and
       never recomputed — so this is a number you can put in front of anyone.
     </p>
     ${scored ? `
-    <table style="width:100%;border-collapse:collapse;font-size:14px">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
       <thead><tr>
-        <th style="text-align:left;padding:6px;border-bottom:2px solid ${RULE};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${MUTE}">Route</th>
-        <th style="text-align:right;padding:6px;border-bottom:2px solid ${RULE};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${MUTE}">Baseline</th>
-        <th style="text-align:right;padding:6px;border-bottom:2px solid ${RULE};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${MUTE}">Paid</th>
-        <th style="text-align:right;padding:6px;border-bottom:2px solid ${RULE};font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:${MUTE}">Saved</th>
+        <th style="${TH}">Route</th>
+        <th style="${TH};text-align:right">Baseline</th>
+        <th style="${TH};text-align:right">Paid</th>
+        <th style="${TH};text-align:right">Saved</th>
       </tr></thead>
       <tbody>${rows}</tbody>
-    </table>` : `<p style="font-size:14px;color:${MUTE}">No trips were scored this period.</p>`}
+    </table>` : `<p style="font-family:${T.SANS};font-size:14px;color:${MUTE}">No trips were scored this period.</p>`}
     ${unscored}
-    <hr style="border:none;border-top:1px solid ${RULE};margin:24px 0 14px">
-    <p style="font-size:12px;color:${MUTE};line-height:1.6;margin:0">Prepared by ${esc(who)} with FlyCheap. Reply to this email with any question about a line.</p>
-  </div>`;
+  </div>`
+    + emailFooter({ appUrl: APP_URL, note: `Prepared by ${esc(who)} with FlyCheap. Reply to this email with any question about a line.` }));
 
   const text = [
     subject, '',

@@ -1,11 +1,12 @@
 import 'server-only';
 import { queries, type SearchRow, type FareRow } from './db';
 import { sendFareAlert } from './email';
-import { getCachedBestDeals } from './bestDeals';
+import { getCachedBestDeals, DEFAULT_PARTY } from './bestDeals';
 import { Resend } from 'resend';
 import { fmtUSD, fmtDate, fmtDateTime, fmtRelative, bookingLink } from './utils';
 import { effectiveTarget } from './targets';
 import { APP_URL } from './hosts';
+import { emailFrame, emailMasthead, emailFooter, emailButton, emailEyebrow, EMAIL_TOKENS as T } from './emailLayout';
 
 const QUOTA_PER_MONTH = 9999; // Travelpayouts is essentially unmetered for affiliates
 
@@ -32,6 +33,31 @@ function buildRows(): DigestRow[] {
       return { search: s, fare, recentLow };
     });
 }
+
+/**
+ * The owner digests wear the same shell as every customer email (editorial
+ * tokens, ruled tables, ink buttons). These helpers keep the three builders'
+ * tables identical rather than each carrying its own inline palette.
+ */
+const TH = `text-align:left;padding:8px 6px;border-bottom:1px solid ${T.INK};font-family:${T.MONO};font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;font-weight:500;color:${T.MUTED_2}`;
+const TD = `padding:8px 6px;border-bottom:1px solid ${T.LINE_CARD};font-family:${T.SANS};font-size:13px;color:${T.INK};vertical-align:top`;
+const TDM = `${TD};color:${T.MUTED}`;
+const NUM = `font-family:${T.MONO}`;
+const H2 = `font-family:${T.MONO};font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:${T.MUTED_2};margin:22px 0 8px`;
+const EMPTY = `padding:16px;text-align:center;color:${T.MUTED};font-family:${T.SANS};font-size:13px`;
+const pill = (ok: boolean, text: string) => `<span style="${NUM};font-size:12px;font-weight:500;color:${ok ? T.GREEN : T.INK_SOFT}">${text}</span>`;
+const digestShell = (eyebrow: string, headline: string, sub: string, inner: string, note: string) => emailFrame(
+  sub,
+  emailMasthead(eyebrow)
+  + `<div style="background:${T.CARD};padding:26px 32px 28px">`
+  + emailEyebrow(new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }))
+  + `<h1 style="font-family:${T.SERIF};font-size:28px;line-height:1.15;font-weight:400;letter-spacing:-.02em;color:${T.INK};margin:8px 0 6px">${headline}</h1>`
+  + `<div style="font-family:${T.SANS};font-size:14px;color:${T.MUTED};margin:0 0 6px">${sub}</div>`
+  + inner
+  + `<div style="margin:26px 0 0">${emailButton('Open the dashboard', APP_URL)}</div>`
+  + `</div>`
+  + emailFooter({ appUrl: APP_URL, note }),
+);
 
 /** Minimal escape for text we put into the digest's HTML. */
 function escapeHtml(v: string): string {
@@ -60,7 +86,7 @@ export function buildDigestHtml(
       labels: originLabels,
       datasets: [{
         data: originLabels.map(o => Math.round(byOrigin[o])),
-        backgroundColor: ['#0a2e57', '#b8912f', '#0f766e', '#9333ea'],
+        backgroundColor: [T.ACCENT, T.AMBER, T.INK, T.MUTED],
       }],
     },
     options: { plugins: { title: { display: true, text: 'Party total by origin (USD)' } } },
@@ -76,7 +102,7 @@ export function buildDigestHtml(
       labels: [`Below threshold (${under})`, `Above (${over})`, `No data (${noData})`],
       datasets: [{
         data: [under, over, noData],
-        backgroundColor: ['#16a34a', '#dc2626', '#94a3b8'],
+        backgroundColor: [T.GREEN, T.RED, T.MUTED],
       }],
     },
     options: { plugins: { title: { display: true, text: `Searches vs $${threshold}/adult threshold` } } },
@@ -95,7 +121,7 @@ export function buildDigestHtml(
   // Headline: prefer best-deal-across-year if it's below threshold, else current cheapest.
   const headline = opts?.headline ?? (() => {
     if (bestDeal && bestDeal.per_adult_usd < threshold) {
-      return `Deal alert: ${fmtUSD(bestDeal.per_adult_usd)}/adult ${bestDeal.origin} → CAI ${fmtDate(bestDeal.outbound_date)} → ${fmtDate(bestDeal.return_date)}`;
+      return `Deal alert: ${fmtUSD(bestDeal.per_adult_usd)}/adult ${bestDeal.origin} → ${bestDeal.destination} ${fmtDate(bestDeal.outbound_date)} → ${fmtDate(bestDeal.return_date)}`;
     }
     if (bestDeal) {
       return `Cheapest in next 12 months: ${fmtUSD(bestDeal.per_adult_usd)}/adult (${bestDeal.origin}, ${fmtDate(bestDeal.outbound_date)})`;
@@ -128,139 +154,82 @@ export function buildDigestHtml(
   const fareTableRows = visibleRows.map(r => {
     if (!r.fare) {
       return `<tr>
-        <td><b>${r.search.origin}</b> → ${r.search.destination}</td>
-        <td>${fmtDate(r.search.depart_date)}</td>
-        <td>${fmtDate(r.search.return_date)}</td>
-        <td colspan="3" style="color:#94a3b8">no data yet</td>
+        <td style="${TD}"><b>${r.search.origin}</b> → ${r.search.destination}</td>
+        <td style="${TDM}">${fmtDate(r.search.depart_date)}</td>
+        <td style="${TDM}">${fmtDate(r.search.return_date)}</td>
+        <td colspan="3" style="${TDM}">no data yet</td>
       </tr>`;
     }
     const delta = r.fare.price_per_adult_usd - effectiveTarget(r.search, threshold);
-    const badge = delta < 0
-      ? `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">below ✓</span>`
-      : `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">+${fmtUSD(delta)}</span>`;
+    const badge = delta < 0 ? pill(true, 'below ✓') : pill(false, `+${fmtUSD(delta)}`);
     return `<tr>
-      <td><b>${r.search.origin}</b> → ${r.search.destination}<br><span style="color:#94a3b8;font-size:11px">${r.fare.outbound_flight_no ?? ''} / ${r.fare.return_flight_no ?? ''}</span></td>
-      <td>${fmtDate(r.search.depart_date)}</td>
-      <td>${fmtDate(r.search.return_date)}</td>
-      <td><b>${fmtUSD(r.fare.price_per_adult_usd)}</b></td>
-      <td>${fmtUSD(r.fare.total_price_usd)}</td>
-      <td>${badge}</td>
+      <td style="${TD}"><b>${r.search.origin}</b> → ${r.search.destination}<br><span style="${NUM};color:${T.MUTED};font-size:11px">${r.fare.outbound_flight_no ?? ''} / ${r.fare.return_flight_no ?? ''}</span></td>
+      <td style="${TDM}">${fmtDate(r.search.depart_date)}</td>
+      <td style="${TDM}">${fmtDate(r.search.return_date)}</td>
+      <td style="${TD};${NUM};font-weight:500;color:${T.FARE_TEXT}">${fmtUSD(r.fare.price_per_adult_usd)}</td>
+      <td style="${TD};${NUM}">${fmtUSD(r.fare.total_price_usd)}</td>
+      <td style="${TD}">${badge}</td>
     </tr>`;
   }).join('');
 
   const alertRows = recentAlerts.length
     ? recentAlerts.map(a => `<tr>
-        <td style="color:#64748b;font-size:12px">${fmtDateTime(a.sent_at)}</td>
-        <td><b>${a.origin}</b> → ${a.destination}</td>
-        <td>${a.depart_date}</td>
-        <td><b>${fmtUSD(a.price_per_adult_usd)}</b></td>
+        <td style="${TDM};${NUM};font-size:12px">${fmtDateTime(a.sent_at)}</td>
+        <td style="${TD}"><b>${a.origin}</b> → ${a.destination}</td>
+        <td style="${TDM}">${a.depart_date}</td>
+        <td style="${TD};${NUM};font-weight:500">${fmtUSD(a.price_per_adult_usd)}</td>
       </tr>`).join('')
-    : `<tr><td colspan="4" style="color:#94a3b8;text-align:center;padding:16px">No alerts sent yet.</td></tr>`;
+    : `<tr><td colspan="4" style="${EMPTY}">No alerts sent yet.</td></tr>`;
 
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc">
-      <div style="background:#0a2e57;color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
-        <div style="font-size:13px;opacity:0.8">${today}</div>
-        <h1 style="margin:6px 0 0;font-size:22px">FlyCheap — Daily Digest</h1>
-        <div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div>
-      </div>
+  const dealRows = bestDealsCache.deals.map(d => {
+    const under = d.per_adult_usd < threshold;
+    // The same party the cache row was priced for — never a second typed 4+1.
+    const bookUrl = bookingLink({ origin: d.origin, destination: d.destination, departDate: d.outbound_date, returnDate: d.return_date, adults: DEFAULT_PARTY.adults, infants: DEFAULT_PARTY.infants });
+    return `<tr>
+      <td style="${TD}"><b>${d.origin}</b> → ${d.destination}</td>
+      <td style="${TDM}">${fmtDate(d.outbound_date)}</td>
+      <td style="${TDM}">${fmtDate(d.return_date)}</td>
+      <td style="${TDM};${NUM}">${d.trip_length_days}d</td>
+      <td style="${TD};${NUM};font-weight:500;color:${T.FARE_TEXT}">${fmtUSD(d.per_adult_usd)}</td>
+      <td style="${TD};${NUM}">${fmtUSD(d.party_total_usd)}</td>
+      <td style="${TD}">${under ? pill(true, 'below ✓') : pill(false, `+${fmtUSD(d.per_adult_usd - threshold)}`)}</td>
+      <td style="${TD};text-align:right"><a href="${bookUrl}" style="color:${T.ACCENT};font-weight:600;text-decoration:underline;font-size:12px">Book</a></td>
+    </tr>`;
+  }).join('');
 
-      <div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
+  const inner = `
+    ${deferredRows ? `<div style="${H2}">Since your last digest</div><ul style="margin:0;padding-left:18px;font-family:${T.SANS};font-size:14px;line-height:1.7;color:${T.INK}">${deferredRows}</ul>` : ''}
 
-        ${deferredRows ? `
-        <h2 style="font-size:15px;color:#0a2e57;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Since your last digest</h2>
-        <ul style="margin:0 0 24px;padding-left:18px;font-size:14px;line-height:1.7;color:#0f172a">${deferredRows}</ul>` : ''}
+    ${bestDealsCache.deals.length > 0 ? `
+    <div style="${H2}">Best deals across the next 12 months</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Route</th><th style="${TH}">Outbound</th><th style="${TH}">Return</th><th style="${TH}">Trip</th><th style="${TH}">Per adult</th><th style="${TH}">Party</th><th style="${TH}">vs ${fmtUSD(threshold)}</th><th style="${TH}"></th></tr></thead>
+      <tbody>${dealRows}</tbody>
+    </table>` : ''}
 
-        ${bestDealsCache.deals.length > 0 ? `
-        <h2 style="font-size:15px;color:#15803d;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">🎯 Best deals across next 12 months</h2>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-          <thead>
-            <tr style="background:#f0fdf4">
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Origin</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Outbound</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Return</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Trip</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Per adult</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Party</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">vs $${threshold}</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${bestDealsCache.deals.map(d => {
-              const under = d.per_adult_usd < threshold;
-              const badge = under
-                ? `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">below ✓</span>`
-                : `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">+${fmtUSD(d.per_adult_usd - threshold)}</span>`;
-              const bookUrl = bookingLink({ origin: d.origin, destination: 'CAI', departDate: d.outbound_date, returnDate: d.return_date, adults: 4, infants: 1 });
-              return `<tr${under ? ' style="background:#f0fdf4"' : ''}>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${d.origin}</b> → CAI</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(d.outbound_date)}</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(d.return_date)}</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b">${d.trip_length_days}d</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(d.per_adult_usd)}</b></td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtUSD(d.party_total_usd)}</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9">${badge}</td>
-                <td style="padding:8px;border-bottom:1px solid #f1f5f9"><a href="${bookUrl}" style="background:#0a2e57;color:#fff;padding:4px 10px;border-radius:6px;text-decoration:none;font-size:11px;font-weight:600">Book →</a></td>
-              </tr>`;
-            }).join('')}
-          </tbody>
-        </table>
-        ` : ''}
+    <div style="${H2}">Tracked searches — current cheapest</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Route</th><th style="${TH}">Depart</th><th style="${TH}">Return</th><th style="${TH}">Per adult</th><th style="${TH}">Party total</th><th style="${TH}">Target</th></tr></thead>
+      <tbody>${fareTableRows || `<tr><td colspan="6" style="${EMPTY}">No active searches.</td></tr>`}</tbody>
+    </table>
 
-        <h2 style="font-size:15px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Tracked searches — current cheapest</h2>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-          <thead>
-            <tr style="background:#f1f5f9">
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Depart</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Return</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Per adult</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Party total</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Threshold</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${fareTableRows || `<tr><td colspan="6" style="text-align:center;padding:16px;color:#94a3b8">No active searches.</td></tr>`}
-          </tbody>
-        </table>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:18px"><tr>
+      <td width="50%" style="padding-right:6px"><img src="${originPie}" alt="Party total by origin" style="max-width:100%;border:1px solid ${T.LINE};display:block"/></td>
+      <td width="50%" style="padding-left:6px"><img src="${thresholdPie}" alt="Threshold breakdown" style="max-width:100%;border:1px solid ${T.LINE};display:block"/></td>
+    </tr></table>
 
-        <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:24px">
-          <div style="flex:1;min-width:280px;text-align:center">
-            <img src="${originPie}" alt="Party total by origin" style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px"/>
-          </div>
-          <div style="flex:1;min-width:280px;text-align:center">
-            <img src="${thresholdPie}" alt="Threshold breakdown" style="max-width:100%;border:1px solid #e2e8f0;border-radius:8px"/>
-          </div>
-        </div>
+    <div style="${H2}">Recent alerts (last 5)</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Sent</th><th style="${TH}">Route</th><th style="${TH}">Depart</th><th style="${TH}">Per adult</th></tr></thead>
+      <tbody>${alertRows}</tbody>
+    </table>
 
-        <h2 style="font-size:15px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Recent alerts (last 5)</h2>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-          <thead>
-            <tr style="background:#f1f5f9">
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Sent</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Depart</th>
-              <th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Per adult</th>
-            </tr>
-          </thead>
-          <tbody>${alertRows}</tbody>
-        </table>
+    <div style="margin-top:18px;padding:12px 14px;background:${T.SURFACE_2};font-family:${T.SANS};font-size:12px;color:${T.INK_SOFT}">
+      <b>This month:</b> ${apiCallsThisMonth} API calls used · alert threshold ${fmtUSD(threshold)}/adult · ${rows.length} active search${rows.length === 1 ? '' : 'es'}.
+    </div>`;
 
-        <div style="background:#f1f5f9;padding:14px;border-radius:8px;font-size:12px;color:#475569">
-          <b>Stats this month:</b> ${apiCallsThisMonth} API calls used. Alert threshold: ${fmtUSD(threshold)}/adult. Active searches: ${rows.length}.
-        </div>
-
-        <p style="margin-top:24px;text-align:center">
-          <a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open full dashboard</a>
-        </p>
-
-        <p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">
-          Sent automatically by your EgyptAir tracker bot at ${fmtDateTime(new Date().toISOString())}.
-          Reply to this email or open the dashboard to manage searches.
-        </p>
-      </div>
-    </div>
-  `;
+  const html = digestShell('Owner digest', 'Daily digest', headline, inner,
+    `Sent automatically by FlyCheap at ${fmtDateTime(new Date().toISOString())}. Reply to this email or open the dashboard to manage searches.`);
 
   return { html, subject, summary, deferredIds };
 }
@@ -273,6 +242,7 @@ export function buildDigestHtml(
 
 type Mover = {
   origin: string;
+  destination: string;
   outbound_date: string;
   return_date: string;
   per_adult_now: number;
@@ -302,6 +272,7 @@ function buildMovers(): { fallers: Mover[]; risers: Mover[] } {
     if (prev.price_per_adult_usd === now) continue;
     movers.push({
       origin: s.origin,
+      destination: s.destination,
       outbound_date: s.depart_date,
       return_date: s.return_date,
       per_adult_now: now,
@@ -316,15 +287,15 @@ function buildMovers(): { fallers: Mover[]; risers: Mover[] } {
 }
 
 function moverRow(m: Mover, isFall: boolean): string {
-  const color = isFall ? '#15803d' : '#b91c1c';
+  const color = isFall ? T.GREEN : T.RED;
   const sign = isFall ? '−' : '+';
   return `<tr>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${m.origin}</b> → CAI</td>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(m.outbound_date)}</td>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(m.return_date)}</td>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b">${fmtUSD(m.per_adult_prev)}</td>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(m.per_adult_now)}</b></td>
-    <td style="padding:8px;border-bottom:1px solid #f1f5f9;color:${color};font-weight:600">${sign}${fmtUSD(Math.abs(m.delta))} (${sign}${Math.abs(m.pct).toFixed(0)}%)</td>
+    <td style="${TD}"><b>${m.origin}</b> → ${m.destination}</td>
+    <td style="${TDM}">${fmtDate(m.outbound_date)}</td>
+    <td style="${TDM}">${fmtDate(m.return_date)}</td>
+    <td style="${TDM};${NUM}">${fmtUSD(m.per_adult_prev)}</td>
+    <td style="${TD};${NUM};font-weight:500">${fmtUSD(m.per_adult_now)}</td>
+    <td style="${TD};${NUM};color:${color};font-weight:500">${sign}${fmtUSD(Math.abs(m.delta))} (${sign}${Math.abs(m.pct).toFixed(0)}%)</td>
   </tr>`;
 }
 
@@ -333,55 +304,24 @@ export function buildAnomalyDigestHtml(): { html: string; subject: string; summa
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
   const topDrop = fallers[0];
   const headline = topDrop
-    ? `📉 Biggest drop: ${topDrop.origin}→CAI ${fmtDate(topDrop.outbound_date)} now ${fmtUSD(topDrop.per_adult_now)} (was ${fmtUSD(topDrop.per_adult_prev)})`
-    : (risers[0] ? `Prices mostly rising — top riser ${risers[0].origin}→CAI +${fmtUSD(risers[0].delta)}` : 'No significant fare movement this week');
+    ? `📉 Biggest drop: ${topDrop.origin}→${topDrop.destination} ${fmtDate(topDrop.outbound_date)} now ${fmtUSD(topDrop.per_adult_now)} (was ${fmtUSD(topDrop.per_adult_prev)})`
+    : (risers[0] ? `Prices mostly rising — top riser ${risers[0].origin}→${risers[0].destination} +${fmtUSD(risers[0].delta)}` : 'No significant fare movement this week');
   const subject = `📈 FlyCheap weekly movers — ${headline}`;
   const summary = `${fallers.length} faller${fallers.length === 1 ? '' : 's'}, ${risers.length} riser${risers.length === 1 ? '' : 's'}. ${headline}.`;
 
-  const html = `
-    <div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc">
-      <div style="background:linear-gradient(135deg,#0a2e57,#154a86);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0">
-        <div style="font-size:13px;opacity:0.8">${today}</div>
-        <h1 style="margin:6px 0 0;font-size:22px">Weekly fare-movement summary</h1>
-        <div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div>
-      </div>
-      <div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none">
-
-        <h2 style="font-size:14px;color:#15803d;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">📉 Biggest fallers (book candidates)</h2>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-          <thead><tr style="background:#f0fdf4">
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Route</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Depart</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Return</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">7d ago</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Now</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #bbf7d0">Δ</th>
-          </tr></thead>
-          <tbody>${fallers.length ? fallers.map(m => moverRow(m, true)).join('') : `<tr><td colspan="6" style="padding:16px;text-align:center;color:#94a3b8">No significant drops this week.</td></tr>`}</tbody>
-        </table>
-
-        <h2 style="font-size:14px;color:#b91c1c;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">📈 Biggest risers (act fast / wait)</h2>
-        <table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px">
-          <thead><tr style="background:#fef2f2">
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">Route</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">Depart</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">Return</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">7d ago</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">Now</th>
-            <th style="text-align:left;padding:8px;border-bottom:1px solid #fecaca">Δ</th>
-          </tr></thead>
-          <tbody>${risers.length ? risers.map(m => moverRow(m, false)).join('') : `<tr><td colspan="6" style="padding:16px;text-align:center;color:#94a3b8">No significant rises this week.</td></tr>`}</tbody>
-        </table>
-
-        <p style="margin-top:24px;text-align:center">
-          <a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a>
-        </p>
-        <p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">
-          Weekly summary · sent Sundays 8pm ET. Comparing today's cheapest vs the snapshot from ~7 days ago for each tracked search.
-        </p>
-      </div>
-    </div>
-  `;
+  const moverTable = (rowsHtml: string, empty: string) => `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Route</th><th style="${TH}">Depart</th><th style="${TH}">Return</th><th style="${TH}">7d ago</th><th style="${TH}">Now</th><th style="${TH}">Δ</th></tr></thead>
+      <tbody>${rowsHtml || `<tr><td colspan="6" style="${EMPTY}">${empty}</td></tr>`}</tbody>
+    </table>`;
+  const inner = `
+    <div style="${H2}">Biggest fallers · book candidates</div>
+    ${moverTable(fallers.map(m => moverRow(m, true)).join(''), 'No significant drops this week.')}
+    <div style="${H2}">Biggest risers · act fast or wait</div>
+    ${moverTable(risers.map(m => moverRow(m, false)).join(''), 'No significant rises this week.')}`;
+  const html = digestShell('Owner digest', 'Weekly fare movement', headline, inner,
+    `Weekly summary · sent Sundays 8pm ET. Comparing today's cheapest with the snapshot from about 7 days ago for each tracked search.`);
+  void today;
   return { html, subject, summary };
 }
 
@@ -468,32 +408,50 @@ export function buildRetrospectiveHtml(win: RetrospectiveWindow): { html: string
   const summary = `${withData.length} routes with data, ${alertsInWindow.length} alerts fired. ${headline}.`;
 
   const trendBadge = (first: number | null, last: number | null) => {
-    if (first === null || last === null) return '<span style="color:#94a3b8">—</span>';
+    if (first === null || last === null) return '<span style="color:${T.MUTED}">—</span>';
     const delta = last - first;
-    if (Math.abs(delta) < 1) return '<span style="color:#64748b">flat</span>';
+    if (Math.abs(delta) < 1) return '<span style="color:${T.MUTED}">flat</span>';
     const pct = (delta / first) * 100;
-    const color = delta < 0 ? '#15803d' : '#b91c1c';
+    const color = delta < 0 ? T.GREEN : T.RED;
     const sign = delta < 0 ? '−' : '+';
-    return `<span style="color:${color};font-weight:600">${sign}${fmtUSD(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(0)}%)</span>`;
+    return `<span style="${NUM};color:${color};font-weight:500">${sign}${fmtUSD(Math.abs(delta))} (${sign}${Math.abs(pct).toFixed(0)}%)</span>`;
   };
 
   const routeRows = stats.length
     ? stats.map(r => {
         if (r.min === null) {
-          return `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${r.search.origin}</b> → ${r.search.destination}</td><td colspan="4" style="padding:8px;border-bottom:1px solid #f1f5f9;color:#94a3b8">no snapshots in window</td></tr>`;
+          return `<tr><td style="${TD}"><b>${r.search.origin}</b> → ${r.search.destination}</td><td colspan="4" style="${TDM}">no snapshots in window</td></tr>`;
         }
-        const underBadge = (r.min as number) < threshold
-          ? `<span style="background:#dcfce7;color:#15803d;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">hit ✓</span>`
-          : `<span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:9999px;font-size:11px;font-weight:600">above</span>`;
-        return `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${r.search.origin}</b> → ${r.search.destination}<br><span style="color:#94a3b8;font-size:11px">${r.count} snapshots</span></td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(r.min as number)}</b> ${underBadge}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtUSD(r.avg as number)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b">${fmtUSD(r.max as number)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${trendBadge(r.firstSeen, r.lastSeen)}</td></tr>`;
+        const underBadge = (r.min as number) < threshold ? pill(true, 'hit ✓') : pill(false, 'above');
+        return `<tr><td style="${TD}"><b>${r.search.origin}</b> → ${r.search.destination}<br><span style="${NUM};color:${T.MUTED};font-size:11px">${r.count} snapshots</span></td><td style="${TD};${NUM};font-weight:500;color:${T.FARE_TEXT}">${fmtUSD(r.min as number)} ${underBadge}</td><td style="${TDM}">${fmtUSD(r.avg as number)}</td><td style="${TDM};${NUM}">${fmtUSD(r.max as number)}</td><td style="${TDM}">${trendBadge(r.firstSeen, r.lastSeen)}</td></tr>`;
       }).join('')
-    : `<tr><td colspan="5" style="padding:16px;text-align:center;color:#94a3b8">No active searches.</td></tr>`;
+    : `<tr><td colspan="5" style="${EMPTY}">No active searches.</td></tr>`;
 
   const alertRows = alertsInWindow.length
-    ? alertsInWindow.slice(0, 20).map(a => `<tr><td style="padding:8px;border-bottom:1px solid #f1f5f9;color:#64748b;font-size:12px">${fmtDateTime(a.sent_at)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${a.origin}</b> → ${a.destination}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9">${fmtDate(a.depart_date)}</td><td style="padding:8px;border-bottom:1px solid #f1f5f9"><b>${fmtUSD(a.price_per_adult_usd)}</b></td></tr>`).join('')
-    : `<tr><td colspan="4" style="padding:16px;text-align:center;color:#94a3b8">No alerts fired in window.</td></tr>`;
+    ? alertsInWindow.slice(0, 20).map(a => `<tr><td style="${TDM};${NUM};font-size:12px">${fmtDateTime(a.sent_at)}</td><td style="${TDM}"><b>${a.origin}</b> → ${a.destination}</td><td style="${TDM}">${fmtDate(a.depart_date)}</td><td style="${TDM}"><b>${fmtUSD(a.price_per_adult_usd)}</b></td></tr>`).join('')
+    : `<tr><td colspan="4" style="${EMPTY}">No alerts fired in window.</td></tr>`;
 
-  const html = `<div style="font-family:-apple-system,BlinkMacSystemFont,Segoe UI,sans-serif;max-width:680px;margin:auto;padding:24px;color:#0f172a;background:#f8fafc"><div style="background:linear-gradient(135deg,#0a2e57,#154a86);color:#fff;padding:20px 24px;border-radius:12px 12px 0 0"><div style="font-size:13px;opacity:0.8">${today}</div><h1 style="margin:6px 0 0;font-size:22px">FlyCheap retrospective — ${label}</h1><div style="margin-top:8px;opacity:0.95;font-size:14px">${headline}</div></div><div style="background:#fff;padding:24px;border-radius:0 0 12px 12px;border:1px solid #e2e8f0;border-top:none"><div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:24px"><div style="flex:1;min-width:140px;background:#f1f5f9;padding:14px;border-radius:8px"><div style="font-size:11px;color:#64748b;text-transform:uppercase;letter-spacing:0.5px">Routes tracked</div><div style="font-size:22px;font-weight:700;color:#0a2e57">${stats.length}</div></div><div style="flex:1;min-width:140px;background:#f0fdf4;padding:14px;border-radius:8px"><div style="font-size:11px;color:#15803d;text-transform:uppercase;letter-spacing:0.5px">Best per-adult</div><div style="font-size:22px;font-weight:700;color:#15803d">${overallMin !== null ? fmtUSD(overallMin) : '—'}</div></div><div style="flex:1;min-width:140px;background:#fef3c7;padding:14px;border-radius:8px"><div style="font-size:11px;color:#92400e;text-transform:uppercase;letter-spacing:0.5px">Alerts fired</div><div style="font-size:22px;font-weight:700;color:#92400e">${alertsInWindow.length}</div></div></div><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Per-route summary</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Min</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Avg</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Max</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Window trend</th></tr></thead><tbody>${routeRows}</tbody></table><h2 style="font-size:14px;color:#475569;margin:0 0 12px;text-transform:uppercase;letter-spacing:0.5px">Alerts fired in window</h2><table style="width:100%;border-collapse:collapse;font-size:13px;margin-bottom:24px"><thead><tr style="background:#f1f5f9"><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Sent</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Route</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Depart</th><th style="text-align:left;padding:8px;border-bottom:1px solid #e2e8f0">Per adult</th></tr></thead><tbody>${alertRows}</tbody></table><p style="margin-top:24px;text-align:center"><a href="${APP_URL}" style="display:inline-block;background:#0a2e57;color:#fff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:600">Open dashboard</a></p><p style="color:#94a3b8;font-size:11px;text-align:center;margin-top:24px">${label} retrospective. Threshold: ${fmtUSD(threshold)}/adult. Stats computed across every snapshot polled in the window.</p></div></div>`;
+  const stat = (label: string, value: string, color = T.INK) =>
+    `<td width="33%" style="padding:12px 14px;border-top:1px solid ${T.LINE};border-bottom:1px solid ${T.LINE}">${emailEyebrow(label)}<div style="font-family:${T.SERIF};font-size:28px;letter-spacing:-.02em;color:${color};margin-top:4px">${value}</div></td>`;
+  const inner = `
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-top:14px"><tr>
+      ${stat('Routes tracked', String(stats.length))}
+      ${stat('Best per adult', overallMin !== null ? fmtUSD(overallMin) : '—', T.FARE_TEXT)}
+      ${stat('Alerts fired', String(alertsInWindow.length))}
+    </tr></table>
+    <div style="${H2}">Per-route summary</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Route</th><th style="${TH}">Min</th><th style="${TH}">Avg</th><th style="${TH}">Max</th><th style="${TH}">Window trend</th></tr></thead>
+      <tbody>${routeRows}</tbody>
+    </table>
+    <div style="${H2}">Alerts fired in window</div>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
+      <thead><tr><th style="${TH}">Sent</th><th style="${TH}">Route</th><th style="${TH}">Depart</th><th style="${TH}">Per adult</th></tr></thead>
+      <tbody>${alertRows}</tbody>
+    </table>`;
+  const html = digestShell('Owner digest', `Retrospective — ${label}`, headline, inner,
+    `${label} retrospective. Threshold ${fmtUSD(threshold)}/adult. Stats computed across every snapshot polled in the window.`);
+  void today;
   return { html, subject, summary };
 }
 
