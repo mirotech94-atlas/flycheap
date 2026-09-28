@@ -192,6 +192,8 @@ const ALLOWED: Record<string, string> = {
   'lib/providers/travelpayouts.ts':   'provider DATA api endpoint, not an outbound partner link',
   'lib/providers/kiwi.ts':            'provider DATA api endpoint, not an outbound partner link',
   'app/about/page.tsx':               'affiliate disclosure prose',
+  'lib/publicDisclosures.ts':
+    'Disclosure copy for /privacy, /terms and /about: names each affiliate partner and links its public programme page, gated on the env its link builder reads. No booking deeplink, no marker, no user data.',
   'app/privacy/page.tsx':             'affiliate disclosure prose',
   'app/page.tsx':                     'marketing prose',
   'app/explore/page.tsx':             'renders explore deeplink output',

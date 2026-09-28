@@ -2,6 +2,12 @@ import Link from 'next/link';
 import type { Metadata } from 'next';
 import { APP_VERSION_SHORT } from '@/lib/version';
 import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
+import { PRICES } from '@/lib/prices';
+import { paymentProcessors, listOf } from '@/lib/publicDisclosures';
+
+// Prices and processors are read at request time so the terms can never
+// quote a price the checkout does not charge, or a processor that is not wired.
+export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
   title: 'Terms of Service — FlyCheap',
@@ -10,7 +16,9 @@ export const metadata: Metadata = {
 
 const EFFECTIVE = 'September 6, 2026';
 
-const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
+type Derived = { processors: string; proMo: number; proYr: number; entMo: number; entYr: number };
+
+const sections = (d: Derived): Array<{ id: string; h: string; body: React.ReactNode }> => [
   {
     id: 'service', h: '1 · The service',
     body: <>FlyCheap (&ldquo;we&rdquo;) is operated by <strong>Myron Mekhael</strong>, sole proprietor, New York, USA. FlyCheap is a fare-monitoring and alerting service. We poll third-party flight-data providers on a schedule, store the prices we see, and notify you when a fare meets rules you set. <strong>We are not a travel agency and do not sell tickets.</strong> Every booking is completed on the airline&rsquo;s or online travel agency&rsquo;s own website, under their terms and at their price.</>,
@@ -25,15 +33,15 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
   },
   {
     id: 'plans', h: '4 · Plans, billing and the free trial',
-    body: <>Every new account starts with a <strong>3-month free trial of the full product</strong> — all Pro and Enterprise features — governed by the <Link href="/trial-terms">Trial Terms</Link>: no card is collected and you are never charged. Near the end of the trial you can contact us by email or phone to continue; if you don&rsquo;t, your account continues automatically on the <strong>Free</strong> plan (free indefinitely). Pro ($9 USD/month) and Enterprise ($39 USD/month) are plain monthly subscriptions, billed in advance through Stripe or PayPal from the moment you subscribe; card details never touch our servers. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
+    body: <>Every new account starts with a <strong>3-month free trial of the full product</strong> — all Pro and Enterprise features — governed by the <Link href="/trial-terms">Trial Terms</Link>: no card is collected and you are never charged. Near the end of the trial you can contact us by email to continue; if you don&rsquo;t, your account continues automatically on the <strong>Free</strong> plan (free indefinitely). Pro (${d.proMo} USD/month or ${d.proYr} USD/year) and Enterprise (${d.entMo} USD/month or ${d.entYr} USD/year) are plain subscriptions, billed in advance through {d.processors} from the moment you subscribe; card details never touch our servers. Prices may change with at least 30 days&rsquo; notice by email; changes never apply mid-cycle.</>,
   },
   {
     id: 'refunds', h: '5 · Cancellation and refunds',
-    body: <>Cancel at any time from <em>Settings → Billing → Manage subscription</em> — one click, no retention calls. Your paid features stay active until the end of the period you already paid for; then your account moves to Free. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved. Monthly charges already billed are non-refundable, which is why cancellation is self-serve. If you believe you were billed in error, email <a href="mailto:sales@flycheap.live">sales@flycheap.live</a> within 7 days of the charge and we will make it right.</>,
+    body: <>Cancel at any time with <em>Downgrade to Free now</em> on the <Link href="/pricing">Pricing page</Link> — one click, no retention calls. Cancellation takes effect immediately: your account moves to Free, routes above the Free limit are paused, and paid-only alert channels stop. <strong>Nothing is deleted</strong>: routes, fare history, and settings are preserved, and you can re-subscribe at any time. Charges already billed are non-refundable. If you believe you were billed in error, or cancelled early in a period by mistake, email <a href="mailto:sales@flycheap.live">sales@flycheap.live</a> within 7 days of the charge and we will make it right.</>,
   },
   {
     id: 'failed-payment', h: '6 · Failed payments',
-    body: <>If a renewal payment fails we email you and retry over the following days. If payment still cannot be collected, the subscription is canceled and your account moves to Free — again with no data loss. You can update your card at any time in the billing portal.</>,
+    body: <>If a renewal payment fails we email you, and your payment provider retries over the following days. If payment still cannot be collected, the subscription is canceled and your account moves to Free — again with no data loss. You can update your payment method with the provider at any time.</>,
   },
   {
     id: 'affiliate', h: '7 · Affiliate disclosure',
@@ -41,11 +49,11 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
   },
   {
     id: 'acceptable-use', h: '8 · Acceptable use',
-    body: <>Don&rsquo;t use FlyCheap to build a competing fare database, resell alerts, or hammer our providers. The REST API (Enterprise) is subject to documented rate limits. We may add reasonable soft caps to any plan to keep the service healthy and will tell you if a cap affects you.</>,
+    body: <>Don&rsquo;t use FlyCheap to build a competing fare database, resell alerts, or hammer our providers. Automated access, including the API our mobile app uses, is rate-limited. We may add reasonable soft caps to any plan to keep the service healthy and will tell you if a cap affects you.</>,
   },
   {
     id: 'privacy', h: '9 · Privacy',
-    body: <>Our <Link href="/privacy">Privacy Policy</Link> explains what we store and why. In short: your email, your routes, the fares we polled for them, and your alert preferences. We don&rsquo;t sell personal data and we don&rsquo;t run third-party ad trackers. You can delete your account and all of its data from Settings → Danger Zone.</>,
+    body: <>Our <Link href="/privacy">Privacy Policy</Link> explains what we store and why. In short: your email, your routes, the fares we polled for them, and your alert preferences. We don&rsquo;t sell personal data and we don&rsquo;t run third-party ad trackers. You can delete your account from Settings → Danger zone; the Privacy Policy lists the few records that can remain afterward and how to have them erased.</>,
   },
   {
     id: 'liability', h: '10 · Warranties and liability',
@@ -58,6 +66,10 @@ const SECTIONS: Array<{ id: string; h: string; body: React.ReactNode }> = [
 ];
 
 export default function TermsPage() {
+  const SECTIONS = sections({
+    processors: listOf(paymentProcessors()),
+    proMo: PRICES.pro.month, proYr: PRICES.pro.year, entMo: PRICES.enterprise.month, entYr: PRICES.enterprise.year,
+  });
   return (
     <div className="mk mk-bleed">
       <PublicTopbar right={<Link href="/" className="ed-btn ed-btn-secondary">← Back to site</Link>} />

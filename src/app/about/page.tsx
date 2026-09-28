@@ -8,6 +8,7 @@ import { tierChannels, channelSentence } from '@/lib/tierCopy';
 import { isPaypalConfigured } from '@/lib/paypal';
 import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
 import { TIER_LIMITS } from '@/lib/db';
+import { affiliatePartners } from '@/lib/publicDisclosures';
 
 // Every number and every "we use X" on this page is read from the running
 // system (public-metrics, channelHealth, TIER_LIMITS, env gates), so the page
@@ -45,6 +46,7 @@ export default function AboutPage() {
   const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
   const billing = isPaypalConfigured() ? 'Stripe and PayPal' : 'Stripe';
   const freeRoutes = TIER_LIMITS.free.maxRoutes;
+  const partners = affiliatePartners();
   return (
     <div className="mk mk-bleed">
       <PublicTopbar
@@ -134,16 +136,12 @@ export default function AboutPage() {
               </p>
               <h4 className="ed-h2" style={{ fontSize: 15, marginTop: 18 }}>Our current partners</h4>
               <ul style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
-                <li>
-                  <strong><a href={travelpayoutsReferralUrl()} target="_blank" rel="noopener noreferrer">Travelpayouts</a></strong>
-                  {' '}— the affiliate network behind Aviasales (flight metasearch), Hotellook
-                  (hotel comparison), and WayAway (cashback flights). Our primary data source for fare polling.
-                </li>
-                <li>
-                  <strong><a href="https://www.trip.com/partners/" target="_blank" rel="noopener noreferrer">Trip.com</a></strong>
-                  {' '}— major OTA, especially competitive on Asia routes. Appears in our &ldquo;Book →&rdquo;
-                  dropdown and hotel suggestions.
-                </li>
+                {partners.map(p => (
+                  <li key={p.name}>
+                    <strong><a href={p.name === 'Travelpayouts' ? travelpayoutsReferralUrl() : p.href} target="_blank" rel="noopener noreferrer">{p.name}</a></strong>
+                    {' '}— {p.note}{p.name === 'Travelpayouts' ? '. Also our primary data source for fare polling' : ''}.
+                  </li>
+                ))}
               </ul>
               <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
                 Stays: hotel links go through Hotellook (Travelpayouts) and Trip.com, which pay a commission. <strong>Airbnb and Vrbo</strong> have no partner programme — those buttons are plain, prefilled searches that earn us nothing; we include them because many travelers prefer homes to hotels.
