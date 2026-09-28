@@ -34,7 +34,9 @@ const NOT_CUSTOMER_FACING = [
 
 /** EVERY locale dictionary is customer copy, not just English. */
 const isDictionary = (rel: string) => /\/lib\/i18n\/[a-z-]+\.[a-z]{2}\.ts$/.test(rel);
-const isInternalLib = (rel: string) => rel.includes('/lib/') && !isDictionary(rel);
+/** Email bodies are customer copy too — the upgrade nudge sold 5-minute polling, WhatsApp and a REST API from inside /lib/. */
+const CUSTOMER_LIB = ['/lib/billing-emails.ts', '/lib/emailTemplates.ts', '/lib/email.ts'];
+const isInternalLib = (rel: string) => rel.includes('/lib/') && !isDictionary(rel) && !CUSTOMER_LIB.includes(rel);
 
 function customerFacingFiles(dir = SRC, out: string[] = []): string[] {
   for (const name of readdirSync(dir)) {

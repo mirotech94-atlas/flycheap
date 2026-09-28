@@ -3,6 +3,10 @@ import {
   renderEmail, emailButton, emailCode, emailNote, p, link, escapeEmail as esc,
   EMAIL_TOKENS as T,
 } from './emailLayout';
+import { TIER_LIMITS } from './db';
+import { PRICES } from './prices';
+import { deliverableChannels } from './channelHealth';
+import { tierChannels, channelSentence, upgradeReasons, plural } from './tierCopy';
 
 /**
  * Concrete FlyCheap emails, one builder per live sender. Each returns
@@ -41,6 +45,15 @@ export function inviteEmail(o: { firstName?: string; loginUrl: string; appUrl?: 
   };
 }
 
+function foundingFooter(): string {
+  const d = deliverableChannels();
+  const free = TIER_LIMITS.free;
+  const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+  const adds = upgradeReasons('free', 'pro', d).map(s => lower(s).replace(/, not just target alerts$/, ''));
+  const addsText = adds.length <= 1 ? adds.join('') : `${adds.slice(0, -1).join(', ')} and ${adds[adds.length - 1]}`;
+  return `Your founding period is the full product for 3 months, free, no card. After that your account continues on Free — ${plural(free.maxRoutes, 'tracked route')}, alerts by ${lower(channelSentence(tierChannels('free', d)))}, worldwide explore — and Pro ($${PRICES.pro.month}/mo) adds ${addsText}.`;
+}
+
 /** First-signup welcome with the 60-second quick start + founding-period terms. */
 export function welcomeQuickStartEmail(o: { appUrl: string; unsubUrl?: string }): BuiltEmail {
   const app = o.appUrl.replace(/\/$/, '');
@@ -53,7 +66,10 @@ export function welcomeQuickStartEmail(o: { appUrl: string; unsubUrl?: string })
       kind: 'welcome', appUrl: app, unsubUrl: o.unsubUrl,
       preheader: 'Your first 3 months are on us. Three quick steps to your first fare alert.',
       headline: 'Welcome to FlyCheap.',
-      footerNote: 'Your founding period covers 5 tracked routes, email alerts and worldwide explore for 3 months, free. Whenever you want more — up to 100 routes, 5-minute polling, SMS / WhatsApp / Telegram — Pro is $9/mo, and Enterprise adds white-label + API.',
+      // Derived: the trial is the FULL product (limitsForUser never drops a
+      // founding account below Enterprise), Free is TIER_LIMITS.free, and the
+      // upgrade case is whatever Pro genuinely adds over Free today.
+      footerNote: foundingFooter(),
       body: [
         p('Your first three months are on us — the full product, no card. Here is everything to do in your first sixty seconds:'),
         step('Add your first route', `pick a home airport and destination at ${link('flycheap.live/searches', app + '/searches')}. We start polling within the hour.`),
