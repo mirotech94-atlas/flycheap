@@ -3,15 +3,22 @@ import 'server-only';
 /**
  * FlyCheap transactional email design system.
  *
- * One formal, branded shell for every email we send; the per-type builders
- * in emailTemplates.ts vary only the accent, the headline and the body — the
- * masthead, type and footer stay identical so every message is unmistakably
- * FlyCheap.
+ * One shell for every email we send; the per-type builders in
+ * emailTemplates.ts vary only the kind line, the headline and the body, so
+ * every message is unmistakably the same product as the site.
  *
- * Design: premium-travel stationery, not a SaaS card kit. Deep navy masthead,
- * warm ivory ground, a single white letter-panel with a gold rule, a Georgia
- * serif headline as the one bold moment, everything else quiet. Email-safe:
- * inline styles, web-safe font stacks, no external CSS/JS.
+ * Design: the site's editorial data sheet, on paper. The same tokens as
+ * src/app/editorial.css (light values, as literals — email clients cannot
+ * read CSS variables), the same three faces, the same rules: rules and
+ * whitespace do the separating, no rounded corners, no shadows, no
+ * gradients. Amber is reserved for a fare and for the featured pricing
+ * action, and it is never text on a light surface — a fare set as text uses
+ * FARE_TEXT, the amber-derived ink the site's .ed-fare-text resolves to.
+ *
+ * Email-safe: inline styles, tables for layout, no external CSS or JS. The
+ * three web faces are offered through one <link> in <head> for the clients
+ * that honour it (Apple Mail, iOS Mail, Outlook for Mac); everything else
+ * falls to the stack's system face, which is the same order the site uses.
  *
  * Two chrome pieces — emailMasthead() and emailFooter() — are exported so a
  * rich, data-heavy email (the fare alert) can wear the same masthead and
@@ -19,36 +26,59 @@ import 'server-only';
  * narrow letter panel.
  */
 
-// ---- Palette (formal refinement of the navy+gold brand) --------------------
-const NAVY = '#0a2e57';       // masthead + primary
-const NAVY_LIGHT = '#154a86';  // the lighter stop for navy gradients (8.9:1 on white)
-const INK = '#12233d';        // body text
-const GOLD = '#b8912f';       // formal gold — rules, one accent
-const PAPER = '#f6f2e9';      // warm ivory ground
-const CARD = '#ffffff';       // letter panel
-const SLATE = '#5c6b82';      // secondary text
-const LINE = '#e6dfce';       // hairline on paper
-const LINE_CARD = '#ece6da';  // hairline inside the panel
+// ---- Palette: editorial.css :root, light -------------------------------------
+const PAPER = '#FBFAF7';      // --bg          page canvas
+const CARD = '#FFFFFF';       // --surface     the letter panel
+const SURFACE_2 = '#F4F1EA';  // --surface-2   one recessed block per letter at most
+const INK = '#14181B';        // --ink         text, the header rule, primary button fill
+const INK_SOFT = '#3B3833';   // --ink-soft
+const MUTED = '#78736A';      // --muted       secondary text (4.7:1 on white)
+const MUTED_2 = '#5F5A52';    // labels under 12px, where --muted would sit at the AA edge
+const LINE = '#E6E2DA';       // --rule
+const LINE_CARD = '#EFECE5';  // --rule-soft   row separators
+const RULE_STRONG = '#D9D4CA';// --rule-strong secondary button border
+const ACCENT = '#1F615D';     // --accent      links, the one data colour (6.9:1 on white)
+const AMBER = '#C98A3C';      // --amber       fare / featured-CTA FILL only, never text
+const FARE_TEXT = '#8A6231';  // .ed-fare-text: color-mix(amber 65%, ink) — a fare AS text (6.0:1)
+const GREEN = '#3E7D5A';      // --green       positive delta
+const RED = '#B4453C';        // --red         errors, negative delta
 
-const SERIF = "Georgia, 'Times New Roman', 'Iowan Old Style', serif";
-const SANS = "-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif";
-const MONO = "'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace";
+// Kept under their old names so nothing that already reads EMAIL_TOKENS breaks:
+// NAVY is now the primary button/ink, GOLD the amber fill, SLATE the muted text.
+const NAVY = INK;
+const NAVY_LIGHT = ACCENT;
+const GOLD = AMBER;
+const SLATE = MUTED;
 
-export const EMAIL_TOKENS = { NAVY, NAVY_LIGHT, INK, GOLD, PAPER, CARD, SLATE, LINE, LINE_CARD, SERIF, SANS, MONO };
+const SERIF = "Newsreader, Georgia, 'Times New Roman', serif";
+const SANS = "'Public Sans', -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif";
+const MONO = "'IBM Plex Mono', SFMono-Regular, Menlo, Consolas, monospace";
+const FONT_LINK = 'https://fonts.googleapis.com/css2?family=Newsreader:wght@400;500&family=Public+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500&display=swap';
+
+export const EMAIL_TOKENS = {
+  NAVY, NAVY_LIGHT, INK, GOLD, PAPER, CARD, SLATE, LINE, LINE_CARD, SERIF, SANS, MONO,
+  SURFACE_2, INK_SOFT, MUTED, MUTED_2, RULE_STRONG, ACCENT, AMBER, FARE_TEXT, GREEN, RED,
+};
 
 export type EmailKind = 'welcome' | 'security' | 'support' | 'alert' | 'billing' | 'notice';
 
-/** Per-type accent + the small serif kind line that sits under the headline. */
+/**
+ * The kind line under the masthead: what this letter is, in words. Colour is
+ * not the carrier here — the label is set in the same mono caps as the site's
+ * eyebrows, and status colour is spent only where something IS a status (a
+ * fare delta, a failed payment).
+ */
 const KIND: Record<EmailKind, { accent: string; label: string }> = {
-  welcome:  { accent: GOLD,      label: 'Founding member' },
-  security: { accent: '#1f5fa5', label: 'Account security' },
-  support:  { accent: '#2f7d6b', label: 'From the team' },
-  alert:    { accent: '#c05621', label: 'Fare alert' },
-  billing:  { accent: NAVY,      label: 'Billing' },
-  notice:   { accent: SLATE,     label: 'Account notice' },
+  welcome:  { accent: INK_SOFT, label: 'Founding member' },
+  security: { accent: INK_SOFT, label: 'Account security' },
+  support:  { accent: INK_SOFT, label: 'From the team' },
+  alert:    { accent: FARE_TEXT, label: 'Fare alert' },
+  billing:  { accent: INK_SOFT, label: 'Billing' },
+  notice:   { accent: INK_SOFT, label: 'Account notice' },
 };
 
 export function kindAccent(kind: EmailKind): string { return KIND[kind].accent; }
+export function kindLabel(kind: EmailKind): string { return KIND[kind].label; }
 
 const esc = (s: string): string =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -57,9 +87,28 @@ const escAttr = (s: string): string => s.replace(/&/g, '&amp;').replace(/"/g, '&
 
 // ---- Reusable pieces --------------------------------------------------------
 
-/** Primary action: navy button with a thin gold cap. Use once per email. */
+/** Mono-caps eyebrow — the site's label device. */
+export function emailEyebrow(text: string, color: string = MUTED_2): string {
+  return `<div style="font-family:${MONO};font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:${color}">${esc(text)}</div>`;
+}
+
+/** Primary action: ink fill, white label, square. Use once per email. */
 export function emailButton(label: string, href: string): string {
-  return `<a href="${escAttr(href)}" style="display:inline-block;background:${NAVY};border-top:2px solid ${GOLD};color:#ffffff;text-decoration:none;font-family:${SANS};font-size:15px;font-weight:600;letter-spacing:.01em;padding:13px 28px;border-radius:6px">${esc(label)}</a>`;
+  return `<a href="${escAttr(href)}" style="display:inline-block;background:${INK};color:#FFFFFF;text-decoration:none;font-family:${SANS};font-size:14px;font-weight:600;letter-spacing:.01em;padding:12px 20px">${esc(label)}</a>`;
+}
+
+/**
+ * The featured pricing action — the one place amber may be a fill in an
+ * email, and only when the thing being acted on is a fare. Ink label on
+ * amber clears 7.6:1.
+ */
+export function emailFareButton(label: string, href: string): string {
+  return `<a href="${escAttr(href)}" style="display:inline-block;background:${AMBER};color:${INK};text-decoration:none;font-family:${SANS};font-size:14px;font-weight:600;letter-spacing:.01em;padding:12px 20px">${esc(label)}</a>`;
+}
+
+/** Secondary action: surface fill, strong rule, soft ink. */
+export function emailSecondaryButton(label: string, href: string): string {
+  return `<a href="${escAttr(href)}" style="display:inline-block;background:${CARD};border:1px solid ${RULE_STRONG};color:${INK_SOFT};text-decoration:none;font-family:${SANS};font-size:13px;font-weight:600;padding:10px 16px">${esc(label)}</a>`;
 }
 
 /**
@@ -69,34 +118,41 @@ export function emailButton(label: string, href: string): string {
  * hair-space in the clipboard makes the form reject a correct code.
  */
 export function emailCode(code: string): string {
-  return `<div style="font-family:${MONO};font-size:34px;font-weight:600;letter-spacing:.42em;color:${INK};background:${PAPER};border:1px solid ${LINE};border-radius:8px;text-align:center;padding:18px 8px 18px 20px;margin:6px 0 4px">${esc(code)}</div>`;
+  return `<div style="font-family:${MONO};font-size:34px;font-weight:500;letter-spacing:.42em;color:${INK};background:${SURFACE_2};border:1px solid ${LINE};text-align:left;padding:18px 8px 18px 20px;margin:6px 0 4px">${esc(code)}</div>`;
 }
 
-/** A definition-style row list (receipts, ticket meta) — label left, value right. */
+/**
+ * A ruled fact list — label left, value right, a soft rule between rows.
+ * Values are set in the mono face: they are things read character by
+ * character (references, dates, amounts), which is the site's own convention.
+ */
 export function emailRows(rows: Array<[string, string]>): string {
   const body = rows.map(([k, v], i) => `
     <tr>
-      <td style="font-family:${SANS};font-size:13px;color:${SLATE};padding:${i ? '9px' : '0'} 0 0;vertical-align:top">${esc(k)}</td>
-      <td style="font-family:${SANS};font-size:13px;color:${INK};font-weight:600;text-align:right;padding:${i ? '9px' : '0'} 0 0;vertical-align:top">${v}</td>
+      <td style="font-family:${SANS};font-size:13px;color:${MUTED};padding:9px 0;${i ? `border-top:1px solid ${LINE_CARD};` : ''}vertical-align:top">${esc(k)}</td>
+      <td style="font-family:${MONO};font-size:13px;color:${INK};font-weight:500;text-align:right;padding:9px 0;${i ? `border-top:1px solid ${LINE_CARD};` : ''}vertical-align:top">${v}</td>
     </tr>`).join('');
-  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">${body}</table>`;
+  return `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;border-top:1px solid ${LINE};border-bottom:1px solid ${LINE}">${body}</table>`;
 }
 
 /** A quiet supporting note under the main content. */
 export function emailNote(html: string): string {
-  return `<p style="font-family:${SANS};font-size:13px;line-height:1.6;color:${SLATE};margin:16px 0 0">${html}</p>`;
+  return `<p style="font-family:${SANS};font-size:13px;line-height:1.6;color:${MUTED};margin:16px 0 0">${html}</p>`;
 }
 
 // ---- Chrome (masthead + footer), shared by every email ---------------------
 
-/** Navy masthead: serif wordmark + quiet gold mark + a short gold rule. */
-export function emailMasthead(): string {
-  return `<div style="background:${NAVY};border-radius:10px 10px 0 0;padding:22px 32px">
+/**
+ * Masthead: the serif wordmark, a mono eyebrow on the right, and the 1px ink
+ * rule the site draws under every table header. No block of colour — the
+ * rule is the brand mark's weight, as it is on the site.
+ */
+export function emailMasthead(eyebrow = 'Fare intelligence'): string {
+  return `<div style="background:${CARD};padding:22px 32px 16px;border-bottom:1px solid ${INK}">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
-      <td style="font-family:${SERIF};font-size:22px;font-weight:700;letter-spacing:.01em;color:#ffffff">FlyCheap</td>
-      <td align="right" style="font-family:${SANS};font-size:11px;letter-spacing:.14em;color:${GOLD}">FARE INTELLIGENCE</td>
+      <td style="font-family:${SERIF};font-size:24px;font-weight:400;letter-spacing:-.02em;color:${INK}">FlyCheap</td>
+      <td align="right" style="font-family:${MONO};font-size:10.5px;letter-spacing:.16em;text-transform:uppercase;color:${MUTED_2}">${esc(eyebrow)}</td>
     </tr></table>
-    <div style="height:2px;background:${GOLD};width:44px;margin-top:12px"></div>
   </div>`;
 }
 
@@ -105,32 +161,43 @@ export function emailFooter(opts: { appUrl?: string; unsubUrl?: string; note?: s
   const app = opts.appUrl || 'https://flycheap.live';
   const year = new Date().getUTCFullYear();
   const unsub = opts.unsubUrl
-    ? ` &nbsp;&middot;&nbsp; <a href="${escAttr(opts.unsubUrl)}" style="color:${SLATE};text-decoration:none">Unsubscribe</a>` : '';
+    ? ` &nbsp;&nbsp; <a href="${escAttr(opts.unsubUrl)}" style="color:${MUTED};text-decoration:underline">Unsubscribe</a>` : '';
   const note = opts.note
-    ? `<div style="font-family:${SANS};font-size:12px;line-height:1.6;color:${SLATE};margin:0 0 12px">${opts.note}</div>` : '';
-  return `<div style="background:${CARD};border:1px solid ${LINE};border-top:1px solid ${LINE_CARD};border-radius:0 0 10px 10px;padding:22px 32px">
-    ${note}<div style="font-family:${SANS};font-size:12px;line-height:1.7;color:${SLATE}">
-      <a href="${escAttr(app)}" style="color:${NAVY};text-decoration:none;font-weight:600">flycheap.live</a>
-      &nbsp;&middot;&nbsp; <a href="${escAttr(app)}/settings" style="color:${SLATE};text-decoration:none">Manage alerts</a>
-      &nbsp;&middot;&nbsp; <a href="${escAttr(app)}/privacy" style="color:${SLATE};text-decoration:none">Privacy</a>${unsub}
+    ? `<div style="font-family:${SANS};font-size:12px;line-height:1.6;color:${MUTED};margin:0 0 12px">${opts.note}</div>` : '';
+  return `<div style="background:${CARD};border-top:1px solid ${LINE};padding:18px 32px 22px">
+    ${note}<div style="font-family:${SANS};font-size:12px;line-height:1.7;color:${MUTED}">
+      <a href="${escAttr(app)}" style="color:${INK};text-decoration:none;font-weight:600">flycheap.live</a>
+      &nbsp;&nbsp; <a href="${escAttr(app)}/settings" style="color:${MUTED};text-decoration:underline">Manage alerts</a>
+      &nbsp;&nbsp; <a href="${escAttr(app)}/privacy" style="color:${MUTED};text-decoration:underline">Privacy</a>${unsub}
     </div>
-    <div style="font-family:${SANS};font-size:11px;color:#97a1b2;margin-top:8px">© ${year} FlyCheap · Fare intelligence, monitored for you · New York, USA</div>
+    <div style="font-family:${MONO};font-size:10.5px;letter-spacing:.06em;color:${MUTED_2};margin-top:10px">© ${year} FlyCheap · New York, USA</div>
   </div>`;
 }
 
-/** Wrap masthead/panel/footer blocks in the centered 600px email frame. */
+/** Wrap masthead/panel/footer blocks in the 600px email document. */
 export function emailFrame(preheader: string, innerBlocks: string): string {
-  return `<!-- FlyCheap -->
+  return `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width">
+<meta name="color-scheme" content="light">
+<meta name="supported-color-schemes" content="light">
+<link rel="stylesheet" href="${FONT_LINK}">
+<title>FlyCheap</title>
+</head>
+<body style="margin:0;padding:0;background:${PAPER}">
 <div style="display:none;max-height:0;overflow:hidden;opacity:0;color:transparent">${esc(preheader)}</div>
-<div style="background:${PAPER};margin:0;padding:24px 12px;font-family:${SANS}">
+<div style="background:${PAPER};margin:0;padding:28px 12px;font-family:${SANS}">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse">
     <tr><td align="center">
-      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;border-collapse:collapse">
-        <tr><td>${innerBlocks}</td></tr>
+      <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:600px;border-collapse:collapse;border-left:1px solid ${LINE};border-right:1px solid ${LINE}">
+        <tr><td style="text-align:left">${innerBlocks}</td></tr>
       </table>
     </td></tr>
   </table>
-</div>`;
+</div>
+</body></html>`;
 }
 
 // ---- The letter shell (account / transactional emails) ---------------------
@@ -145,24 +212,21 @@ export function renderEmail(opts: {
   unsubUrl?: string;         // adds a visible unsubscribe link to the footer
   footerNote?: string;       // quiet line above the footer links
 }): string {
-  const { accent, label } = KIND[opts.kind];
-  const panel = `<div style="background:${CARD};padding:34px 32px 30px;border-left:1px solid ${LINE};border-right:1px solid ${LINE}">
-    <div style="font-family:${SERIF};font-size:14px;font-style:italic;color:${accent};margin:0 0 10px">${esc(label)}</div>
-    <h1 style="font-family:${SERIF};font-size:28px;line-height:1.18;font-weight:700;color:${INK};margin:0 0 18px">${esc(opts.headline)}</h1>
-    <div style="border-left:3px solid ${accent};padding-left:18px">
-      ${opts.body}
-    </div>
+  const { label } = KIND[opts.kind];
+  const panel = `<div style="background:${CARD};padding:30px 32px 30px">
+    <h1 style="font-family:${SERIF};font-size:30px;line-height:1.15;font-weight:400;letter-spacing:-.02em;color:${INK};margin:0 0 20px">${esc(opts.headline)}</h1>
+    ${opts.body}
   </div>`;
   return emailFrame(opts.preheader,
-    emailMasthead() + panel + emailFooter({ appUrl: opts.appUrl, unsubUrl: opts.unsubUrl, note: opts.footerNote }));
+    emailMasthead(label) + panel + emailFooter({ appUrl: opts.appUrl, unsubUrl: opts.unsubUrl, note: opts.footerNote }));
 }
 
 // ---- Body helpers (paragraphs the builders compose) ------------------------
 
 export function p(html: string): string {
-  return `<p style="font-family:${SANS};font-size:15px;line-height:1.62;color:${INK};margin:0 0 16px">${html}</p>`;
+  return `<p style="font-family:${SANS};font-size:15px;line-height:1.6;color:${INK};margin:0 0 16px">${html}</p>`;
 }
 export function link(label: string, href: string): string {
-  return `<a href="${escAttr(href)}" style="color:${NAVY};font-weight:600;text-decoration:underline">${esc(label)}</a>`;
+  return `<a href="${escAttr(href)}" style="color:${ACCENT};font-weight:600;text-decoration:underline">${esc(label)}</a>`;
 }
 export { esc as escapeEmail };

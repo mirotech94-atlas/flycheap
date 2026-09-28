@@ -13,6 +13,7 @@ import {
   mintConfirmToken, confirmUrl, postTripUrl, commercialUnsubscribeUrl,
 } from './tripChain';
 import { hotellookLink, hotelCityForDestination, tpBrandConfigured } from './affiliate';
+import { renderEmail, emailButton, emailEyebrow, EMAIL_TOKENS as T } from './emailLayout';
 
 /**
  * Rendering and sending for the chain.
@@ -26,10 +27,12 @@ import { hotellookLink, hotelCityForDestination, tpBrandConfigured } from './aff
  */
 
 const SITE = (process.env.APP_URL || APP_URL).replace(/\/$/, '');
-const INK = '#0a1426';
-const MUTE = '#5b6678';
-const RULE = 'rgba(10,20,38,.10)';
-const LINK = '#0a3a6b';
+// The chain wears the same shell as every other FlyCheap email (emailLayout):
+// editorial tokens, Newsreader headline, ink buttons. A commercial CTA is not
+// a fare, so it never takes the amber fill the fare alert's Book button does.
+const INK = T.INK;
+const MUTE = T.MUTED;
+const LINK = T.ACCENT;
 
 function esc(s: string): string {
   return s.replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]!));
@@ -45,20 +48,29 @@ function fmtDate(iso: string | null): string {
 
 /** The disclosure. Visible, not a footnote in 9px grey. */
 function disclosure(): string {
-  return `<p style="font-size:12.5px;color:${MUTE};line-height:1.5;margin:20px 0 0">
+  return `<p style="font-family:${T.SANS};font-size:12.5px;color:${MUTE};line-height:1.55;margin:20px 0 0">
     We earn a commission if you book through these links, at no extra cost to you.
     It is how FlyCheap stays free to use, and it never changes which option we show first.
   </p>`;
 }
 
-function shell(opts: { preheader: string; body: string; footer: string }): string {
-  return `
-  <div style="display:none;max-height:0;overflow:hidden;opacity:0">${esc(opts.preheader)}</div>
-  <div style="font-family:Manrope,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;max-width:600px;margin:auto;padding:24px;color:${INK};background:#faf7ef">
-    ${opts.body}
-    <hr style="border:none;border-top:1px solid ${RULE};margin:24px 0 14px">
-    ${opts.footer}
-  </div>`;
+const para = (html: string, quiet = false) =>
+  `<p style="font-family:${T.SANS};font-size:15px;line-height:1.6;color:${quiet ? MUTE : INK};margin:0 0 ${quiet ? 18 : 8}px">${html}</p>`;
+
+/**
+ * One chain letter. `headline` is the serif moment; `kind` picks the masthead
+ * eyebrow — a commercial stage is an account notice, the confirmation, nudge
+ * and post-trip question are part of the fare alerts and say so.
+ */
+function shell(opts: { kind: 'notice' | 'alert'; preheader: string; headline: string; body: string; footer: string; eyebrow?: string }): string {
+  return renderEmail({
+    kind: opts.kind,
+    preheader: opts.preheader,
+    headline: opts.headline,
+    body: (opts.eyebrow ? `<div style="margin:-10px 0 14px">${emailEyebrow(opts.eyebrow)}</div>` : '') + opts.body,
+    appUrl: SITE,
+    footerNote: opts.footer,
+  });
 }
 
 // ---------------------------------------------------------------------------
@@ -150,20 +162,13 @@ function renderCommercial(trip: Trip, stage: ChainStage): Rendered {
   const city = hotelCityForDestination(trip.destination);
 
   const body = `
-    <div style="font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#8a93a6;font-family:'JetBrains Mono',monospace">Your ${esc(city)} trip</div>
-    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:6px 0 10px">${esc(copy.subject(trip))}</h1>
-    <p style="font-size:15px;line-height:1.6;color:${INK};margin:0 0 18px">${esc(copy.lead(trip))}</p>
-    <p style="margin:0 0 6px">
-      <a href="${url}" style="display:inline-block;background:#d4af37;color:#061a35;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">${esc(copy.cta)} →</a>
-    </p>
+    ${para(esc(copy.lead(trip)))}
+    <div style="margin:14px 0 6px">${emailButton(copy.cta, url)}</div>
     ${disclosure()}`;
 
-  const footer = `
-    <p style="font-size:12px;color:${MUTE};line-height:1.6;margin:0">
-      You are getting this because you told us you booked ${esc(route)}.
-      <a href="${unsub}" style="color:${LINK}">Turn off trip offers</a> —
-      <strong style="color:${INK}">your fare alerts keep working</strong>, they are a separate subscription.
-    </p>`;
+  const footer = `You are getting this because you told us you booked ${esc(route)}.
+      <a href="${unsub}" style="color:${LINK};text-decoration:underline">Turn off trip offers</a> —
+      <strong style="color:${INK}">your fare alerts keep working</strong>, they are a separate subscription.`;
 
   const text = [
     copy.subject(trip), '',
@@ -175,7 +180,7 @@ function renderCommercial(trip: Trip, stage: ChainStage): Rendered {
     `Turn off trip offers (your fare alerts keep working): ${unsub}`,
   ].join('\n');
 
-  return { subject: copy.subject(trip), html: shell({ preheader: copy.lead(trip), body, footer }), text };
+  return { subject: copy.subject(trip), html: shell({ kind: 'notice', eyebrow: `Your ${city} trip`, preheader: copy.lead(trip), headline: copy.subject(trip), body, footer }), text };
 }
 
 /**
@@ -189,21 +194,16 @@ function renderConfirm(trip: Trip, token: string): Rendered {
   const subject = `Did you get the ${trip.destination} fare?`;
 
   const body = `
-    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:0 0 10px">${esc(subject)}</h1>
-    <p style="font-size:15px;line-height:1.6;color:${INK};margin:0 0 6px">
-      ${esc(route)}${trip.depart_date ? ` · ${esc(fmtDate(trip.depart_date))}` : ''}${trip.fare_per_adult_usd ? ` · $${Math.round(trip.fare_per_adult_usd)} per adult` : ''}
-    </p>
-    <p style="font-size:15px;line-height:1.6;color:${MUTE};margin:0 0 18px">
-      It is the one thing we cannot see, and it tells us which alerts are actually worth sending.
-    </p>
-    <p style="margin:0">
-      <a href="${url}" style="display:inline-block;background:#d4af37;color:#061a35;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Yes, I booked it</a>
-      <a href="${url}" style="display:inline-block;margin-left:8px;color:${LINK};padding:12px 8px;text-decoration:none;font-weight:600;font-size:15px">Still deciding</a>
-    </p>`;
+    ${para(`<span style="font-family:${T.MONO};font-size:14px">${esc(route)}${trip.depart_date ? ` · ${esc(fmtDate(trip.depart_date))}` : ''}${trip.fare_per_adult_usd ? ` · $${Math.round(trip.fare_per_adult_usd)} per adult` : ''}</span>`)}
+    ${para('It is the one thing we cannot see, and it tells us which alerts are actually worth sending.', true)}
+    <div style="margin:0">
+      ${emailButton('Yes, I booked it', url)}
+      <a href="${url}" style="display:inline-block;margin-left:14px;color:${LINK};font-family:${T.SANS};text-decoration:underline;font-weight:600;font-size:14px">Still deciding</a>
+    </div>`;
 
-  const footer = `<p style="font-size:12px;color:${MUTE};margin:0">One question, one email. We will not ask again.</p>`;
+  const footer = 'One question, one email. We will not ask again.';
   const text = [subject, '', route, '', `Answer here: ${url}`, '', 'One question, one email. We will not ask again.'].join('\n');
-  return { subject, html: shell({ preheader: route, body, footer }), text };
+  return { subject, html: shell({ kind: 'alert', preheader: route, headline: subject, body, footer }), text };
 }
 
 /**
@@ -229,17 +229,12 @@ function renderNudge(trip: Trip): Rendered {
 
   const subject = `${route}: where the fare sits now`;
   const body = `
-    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:0 0 10px">${esc(route)}</h1>
-    <p style="font-size:15px;line-height:1.6;color:${INK};margin:0 0 10px">${esc(movement)}</p>
-    ${now != null && low != null ? `<p style="font-size:15px;line-height:1.6;color:${MUTE};margin:0 0 18px">
-      Now $${Math.round(now)} per adult. The 30-day low on this route is $${Math.round(low)}.
-    </p>` : ''}
-    <p style="font-size:15px;line-height:1.6;color:${MUTE};margin:0">
-      Nothing to do — we will alert you if it drops. <a href="${SITE}/searches" style="color:${LINK}">Adjust your target</a> if you want to hear sooner.
-    </p>`;
-  const footer = `<p style="font-size:12px;color:${MUTE};margin:0">This is part of your fare alerts, not a promotion.</p>`;
+    ${para(esc(movement))}
+    ${now != null && low != null ? para(`Now <span style="font-family:${T.MONO};color:${T.FARE_TEXT};font-weight:500">$${Math.round(now)}</span> per adult. The 30-day low on this route is <span style="font-family:${T.MONO}">$${Math.round(low)}</span>.`, true) : ''}
+    ${para(`Nothing to do — we will alert you if it drops. <a href="${SITE}/searches" style="color:${LINK};text-decoration:underline;font-weight:600">Adjust your target</a> if you want to hear sooner.`, true)}`;
+  const footer = 'This is part of your fare alerts, not a promotion.';
   const text = [subject, '', movement, '', `Adjust your target: ${SITE}/searches`].join('\n');
-  return { subject, html: shell({ preheader: movement, body, footer }), text };
+  return { subject, html: shell({ kind: 'alert', preheader: movement, headline: route, body, footer }), text };
 }
 
 /**
@@ -255,22 +250,13 @@ function renderPostTrip(trip: Trip, token: string): Rendered {
   const subject = `Welcome back — how was ${trip.destination}?`;
 
   const body = `
-    <h1 style="font-family:Fraunces,Georgia,serif;font-weight:400;font-size:28px;line-height:1.15;color:${LINK};margin:0 0 10px">${esc(subject)}</h1>
-    <p style="font-size:15px;line-height:1.6;color:${INK};margin:0 0 6px">
-      ${esc(route)}${trip.depart_date ? ` · ${esc(fmtDate(trip.depart_date))}` : ''}${trip.return_date ? ` to ${esc(fmtDate(trip.return_date))}` : ''}
-    </p>
-    <p style="font-size:15px;line-height:1.6;color:${MUTE};margin:0 0 18px">
-      Two quick things, and then we leave you alone: did the trip happen, and what did you
-      actually pay for the flights? It is the only way we can tell you what you have saved
-      this year — and whether our advice on this route has been any good.
-    </p>
-    <p style="margin:0">
-      <a href="${url}" style="display:inline-block;background:#d4af37;color:#061a35;padding:12px 22px;border-radius:10px;text-decoration:none;font-weight:700;font-size:15px">Answer in ten seconds</a>
-    </p>`;
+    ${para(`<span style="font-family:${T.MONO};font-size:14px">${esc(route)}${trip.depart_date ? ` · ${esc(fmtDate(trip.depart_date))}` : ''}${trip.return_date ? ` to ${esc(fmtDate(trip.return_date))}` : ''}</span>`)}
+    ${para('Two quick things, and then we leave you alone: did the trip happen, and what did you actually pay for the flights? It is the only way we can tell you what you have saved this year — and whether our advice on this route has been any good.', true)}
+    <div style="margin:0">${emailButton('Answer in ten seconds', url)}</div>`;
 
-  const footer = `<p style="font-size:12px;color:${MUTE};margin:0">Part of your fare alerts, not a promotion. We ask once per trip.</p>`;
+  const footer = 'Part of your fare alerts, not a promotion. We ask once per trip.';
   const text = [subject, '', route, '', `Answer here: ${url}`, '', 'Part of your fare alerts, not a promotion. We ask once per trip.'].join('\n');
-  return { subject, html: shell({ preheader: `Did the ${trip.destination} trip happen, and what did you pay?`, body, footer }), text };
+  return { subject, html: shell({ kind: 'alert', preheader: `Did the ${trip.destination} trip happen, and what did you pay?`, headline: subject, body, footer }), text };
 }
 
 /**
