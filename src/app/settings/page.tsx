@@ -94,7 +94,7 @@ export default async function SettingsPage() {
             </p>
             {user.subscription_status === 'founding_free' && user.trial_ends_at && (
               <p className="text-xs mt-1" style={{ color: 'var(--green)' }}>
-                Founding trial — the basic capabilities are free for your first 3 months, until {new Date(user.trial_ends_at.replace(' ', 'T') + (user.trial_ends_at.endsWith('Z') ? '' : 'Z')).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Upgrade to Pro or Enterprise whenever you want more.
+                Founding trial — the full product is free for your first 3 months, until {new Date(user.trial_ends_at.replace(' ', 'T') + (user.trial_ends_at.endsWith('Z') ? '' : 'Z')).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}. Upgrade to Pro or Enterprise whenever you want more.
               </p>
             )}
             {user.subscription_status === 'cancel_at_period_end' && user.subscription_renews_at && (

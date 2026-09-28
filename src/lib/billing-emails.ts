@@ -4,8 +4,17 @@ import { getDb } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
 import { renderEmail, emailButton, EMAIL_TOKENS as T } from './emailLayout';
+import { TIER_LIMITS } from './db';
+import { PRICES } from './prices';
+import { deliverableChannels } from './channelHealth';
+import { tierChannels, channelSentence, upgradeReasons, plural } from './tierCopy';
 
 const APP = process.env.APP_URL || APP_URL;
+
+/** "a, b and c" — every list in these emails is derived, so it needs joining at render time. */
+const andList = (xs: readonly string[]) =>
+  xs.length <= 1 ? xs.join('') : `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}`;
+const lower = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
 
 export function findUserByStripeCustomer(customerId: string): { id: number; email: string; name: string | null } | undefined {
   return getDb()
@@ -41,12 +50,14 @@ export async function sendTrialEndingEmail(to: string, trialEndUnix: number | un
   const when = trialEndUnix
     ? new Date(trialEndUnix * 1000).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })
     : 'in 3 days';
-  const price = plan === 'enterprise' ? '$39' : '$9';
-  await send(to, `Your FlyCheap Pro trial ends ${trialEndUnix ? 'on ' + when : when}`, shell(
+  const tier = plan === 'enterprise' ? 'enterprise' : 'pro';
+  const planName = tier === 'enterprise' ? 'Enterprise' : 'Pro';
+  const price = `$${PRICES[tier].month}`;
+  await send(to, `Your FlyCheap ${planName} trial ends ${trialEndUnix ? 'on ' + when : when}`, shell(
     'Your free trial ends in 3 days',
-    `<p>Heads up — your FlyCheap ${plan === 'enterprise' ? 'Enterprise' : 'Pro'} trial ends <strong>${when}</strong>. If you do nothing, your card will be charged <strong>${price}/month</strong> starting then, and every feature you're using stays on.</p>
-     <p>Not for you? Cancel in one click from Settings → Billing before then and you won't be charged anything. Your routes and fare history stay put on the Free plan either way.</p>`,
-    `${APP}/settings`, 'Manage my subscription →',
+    `<p>Heads up — your FlyCheap ${planName} trial ends <strong>${when}</strong>. If you do nothing, your card will be charged <strong>${price}/month</strong> starting then, and every feature you're using stays on.</p>
+     <p>Not for you? Click <strong>Downgrade to Free</strong> on the Pricing page before then and you won't be charged anything. Your routes and fare history stay put on the Free plan either way.</p>`,
+    `${APP}/pricing`, 'Manage my plan →',
   ));
 }
 
@@ -61,12 +72,38 @@ export async function sendPaymentFailedEmail(to: string, amountCents: number | u
   ));
 }
 
-/** One-time nudge when the free founding period (first 3 months) ends. */
+/**
+ * One-time nudge when the free founding period (first 3 months) ends.
+ *
+ * Every claim is derived: the Free plan from TIER_LIMITS and the channels we
+ * can actually deliver on, the upgrade cases from upgradeReasons(), prices
+ * from PRICES. The hand-written version sold "priority 5-minute polling",
+ * WhatsApp, a mistake-fare radar, a REST API and Slack alerts — none of which
+ * a customer can get — and linked to the retired /welcome page.
+ */
+export function upgradeNudgeEmail(): { subject: string; html: string } {
+  const d = deliverableChannels();
+  const free = TIER_LIMITS.free;
+  const freeLine = `${plural(free.maxRoutes, 'tracked route')}, alerts by ${lower(channelSentence(tierChannels('free', d)))}, and worldwide explore`;
+  // upgradeReasons() is shared with the pricing page; one of its lines carries
+  // its own comma clause, which reads badly inside a joined list here.
+  const tidy = (s: string) => lower(s).replace(/, not just target alerts$/, '');
+  const proAdds = upgradeReasons('free', 'pro', d).map(tidy);
+  const entAdds = upgradeReasons('pro', 'enterprise', d).map(tidy);
+  const pro = `<strong>Pro</strong> ($${PRICES.pro.month}/month) adds ${andList(proAdds)}.`;
+  const ent = entAdds.length ? ` <strong>Enterprise</strong> ($${PRICES.enterprise.month}/month) adds ${andList(entAdds)}.` : '';
+  return {
+    subject: 'Your first 3 months with FlyCheap are up — ready for more?',
+    html: shell(
+      'Three months in. Time to level up?',
+      `<p>Your founding period is complete — thanks for flying with us. Your account stays on the Free plan (${freeLine}), nothing is lost.</p>
+       <p>If FlyCheap has been earning its keep: ${pro}${ent}</p>`,
+      `${APP}/pricing`, 'See Pro & Enterprise →',
+    ),
+  };
+}
+
 export async function sendUpgradeNudgeEmail(to: string): Promise<void> {
-  await send(to, 'Your first 3 months with FlyCheap are up — ready for more?', shell(
-    'Three months in. Time to level up?',
-    `<p>Your founding period is complete — thanks for flying with us. Your account stays on the Free plan (5 routes, email alerts, worldwide explore), nothing is lost.</p>
-     <p>If FlyCheap has been earning its keep, <strong>Pro</strong> ($9/month) unlocks up to 100 routes, priority 5-minute polling, SMS / WhatsApp / Telegram alerts, buy/wait verdicts and the mistake-fare radar. <strong>Enterprise</strong> ($39/month) adds white-label, a custom domain, the REST API and Slack alerts.</p>`,
-    `${APP}/welcome#pricing`, 'See Pro & Enterprise →',
-  ));
+  const { subject, html } = upgradeNudgeEmail();
+  await send(to, subject, html);
 }
