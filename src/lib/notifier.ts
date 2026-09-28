@@ -76,6 +76,7 @@ export async function sendTwilio(
 
   try {
     const res = await fetch(url, {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { Authorization: auth, 'Content-Type': 'application/x-www-form-urlencoded' },
       body: form.toString(),
@@ -98,6 +99,7 @@ async function sendTelegram(chatId: string, body: string, parseMode?: 'Markdown'
     const payload: Record<string, unknown> = { chat_id: chatId, text: body, disable_web_page_preview: true };
     if (parseMode) payload.parse_mode = parseMode;
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
@@ -144,6 +146,7 @@ export async function postToSlackThread(channel: string, threadTs: string, text:
   if (!channel || !threadTs) return { channel: 'slack', ok: false, skipped: 'no channel/thread' };
   try {
     const res = await fetch('https://slack.com/api/chat.postMessage', {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ channel, thread_ts: threadTs, text, unfurl_links: false }),
@@ -249,6 +252,7 @@ export async function postToSlackChannel(
   if (!channel) return { channel: 'slack', ok: false, skipped: 'no slack channel id' };
   try {
     const res = await fetch('https://slack.com/api/chat.postMessage', {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { 'Content-Type': 'application/json; charset=utf-8', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ channel, text, ...(blocks ? { blocks } : {}) }),

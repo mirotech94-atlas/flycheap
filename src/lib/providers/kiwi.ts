@@ -70,6 +70,7 @@ export const kiwiProvider: FlightProvider = {
     });
 
     const res = await fetch(`https://tequila-api.kiwi.com/v2/search?${params}`, {
+      signal: AbortSignal.timeout(20_000),
       headers: { apikey: key },
       cache: 'no-store',
     });

@@ -17,6 +17,7 @@ const X_DAILY_CAP = 4;
 async function postTelegram(token: string, chatId: string, text: string): Promise<{ ok: boolean; error?: string }> {
   try {
     const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { 'content-type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'Markdown', disable_web_page_preview: false }),

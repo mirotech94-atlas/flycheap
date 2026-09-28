@@ -28,6 +28,7 @@ export async function sendExpoPush(tokens: string[], msg: PushMessage): Promise<
   }));
   try {
     const res = await fetch(EXPO_PUSH_URL, {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { 'content-type': 'application/json', accept: 'application/json' },
       body: JSON.stringify(messages),

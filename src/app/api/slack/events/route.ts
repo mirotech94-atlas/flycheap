@@ -94,7 +94,7 @@ async function fetchThreadHistory(
   try {
     const res = await fetch(
       `https://slack.com/api/conversations.replies?channel=${channel}&ts=${threadTs}&limit=20`,
-      { headers: { Authorization: `Bearer ${botToken}` } },
+      { signal: AbortSignal.timeout(10_000), headers: { Authorization: `Bearer ${botToken}` } },
     );
     const j = await res.json().catch(() => ({}));
     if (!j.ok || !Array.isArray(j.messages)) return [];
@@ -153,7 +153,7 @@ async function answerInThread(
         maxTokens: 500,
       })).trim();
     } else {
-      const client = new Anthropic({ apiKey: apiKey! });
+      const client = new Anthropic({ apiKey: apiKey!, timeout: 20_000, maxRetries: 1 });
       const res = await client.messages.create({
         // Haiku 4.5 — fast enough to typically reply in ~1-2s, plenty capable
         // for app-support Q&A.
@@ -183,6 +183,7 @@ async function postToSlackChannelThread(channel: string, threadTs: string, text:
   if (!botToken) return;
   try {
     await fetch('https://slack.com/api/chat.postMessage', {
+      signal: AbortSignal.timeout(10_000),
       method: 'POST',
       headers: { Authorization: `Bearer ${botToken}`, 'Content-Type': 'application/json; charset=utf-8' },
       body: JSON.stringify({ channel, thread_ts: threadTs, text, unfurl_links: false }),

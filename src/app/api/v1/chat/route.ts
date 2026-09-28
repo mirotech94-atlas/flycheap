@@ -37,7 +37,7 @@ async function runAnthropicLoop(
 ): Promise<LoopResult> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) return { ok: false, error: 'ANTHROPIC_API_KEY not set', status: 500 };
-  const client = new Anthropic({ apiKey });
+  const client = new Anthropic({ apiKey, timeout: 30_000, maxRetries: 1 });
   // Set once a tool has written something — the caller must not fail over after this.
   let executed = false;
   const messages: Anthropic.MessageParam[] = userMessages.map((m) => ({ role: m.role, content: m.content }));
@@ -93,6 +93,7 @@ async function runOpenAICompatLoop(
 
   for (let i = 0; i < MAX_ITERATIONS; i++) {
     const res = await fetch(`${opts.baseUrl}/chat/completions`, {
+      signal: AbortSignal.timeout(30_000),
       method: 'POST',
       headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
       body: JSON.stringify({ model: opts.model, max_tokens: 1024, messages, tools: oaTools }),

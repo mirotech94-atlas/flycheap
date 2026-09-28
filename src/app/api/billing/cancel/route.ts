@@ -46,6 +46,7 @@ export async function POST() {
     try {
       const sk = process.env.STRIPE_SECRET_KEY ?? '';
       const r = await fetch(`https://api.stripe.com/v1/subscriptions/${stripeSubId}`, {
+        signal: AbortSignal.timeout(15_000),
         method: 'POST',
         headers: {
           Authorization: 'Basic ' + Buffer.from(sk + ':').toString('base64'),
@@ -69,11 +70,13 @@ export async function POST() {
       if (cid && sec) {
         const auth = Buffer.from(`${cid}:${sec}`).toString('base64');
         const tok = await fetch(`${env}/v1/oauth2/token`, {
+          signal: AbortSignal.timeout(15_000),
           method: 'POST',
           headers: { Authorization: `Basic ${auth}`, 'Content-Type': 'application/x-www-form-urlencoded' },
           body: 'grant_type=client_credentials',
         }).then(r => r.json()).then(j => j.access_token);
         const r = await fetch(`${env}/v1/billing/subscriptions/${paypalSubId}/cancel`, {
+          signal: AbortSignal.timeout(15_000),
           method: 'POST',
           headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({ reason: 'User requested cancellation from the Pricing page.' }),

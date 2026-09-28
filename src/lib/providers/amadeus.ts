@@ -25,6 +25,7 @@ async function getToken(): Promise<{ ok: true; token: string } | { ok: false; er
   if (!id || !secret) return { ok: false, error: 'AMADEUS_CLIENT_ID / AMADEUS_CLIENT_SECRET not set' };
 
   const res = await fetch(`${baseUrl()}/v1/security/oauth2/token`, {
+    signal: AbortSignal.timeout(20_000),
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     body: `grant_type=client_credentials&client_id=${encodeURIComponent(id)}&client_secret=${encodeURIComponent(secret)}`,
@@ -73,6 +74,7 @@ export const amadeusProvider: FlightProvider = {
     if (p.infants > 0) params.set('infants', String(p.infants));
 
     const res = await fetch(`${baseUrl()}/v2/shopping/flight-offers?${params}`, {
+      signal: AbortSignal.timeout(20_000),
       headers: { Authorization: `Bearer ${auth.token}` }, cache: 'no-store',
     });
     const ms = Date.now() - start;

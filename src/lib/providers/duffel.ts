@@ -34,6 +34,7 @@ export const duffelProvider: FlightProvider = {
 
     const base = process.env.DUFFEL_BASE || 'https://api.duffel.com';
     const reqRes = await fetch(`${base}/air/offer_requests`, {
+      signal: AbortSignal.timeout(20_000),
       method: 'POST',
       headers: {
         Authorization: `Bearer ${token}`,

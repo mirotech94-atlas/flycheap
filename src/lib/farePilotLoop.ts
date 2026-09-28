@@ -55,6 +55,7 @@ async function callModel(
   let res: Response;
   try {
     res = await fetch(`${opts.baseUrl}/chat/completions`, {
+      signal: AbortSignal.timeout(30_000),
       method: 'POST',
       headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
       body: JSON.stringify({ model: opts.model, max_tokens: tools ? 2048 : 1024, messages, ...(tools ? { tools } : {}) }),

@@ -61,6 +61,7 @@ export async function pullCommissions(): Promise<PullResult> {
   let balanceUsd: number | null = null;
   try {
     const res = await fetch(BALANCE_URL, {
+      signal: AbortSignal.timeout(20_000),
       cache: 'no-store',
       headers: { 'X-Access-Token': token },
     });
@@ -98,7 +99,7 @@ export async function pullCommissions(): Promise<PullResult> {
   ];
   for (const url of statsCandidates) {
     try {
-      const res = await fetch(url, { cache: 'no-store', headers: { 'X-Access-Token': token } });
+      const res = await fetch(url, { signal: AbortSignal.timeout(20_000), cache: 'no-store', headers: { 'X-Access-Token': token } });
       if (!res.ok) continue; // 404 = endpoint retired; just move on
       const body = (await res.json().catch(() => null)) as { data?: RawStatRow[] } | RawStatRow[] | null;
       const rows: RawStatRow[] = Array.isArray(body) ? body : (body?.data ?? []);

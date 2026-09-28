@@ -44,6 +44,7 @@ async function tgSend(chatId: string | number, text: string, parseMode: 'Markdow
   const token = envBotToken();
   if (!token) return { ok: false, error: 'TELEGRAM_BOT_TOKEN unset' };
   const r = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+    signal: AbortSignal.timeout(10_000),
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: parseMode, disable_web_page_preview: true }),

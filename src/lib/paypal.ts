@@ -66,6 +66,7 @@ async function getAccessToken(): Promise<string | null> {
   if (!id || !secret) return null;
   const auth = Buffer.from(`${id}:${secret}`).toString('base64');
   const res = await fetch(`${API}/v1/oauth2/token`, {
+    signal: AbortSignal.timeout(15_000),
     method: 'POST',
     headers: {
       Authorization: `Basic ${auth}`,
@@ -116,6 +117,7 @@ export async function createSubscription(opts: {
   };
 
   const res = await fetch(`${API}/v1/billing/subscriptions`, {
+    signal: AbortSignal.timeout(15_000),
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),
@@ -131,6 +133,7 @@ export async function getSubscription(subscriptionId: string): Promise<any | nul
   const token = await getAccessToken();
   if (!token) return null;
   const res = await fetch(`${API}/v1/billing/subscriptions/${subscriptionId}`, {
+    signal: AbortSignal.timeout(15_000),
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!res.ok) return null;
@@ -159,6 +162,7 @@ export async function verifyWebhook(headers: Headers, rawBody: string): Promise<
     webhook_event:       JSON.parse(rawBody),
   };
   const res = await fetch(`${API}/v1/notifications/verify-webhook-signature`, {
+    signal: AbortSignal.timeout(15_000),
     method: 'POST',
     headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify(body),

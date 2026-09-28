@@ -18,7 +18,7 @@ async function surveyOne(origin: string, destination: string, month: string, tok
     unique: 'false', sorting: 'price', direct: 'false',
     currency: 'usd', limit: '1000', page: '1', one_way: 'true', token,
   });
-  const res = await fetch(`${ENDPOINT}?${params}`, { cache: 'no-store' });
+  const res = await fetch(`${ENDPOINT}?${params}`, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
   if (!res.ok) return { month, totalCached: 0, matchingAirline: 0, byDay: {} as Record<string, number>, ok: false, error: `${res.status}` };
   const j = await res.json() as { data?: TPLeg[] };
   const all = j.data ?? [];

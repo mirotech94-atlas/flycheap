@@ -326,7 +326,7 @@ function opsClient(): MessagesClient | null {
     });
   }
   if (provider === 'anthropic') {
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, timeout: 60_000 }) as unknown as MessagesClient;
   }
   return null;
 }
@@ -344,7 +344,7 @@ function opsChatClient(): MessagesClient | null {
     });
   }
   if (provider === 'anthropic') {
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, timeout: 60_000 }) as unknown as MessagesClient;
   }
   return null;
 }
