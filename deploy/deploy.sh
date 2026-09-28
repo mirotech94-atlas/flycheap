@@ -257,6 +257,10 @@ echo "==> Defensive chown: ensure $APP_USER owns .next, node_modules, and source
 # A prior failed deploy may have left root-owned files. The build runs as
 # $APP_USER, so any root-owned residue causes EACCES half-way through.
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next" "$APP_DIR/.next.a" "$APP_DIR/.next.b" "$APP_DIR/node_modules" 2>/dev/null || true
+# Leftovers from runs that did this work as root would now block the app-user
+# steps below (set -e), so hand them back too.
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next.static-keep" "$APP_DIR/.node_modules-cache.keep" 2>/dev/null || true
+rm -f "$APP_DIR/.deploy-active-dist.tmp"
 # The in-tree deploy/ copy stays root-owned and read-only to the app user
 # (chown -R does not follow symlinks, so this is safe on an app-owned tree).
 chown -R root:root "$APP_DIR/deploy" 2>/dev/null || true
