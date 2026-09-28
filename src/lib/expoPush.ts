@@ -40,7 +40,7 @@ export async function sendExpoPush(tokens: string[], msg: PushMessage): Promise<
       const tickets = Array.isArray(json?.data) ? json.data : [];
       tickets.forEach((t, i) => {
         if (t?.status === 'error' && t?.details?.error === 'DeviceNotRegistered' && valid[i]) {
-          queries.deletePushDevice(valid[i]);
+          queries.pruneDeadPushDevice(valid[i]);
         }
       });
     } catch { /* response parsing is best-effort */ }

@@ -9,6 +9,8 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ token: strin
   const user = await apiAuthBearer(req);
   if (!user) return NextResponse.json({ error: 'unauthenticated' }, { status: 401 });
   const { token } = await ctx.params;
-  queries.deletePushDevice(decodeURIComponent(token));
+  // Scoped to the caller: a signed-in user must not be able to unregister
+  // someone else's device (and silence their alerts) by guessing its token.
+  queries.deletePushDeviceForUser(decodeURIComponent(token), user.id);
   return NextResponse.json({ ok: true });
 }

@@ -1779,7 +1779,11 @@ export const queries = {
       `INSERT INTO push_devices (token, user_id, platform) VALUES (?, ?, ?)
        ON CONFLICT(token) DO UPDATE SET user_id = excluded.user_id, platform = excluded.platform`
     ).run(token, userId, platform),
-  deletePushDevice: (token: string) =>
+  /** Unregister a device on behalf of a signed-in user — only their own. */
+  deletePushDeviceForUser: (token: string, userId: number) =>
+    getDb().prepare(`DELETE FROM push_devices WHERE token = ? AND user_id = ?`).run(token, userId),
+  /** Server-side cleanup only: Expo reported this token as DeviceNotRegistered. */
+  pruneDeadPushDevice: (token: string) =>
     getDb().prepare(`DELETE FROM push_devices WHERE token = ?`).run(token),
   listPushDevicesForUser: (userId: number) =>
     getDb().prepare(`SELECT token, platform FROM push_devices WHERE user_id = ?`).all(userId) as
