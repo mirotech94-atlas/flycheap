@@ -6,6 +6,9 @@ import { postToSlackChannel, founderChannelId, postToSlackThread } from '@/lib/n
 import { routeSlackMessage } from '@/lib/ops/route';
 import { groqChat } from '@/lib/groqChat';
 import { llmProvider, groqModel } from '@/lib/llmProvider';
+import { deliverableChannels } from '@/lib/channelHealth';
+import { tierChannels, channelSentence } from '@/lib/tierCopy';
+import { TIER_LIMITS } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,21 +24,31 @@ export const dynamic = 'force-dynamic';
 //   - SLACK_SIGNING_SECRET in .env.local
 // ---------------------------------------------------------------------------
 
-const SUPPORT_SYSTEM_PROMPT = `You are the FlyCheap support agent, responding inside the team's Slack #support channel. A customer has posted a question; the human operator may be unavailable, so you answer on their behalf.
+// Built per request, not as a constant: the channel lists and the Free-tier
+// route limit are read from TIER_LIMITS and the configured senders, so the
+// agent cannot describe a channel we cannot send on. (It used to list Slack,
+// WhatsApp and Instagram DM as customer alert channels, a 30% mistake-fare
+// radar, five digest cadences and PDF export — none of which exist.)
+function supportSystemPrompt(): string {
+  const deliverable = deliverableChannels();
+  const free = channelSentence(tierChannels('free', deliverable));
+  const paid = channelSentence(tierChannels('pro', deliverable));
+  return `You are the FlyCheap support agent, responding inside the team's Slack #support channel. A customer has posted a question; the human operator may be unavailable, so you answer on their behalf.
 
 About FlyCheap:
 - A fare-watching app that polls airline fares through partner APIs (Travelpayouts/Aviasales is the live source; Amadeus, Duffel, Kiwi, SerpAPI and SearchAPI exist as integrations) and alerts users when fares drop. Never quote an airline count or a provider count — you cannot verify one.
-- Users add tracked routes; the scheduler polls them and emails/Slacks/Telegrams an alert when a fare falls below their threshold or ≥30% below the route's median (mistake-fare radar).
+- Users add tracked routes; the scheduler polls them and sends an alert when a fare lands at or below their target, or drops more than their configured percentage below the route's own recent median.
 - Key pages: Dashboard (executive brief, best fares worldwide, live feed, route intelligence, fare heatmap, carbon ledger), Explore (interactive 3D globe + satellite map, trending deals), Offers (flights + hotels combined), Hotels (search + price-by-month chart + neighborhood grid), Searches (add/manage tracked routes, multi-origin, airport typeahead), Settings (alert channels, providers, digests, share link).
-- Alert channels: email, Slack, Telegram, WhatsApp, Instagram DM, SMS. Free tier is email-only; paid tiers unlock the rest.
-- Digests: daily, weekly, monthly, 6-month, annual — all previewable + PDF-exportable in Settings.
-- Booking: every "Book" button routes through an affiliate redirect; users can pick the provider (Aviasales, Trip.com, Skyscanner, WayAway, Hotellook).
+- Alert channels: ${free} on the Free plan (up to ${TIER_LIMITS.free.maxRoutes} tracked routes); ${paid} on paid plans. Do not offer any other channel.
+- Digests: a daily or weekly email summary, previewable in Settings. There is no PDF export.
+- Booking: every "Book" button routes through our redirect; users can pick the provider (Aviasales, Trip.com, WayAway, Hotellook for stays) or non-affiliate options like Google Flights, Kayak, Skyscanner and the airline's own site. We never sell tickets ourselves.
 
 Style:
 - Be warm, concise, and genuinely helpful. 1-4 sentences usually.
 - If it's a billing/account-specific issue, or something you genuinely can't resolve, say you've flagged it for the operator to follow up personally.
 - Never invent specific fare prices or make promises about deals — speak generally about how the app works.
 - You're in Slack: plain text, light markdown (*bold*), no big headers.`;
+}
 
 // In-memory dedup of Slack event IDs. Slack retries deliveries; the app is a
 // long-running Node process so a Set survives between requests. Capped so it
@@ -135,7 +148,7 @@ async function answerInThread(
       text = (await groqChat({
         apiKey: groqKey!,
         model: process.env.SUPPORT_MODEL_GROQ || groqModel('fast'),
-        system: SUPPORT_SYSTEM_PROMPT,
+        system: supportSystemPrompt(),
         messages,
         maxTokens: 500,
       })).trim();
@@ -146,7 +159,7 @@ async function answerInThread(
         // for app-support Q&A.
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 500,
-        system: SUPPORT_SYSTEM_PROMPT,
+        system: supportSystemPrompt(),
         messages,
       });
       text = res.content

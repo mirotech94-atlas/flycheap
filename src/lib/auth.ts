@@ -187,7 +187,7 @@ export async function startSession(userId: number): Promise<string> {
 // ── Device token helpers (trusted-device, skip-OTP on returning browsers) ──
 
 export const DEVICE_COOKIE = 'fareintel_device';
-const DEVICE_MAX_AGE_SEC = 90 * 24 * 60 * 60; // 90 days
+export const DEVICE_MAX_AGE_SEC = 90 * 24 * 60 * 60; // 90 days
 
 /** Set a device token cookie after successful OTP verification. */
 export async function setDeviceToken(userId: number): Promise<void> {
