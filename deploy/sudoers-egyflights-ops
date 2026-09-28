@@ -8,4 +8,6 @@ egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl reset-failed egyptair-backup.
 egyflights ALL=(root) NOPASSWD: /usr/bin/systemctl list-units --failed --no-legend --plain egyptair\*
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-jobs@*.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-post-video.service -n [0-9]* --no-pager, /usr/bin/journalctl -u egyptair-backup.service -n [0-9]* --no-pager
 egyflights ALL=(root) NOPASSWD: /usr/bin/journalctl -u egyptair --since -[0-9]*min --no-pager -o cat
-egyflights ALL=(root) NOPASSWD: /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /opt/egyptair-tracker/deploy/deploy.sh
+# The root-owned copy installed by setup.sh — never the in-tree deploy/deploy.sh,
+# which lives in a directory egyflights owns and could therefore replace.
+egyflights ALL=(root) NOPASSWD: /usr/bin/systemd-run --unit=egyptair-redeploy --collect --no-block /usr/bin/bash /usr/local/sbin/flycheap-deploy

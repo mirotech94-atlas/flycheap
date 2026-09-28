@@ -6,12 +6,43 @@
 # - Logs to syslog so `journalctl --since today | grep fareintel-backup` works
 set -euo pipefail
 
+APP_USER="egyflights"
+INSTALLED_PATH="/usr/local/sbin/flycheap-backup"
+
+# Root runs this script, so it must come from a path only root can write: the
+# app user owns $APP_DIR, and could otherwise swap this file (or rename its
+# directory) and have root run whatever it planted. Install the root-owned
+# copy with setup.sh and run that.
+path_is_root_only() {
+  local p="$1" uid mode
+  while :; do
+    uid=$(stat -c '%u' -- "$p") || return 1
+    mode=$(stat -c '%a' -- "$p") || return 1
+    if [ "$uid" != "0" ]; then echo "    $p is owned by uid $uid, not root" >&2; return 1; fi
+    if (( 8#$mode & 8#022 )); then echo "    $p is group/other-writable (mode $mode)" >&2; return 1; fi
+    [ "$p" = "/" ] && return 0
+    p="$(dirname -- "$p")"
+  done
+}
+# The backup only reads the app's DB and writes into the app's own data dir,
+# both owned by the app user. So when started as root (cron / the backup
+# unit), check where this file came from, then drop to the app user before
+# touching anything: a symlinked data/backups can then only point at files
+# the app user could already write.
+if [ "$(id -u)" -eq 0 ]; then
+  SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+  if ! path_is_root_only "$SELF"; then
+    echo "REFUSED: $SELF is not root-only. Install: install -o root -g root -m 0755 $SELF $INSTALLED_PATH" >&2
+    exit 5
+  fi
+  exec runuser -u "$APP_USER" -- /bin/bash "$SELF" "$@"
+fi
+
 DB="/opt/egyptair-tracker/data/fares.db"
 DEST="/opt/egyptair-tracker/data/backups"
 KEEP=14
 
 mkdir -p "$DEST"
-chown egyflights:egyflights "$DEST" 2>/dev/null || true
 
 STAMP=$(date +%Y-%m-%d_%H%M%S)
 OUT="$DEST/fares-$STAMP.db"

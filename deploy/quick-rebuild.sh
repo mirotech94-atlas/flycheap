@@ -15,6 +15,33 @@ set -euo pipefail
 APP_DIR=/opt/egyptair-tracker
 APP_USER=egyflights
 KEEP="$APP_DIR/.next.static-keep"
+INSTALLED_PATH=/usr/local/sbin/flycheap-quick-rebuild
+
+# Root runs this script, so it must come from a path only root can write: the
+# app user owns $APP_DIR, and could otherwise swap this file (or rename its
+# directory) and have root run whatever it planted. Install the root-owned
+# copy with setup.sh and run that.
+path_is_root_only() {
+  local p="$1" uid mode
+  while :; do
+    uid=$(stat -c '%u' -- "$p") || return 1
+    mode=$(stat -c '%a' -- "$p") || return 1
+    if [ "$uid" != "0" ]; then echo "    $p is owned by uid $uid, not root" >&2; return 1; fi
+    if (( 8#$mode & 8#022 )); then echo "    $p is group/other-writable (mode $mode)" >&2; return 1; fi
+    [ "$p" = "/" ] && return 0
+    p="$(dirname -- "$p")"
+  done
+}
+SELF="$(readlink -f -- "${BASH_SOURCE[0]}")"
+if [ "$(id -u)" -eq 0 ] && ! path_is_root_only "$SELF"; then
+  echo "REFUSED: $SELF is not root-only all the way up to /. Run the installed copy:" >&2
+  echo "  install -o root -g root -m 0755 $APP_DIR/deploy/quick-rebuild.sh $INSTALLED_PATH && $INSTALLED_PATH" >&2
+  exit 5
+fi
+
+# Every write inside the app-owned tree happens as the app user, so a planted
+# symlink can never aim a root write outside it.
+as_app() { sudo -u "$APP_USER" -- "$@"; }
 
 cd "$APP_DIR"
 
@@ -31,22 +58,28 @@ fi
 echo "quick-rebuild: building active dist $DIST in place"
 
 if [ -d "$APP_DIR/$DIST/static" ]; then
-  rm -rf "$KEEP"
-  cp -a "$APP_DIR/$DIST/static" "$KEEP"
+  as_app rm -rf "$KEEP"
+  as_app cp -a "$APP_DIR/$DIST/static" "$KEEP"
 fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/src" "$APP_DIR/scripts" 2>/dev/null || true
 sudo -u "$APP_USER" bash -lc "cd $APP_DIR && NEXT_DIST_DIR=$DIST DEPLOY_LOCK_HELD=1 node node_modules/next/dist/bin/next build"
 
 if [ -d "$KEEP" ]; then
-  cp -an "$KEEP/." "$APP_DIR/$DIST/static/" 2>/dev/null || true
-  rm -rf "$KEEP"
+  as_app cp -an "$KEEP/." "$APP_DIR/$DIST/static/" 2>/dev/null || true
+  as_app rm -rf "$KEEP"
   echo "restored previous static assets — open tabs keep working"
 fi
 
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/$DIST"
-chown "$APP_USER:$APP_USER" "$APP_DIR/.env.local"
-chmod 600 "$APP_DIR/.env.local"
+# Never follow a symlink here: `chown` without -h on a planted
+# .env.local -> /etc/shadow would hand the app user that file.
+if [ -L "$APP_DIR/.env.local" ]; then
+  echo "REFUSED: $APP_DIR/.env.local is a symlink" >&2
+  exit 6
+fi
+chown -h "$APP_USER:$APP_USER" "$APP_DIR/.env.local"
+as_app chmod 600 "$APP_DIR/.env.local"
 
 systemctl restart egyptair
 sleep 7

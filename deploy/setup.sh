@@ -38,6 +38,24 @@ ufw --force enable
 echo "==> Preparing $APP_DIR"
 mkdir -p "$APP_DIR"
 chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+# The app user owns the app tree, but nothing root runs may live anywhere it
+# can write. deploy/ stays root-owned and read-only to it...
+if [ -d "$APP_DIR/deploy" ]; then
+  chown -R root:root "$APP_DIR/deploy"
+  chmod -R go-w "$APP_DIR/deploy"
+fi
+
+echo "==> Installing root-run scripts outside the app tree"
+# ...and, because egyflights owns $APP_DIR itself, it could still rename
+# deploy/ and plant a new one. So the scripts root actually executes (via
+# sudoers, cron, or by hand) are root-owned copies in /usr/local/sbin. They
+# refuse to run from any path a non-root user can write. Re-run these
+# installs whenever deploy/*.sh changes.
+DEPLOY_SRC="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+install -o root -g root -m 0755 "$DEPLOY_SRC/deploy.sh"        /usr/local/sbin/flycheap-deploy
+install -o root -g root -m 0755 "$DEPLOY_SRC/quick-rebuild.sh" /usr/local/sbin/flycheap-quick-rebuild
+install -o root -g root -m 0755 "$DEPLOY_SRC/backup.sh"        /usr/local/sbin/flycheap-backup
+install -d -o root -g root -m 0700 /var/lib/flycheap-deploy
 
 echo "==> Installing ops agent privilege boundary"
 # Ops agent privilege boundary — exact commands the app user may run via sudo.
@@ -56,8 +74,10 @@ Next steps (run by hand):
        sudo -u $APP_USER cp .env.example .env.local
        sudo -u $APP_USER nano .env.local       # fill AMADEUS_*, RESEND_*, etc.
        chmod 600 .env.local
+       chown -R $APP_USER:$APP_USER $APP_DIR
+       chown -R root:root $APP_DIR/deploy && chmod -R go-w $APP_DIR/deploy
        sudo -u $APP_USER npm ci
-       sudo -u $APP_USER npm run build
+       DEPLOY_OWNER_TOKEN=… /usr/local/sbin/flycheap-deploy   # builds + starts
 
   2. Install systemd unit:
        cp deploy/egyptair.service /etc/systemd/system/

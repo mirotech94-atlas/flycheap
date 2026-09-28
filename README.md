@@ -86,7 +86,7 @@ Secrets live in `.env.local` (never committed — see `.env.example`).
 - **Safe health checks** — `deploy.sh` health-checks through a real `Host` header on an app-router route, verifies build completeness (BUILD_ID + client manifests) before restart, auto-rolls-back on failure, and enforces a 60s cooldown between deploys.
 - **Reconcile before shipping** — because the box diverges from git, `prod-original` must be reconciled against the server before it's a trustworthy mirror.
 
-Deploy: `DEPLOY_OWNER_TOKEN=… bash deploy/deploy.sh` (run by the deploy owner only).
+Deploy: `DEPLOY_OWNER_TOKEN=… /usr/local/sbin/flycheap-deploy` (run by the deploy owner only). That is the root-owned copy of `deploy/deploy.sh` that `setup.sh` installs; the script refuses to run from inside `/opt/egyptair-tracker`, which the app user owns. After changing `deploy/*.sh`, re-install it: `install -o root -g root -m 0755 deploy/deploy.sh /usr/local/sbin/flycheap-deploy`.
 
 ## Contributing
 
