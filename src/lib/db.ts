@@ -1707,6 +1707,24 @@ export const queries = {
   setUserStripe: (id: number, customerId: string, subscriptionId?: string | null) =>
     getDb().prepare(`UPDATE users SET stripe_customer_id = ?, stripe_subscription_id = ? WHERE id = ?`)
       .run(customerId, subscriptionId ?? null, id),
+  /**
+   * Users who cancelled and whose paid period has now ended. Stripe normally
+   * tells us first (customer.subscription.deleted fires at period end); this
+   * is the safety net for that webhook and the only mechanism for PayPal,
+   * whose cancel is immediate on its side. renews_at is stored as ISO from
+   * both providers, so it is normalised to SQLite's 'YYYY-MM-DD HH:MM:SS'
+   * before the comparison — a raw compare would sort 'T' after ' ' and hold
+   * the downgrade until the next calendar day.
+   */
+  dueScheduledCancellations: () =>
+    getDb().prepare(`SELECT id, email, tier FROM users WHERE subscription_status = 'cancel_at_period_end'
+       AND subscription_renews_at IS NOT NULL
+       AND substr(replace(subscription_renews_at, 'T', ' '), 1, 19) < datetime('now')`).all() as Array<{ id: number; email: string; tier: string }>,
+  /** The period ran out: drop to Free and forget the subscription. Routes and history are untouched. */
+  finishScheduledCancellation: (id: number) =>
+    getDb().prepare(`UPDATE users SET tier = 'free', subscription_status = 'canceled', subscription_renews_at = NULL,
+       subscription_provider = NULL, subscription_period = NULL, stripe_subscription_id = NULL, paypal_subscription_id = NULL
+       WHERE id = ? AND subscription_status = 'cancel_at_period_end'`).run(id),
   setUserPaypal: (id: number, subscriptionId: string | null) =>
     getDb().prepare(`UPDATE users SET paypal_subscription_id = ? WHERE id = ?`).run(subscriptionId ?? null, id),
   /** Provider / billing period / trial end for the current subscription. Nulls clear provider+period; an omitted trialEndsAt keeps the stored value. */

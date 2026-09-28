@@ -29,10 +29,12 @@ const MAX_ANNUAL_SAVINGS_PCT = Math.max(
 export type PlanBullets = Record<'free' | 'pro' | 'enterprise', PlanFeature[]>;
 
 
-export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = false }: {
+export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = false, cancelsOn = null }: {
   signedIn: boolean;
   currentTier: string;
   bullets: PlanBullets;
+  /** Human date the paid period ends when a cancellation is already scheduled; null otherwise. */
+  cancelsOn?: string | null;
   /** False when PayPal has no credentials — then we do not offer it at all. */
   paypalEnabled?: boolean;
 }) {
@@ -42,7 +44,7 @@ export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = 
   async function downgrade() {
     if (cancelling) return;
     const confirmed = window.confirm(
-      'Downgrade to Free? Your paid subscription will be cancelled immediately, your active routes above the free route cap will be paused, and paid-only alert channels (SMS, Telegram) will stop. You can re-subscribe any time.'
+      'Downgrade to Free? Your subscription will not renew. You keep your current plan until the end of the period you have already paid for; after that your account moves to Free, routes above the Free limit are paused, and paid-only alert channels stop. Nothing is deleted and you can re-subscribe any time.'
     );
     if (!confirmed) return;
     setCancelling(true);
@@ -50,7 +52,7 @@ export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = 
     const j = await res.json().catch(() => ({}));
     setCancelling(false);
     if (j.ok) {
-      window.location.href = '/settings?billing=cancelled';
+      window.location.href = j.endsAt ? '/settings?billing=cancel-scheduled' : '/settings?billing=cancelled';
     } else {
       alert('Cancellation hit an error: ' + (j.error ?? 'unknown') + '\nReach out and we will sort it out.');
     }
@@ -120,9 +122,11 @@ export function PricingClient({ signedIn, currentTier, bullets, paypalEnabled = 
               <a href="/early-access" className="ed-btn ed-btn-primary w-full justify-center text-center">Get early access →</a>
             ) : currentTier === 'free' ? (
               <button className="ed-btn ed-btn-secondary w-full justify-center" disabled>Your current plan</button>
+            ) : cancelsOn ? (
+              <button className="ed-btn ed-btn-secondary w-full justify-center" disabled>Moves to Free on {cancelsOn}</button>
             ) : (
               <button type="button" className="ed-btn ed-btn-danger w-full justify-center" disabled={cancelling} onClick={downgrade}>
-                {cancelling ? 'Cancelling…' : 'Downgrade to Free now'}
+                {cancelling ? 'Cancelling…' : 'Downgrade to Free'}
               </button>
             )}
           </div>

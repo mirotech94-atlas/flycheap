@@ -20,6 +20,9 @@ export default async function PricingPage() {
   // What we can actually send on right now, measured — not what a tier permits.
   const deliverable = deliverableChannels();
   const paypal = isPaypalConfigured();
+  const cancelsOn = user?.subscription_status === 'cancel_at_period_end' && user.subscription_renews_at
+    ? new Date(user.subscription_renews_at.replace(' ', 'T')).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : null;
   const bullets = {
     free: planFeatures('free', deliverable),
     pro: planFeatures('pro', deliverable),
@@ -52,6 +55,7 @@ export default async function PricingPage() {
         currentTier={user?.tier ?? 'free'}
         bullets={bullets}
         paypalEnabled={paypal}
+        cancelsOn={cancelsOn}
       />
 
       <div className="ed-panel">
@@ -129,7 +133,7 @@ export default async function PricingPage() {
           <li><strong>Card payments</strong> (Visa, Mastercard, Amex, etc.) are processed through Stripe Checkout — Apple Pay and Google Pay are auto-detected on supported devices.</li>
           {paypal && <li><strong>PayPal</strong> charges through your PayPal balance, linked bank, or any card attached to your PayPal account.</li>}
           <li>Card data <em>never touches our servers</em> — {paypal ? 'Stripe and PayPal are both' : 'Stripe is'} PCI Level 1 certified.</li>
-          <li>Cancel any time — click <strong>Downgrade to Free now</strong> on this page. Cancellation is immediate; you can re-subscribe at any time.</li>
+          <li>Cancel any time — click <strong>Downgrade to Free</strong> on this page. Your plan stays active until the end of the period you already paid for, then moves to Free with nothing deleted; you can re-subscribe at any time.</li>
         </ul>
       </div>
     </div>

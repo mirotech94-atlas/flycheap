@@ -85,7 +85,13 @@ export async function POST(req: NextRequest) {
     case 'BILLING.SUBSCRIPTION.CANCELLED':
     case 'BILLING.SUBSCRIPTION.EXPIRED': {
       if (!Number.isFinite(userId)) break;
-      const wasPaid = (queries.getUserById(userId)?.tier ?? 'free') !== 'free';
+      const cur = queries.getUserById(userId);
+      // PayPal cancels on its side the moment the user asks, and this event
+      // follows within seconds — but the user has paid through renews_at, so
+      // a cancellation we scheduled keeps its tier until the poll sweep ends it.
+      if (cur?.subscription_status === 'cancel_at_period_end' && cur.subscription_renews_at
+          && Date.parse(cur.subscription_renews_at.replace(' ', 'T')) > Date.now()) break;
+      const wasPaid = (cur?.tier ?? 'free') !== 'free';
       queries.setUserTier(userId, 'free', 'canceled', null);
       queries.setSubscriptionMeta(userId, { provider: null, period: null });
       queries.setUserPaypal(userId, null);
