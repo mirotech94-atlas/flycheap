@@ -110,7 +110,7 @@ async function runSearch(params: {
 
   const results = await Promise.all(searches);
   const merged = results.flatMap(r => r.offers.map(o => ({ ...o, origin: r.origin })));
-  let filtered = merged.filter(o => stopsMatch(o, stops));
+  const filtered = merged.filter(o => stopsMatch(o, stops));
   filtered.sort((a, b) => a.per_adult_usd - b.per_adult_usd);
 
   let fallback: { offers: typeof filtered; window: string } | null = null;

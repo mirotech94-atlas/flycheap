@@ -1,4 +1,5 @@
 import { queries } from '@/lib/db';
+import { verifyTwilioSignature } from '@/lib/twilioSignature';
 
 export const dynamic = 'force-dynamic';
 
@@ -13,9 +14,39 @@ function twiml(message: string | null): Response {
   return new Response(xml, { headers: { 'Content-Type': 'text/xml; charset=utf-8' } });
 }
 
+const forbidden = () => new Response('Forbidden', { status: 403 });
+
+let warnedUnverified = false;
+
 export async function POST(req: Request) {
   const form = await req.formData().catch(() => null);
-  if (!form) return twiml(null);
+  if (!form) return forbidden();
+
+  // Only Twilio may drive this: an unsigned STOP/START lets anyone flip a
+  // user's SMS subscription by knowing their phone number.
+  //
+  // Enforced once TWILIO_WEBHOOK_URL is set — the signature covers the exact
+  // public URL configured in the Twilio console, and behind the proxy the app
+  // cannot reliably reconstruct it, so guessing would refuse real traffic
+  // (including STOP, which carriers require us to honour). Until it is set the
+  // check is inert and says so, once, in the log. Once set, a missing auth
+  // token fails closed.
+  const webhookUrl = process.env.TWILIO_WEBHOOK_URL?.trim();
+  if (webhookUrl) {
+    const params: Record<string, string[]> = {};
+    for (const [k, v] of form.entries()) (params[k] ??= []).push(typeof v === 'string' ? v : '');
+    if (!verifyTwilioSignature({
+      authToken: process.env.TWILIO_AUTH_TOKEN,
+      url: webhookUrl,
+      params,
+      signature: req.headers.get('x-twilio-signature'),
+    })) {
+      return forbidden();
+    }
+  } else if (!warnedUnverified) {
+    warnedUnverified = true;
+    console.warn('[twilio] TWILIO_WEBHOOK_URL is not set — inbound SMS signatures are NOT verified. Set it to the URL in the Twilio console.');
+  }
 
   const from = String(form.get('From') ?? '').trim();
   const bodyRaw = String(form.get('Body') ?? '').trim();

@@ -10,6 +10,7 @@ fs.mkdirSync(DATA_DIR, { recursive: true });
 const dbPath = path.join(DATA_DIR, 'fares.db');
 
 declare global {
+  // eslint-disable-next-line no-var -- `declare global` requires var
   var __egyptairDb: Database.Database | undefined;
 }
 
@@ -1355,6 +1356,24 @@ export function limitsForUser(
   return base;
 }
 
+const TIER_ORDER = ['free', 'pro', 'enterprise'] as const;
+const TIER_LABEL: Record<string, string> = { free: 'Free', pro: 'Pro', enterprise: 'Enterprise' };
+
+/**
+ * Why this user may not add another tracked route, or null if they may. Shared
+ * by the web and mobile APIs so neither can drift from TIER_LIMITS; every
+ * number in the message is read from it, never typed.
+ */
+export function routeLimitError(
+  user: { id: number; tier?: string | null; subscription_status?: string | null },
+): string | null {
+  const limit = limitsForUser(user).maxRoutes;
+  if (queries.countActiveSearchesForUser(user.id) < limit) return null;
+  const next = TIER_ORDER.find(t => TIER_LIMITS[t].maxRoutes > limit);
+  const upsell = next ? ` ${TIER_LABEL[next]} tracks up to ${TIER_LIMITS[next].maxRoutes}.` : '';
+  return `You're at your plan's limit of ${limit} tracked routes.${upsell}`;
+}
+
 export type UserRow = {
   id: number;
   email: string;
@@ -1778,7 +1797,11 @@ export const queries = {
       `INSERT INTO push_devices (token, user_id, platform) VALUES (?, ?, ?)
        ON CONFLICT(token) DO UPDATE SET user_id = excluded.user_id, platform = excluded.platform`
     ).run(token, userId, platform),
-  deletePushDevice: (token: string) =>
+  /** Unregister a device on behalf of a signed-in user — only their own. */
+  deletePushDeviceForUser: (token: string, userId: number) =>
+    getDb().prepare(`DELETE FROM push_devices WHERE token = ? AND user_id = ?`).run(token, userId),
+  /** Server-side cleanup only: Expo reported this token as DeviceNotRegistered. */
+  pruneDeadPushDevice: (token: string) =>
     getDb().prepare(`DELETE FROM push_devices WHERE token = ?`).run(token),
   listPushDevicesForUser: (userId: number) =>
     getDb().prepare(`SELECT token, platform FROM push_devices WHERE user_id = ?`).all(userId) as
@@ -2011,6 +2034,9 @@ export const queries = {
     ).run(id, source);
     return r.changes === 1;
   },
+  /** Undo recordWebhookEvent when processing failed, so the sender's retry runs. */
+  forgetWebhookEvent: (id: string, source: string) =>
+    getDb().prepare(`DELETE FROM webhook_events WHERE id = ? AND source = ?`).run(id, source),
 
   // -------- SSE cursors --------
   maxSnapshotId: (): number | null => {

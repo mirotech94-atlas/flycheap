@@ -1,12 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUser, isAdmin } from '@/lib/auth';
 import { queries } from '@/lib/db';
-import { earlyAccessCount, getEarlyAccessById, joinEarlyAccess, listEarlyAccess, sendAccessRequestNotification, sendEarlyAccessEmail } from '@/lib/early-access';
+import { earlyAccessCount, getEarlyAccessById, isValidEarlyAccessEmail, joinEarlyAccess, listEarlyAccess, sendAccessRequestNotification, sendEarlyAccessEmail } from '@/lib/early-access';
 import { parseFirstWatch } from '@/lib/firstWatch';
 
 export const dynamic = 'force-dynamic';
-
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
 function clientIp(req: NextRequest): string {
   return (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
@@ -20,7 +18,7 @@ export async function POST(req: NextRequest) {
   if (body.website) return NextResponse.json({ ok: true, position: 0 });
 
   const email = String(body.email ?? '').trim().toLowerCase();
-  if (!EMAIL_RE.test(email) || email.length > 254) {
+  if (!isValidEarlyAccessEmail(email)) {
     return NextResponse.json({ ok: false, error: 'Please enter a valid email address.' }, { status: 400 });
   }
   const name = String(body.name ?? '').trim();

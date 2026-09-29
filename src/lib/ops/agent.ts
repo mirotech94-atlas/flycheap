@@ -134,6 +134,20 @@ const SETTING_VALIDATORS: Record<string, (v: string) => string | null> = {
 // visible action — never the agent approving something of its own invention.
 // A bare "fix it" in the channel with no proposal recorded yet still goes
 // through the normal propose-first path (this only fires when `pending` exists).
+/**
+ * Whether a Slack user may approve a gated action. The channel is not the
+ * boundary — anyone invited to #admin_alerts (or any app with chat:write in
+ * it) can post "go" — so the approving USER must be on an explicit list:
+ * OPS_APPROVER_SLACK_USER_IDS, comma-separated Slack user ids (U…). Unset or
+ * empty means nobody can approve: fail closed.
+ */
+export function isOpsApprover(slackUserId: string | null | undefined): boolean {
+  const id = String(slackUserId ?? '').trim();
+  if (!id) return false;
+  const allowed = (process.env.OPS_APPROVER_SLACK_USER_IDS ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  return allowed.includes(id);
+}
+
 export function approvalGranted(latestHumanText: string): boolean {
   return /^(go|go ahead|yes|yep|yeah|ok|okay|do it|just do it|fix (it|them|that|this)|fix|handle (it|them|that)|sort (it|them) out|resolve (it|them|that)|approved?|proceed)\b/i
     .test(latestHumanText.trim());
@@ -446,14 +460,19 @@ export async function autoFix(incident: OpsIncidentRow, action: { tool: string; 
   return { text: r.text ?? r.lastToolResult ?? 'done', restarted: r.restarted };
 }
 
-export async function handleThreadReply(incident: OpsIncidentRow, thread: ThreadMsg[], latest: string, deps: AgentDeps):
-  Promise<{ text: string; restarted: boolean }> {
+export async function handleThreadReply(
+  incident: OpsIncidentRow, thread: ThreadMsg[], latest: string, deps: AgentDeps,
+  /** Slack user id of whoever wrote `latest`. Only listed approvers can approve. */
+  authorSlackUserId?: string | null,
+): Promise<{ text: string; restarted: boolean }> {
   const pending = parseProposal(incident.last_action);
   // A pending proposal is approvable only by the very next human reply, and
   // only once: whether this reply approves it or not, it is consumed here
   // (before the loop runs) so a later unrelated "go" can never resurrect a
-  // stale proposal, and the same proposal can never be replayed twice.
-  const approvedProposal: Proposal | null = pending && approvalGranted(latest) ? pending : null;
+  // stale proposal, and the same proposal can never be replayed twice. The
+  // reply must also come from a listed approver, not merely from the channel.
+  const approvedProposal: Proposal | null =
+    pending && approvalGranted(latest) && isOpsApprover(authorSlackUserId) ? pending : null;
   if (pending) {
     queries.setIncidentStatus(incident.id, 'open', null);
     incident = queries.incidentById(incident.id) ?? incident;

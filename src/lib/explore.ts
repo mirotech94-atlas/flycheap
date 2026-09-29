@@ -39,7 +39,7 @@ export async function topDestinations(origin: string, currency = 'usd'): Promise
   const t = token();
   if (!t) return [];
   const params = new URLSearchParams({ origin, currency, token: t });
-  const r = await fetch(`${HOST}/v1/city-directions?${params}`, { cache: 'no-store' });
+  const r = await fetch(`${HOST}/v1/city-directions?${params}`, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
   if (!r.ok) return [];
   const j = await r.json() as { data?: Record<string, {
     price: number; airline: string; departure_at: string; return_at?: string;
@@ -81,7 +81,7 @@ export async function hotDeals(opts: {
   });
   if (opts.origin)      p.set('origin', opts.origin);
   if (opts.destination) p.set('destination', opts.destination);
-  const r = await fetch(`${HOST}/aviasales/v3/get_latest_prices?${p}`, { cache: 'no-store' });
+  const r = await fetch(`${HOST}/aviasales/v3/get_latest_prices?${p}`, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
   if (!r.ok) return [];
   // The TP "get_latest_prices" endpoint returns the price under `value`, not `price`.
   // Map onto our normalized LatestDeal shape so downstream code can rely on `price`.
@@ -118,7 +118,7 @@ export async function cheapestByMonth(origin: string, destination: string): Prom
     const month = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, '0')}`;
     const p = new URLSearchParams({ origin, destination, depart_date: month, currency: 'usd', token: t });
     try {
-      const r = await fetch(`${HOST}/v1/prices/cheap?${p}`, { cache: 'no-store' });
+      const r = await fetch(`${HOST}/v1/prices/cheap?${p}`, { signal: AbortSignal.timeout(20_000), cache: 'no-store' });
       if (!r.ok) continue;
       const j = await r.json() as { data?: Record<string, Record<string, { price: number; departure_at: string; return_at?: string }>> };
       // Shape: data[destination][index] = { price, departure_at, return_at }

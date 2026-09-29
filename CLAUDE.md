@@ -26,8 +26,11 @@ before it lands in `src/`.
 
 ## Deploys
 
-Ship via `deploy/deploy.sh`. A bare `next build` is refused (`DEPLOY_LOCK_HELD`) — the lock
-prevents concurrent-build outages. Never bulk-rsync local → prod; use scoped file copies.
+Ship via `deploy/deploy.sh`, run as its root-owned installed copy `/usr/local/sbin/flycheap-deploy`
+(the script refuses to run from inside `/opt/egyptair-tracker`, which the app user owns). When
+`deploy/*.sh` changes, copy it to `/usr/local/sbin` from a trusted checkout, never from the app
+tree. A bare `next build` is refused (`DEPLOY_LOCK_HELD`) — the lock prevents concurrent-build
+outages. Never bulk-rsync local → prod; use scoped file copies.
 
 ## Copy
 

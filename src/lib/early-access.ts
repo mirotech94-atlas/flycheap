@@ -1,7 +1,9 @@
 import 'server-only';
 import crypto from 'node:crypto';
 import { Resend } from 'resend';
-import { renderEmail, emailRows, emailButton, emailSecondaryButton, emailNote, p as para, escapeEmail as escE } from './emailLayout';
+import { z } from 'zod';
+import { renderEmail, emailRows, emailButton, emailSecondaryButton, emailNote } from './emailLayout';
+import { escapeHtml as h } from './html';
 import { getDb, queries } from './db';
 import { supportFrom } from './senders';
 import { APP_URL } from './hosts';
@@ -22,6 +24,17 @@ export type EarlyAccessRow = {
 /** Where new access requests are announced (Approve / Decline links). */
 export const NOTIFY_TO: string[] = (process.env.EARLY_ACCESS_NOTIFY || 'miro@flycheap.live')
   .split(',').map(s => s.trim()).filter(Boolean);
+
+/** The emailed approve/decline link works for this long after the request. */
+export const APPROVE_LINK_TTL_DAYS = 14;
+
+// zod's email check (no angle brackets, quotes, spaces or bare hosts), plus the
+// RFC length cap. The old regex accepted anything without whitespace or '@',
+// which let `<script>` ride in on the address itself.
+const EmailSchema = z.string().max(254).email();
+export function isValidEarlyAccessEmail(email: string): boolean {
+  return EmailSchema.safeParse(email).success;
+}
 
 let ensured = false;
 function ensure() {
@@ -151,13 +164,38 @@ export function getEarlyAccessById(id: number): EarlyAccessRow | undefined {
   return getDb().prepare('SELECT * FROM early_access WHERE id = ?').get(id) as EarlyAccessRow | undefined;
 }
 
-/** Approve/decline via the signed link in the admin email. Returns the row or null when the token is wrong. */
-export function decideEarlyAccess(id: number, token: string, action: 'approve' | 'decline'): EarlyAccessRow | null {
+function tokenMatches(stored: string | null, given: string): boolean {
+  if (!stored || !given) return false;
+  const a = Buffer.from(stored), b = Buffer.from(given);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+
+/** The row an emailed link is still good for (right token, not yet used, not
+ *  expired), or null. Read-only — used to render the confirmation page. */
+export function peekEarlyAccessDecision(id: number, token: string): EarlyAccessRow | null {
   const row = getEarlyAccessById(id);
-  if (!row || !row.approve_token || row.approve_token !== token) return null;
+  if (!row || !tokenMatches(row.approve_token, token)) return null;
+  const fresh = getDb().prepare(`SELECT 1 FROM early_access WHERE id = ? AND created_at > datetime('now', ?)`)
+    .get(id, `-${APPROVE_LINK_TTL_DAYS} days`);
+  return fresh ? row : null;
+}
+
+/**
+ * Approve/decline via the emailed link. Single-use and expiring: the token is
+ * checked and cleared in ONE conditional UPDATE, so two clicks (or a replayed
+ * link) can never both succeed and double-provision. Returns the updated row,
+ * or null when the token is wrong, already used, or older than the TTL.
+ */
+export function consumeEarlyAccessDecision(id: number, token: string, action: 'approve' | 'decline'): EarlyAccessRow | null {
+  if (!peekEarlyAccessDecision(id, token)) return null;
   const col = action === 'approve' ? 'approved_at' : 'declined_at';
   const other = action === 'approve' ? 'declined_at' : 'approved_at';
-  getDb().prepare(`UPDATE early_access SET ${col} = COALESCE(${col}, datetime('now')), ${other} = NULL WHERE id = ?`).run(id);
+  const r = getDb().prepare(
+    `UPDATE early_access
+        SET ${col} = COALESCE(${col}, datetime('now')), ${other} = NULL, approve_token = NULL
+      WHERE id = ? AND approve_token = ? AND created_at > datetime('now', ?)`,
+  ).run(id, token, `-${APPROVE_LINK_TTL_DAYS} days`);
+  if (r.changes !== 1) return null;
   return getEarlyAccessById(id) ?? null;
 }
 
@@ -166,35 +204,44 @@ function resend(): Resend | null {
   return k ? new Resend(k) : null;
 }
 
-/** Tells the owner a new request came in, with one-click Approve / Decline links. */
-export async function sendAccessRequestNotification(row: EarlyAccessRow, referrals: number): Promise<void> {
-  const r = resend(); if (!r) return;
-  const base = `${APP}/api/early-access/approve?id=${row.id}&t=${encodeURIComponent(row.approve_token ?? '')}`;
-  const total = earlyAccessCount();
+/**
+ * The owner's "new access request" email, on the shared email shell. Every
+ * requester-supplied field is escaped: this lands in the inbox of the one
+ * account that can approve users, so a name like `<img onerror=…>` must
+ * arrive as text. (renderEmail escapes the headline and preheader itself, so
+ * those get the raw values; the rows and note are HTML and get escapeHtml.)
+ */
+export function accessRequestHtml(row: EarlyAccessRow, referrals: number, total: number, app: string = APP): string {
+  const base = `${app}/api/early-access/approve?id=${encodeURIComponent(String(row.id))}&t=${encodeURIComponent(row.approve_token ?? '')}`;
   const dash = '—';
-  const html = renderEmail({
+  return renderEmail({
     kind: 'notice',
-    appUrl: APP,
+    appUrl: app,
     preheader: `Access request #${row.position}: ${row.email}`,
-    headline: `${row.name ? escE(row.name) + ' asked for access.' : 'Someone asked for access.'}`,
+    headline: row.name ? `${row.name} asked for access.` : 'Someone asked for access.',
     body: [
       emailRows([
-        ['Email', escE(row.email)],
-        ['Name', escE(row.name ?? dash)],
-        ['Phone', escE(row.phone ?? dash)],
-        ['Position', `#${row.position} of ${total}`],
-        ['Home airport', escE(row.home_airport ?? dash)],
-        ['Referred by', escE(row.referred_by ?? dash)],
-        ['Referrals', String(referrals)],
-        ['IP', escE(row.ip ?? dash)],
-        ['Requested', `${escE(row.created_at)} UTC`],
+        ['Email', h(row.email)],
+        ['Name', h(row.name ?? dash)],
+        ['Phone', h(row.phone ?? dash)],
+        ['Position', `#${h(row.position)} of ${h(total)}`],
+        ['Home airport', h(row.home_airport ?? dash)],
+        ['Referred by', h(row.referred_by ?? dash)],
+        ['Referrals', h(referrals)],
+        ['IP', h(row.ip ?? dash)],
+        ['Requested', `${h(row.created_at)} UTC`],
       ]),
       `<div style="margin:22px 0 6px">${emailButton('Approve and send invite', `${base}&action=approve`)} <span style="display:inline-block;width:10px"></span> ${emailSecondaryButton('Decline', `${base}&action=decline`)}</div>`,
-      emailNote(`Approving emails ${escE(row.email)} a sign-in link. Full list: <a href="${APP}/api/early-access?format=csv" style="color:inherit;text-decoration:underline">CSV export</a> (admin login required).`),
+      emailNote(`Each link opens a confirmation page, works once, and expires ${APPROVE_LINK_TTL_DAYS} days after the request. Approving emails ${h(row.email)} a sign-in link. Full list: <a href="${h(app)}/api/early-access?format=csv" style="color:inherit;text-decoration:underline">CSV export</a> (admin login required).`),
     ].join(''),
     footerNote: 'Internal notice — sent to the owner for every early-access request.',
   });
-  void para;
+}
+
+/** Tells the owner a new request came in, with one-click Approve / Decline links. */
+export async function sendAccessRequestNotification(row: EarlyAccessRow, referrals: number): Promise<void> {
+  const r = resend(); if (!r) return;
+  const html = accessRequestHtml(row, referrals, earlyAccessCount());
   try {
     const sent = await r.emails.send({ from: supportFrom('FlyCheap Early Access'), to: NOTIFY_TO, replyTo: row.email, subject: `Access request #${row.position}: ${row.email}`, html });
     if (sent.error) console.error('[early-access] notify rejected:', JSON.stringify(sent.error));

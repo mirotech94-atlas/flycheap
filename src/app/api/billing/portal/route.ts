@@ -21,6 +21,7 @@ export async function GET(req: NextRequest) {
   form.set('return_url', returnUrl);
 
   const r = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+    signal: AbortSignal.timeout(15_000),
     method: 'POST',
     headers: {
       Authorization: 'Basic ' + Buffer.from(sk + ':').toString('base64'),

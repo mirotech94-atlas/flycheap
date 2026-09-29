@@ -200,7 +200,9 @@ export async function tick(io: DetectorIO): Promise<{ created: number; resolved:
     let diagnosesThisTick = 0;
     for (const f of findings) {
       seen.add(f.fingerprint);
-      let { row, created: isNew } = queries.upsertIncident(f.fingerprint, f.source, f.title);
+      const upserted = queries.upsertIncident(f.fingerprint, f.source, f.title);
+      let row = upserted.row;
+      const isNew = upserted.created;
       // probeErrors groups every matching error_log row into one Finding per
       // tick; upsertIncident above only counts that as a single occurrence.
       // Bump occurrences for the rest of the group so none of the underlying
@@ -324,7 +326,7 @@ function opsClient(): MessagesClient | null {
     });
   }
   if (provider === 'anthropic') {
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, timeout: 60_000 }) as unknown as MessagesClient;
   }
   return null;
 }
@@ -342,7 +344,7 @@ function opsChatClient(): MessagesClient | null {
     });
   }
   if (provider === 'anthropic') {
-    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! }) as unknown as MessagesClient;
+    return new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY!, timeout: 60_000 }) as unknown as MessagesClient;
   }
   return null;
 }

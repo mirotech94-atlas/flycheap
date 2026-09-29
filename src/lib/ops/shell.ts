@@ -42,10 +42,13 @@ export const commands = {
   },
   // Runs deploy.sh in its own transient unit so it survives the app restart it
   // performs. A second call while one is running fails ("unit already exists"),
-  // which is the intended one-at-a-time behaviour.
+  // which is the intended one-at-a-time behaviour. It is the ROOT-OWNED copy
+  // setup.sh installs outside the app tree: the app user owns
+  // /opt/egyptair-tracker, so the in-tree deploy/deploy.sh is something it
+  // could swap, and running that as root would hand it root.
   deploy: (): CommandSpec => ({
     file: 'sudo',
-    args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/opt/egyptair-tracker/deploy/deploy.sh'],
+    args: ['/usr/bin/systemd-run', '--unit=egyptair-redeploy', '--collect', '--no-block', '/usr/bin/bash', '/usr/local/sbin/flycheap-deploy'],
   }),
   // Plain `df`, no sudo needed — not in deploy/sudoers-egyflights-ops.
   diskFree: (): CommandSpec => ({ file: 'df', args: ['-Pk', '/opt/egyptair-tracker'] }),

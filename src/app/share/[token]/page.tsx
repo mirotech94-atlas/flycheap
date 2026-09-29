@@ -1,6 +1,5 @@
 import { notFound } from 'next/navigation';
 import { headers } from 'next/headers';
-import { loadDashboard } from '@/lib/dashboard-data';
 import { queries } from '@/lib/db';
 import { getCachedBestDeals } from '@/lib/bestDeals';
 import { fmtUSD, fmtDate, fmtRelative } from '@/lib/utils';
@@ -9,7 +8,7 @@ import { KpiStrip } from '@/components/KpiStrip';
 import { FareCalendar } from '@/components/FareCalendar';
 import { Sparkline } from '@/components/Sparkline';
 import { BookingActions } from '@/components/BookingActions';
-import { resolveBoard, recordView } from '@/lib/boardShare';
+import { resolveBoard, recordView, boardRows } from '@/lib/boardShare';
 
 export const dynamic = 'force-dynamic';
 
@@ -30,32 +29,29 @@ export default async function SharedDashboard({ params }: { params: Promise<{ to
   // Per-group boards, resolved by token HASH. Revocation and expiry are checked
   // inside the query on every request with nothing cached — the whole value of
   // revoke is that it is immediate.
+  // The retired global `share_token` is NOT honoured: it was one link for the
+  // whole install and showed every user's watches to anyone holding it.
   const board = resolveBoard(token);
+  if (!board) notFound();
 
-  // Back-compat: the single global `share_token` in settings still works so
-  // links already sent to people's families do not break. It is the legacy
-  // path and carries no per-board privacy controls.
-  const legacy = queries.getSetting('share_token') ?? '';
-  const isLegacy = !board && !!legacy && token === legacy;
-  if (!board && !isLegacy) notFound();
-
-  if (board) {
-    const h = await headers();
-    recordView(board.id, {
-      // Truncated the same way affiliate clicks are: enough to tell views
-      // apart, not enough to be a location record of who is watching whom.
-      ip: (h.get('x-forwarded-for') ?? '').split(',')[0].trim().split('.').slice(0, 3).join('.') || null,
-      userAgent: h.get('user-agent'),
-    });
-  }
+  const h = await headers();
+  recordView(board.id, {
+    // Truncated the same way affiliate clicks are: enough to tell views
+    // apart, not enough to be a location record of who is watching whom.
+    ip: (h.get('x-forwarded-for') ?? '').split(',')[0].trim().split('.').slice(0, 3).join('.') || null,
+    userAgent: h.get('user-agent'),
+  });
 
   // A board may share the schedule without the budget: "a family organiser may
   // not want everyone to see what they are willing to pay."
-  const showPrices = board ? board.show_prices === 1 : true;
-  const showTargets = board ? board.show_targets === 1 : true;
+  const showPrices = board.show_prices === 1;
 
-  const rows = loadDashboard();
-  const threshold = parseFloat(queries.getSetting('alert_threshold_per_adult_usd') ?? '900');
+  // Only the board creator's watches — never the install-wide list.
+  const rows = boardRows(board);
+  const threshold = parseFloat(
+    (board.created_by && queries.getUserSetting(board.created_by, 'alert_threshold_per_adult_usd'))
+    || queries.getSetting('alert_threshold_per_adult_usd') || '900',
+  );
   const maxDisplay = parseFloat(queries.getSetting('max_display_per_adult_usd') ?? '1200');
   const usdToEgp = parseFloat(queries.getSetting('usd_to_egp') ?? '49.5');
 

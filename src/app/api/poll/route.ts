@@ -11,6 +11,7 @@ type PollState = {
 };
 
 declare global {
+  // eslint-disable-next-line no-var -- `declare global` requires var
   var __flycheapPollAll: PollState | undefined;
 }
 

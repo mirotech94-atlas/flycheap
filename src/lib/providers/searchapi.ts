@@ -54,7 +54,7 @@ export const searchapiProvider: FlightProvider = {
       infants: String(p.infants),
     });
 
-    const res = await fetch(`https://www.searchapi.io/api/v1/search?engine=google_flights&${params}`, { cache: 'no-store' });
+    const res = await fetch(`https://www.searchapi.io/api/v1/search?engine=google_flights&${params}`, { signal: AbortSignal.timeout(60_000), cache: 'no-store' });
     const ms = Date.now() - start;
     const text = await res.text();
     if (!res.ok) return { provider: 'searchapi', ok: false, error: `${res.status} ${text.slice(0, 200)}`, status: res.status, ms };

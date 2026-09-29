@@ -29,7 +29,13 @@ HEALTH_MAX_ATTEMPTS=12     # 12 × 5s = 60s grace window after restart
 # (tonight's collision was ~30s apart). Override for a genuine rapid follow-up
 # with DEPLOY_FORCE=1.
 DEPLOY_COOLDOWN_S=60
-COOLDOWN_FILE="$APP_DIR/.last-deploy-epoch"
+# Root's own bookkeeping (lock, cooldown, deps hash) lives in a root-only dir.
+# It used to sit in $APP_DIR, which the app user can write: a symlink planted
+# there turned root's `>` redirects into writes anywhere on the box.
+STATE_DIR="/var/lib/flycheap-deploy"
+COOLDOWN_FILE="$STATE_DIR/last-deploy-epoch"
+# Where setup.sh installs this script. sudoers points here, never at $APP_DIR.
+INSTALLED_PATH="/usr/local/sbin/flycheap-deploy"
 
 # Single place that performs the health request, with the real Host header.
 health_code() {
@@ -40,6 +46,48 @@ if [ "$(id -u)" -ne 0 ]; then
   echo "Run as root (or with sudo)." >&2
   exit 1
 fi
+
+# -------------------------------------------------------------------------
+# 0-self. RUN ONLY FROM A ROOT-OWNED PATH. The app user may start this script
+#   as root (sudoers → systemd-run). If the file, or ANY directory above it, is
+#   writable by someone other than root, that someone can swap the script (or
+#   rename its directory and plant a new one) and get root. $APP_DIR is owned
+#   by the app user, so the in-tree deploy/deploy.sh never qualifies; the
+#   installed copy at $INSTALLED_PATH does.
+# -------------------------------------------------------------------------
+path_is_root_only() {
+  local p="$1" uid mode
+  while :; do
+    uid=$(stat -c '%u' -- "$p") || return 1
+    mode=$(stat -c '%a' -- "$p") || return 1
+    if [ "$uid" != "0" ]; then echo "    $p is owned by uid $uid, not root" >&2; return 1; fi
+    if (( 8#$mode & 8#022 )); then echo "    $p is group/other-writable (mode $mode)" >&2; return 1; fi
+    [ "$p" = "/" ] && return 0
+    p="$(dirname -- "$p")"
+  done
+}
+SRC="${BASH_SOURCE[0]:-}"
+if [ -n "$SRC" ] && [ -f "$SRC" ]; then
+  SELF="$(readlink -f -- "$SRC")"
+  if ! path_is_root_only "$SELF"; then
+    echo "==> REFUSED: $SELF is not root-only all the way up to /." >&2
+    echo "    Run the root-owned copy instead (copy it there from a trusted checkout," >&2
+    echo "    not from this app-owned tree, whenever deploy.sh changes):" >&2
+    echo "      DEPLOY_OWNER_TOKEN=… $INSTALLED_PATH" >&2
+    exit 5
+  fi
+else
+  # Fed on stdin (`bash -s`): the code came from the invoking root shell, not
+  # from a file the app user could have swapped. sudoers never runs it so.
+  echo "==> Script read from stdin — path ownership check not applicable"
+fi
+
+install -d -o root -g root -m 0700 "$STATE_DIR"
+
+# Run a command as the app user. Every write INSIDE $APP_DIR goes through
+# this: the app user owns that tree, so a symlink it plants can only ever
+# point root's write at something the app user could already write itself.
+as_app() { sudo -u "$APP_USER" -- "$@"; }
 
 cd "$APP_DIR"
 
@@ -73,7 +121,7 @@ fi
 #    invoked directly, outside this script, still bypasses the lock — deploy
 #    only through deploy.sh.)
 # -------------------------------------------------------------------------
-exec 200>"$APP_DIR/.deploy.lock"
+exec 200>"$STATE_DIR/deploy.lock"
 if ! flock -w 600 200; then
   echo "==> Another deploy is in progress and did not finish within 10 min — aborting." >&2
   exit 1
@@ -132,16 +180,30 @@ if [ -f "$ACTIVE_FILE" ]; then
   ACTIVE_DIST="$(sed -n 's/^NEXT_DIST_DIR=//p' "$ACTIVE_FILE" | tail -1)"
   [ -n "$ACTIVE_DIST" ] || ACTIVE_DIST=".next"
 fi
+# Written as the app user (it lives in the app tree); the rename keeps the
+# flip atomic for the systemd unit that reads it.
+write_active_dist() {
+  printf 'NEXT_DIST_DIR=%s\n' "$1" | as_app tee "$ACTIVE_FILE.tmp" >/dev/null
+  as_app mv -f "$ACTIVE_FILE.tmp" "$ACTIVE_FILE"
+}
 case "$ACTIVE_DIST" in
   .next.a) TARGET_DIST=".next.b" ;;
   *)       TARGET_DIST=".next.a" ;;   # from .next.b OR the legacy .next
 esac
 echo "==> Active build: $ACTIVE_DIST → building into $TARGET_DIST (live dir stays up)"
 
-# Deps-change detection: `npm install` renames node_modules/next, which fails
+# Deps-change detection: `npm ci` replaces node_modules/next, which fails
 # (ENOTEMPTY) while `next start` holds it open — the ONLY reason we stop the
 # service. A code-only deploy (unchanged lockfile) skips install and stays up.
-DEPS_FILE="$APP_DIR/.deploy-deps-hash"
+DEPS_FILE="$STATE_DIR/deps-hash"
+# One-time migration from the old in-tree location, so the first deploy after
+# the move does not force a needless install + service stop. Only a well-formed
+# md5 is trusted; anything else just means "deps changed".
+LEGACY_DEPS_FILE="$APP_DIR/.deploy-deps-hash"
+if [ ! -f "$DEPS_FILE" ] && [ -f "$LEGACY_DEPS_FILE" ]; then
+  LEGACY_HASH="$(head -c 64 "$LEGACY_DEPS_FILE" 2>/dev/null | tr -d '[:space:]')"
+  [[ "$LEGACY_HASH" =~ ^[0-9a-f]{32}$ ]] && printf '%s\n' "$LEGACY_HASH" > "$DEPS_FILE"
+fi
 DEPS_NOW="$(md5sum "$APP_DIR/package-lock.json" 2>/dev/null | cut -d' ' -f1)"
 DEPS_CHANGED=yes
 if [ -n "$DEPS_NOW" ] && [ -f "$DEPS_FILE" ] && [ "$DEPS_NOW" = "$(cat "$DEPS_FILE" 2>/dev/null)" ] && [ -d "$APP_DIR/node_modules/next" ]; then
@@ -152,14 +214,14 @@ echo "==> Dependencies changed since last deploy: $DEPS_CHANGED"
 # -------------------------------------------------------------------------
 # 3. INSTALL + BUILD as the service user so file ownership stays sane.
 # -------------------------------------------------------------------------
-# Only stop the service when deps actually change (npm install must rename
+# Only stop the service when deps actually change (npm ci must replace
 # node_modules/next, impossible while `next start` holds it open). A code-only
 # deploy keeps the service RUNNING and serving $ACTIVE_DIST throughout — the
 # build writes a DIFFERENT dir, so there is no build-window outage.
 WAS_ACTIVE=no
 if systemctl is-active --quiet egyptair; then WAS_ACTIVE=yes; fi
 if [ "$DEPS_CHANGED" = "yes" ] && [ "$WAS_ACTIVE" = "yes" ]; then
-  echo "==> Deps changed — stopping service for npm install (brief downtime THIS deploy only)"
+  echo "==> Deps changed — stopping service for npm ci (brief downtime THIS deploy only)"
   systemctl stop egyptair
 fi
 
@@ -202,6 +264,14 @@ echo "==> Defensive chown: ensure $APP_USER owns .next, node_modules, and source
 # A prior failed deploy may have left root-owned files. The build runs as
 # $APP_USER, so any root-owned residue causes EACCES half-way through.
 chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next" "$APP_DIR/.next.a" "$APP_DIR/.next.b" "$APP_DIR/node_modules" 2>/dev/null || true
+# Leftovers from runs that did this work as root would now block the app-user
+# steps below (set -e), so hand them back too.
+chown -R "$APP_USER:$APP_USER" "$APP_DIR/.next.static-keep" "$APP_DIR/.node_modules-cache.keep" 2>/dev/null || true
+rm -f "$APP_DIR/.deploy-active-dist.tmp"
+# The in-tree deploy/ copy stays root-owned and read-only to the app user
+# (chown -R does not follow symlinks, so this is safe on an app-owned tree).
+chown -R root:root "$APP_DIR/deploy" 2>/dev/null || true
+chmod -R go-w "$APP_DIR/deploy" 2>/dev/null || true
 
 # -------------------------------------------------------------------------
 # DISK GUARD — npm's content-addressable cache (_cacache) grows unbounded
@@ -217,15 +287,21 @@ if [ "${FREE_KB:-0}" -lt 2097152 ]; then
   echo "    free now: $(df -h --output=avail / | tail -1 | tr -d ' ')"
 fi
 
-# `npm ci` is faster + deterministic but breaks hard on any lockfile drift.
-# Today's app evolves the lockfile faster than we can keep prod in lock-step,
-# so prefer `npm install` which auto-heals drift. Add `--prefer-offline` to
-# use the cached tarballs when possible (faster, fewer registry hits).
+# `npm ci`: install exactly what package-lock.json pins, and fail loudly if
+# package.json and the lockfile disagree. `npm install` "healed" drift by
+# resolving fresh versions on the production box, so what shipped was never
+# what CI tested. If this fails, fix the lockfile in git, not on the server.
+# `npm ci` deletes node_modules, so carry the build cache across it: a cold
+# build needs ~5GB and can OOM this box (see below).
 if [ "$DEPS_CHANGED" = "yes" ]; then
-  echo "==> Installing deps as $APP_USER (lockfile changed)"
-  sudo -u "$APP_USER" npm install --no-audit --no-fund --prefer-offline
+  echo "==> Installing deps as $APP_USER with npm ci (lockfile changed)"
+  BUILD_CACHE_KEEP="$APP_DIR/.node_modules-cache.keep"
+  as_app rm -rf "$BUILD_CACHE_KEEP"
+  if [ -d "$APP_DIR/node_modules/.cache" ]; then as_app mv "$APP_DIR/node_modules/.cache" "$BUILD_CACHE_KEEP"; fi
+  as_app npm ci --no-audit --no-fund --prefer-offline
+  if [ -d "$BUILD_CACHE_KEEP" ]; then as_app mv "$BUILD_CACHE_KEEP" "$APP_DIR/node_modules/.cache"; fi
 else
-  echo "==> Skipping npm install — lockfile unchanged (service stays up)"
+  echo "==> Skipping npm ci — lockfile unchanged (service stays up)"
 fi
 
 # DO NOT wipe node_modules/.cache here — Next's Turbopack cache makes builds
@@ -249,8 +325,8 @@ fi
 # ---------------------------------------------------------------------------
 STATIC_KEEP="$APP_DIR/.next.static-keep"
 if [ -d "$APP_DIR/$ACTIVE_DIST/static" ]; then
-  rm -rf "$STATIC_KEEP"
-  cp -a "$APP_DIR/$ACTIVE_DIST/static" "$STATIC_KEEP"
+  as_app rm -rf "$STATIC_KEEP"
+  as_app cp -a "$APP_DIR/$ACTIVE_DIST/static" "$STATIC_KEEP"
   echo "==> Snapshotted current static assets for open tabs"
 fi
 
@@ -296,10 +372,11 @@ fi
 # Carry the previous build's hashed assets into the new dir so tabs opened
 # before this deploy keep rendering after the flip. --no-clobber: new wins.
 if [ -d "$STATIC_KEEP" ]; then
-  mkdir -p "$APP_DIR/$TARGET_DIST/static"
-  cp -an "$STATIC_KEEP/." "$APP_DIR/$TARGET_DIST/static/" 2>/dev/null || true
-  chown -R "$APP_USER:$APP_USER" "$APP_DIR/$TARGET_DIST/static"
-  rm -rf "$STATIC_KEEP"
+  # As the app user: $TARGET_DIST/static was written by the build, so a
+  # symlink there must not become a root-owned copy into the rest of the box.
+  as_app mkdir -p "$APP_DIR/$TARGET_DIST/static"
+  as_app cp -an "$STATIC_KEEP/." "$APP_DIR/$TARGET_DIST/static/" 2>/dev/null || true
+  as_app rm -rf "$STATIC_KEEP"
   echo "==> Carried previous static assets into $TARGET_DIST (open tabs keep working)"
 fi
 
@@ -307,8 +384,7 @@ fi
 # Until this line the service is still serving $ACTIVE_DIST; the restart below
 # is the ONLY moment of impact, and it's a fast `next start` boot, not a build.
 echo "==> Flipping active build → $TARGET_DIST"
-printf 'NEXT_DIST_DIR=%s\n' "$TARGET_DIST" > "$ACTIVE_FILE.tmp"
-mv "$ACTIVE_FILE.tmp" "$ACTIVE_FILE"
+write_active_dist "$TARGET_DIST"
 
 echo "==> Restarting service onto $TARGET_DIST"
 systemctl restart egyptair
@@ -337,8 +413,7 @@ done
 if [ "$HEALTHY" != "yes" ]; then
   echo "==> ❌ NEW BUILD UNHEALTHY — flipping back to $ACTIVE_DIST" >&2
   if [ -d "$APP_DIR/$ACTIVE_DIST" ] && [ "$ACTIVE_DIST" != "$TARGET_DIST" ]; then
-    printf 'NEXT_DIST_DIR=%s\n' "$ACTIVE_DIST" > "$ACTIVE_FILE.tmp"
-    mv "$ACTIVE_FILE.tmp" "$ACTIVE_FILE"
+    write_active_dist "$ACTIVE_DIST"
     systemctl restart egyptair
     sleep 5
     CODE=$(health_code)
@@ -352,7 +427,7 @@ fi
 # -------------------------------------------------------------------------
 # 6. SUCCESS — clean up the backup so we don't keep growing disk usage.
 # -------------------------------------------------------------------------
-# Record the deps hash so the next code-only deploy can skip npm install and
+# Record the deps hash so the next code-only deploy can skip npm ci and
 # stay fully up. Retire the legacy in-place .next once we're safely running
 # from a color dir (the first zero-downtime deploy migrates off it); KEEP the
 # previous color dir — it's the rollback and the next build's target.
@@ -384,7 +459,9 @@ echo "==> ✓ Deploy successful. Service active, HTTP 200. Tail logs: journalctl
 #    so prefer `git describe` when available (dev/CI boxes) and otherwise
 #    fall back to a UTC timestamp.
 # -------------------------------------------------------------------------
-RELEASE_VALUE="$(git -C "$APP_DIR" describe --always --dirty 2>/dev/null || true)"
+# As the app user: a .git/config in the app tree can name hooks/fsmonitor
+# programs, which must never run as root.
+RELEASE_VALUE="$(as_app git -C "$APP_DIR" describe --always --dirty 2>/dev/null || true)"
 if [ -n "$RELEASE_VALUE" ]; then
   RELEASE_VALUE="$RELEASE_VALUE $(date -u +'%Y-%m-%d %H:%M UTC') deploy.sh"
 else
@@ -394,7 +471,7 @@ if command -v sqlite3 >/dev/null 2>&1 && [ -f "$APP_DIR/data/fares.db" ]; then
   # Escape single quotes for safe SQL string embedding (value is our own
   # git-describe/date output, but escape defensively regardless).
   RELEASE_VALUE_SQL="${RELEASE_VALUE//\'/\'\'}"
-  sqlite3 "$APP_DIR/data/fares.db" "INSERT INTO settings(key,value) VALUES('ops_last_release','${RELEASE_VALUE_SQL}') ON CONFLICT(key) DO UPDATE SET value=excluded.value" \
+  as_app sqlite3 "$APP_DIR/data/fares.db" "INSERT INTO settings(key,value) VALUES('ops_last_release','${RELEASE_VALUE_SQL}') ON CONFLICT(key) DO UPDATE SET value=excluded.value" \
     2>/dev/null || echo "==> WARNING: failed to record ops_last_release (non-fatal)" >&2
 else
   echo "==> WARNING: sqlite3 or data/fares.db not found — skipping ops_last_release" >&2

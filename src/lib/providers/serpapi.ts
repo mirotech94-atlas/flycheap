@@ -97,7 +97,7 @@ export const serpapiProvider: FlightProvider = {
       stops: '0',                // 0 = any (per SerpAPI docs)
     };
 
-    const res = await fetch(`https://serpapi.com/search?${new URLSearchParams(baseParams)}`, { cache: 'no-store' });
+    const res = await fetch(`https://serpapi.com/search?${new URLSearchParams(baseParams)}`, { signal: AbortSignal.timeout(60_000), cache: 'no-store' });
     const text = await res.text();
     if (!res.ok) {
       const ms = Date.now() - start;
@@ -116,7 +116,7 @@ export const serpapiProvider: FlightProvider = {
       .slice(0, 12); // protect SerpAPI quota
 
     async function fetchReturns(token: string): Promise<SerpFlight[]> {
-      const r2 = await fetch(`https://serpapi.com/search?${new URLSearchParams({ ...baseParams, departure_token: token })}`, { cache: 'no-store' });
+      const r2 = await fetch(`https://serpapi.com/search?${new URLSearchParams({ ...baseParams, departure_token: token })}`, { signal: AbortSignal.timeout(60_000), cache: 'no-store' });
       if (!r2.ok) return [];
       const j2 = await r2.json().catch(() => ({} as SerpResponse));
       const list = [

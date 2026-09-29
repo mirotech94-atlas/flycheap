@@ -1,5 +1,5 @@
 import 'server-only';
-import { ADMIN_SYSTEM_PROMPT, ADMIN_TOOLS, runAdminTool, PRIVILEGED_TOOLS, buildLiveTableList, type AdminToolCtx } from '@/lib/adminAgentTools';
+import { adminSystemPrompt, adminTools, ADMIN_TOOLS, runAdminTool, PRIVILEGED_TOOLS, buildLiveTableList, stepUpRequired, type AdminToolCtx } from '@/lib/adminAgentTools';
 import type { ProviderAttempt } from '@/lib/ai/providers';
 
 /** Tool steps allowed per turn. Real diagnostic work legitimately needs room to
@@ -25,6 +25,23 @@ export function forModel(content: string): string {
     : `${content.slice(0, MODEL_TOOL_RESULT_CHARS)}\n…[truncated ${content.length - MODEL_TOOL_RESULT_CHARS} chars — narrow the query if you need the rest]`;
 }
 
+const KNOWN_TOOLS: ReadonlySet<string> = new Set(ADMIN_TOOLS.map(t => t.name));
+
+/**
+ * Wrap a tool result for the model. Tool output is attacker-reachable (client
+ * emails, error text, row values), so it must not be able to END the wrapper:
+ * a row containing `</untrusted_data>` followed by fake instructions would
+ * otherwise read as if it came from outside the data block. Every `<` and `>`
+ * inside is entity-escaped, so the only tags left are the two written here,
+ * and the tool= attribute is a known tool name or "unknown", never
+ * model-controlled text.
+ */
+export function wrapUntrusted(toolName: string, content: string): string {
+  const tool = KNOWN_TOOLS.has(toolName) ? toolName : 'unknown';
+  const body = forModel(content).replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return `<untrusted_data tool="${tool}">\n${body}\n</untrusted_data>`;
+}
+
 type OAMsg =
   | { role: 'system' | 'user' | 'assistant'; content: string }
   | { role: 'assistant'; content: string | null; tool_calls: Array<{ id: string; type: 'function'; function: { name: string; arguments: string } }> }
@@ -38,6 +55,7 @@ async function callModel(
   let res: Response;
   try {
     res = await fetch(`${opts.baseUrl}/chat/completions`, {
+      signal: AbortSignal.timeout(30_000),
       method: 'POST',
       headers: { Authorization: `Bearer ${opts.apiKey}`, 'Content-Type': 'application/json', ...(opts.headers ?? {}) },
       body: JSON.stringify({ model: opts.model, max_tokens: tools ? 2048 : 1024, messages, ...(tools ? { tools } : {}) }),
@@ -67,12 +85,13 @@ async function callModel(
 export async function runLoop(
   chain: ProviderAttempt[], userMessages: ChatMsg[], ctx: AdminToolCtx,
 ): Promise<LoopResult> {
-  const oaTools = ADMIN_TOOLS.map(t => ({ type: 'function' as const, function: { name: t.name, description: t.description, parameters: t.input_schema } }));
+  const stepUp = stepUpRequired(ctx);
+  const oaTools = adminTools(stepUp).map(t => ({ type: 'function' as const, function: { name: t.name, description: t.description, parameters: t.input_schema } }));
   // The live table list is queried once per request (cheap: one sqlite_master
   // SELECT) and appended to the system prompt so the model never has to guess
   // — or worse, assume absence — about what tables currently exist.
   const messages: OAMsg[] = [
-    { role: 'system', content: `${ADMIN_SYSTEM_PROMPT}\n\n${buildLiveTableList()}` },
+    { role: 'system', content: `${adminSystemPrompt(stepUp)}\n\n${buildLiveTableList()}` },
     ...userMessages.map(m => ({ role: m.role, content: m.content } as OAMsg)),
   ];
   const toolCalls: ToolCall[] = [];
@@ -108,7 +127,7 @@ export async function runLoop(
       else if (PRIVILEGED_TOOLS.has(c.function.name)) executed = true;
       toolCalls.push({ name: c.function.name, input, result_preview: r.content.slice(0, 300) });
       // Everything a tool returns is untrusted data, never instructions.
-      messages.push({ role: 'tool', tool_call_id: c.id, content: `<untrusted_data tool="${c.function.name}">\n${forModel(r.content)}\n</untrusted_data>` });
+      messages.push({ role: 'tool', tool_call_id: c.id, content: wrapUntrusted(c.function.name, r.content) });
     }
   }
 

@@ -41,7 +41,7 @@ The legacy host `flycheap.18dn.com` is retired: Caddy answers it with a permanen
 - **Multi-provider failover registry** (`src/lib/ai/providers.ts`): Groq (free, primary) → Cloudflare Workers AI → OpenRouter → Google Gemini → Anthropic → Ollama, all via OpenAI-compatible endpoints, each dormant until its key is set. Groq's token cap is per-model, so multiple Groq models are tried before any paid provider. `DEPLOY`-safe: see `groqChat` / `groqClient` for the daily-cap and rate-limit handling.
 - **Agent pipeline** (`src/agents/**`): curator, verifier, insights, social-poster, storyteller, digest — run as systemd timers, DRY-run by default, with guards against invented numbers.
 - **Slack ops agent** (`src/lib/ops/**`): watches production, posts incidents to Slack, and can run safe fixes; gated tools require approval.
-- **FarePilot admin operator** (`src/app/api/admin/farepilot/route.ts` + `src/lib/farePilotLoop.ts`): owner-only SQL + shell over production, owner + admin-host + same-origin gated, per-owner rate limit, audit-before-execute, and an optional TOTP step-up (`FAREPILOT_REQUIRE_STEPUP=1`). Provider failover resumes a rate-limited turn on the next model without re-running tools.
+- **FarePilot admin operator** (`src/app/api/admin/farepilot/route.ts` + `src/lib/farePilotLoop.ts`): owner-only, read-only SQL (SELECT only, on a read-only connection) and a fixed allowlist of named ops commands (no shell), owner + admin-host + same-origin gated, per-owner rate limit, audit-before-execute, and a TOTP step-up enforced whenever an authenticator is configured (`OWNER_TOTP_SECRET` or owner 2FA; `FAREPILOT_REQUIRE_STEPUP=0` opts out). Provider failover resumes a rate-limited turn on the next model without re-running tools.
 
 ## Pricing & trial
 
@@ -86,7 +86,7 @@ Secrets live in `.env.local` (never committed — see `.env.example`).
 - **Safe health checks** — `deploy.sh` health-checks through a real `Host` header on an app-router route, verifies build completeness (BUILD_ID + client manifests) before restart, auto-rolls-back on failure, and enforces a 60s cooldown between deploys.
 - **Reconcile before shipping** — because the box diverges from git, `prod-original` must be reconciled against the server before it's a trustworthy mirror.
 
-Deploy: `DEPLOY_OWNER_TOKEN=… bash deploy/deploy.sh` (run by the deploy owner only).
+Deploy: `DEPLOY_OWNER_TOKEN=… /usr/local/sbin/flycheap-deploy` (run by the deploy owner only). That is the root-owned copy of `deploy/deploy.sh` that `setup.sh` installs; the script refuses to run from inside `/opt/egyptair-tracker`, which the app user owns. After changing `deploy/*.sh`, copy the new version there from a trusted checkout (e.g. `scp deploy/deploy.sh root@<host>:/usr/local/sbin/flycheap-deploy`), never from the app-owned tree on the server.
 
 ## Contributing
 

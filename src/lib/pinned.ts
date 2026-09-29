@@ -15,6 +15,10 @@ export type PinnedDeal = {
   outbound_hour: number;
   return_dow: number;
   return_hour: number;
+  /** Present on deals pinned from multi-destination views; older pins omit them. */
+  destination?: string;
+  outbound_transfers?: number | null;
+  return_transfers?: number | null;
 };
 
 export const PIN_LIMIT = 3;

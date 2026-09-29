@@ -5,7 +5,6 @@ export const revalidate = 60;
 
 type Health = {
   ok: boolean;
-  version: string;
   uptime_sec: number;
   checked_at: string;
   duration_ms: number;
@@ -56,7 +55,7 @@ export default async function StatusPage() {
               {overallOk ? 'All systems operational' : 'Some checks failing'}
             </div>
             <div className="ed-panel-note">
-              Version <code>{h?.version ?? '—'}</code> · uptime <strong>{uptimeStr(h?.uptime_sec ?? 0)}</strong> · health-check {h?.duration_ms ?? '?'}ms
+              Uptime <strong>{uptimeStr(h?.uptime_sec ?? 0)}</strong> · health-check {h?.duration_ms ?? '?'}ms
             </div>
           </div>
         </div>

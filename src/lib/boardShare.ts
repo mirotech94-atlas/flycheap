@@ -1,6 +1,7 @@
 import 'server-only';
 import crypto from 'node:crypto';
 import { getDb } from './db';
+import { loadDashboard, type DashboardRow } from './dashboard-data';
 
 /**
  * Boards — the read-only page a group's watches live on.
@@ -31,6 +32,7 @@ export const DEFAULT_EXPIRY_DAYS = 180;
 export type BoardShare = {
   id: number;
   group_id: number;
+  created_by: number | null;
   label: string | null;
   expires_at: string | null;
   revoked_at: string | null;
@@ -109,6 +111,17 @@ export function resolveBoard(token: string): BoardShare | null {
         AND (expires_at IS NULL OR expires_at > datetime('now'))`,
   ).get(hashToken(token)) as BoardShare | undefined;
   return row ?? null;
+}
+
+/**
+ * The watches a board shows: its creator's, and never one they filed under a
+ * different group (an agent's board for client A must not show client B's
+ * trip). A board with no recorded creator shows nothing — this page is public
+ * to anyone holding the link, so the scope has to be explicit or empty.
+ */
+export function boardRows(board: Pick<BoardShare, 'created_by' | 'group_id'>): DashboardRow[] {
+  if (!board.created_by) return [];
+  return loadDashboard({ userId: board.created_by, groupId: board.group_id });
 }
 
 /** Record a view. Best-effort: never let analytics break someone's board. */

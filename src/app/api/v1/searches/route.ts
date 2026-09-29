@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { apiAuthBearer } from '@/lib/mobileAuth';
-import { queries, limitsForUser } from '@/lib/db';
+import { queries, routeLimitError } from '@/lib/db';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,13 +57,8 @@ export async function POST(req: Request) {
   if (days <= 0) return NextResponse.json({ error: 'return_date must be after depart_date' }, { status: 400 });
   if (days > 62) return NextResponse.json({ error: `trip is ${Math.round(days)} days; max 62` }, { status: 400 });
 
-  const limit = limitsForUser(user);
-  if (queries.countActiveSearchesForUser(user.id) >= limit.maxRoutes) {
-    return NextResponse.json(
-      { error: `You're at the ${user.tier} limit of ${limit.maxRoutes} routes. Upgrade to Pro for unlimited.` },
-      { status: 403 },
-    );
-  }
+  const overLimit = routeLimitError(user);
+  if (overLimit) return NextResponse.json({ error: overLimit }, { status: 403 });
 
   const result = queries.insertSearch({
     ...parsed.data,

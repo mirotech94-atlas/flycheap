@@ -10,6 +10,7 @@ import { Em } from '@/lib/i18n/rich';
 import { headers, cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { isAdminHost, getCurrentUser, isOwner, checkDeviceToken, DEVICE_COOKIE } from '@/lib/auth';
+import { safeNextPath } from '@/lib/safeNext';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,7 +84,7 @@ export default async function LoginPage(
   // OTP form below.
   const sp = (await searchParams) ?? {};
   const rawNext = typeof sp.next === 'string' ? sp.next : '';
-  const nextPath = rawNext.startsWith('/') && !rawNext.startsWith('//') ? rawNext : '';
+  const nextPath = safeNextPath(rawNext);
   const dest = nextPath || (adminPortal ? '/admin' : '/');
   const existingUser = await getCurrentUser();
   if (existingUser) {
