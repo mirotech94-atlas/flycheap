@@ -25,14 +25,28 @@ export async function POST(req: Request) {
   // Only Twilio may drive this: an unsigned STOP/START lets anyone flip a
   // user's SMS subscription by knowing their phone number.
   //
-  // Enforced once TWILIO_WEBHOOK_URL is set — the signature covers the exact
-  // public URL configured in the Twilio console, and behind the proxy the app
-  // cannot reliably reconstruct it, so guessing would refuse real traffic
-  // (including STOP, which carriers require us to honour). Until it is set the
-  // check is inert and says so, once, in the log. Once set, a missing auth
-  // token fails closed.
+  // This used to fail OPEN when TWILIO_WEBHOOK_URL was unset, for a real
+  // reason: the signature covers the exact public URL from the Twilio console,
+  // the app cannot reliably reconstruct that behind the proxy, and refusing a
+  // genuine STOP has carrier consequences. Fail-open was the lesser risk while
+  // SMS was a live channel.
+  //
+  // It is not a live channel. Twilio is retired (2026-10-06, Miro's call) and
+  // SMS never delivered anyway — error 30034, no A2P campaign. So there is no
+  // legitimate inbound message left to protect, and the only thing the open
+  // path still protects is a forged STOP flipping a stranger's subscription.
+  //
+  // Now: a verified signature, or nothing. If Twilio is ever reinstated, set
+  // TWILIO_WEBHOOK_URL to the console URL and this starts accepting again.
   const webhookUrl = process.env.TWILIO_WEBHOOK_URL?.trim();
-  if (webhookUrl) {
+  if (!webhookUrl) {
+    if (!warnedUnverified) {
+      warnedUnverified = true;
+      console.warn('[twilio] inbound refused: TWILIO_WEBHOOK_URL is not set, so no signature can be verified. Twilio is retired; set it only if SMS comes back.');
+    }
+    return forbidden();
+  }
+  {
     const params: Record<string, string[]> = {};
     for (const [k, v] of form.entries()) (params[k] ??= []).push(typeof v === 'string' ? v : '');
     if (!verifyTwilioSignature({
@@ -43,9 +57,6 @@ export async function POST(req: Request) {
     })) {
       return forbidden();
     }
-  } else if (!warnedUnverified) {
-    warnedUnverified = true;
-    console.warn('[twilio] TWILIO_WEBHOOK_URL is not set — inbound SMS signatures are NOT verified. Set it to the URL in the Twilio console.');
   }
 
   const from = String(form.get('From') ?? '').trim();

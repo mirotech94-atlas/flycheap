@@ -72,16 +72,31 @@ describe('POST /api/twilio/incoming', () => {
     expect(res.status).toBe(403);
   });
 
-  it('inert until TWILIO_WEBHOOK_URL is set: accepts as before, warning once', async () => {
+  /**
+   * This test asserted the opposite until 2026-10-06, and the old assertion was
+   * right at the time: with no TWILIO_WEBHOOK_URL the signature cannot be
+   * checked, and refusing an unsigned STOP meant failing to honour an opt-out a
+   * carrier requires us to honour. Fail-open was the lesser risk.
+   *
+   * Twilio is retired (Miro's call), and SMS never delivered anyway — error
+   * 30034, no A2P campaign. There is no genuine inbound message left to lose,
+   * so the only thing the open path still bought was a stranger flipping
+   * someone else's subscription by knowing their phone number.
+   */
+  it('refuses unsigned inbound entirely when no signature can be verified', async () => {
     delete process.env.TWILIO_WEBHOOK_URL;
     process.env.TWILIO_AUTH_TOKEN = 'tok';
     const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
     const uid = Number(db.getDb().prepare("INSERT INTO users (email) VALUES ('sms-inert@x.com')").run().lastInsertRowid);
     db.queries.setUserSetting(uid, 'sms_phone', '+15550199');
     db.queries.setUserSetting(uid, 'sms_opt_in', 'true');
-    expect((await post({ From: '+15550199', Body: 'STOP' }, null)).status).toBe(200);
-    expect(db.queries.getUserSetting(uid, 'sms_opt_in')).toBe('false');
-    expect((await post({ From: '+15550199', Body: 'HELP' }, null)).status).toBe(200);
+
+    expect((await post({ From: '+15550199', Body: 'STOP' }, null)).status).toBe(403);
+    // And the forged STOP changed nothing.
+    expect(db.queries.getUserSetting(uid, 'sms_opt_in')).toBe('true');
+    expect((await post({ From: '+15550199', Body: 'HELP' }, null)).status).toBe(403);
+
+    // Still exactly one line in the log, not one per request.
     expect(warn.mock.calls.filter(c => String(c[0]).includes('TWILIO_WEBHOOK_URL'))).toHaveLength(1);
     warn.mockRestore();
   });

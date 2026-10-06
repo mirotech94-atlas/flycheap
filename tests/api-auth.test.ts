@@ -144,7 +144,7 @@ describe('every API route decides who may call it', () => {
     'early-access/approve/route.ts':
       'Authenticates by a single-use capability token with a TTL, consumed on use. GET only confirms, because mail scanners fetch every link in an email.',
     'twilio/incoming/route.ts':
-      'Twilio webhook. Verifies x-twilio-signature once TWILIO_WEBHOOK_URL is set; left inert until then because a wrong URL would refuse real STOP messages, which carriers require us to honour.',
+      'Twilio webhook, and it now REFUSES everything unless a signature verifies. Twilio is retired, so there is no legitimate inbound message to protect.',
   };
 
   it('never lets a public route take an unguarded write', () => {
@@ -168,6 +168,18 @@ describe('every API route decides who may call it', () => {
     }
     const actual = new Set(routeFiles().map(rel));
     expect(Object.keys(PUBLIC_WRITES).filter(p => !actual.has(p))).toEqual([]);
+  });
+
+  it('the retired Twilio webhook refuses rather than trusting an unsigned POST', () => {
+    // It used to fail OPEN when TWILIO_WEBHOOK_URL was unset — defensible while
+    // SMS was live, because refusing a real STOP has carrier consequences. With
+    // Twilio retired there is no real STOP to refuse, and the only thing the
+    // open path protected was a stranger flipping someone's subscription.
+    const src = readFileSync(join(API, 'twilio/incoming/route.ts'), 'utf8');
+    const gate = src.slice(src.indexOf('TWILIO_WEBHOOK_URL'));
+    expect(gate).toMatch(/if\s*\(!webhookUrl\)/);
+    expect(gate.slice(0, gate.indexOf('const from'))).toContain('forbidden()');
+    expect(src).not.toContain('are NOT verified');
   });
 
   it('the best-deals refresh, which spends money, requires a session', () => {
