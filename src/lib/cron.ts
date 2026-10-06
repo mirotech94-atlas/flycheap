@@ -36,7 +36,26 @@ export function startCron() {
     const t = new Date().toISOString();
     try {
       const results = await pollAll();
-      console.log(`[cron ${t}] polled ${results.length} searches`, results);
+      // Summarise, never dump. Passing the array to console.log pretty-printed
+      // every result object every cycle: 19 searches x 5 lines x every 5
+      // minutes is ~4,500 journal lines a day, of which 4,544 in the last 24h
+      // read `error: 'no offers returned'` — a search that simply had no
+      // offers this cycle, with ok: true. The real failures were six lines
+      // buried in that, and `journalctl | grep -i error` could not tell the
+      // difference between a provider outage and ordinary sparsity.
+      //
+      // A search with no offers is counted, not printed. A search that
+      // actually failed is printed with its reason, because that is the line
+      // worth finding.
+      const failed = results.filter((r) => !r.ok);
+      const empty = results.filter((r) => r.ok && r.error).length;
+      const parts = [`${results.length - failed.length}/${results.length} ok`];
+      if (empty) parts.push(`${empty} with no offers`);
+      if (failed.length) parts.push(`${failed.length} failed`);
+      console.log(`[cron ${t}] polled ${results.length} searches — ${parts.join(' · ')}`);
+      for (const r of failed) {
+        console.error(`[cron ${t}] search ${r.search_id} (${r.origin}) failed: ${r.error ?? 'no reason given'}`);
+      }
     } catch (e) {
       console.error(`[cron ${t}] poll failed`, e);
       queries.logError({ source: 'cron:poll', message: (e as Error).message, stack: (e as Error).stack });
