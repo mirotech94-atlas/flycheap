@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { refreshBestDeals, getCachedBestDeals } from '@/lib/bestDeals';
+import { requireUser } from '@/lib/apiGuard';
 
 export const maxDuration = 60;
 
@@ -30,11 +31,26 @@ function state(): RefreshState {
 }
 
 export async function GET() {
+  // Deliberately public, and it stays that way: `destinations/[slug]` renders
+  // these same rows server-side on pages anyone can read, so gating the JSON
+  // would protect nothing. See INTENTIONALLY_PUBLIC in tests/api-auth.test.ts.
+  //
+  // The POST below is a different question — it spends money.
   // Dashboard filtering expects a larger cache for month/stop filtering.
   return NextResponse.json({ ...getCachedBestDeals(5000), refresh: state() });
 }
 
-export async function POST() {
+export async function POST(req: Request) {
+  // This one spends money. refreshBestDeals() fans out to the fare providers
+  // and every call writes an api_calls row with its cost, so an unguarded POST
+  // let anyone burn the Travelpayouts quota — and the 202 "already running"
+  // reply made it trivially repeatable. Guarded for cost, not just privacy.
+  // `req` is passed so the guard's same-origin check runs: on a mutation a
+  // session cookie alone is not consent, and tests/api-auth.test.ts enforces
+  // that every mutating handler hands its request over.
+  const auth = await requireUser(req);
+  if (!auth.ok) return auth.response;
+
   const s = state();
   if (s.running) {
     return NextResponse.json({ ok: true, status: 'running', refresh: s }, { status: 202 });

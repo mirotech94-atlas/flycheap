@@ -104,6 +104,77 @@ describe('every API route decides who may call it', () => {
       expect(why.length, `${p} needs a reason`).toBeGreaterThan(20);
     }
   });
+
+  /**
+   * Being public is a decision about READING. It is not a waiver for writes.
+   *
+   * The list above exempts a route FILE, so every method it exports inherited
+   * the waiver. `best-deals/route.ts` is on the list because its GET serves
+   * cached deals that `destinations/[slug]` already renders server-side on
+   * public pages — a fair call. But the same file exported an unguarded POST
+   * that calls refreshBestDeals(), which fans out to the fare providers and
+   * writes an api_calls row with a real cost for each one. "The data is
+   * public" is an argument about the GET; it says nothing about letting a
+   * stranger spend money, repeatedly.
+   */
+  const WRITE_METHODS = ['POST', 'PUT', 'PATCH', 'DELETE'] as const;
+
+  /** Public routes allowed an unguarded write, each with its reason. */
+  const PUBLIC_WRITES: Record<string, string> = {
+    'lang/route.ts':
+      'Sets the locale cookie for anonymous visitors — writes a cookie, nothing server-side.',
+    'auth/otp/start/route.ts':
+      'Starts sign-in for someone who has no session yet; rate-limited inside the handler.',
+    'early-access/route.ts':
+      'The public signup form. Creating a pending row IS the feature.',
+    'contact/route.ts':
+      'The public contact form. Opening a ticket IS the feature.',
+    'events/route.ts':
+      'Anonymous client telemetry, which has no session by definition.',
+    'auth/logout/route.ts':
+      'Ends a session. There is nothing to protect in giving one up.',
+    'auth/device-login/route.ts':
+      'Exchanges a device code for a session — it authenticates by that code, which is the guard.',
+    'v1/auth/verify/route.ts':
+      'Sign-in: verifies a one-time code for someone who has no session yet.',
+    'v1/auth/email/verify/route.ts':
+      'Sign-in: verifies an emailed code for someone who has no session yet.',
+    'v1/auth/enroll/route.ts':
+      'Enrols a new device against a one-time token; the token is the credential.',
+    'early-access/approve/route.ts':
+      'Authenticates by a single-use capability token with a TTL, consumed on use. GET only confirms, because mail scanners fetch every link in an email.',
+    'twilio/incoming/route.ts':
+      'Twilio webhook. Verifies x-twilio-signature once TWILIO_WEBHOOK_URL is set; left inert until then because a wrong URL would refuse real STOP messages, which carriers require us to honour.',
+  };
+
+  it('never lets a public route take an unguarded write', () => {
+    const offenders: string[] = [];
+    for (const path of Object.keys(INTENTIONALLY_PUBLIC)) {
+      if (path in PUBLIC_WRITES) continue;
+      const src = readFileSync(join(API, path), 'utf8');
+      const writes = WRITE_METHODS.filter(m =>
+        new RegExp(`export\\s+(?:async\\s+)?function\\s+${m}\\b`).test(src));
+      if (writes.length === 0) continue;
+      if (!GUARD_SIGNALS.some(sig => src.includes(sig))) {
+        offenders.push(`${path} exports ${writes.join('/')} with no guard`);
+      }
+    }
+    expect(offenders).toEqual([]);
+  });
+
+  it('gives every public write a stated reason', () => {
+    for (const [p, why] of Object.entries(PUBLIC_WRITES)) {
+      expect(why.length, `${p} needs a reason`).toBeGreaterThan(20);
+    }
+    const actual = new Set(routeFiles().map(rel));
+    expect(Object.keys(PUBLIC_WRITES).filter(p => !actual.has(p))).toEqual([]);
+  });
+
+  it('the best-deals refresh, which spends money, requires a session', () => {
+    const src = readFileSync(join(API, 'best-deals/route.ts'), 'utf8');
+    const post = src.slice(src.search(/export\s+(?:async\s+)?function\s+POST\b/));
+    expect(post).toContain('requireUser');
+  });
 });
 
 describe('the endpoints that were open in production', () => {
