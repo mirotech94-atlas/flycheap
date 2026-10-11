@@ -67,12 +67,16 @@ describe('a per-watch channel override can only narrow', () => {
   });
 
   it('makes one route louder than the account default', () => {
-    // "The home route to see family gets SMS; the speculative Tokyo budget
-    //  watch gets digest."
-    db.queries.setUserSetting(1, 'alert_channels', 'email,sms');
-    db.getDb().prepare('UPDATE searches SET alert_channels = ? WHERE id = 1').run('sms');
+    // "The home route to see family gets Telegram; the speculative Tokyo
+    //  budget watch gets digest."
+    //
+    // This used to say SMS. SMS is gone with Twilio, so the example moved to a
+    // channel that can actually deliver — which is the same rule the test
+    // below enforces, applied to the test itself.
+    db.queries.setUserSetting(1, 'alert_channels', 'email,telegram');
+    db.getDb().prepare('UPDATE searches SET alert_channels = ? WHERE id = 1').run('telegram');
     const d = decide();
-    expect(d.send && d.channels).toEqual(['sms']);
+    expect(d.send && d.channels).toEqual(['telegram']);
   });
 
   it('cannot conjure a channel the account has not configured', () => {

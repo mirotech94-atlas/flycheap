@@ -13,7 +13,6 @@ const LINKS: Array<{ href: string; key: keyof AppNavDict }> = [
   { href: '/hotels',       key: 'hotels'    },
   { href: '/routes',       key: 'routes'    },
   { href: '/guides',       key: 'guides'    },
-  { href: '/pricing',      key: 'pricing'   },
   { href: '/searches',     key: 'searches'  },
   { href: '/integrations', key: 'integrations' },
   { href: '/settings',     key: 'settings'  },

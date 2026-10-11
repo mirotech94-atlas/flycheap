@@ -1,15 +1,32 @@
 # FlyCheap
 
-[![pipeline status](https://gitlab.com/mirotech94/flycheap-tracker/badges/main/pipeline.svg)](https://gitlab.com/mirotech94/flycheap-tracker/-/commits/main)
+A self-hosted flight-price tracker. Watch the routes you care about, record
+every price seen, and get told when a fare drops below your target or looks
+anomalous — with a buy-or-wait verdict grounded in that route's own history.
 
-Fare intelligence for flights. FlyCheap watches 1,000+ airlines on the routes you care about, records every price it sees, and alerts you the moment a fare drops below your target or looks anomalous — with a buy-or-wait verdict grounded in that route's own history.
+**Free and open source (MIT). No plans, no accounts to buy, no payment
+processor.** It is not a service being sold; it is a program you run. Every
+feature is on for everyone, and if the hosted instance ever disappears, your
+copy keeps working.
 
-Production app package name: `egyptair-tracker` (historical). Current brand: **FlyCheap**.
+Package name is `egyptair-tracker` for historical reasons.
+
+## Run your own
+
+```bash
+git clone <this repo> flycheap && cd flycheap
+cp .env.example .env.local     # the only required key is a fare provider
+npm install
+npm run dev                    # http://localhost:3000
+```
+
+SQLite is the whole database — one file at `data/fares.db`, created on first
+run. There is nothing else to provision.
 
 ## What it does
 
 - **Route tracking** — add a route, a date window, and a per-adult target price. Four providers are polled on a schedule; the cheapest round-trip is recorded every cycle.
-- **Smart alerts** — threshold crossings and statistical anomalies (e.g. a fare ≥ 3σ below the 30-day mean, a "mistake fare") are scored against the route's own history and delivered by email, SMS, WhatsApp or Telegram.
+- **Smart alerts** — threshold crossings and statistical anomalies (e.g. a fare ≥ 3σ below the 30-day mean, a "mistake fare") are scored against the route's own history and delivered by email or Telegram.
 - **Buy / wait verdicts** — percentile position, 14-day trend slope, and a confidence score, so a wrong call costs a click, not a trip.
 - **Explore & Offers** — cheapest fares to every reachable destination, a fare heat-map calendar, hotels and stays, and an interactive map.
 - **AI concierge (FarePilot)** — ask in plain English ("cheapest two weeks to Rome in October under $600") and get real numbers.
@@ -21,7 +38,7 @@ Production app package name: `egyptair-tracker` (historical). Current brand: **F
 - **node-cron** in-process schedulers for polling, digests, and the agent pipeline
 - **Caddy** reverse proxy with automatic TLS and a strict CSP
 - **systemd** service (`egyptair`) + timers for the job runner
-- **Resend** (email), **Stripe** + **PayPal** (billing), **MapLibre GL** (maps)
+- **Resend** (email), **MapLibre GL** (maps)
 - **Zod** for input validation; **Vitest** for tests
 
 ## Architecture: three front doors
@@ -43,13 +60,17 @@ The legacy host `flycheap.18dn.com` is retired: Caddy answers it with a permanen
 - **Slack ops agent** (`src/lib/ops/**`): watches production, posts incidents to Slack, and can run safe fixes; gated tools require approval.
 - **FarePilot admin operator** (`src/app/api/admin/farepilot/route.ts` + `src/lib/farePilotLoop.ts`): owner-only, read-only SQL (SELECT only, on a read-only connection) and a fixed allowlist of named ops commands (no shell), owner + admin-host + same-origin gated, per-owner rate limit, audit-before-execute, and a TOTP step-up enforced whenever an authenticator is configured (`OWNER_TOTP_SECRET` or owner 2FA; `FAREPILOT_REQUIRE_STEPUP=0` opts out). Provider failover resumes a rate-limited turn on the next model without re-running tools.
 
-## Pricing & trial
+## No pricing
 
-Free / Pro ($9/mo) / Enterprise ($39/mo). Every new account gets a **3-month free trial of the entire product** (all Pro and Enterprise features, no card) via the early-access flow; near the end you continue by contacting the owner, otherwise it rolls to Free.
+There are no plans. `TIER_LIMITS` resolves every tier name to one unlimited
+record, so an account's stored tier — including `free` or `pro` from a database
+older than the open-source change — makes no difference to what it can do.
+
+If you fork this and want to meter it, that map is the single place to do it.
 
 ## Mobile
 
-An Expo native app (`ios-app/`, `docs/mobile-app/`) runs over the web app as a headless JSON API under `/api/v1/**` (auth, searches, plans, ai-providers, onboarded, chat). TestFlight builds depend on those endpoints.
+An Expo native app (`ios-app/`, `docs/mobile-app/`) runs over the web app as a headless JSON API under `/api/v1/**` (auth, searches, ai-providers, onboarded, chat). TestFlight builds depend on those endpoints.
 
 ## Project structure
 

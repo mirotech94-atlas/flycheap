@@ -58,7 +58,6 @@ export function PortalTopBar({
           <a href={`https://${PUBLIC_MARKETING_HOST}/`} className="pt-tab">{nav.whatIs}</a>
           <Link href="/explore" className="pt-tab" onClick={() => setOpen(false)}>{nav.exploreDeals}</Link>
           <Link href="/guides" className="pt-tab" onClick={() => setOpen(false)}>{nav.guides}</Link>
-          <Link href="/pricing" className="pt-tab" onClick={() => setOpen(false)}>{nav.pricing}</Link>
           <Link href="/login" className="ed-btn ed-btn-primary" onClick={() => setOpen(false)}>{nav.signInArrow}</Link>
         </div>
       )}

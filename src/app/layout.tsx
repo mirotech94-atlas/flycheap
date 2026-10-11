@@ -8,7 +8,6 @@ import { ClientChrome, AdminAwareMain } from '@/components/ClientChrome';
 import { PortalTopBar } from '@/components/PortalTopBar';
 import { DeferredAppWidgets } from '@/components/DeferredAppWidgets';
 import { UserTelemetry } from '@/components/UserTelemetry';
-import { getActiveTenant } from '@/lib/tenant';
 import { getCurrentUser } from '@/lib/auth';
 import { MARKETING_HOSTS } from '@/lib/hosts';
 import { readThemeCookie } from '@/lib/theme';
@@ -60,21 +59,22 @@ const themeBoot = `
 `;
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  // Per-tenant brand color (white-label) — apply at the root via inline CSS var.
-  // Falls back to the default navy when the user hasn't set one.
-  const user = await getActiveTenant();
+  // One brand, not a tenant's. White-label is gone with the rest of the
+  // client/SaaS layer: an open-source tracker someone runs for themselves has
+  // no tenants to re-skin for. Anyone who wants a different colour edits this
+  // literal, which is a smaller and more honest surface than a settings card
+  // that existed to resell the app.
   const sessionUser = await getCurrentUser();
   // Kept in step with tailwind's `brand.DEFAULT` on purpose -- these are two
   // separate literals for one idea ("the house blue"), and letting them drift
   // means `bg-brand/10` and the injected `.border-brand-500` stop matching.
   // Both moved off the retired Bloomberg navy together.
-  const brand = user?.brand_color || '#1A4459';
-  // Tenant ink, made legible WITHOUT being thrown away. The raw hex used to go
-  // straight into the text roles, where a dark brand (including this default)
-  // measured 1.55:1 on the cabin ground; the stopgap was a blanket override
-  // that painted them all teal, i.e. it fixed legibility by discarding the
-  // tenant's branding. contrastSafe keeps their HUE and moves only lightness
-  // until it clears AA, and returns the colour untouched when it already does.
+  const brand = '#1A4459';
+  // The ink is still DERIVED rather than hardcoded, and that is deliberate even
+  // with one fixed brand: `contrastSafe` keeps the hue and moves only lightness
+  // until it clears AA against both grounds. Anyone forking this and changing
+  // the literal above gets a legible result instead of the 1.55:1 the raw hex
+  // used to measure on the dark ground.
   //
   // The editorial system swaps `--bg` per theme (light on :root, dark under
   // html[data-theme="dark"]), so the ink has to be derived against BOTH

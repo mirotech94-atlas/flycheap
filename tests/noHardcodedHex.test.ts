@@ -23,7 +23,6 @@ const ALLOWLIST: Record<string, number> = {
   // occurrences of the house-blue default (useState initial + API fallback).
   // Task 2.11b converted every styling hex in this file to tokens; these are
   // what a tenant sees as THEIR colour, which is exactly what stays literal.
-  'src/components/WhiteLabelSettings.tsx': 10,
   // Brand-mark art — the logo tile/gradient/plane-glyph hex is the FlyCheap
   // mark itself, not page styling; a token swap would change the brand.
   'src/components/Logo.tsx': 10,

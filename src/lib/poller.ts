@@ -690,14 +690,6 @@ function lastPolledMap(ids: number[]): Map<number, string | null> {
 }
 
 export async function pollAll(): Promise<PollResult[]> {
-  // Founding periods that just ended → mark + one-time upgrade nudge email.
-  try {
-    const { sendUpgradeNudgeEmail } = await import('./billing-emails');
-    for (const u of queries.dueFoundingUpgrades()) {
-      queries.markUpgradeDue(u.id);
-      await sendUpgradeNudgeEmail(u.email);
-    }
-  } catch (e) { console.error('[poll] founding-period sweep failed:', (e as Error).message); }
   // Cancellations whose paid period has run out → Free. Stripe's deleted
   // webhook usually beats this; for PayPal it is the only path.
   try {

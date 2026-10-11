@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { travelpayoutsReferralUrl } from '@/lib/affiliate';
-import { enabledFareProviders, configuredAiProviders, paymentProcessors, alertChannelSentences, alertCarriers, affiliatePartners, listOf } from '@/lib/publicDisclosures';
+import { enabledFareProviders, configuredAiProviders, alertChannelSentences, alertCarriers, affiliatePartners, listOf } from '@/lib/publicDisclosures';
 import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
 
 // Vendor and channel lists below are read from the deployment per request,
@@ -19,7 +19,6 @@ export default function PrivacyPage() {
   const providerList = providers.labels.length ? listOf(providers.labels) : 'the fare providers enabled at the time';
   const ai = configuredAiProviders();
   const aiList = ai.length ? listOf(ai) : 'the AI provider configured at the time';
-  const processors = listOf(paymentProcessors());
   const channels = alertChannelSentences();
   const carriers = alertCarriers();
   const partners = affiliatePartners();
@@ -103,9 +102,9 @@ export default function PrivacyPage() {
               <h3 className="text-center">What we do NOT collect</h3>
               <ul className="text-left" style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>
-                  Your card number or bank details. Subscription payments run through
-                  Stripe&apos;s own checkout page — we only ever see a customer/subscription
-                  ID and status, never your card. Flight bookings happen entirely on the
+                  Your card number or bank details — there is nothing to pay for.
+                  FlyCheap is free and open source and takes no payments at all, so no
+                  card processor is in the path. Flight bookings happen entirely on the
                   airline or travel site you choose.
                 </li>
                 <li>Passport or government-ID data.</li>
@@ -121,8 +120,7 @@ export default function PrivacyPage() {
               <h3 className="text-center">How we use it</h3>
               <ul className="text-left" style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>To query the flight-data providers enabled at the time — currently {providerList} — for the routes you track. Providers receive route parameters only.</li>
-                <li>To send you fare alerts: by {channels.free} on the Free plan, and by {channels.paid} on paid plans if you enable those channels.</li>
-                <li>To process your subscription payment, through {processors}.</li>
+                <li>To send you fare alerts, by {channels.open} if you enable those channels.</li>
                 <li>To attribute affiliate revenue back to the right partner and campaign.</li>
                 <li>To power the AI flight-chat assistant, if you use it.</li>
                 <li>To keep the service running, debug problems, and prevent abuse.</li>
@@ -172,12 +170,10 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Slack (internal)</strong> — when you sign up or delete your
                   account, a short notice including your email and IP address posts to our
-                  own private team channel, so we can watch for abuse; subscription events
-                  (started, payment received or failed, cancelled) post your email and the
-                  amount. Only our team can see it.
+                  own private channel, so we can watch for abuse. Only we can see it.
                 </li>
                 <li>
-                  <strong>Infrastructure providers</strong> ({listOf([...carriers, `${processors} for billing`, 'our hosting provider'])}) — they only see what they
+                  <strong>Infrastructure providers</strong> ({listOf([...carriers, 'our hosting provider'])}) — they only see what they
                   need to deliver that specific service.
                 </li>
               </ul>

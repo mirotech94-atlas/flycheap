@@ -41,7 +41,6 @@ const INTENTIONALLY_PUBLIC: Record<string, string> = {
   'live-feed/route.ts': 'Public cached activity feed, already shown to logged-out visitors.',
   'route-dna/route.ts': 'Public route statistics, shown on the public route pages.',
   'hotels/by-month/route.ts': 'Public cached hotel prices, shown on the public hotels page.',
-  'v1/plans/route.ts': 'Public price list, the same one the pricing page shows.',
   'auth/login/route.ts': 'Sign-in. It cannot require the session it is in the business of creating.',
   'auth/logout/route.ts': 'Sign-out. Clears the session cookie; nothing to protect.',
   'auth/verify/route.ts': 'Magic-link verification — the token IS the credential.',

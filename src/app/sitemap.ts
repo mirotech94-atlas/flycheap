@@ -13,7 +13,6 @@ export default function sitemap(): MetadataRoute.Sitemap {
     // advertising a redirect as the site's most important page.
     { url: `${base}/`,           lastModified: now, changeFrequency: 'hourly',  priority: 1.0 },
     { url: `${base}/explore`,    lastModified: now, changeFrequency: 'hourly',  priority: 0.9 },
-    { url: `${base}/pricing`,    lastModified: now, changeFrequency: 'weekly',  priority: 0.8 },
     { url: `${base}/about`,      lastModified: now, changeFrequency: 'monthly', priority: 0.7 },
     { url: `${base}/guides`,     lastModified: now, changeFrequency: 'weekly',  priority: 0.7 },
     { url: `${base}/login`,      lastModified: now, changeFrequency: 'monthly', priority: 0.6 },

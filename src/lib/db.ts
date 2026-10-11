@@ -1326,14 +1326,39 @@ export type TierLimit = {
 // On cadence: Travelpayouts serves a ~7-day cache derived from other users'
 // searches, so polling a route every 5 minutes spent quota re-reading numbers
 // that had not moved. 30 minutes is the honest ceiling on usefulness.
-export const TIER_LIMITS: Record<string, TierLimit> = {
-  free:        { maxRoutes: 5,    pollIntervalMin: 240, channels: ['email'],
-                 anyDates: false, historyDays: 7,   familyShare: false, priceDropAlerts: false },
-  pro:         { maxRoutes: 100,  pollIntervalMin: 30,  channels: ['email','sms','whatsapp','telegram'],
-                 anyDates: true,  historyDays: 365, familyShare: true,  priceDropAlerts: true },
-  enterprise:  { maxRoutes: 9999, pollIntervalMin: 15,  channels: ['email','sms','whatsapp','telegram'],
-                 anyDates: true,  historyDays: 3650, familyShare: true, priceDropAlerts: true },
+/**
+ * There are no tiers any more.
+ *
+ * FlyCheap is an open-source flight tracker that anyone can run for
+ * themselves. It is not a product with plans, so there is nothing to meter and
+ * nobody to upsell: every capability is on, for everyone, on every install.
+ *
+ * The map and the `TierLimit` shape survive on purpose rather than being torn
+ * out of the twenty files that read them. A Proxy answering every key with the
+ * same unlimited record means `TIER_LIMITS[user.tier]` keeps working whatever
+ * the old column says — 'free', 'pro', 'enterprise', or a tier name from a
+ * database that predates this commit — and no caller has to care. Deleting the
+ * map instead would have meant touching every gate to say "allowed", which is
+ * the same behaviour written twenty times.
+ *
+ * `maxRoutes` is a real number rather than Infinity because it is rendered,
+ * compared and serialised to JSON in a dozen places, and Infinity becomes
+ * `null` in JSON. It is a ceiling nobody running this for themselves will meet.
+ */
+export const OPEN_LIMITS: TierLimit = {
+  maxRoutes: 100_000,
+  pollIntervalMin: 15,
+  channels: ['email', 'telegram'],
+  anyDates: true,
+  historyDays: 36_500,
+  familyShare: true,
+  priceDropAlerts: true,
 };
+
+export const TIER_LIMITS: Record<string, TierLimit> = new Proxy(
+  { open: OPEN_LIMITS } as Record<string, TierLimit>,
+  { get: () => OPEN_LIMITS, has: () => true },
+);
 
 /**
  * Resolve the limits that actually apply to a user.
@@ -1367,11 +1392,20 @@ const TIER_LABEL: Record<string, string> = { free: 'Free', pro: 'Pro', enterpris
 export function routeLimitError(
   user: { id: number; tier?: string | null; subscription_status?: string | null },
 ): string | null {
+  // There is no plan, so there is no plan limit and nothing to upsell. The
+  // function stays because the web and mobile route-creation paths both call it
+  // and both want one place to ask "may this user add another route" — the
+  // answer is now yes, and a caller that stops asking is a caller that cannot
+  // be told otherwise later.
+  //
+  // The OPEN_LIMITS ceiling is still honoured, because an install that somehow
+  // reaches a hundred thousand active routes has a runaway script rather than a
+  // keen user, and saying so beats quietly polling all of them.
   const limit = limitsForUser(user).maxRoutes;
   if (queries.countActiveSearchesForUser(user.id) < limit) return null;
-  const next = TIER_ORDER.find(t => TIER_LIMITS[t].maxRoutes > limit);
-  const upsell = next ? ` ${TIER_LABEL[next]} tracks up to ${TIER_LIMITS[next].maxRoutes}.` : '';
-  return `You're at your plan's limit of ${limit} tracked routes.${upsell}`;
+  return `You have ${limit.toLocaleString('en-US')} active routes, which is this `
+    + `install's ceiling. That is almost certainly a runaway script rather than `
+    + `a tracking list — archive some, or raise OPEN_LIMITS.maxRoutes.`;
 }
 
 export type UserRow = {

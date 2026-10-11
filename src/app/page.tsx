@@ -9,7 +9,6 @@ import { PollNowButton } from '@/components/PollNowButton';
 import { RefreshDealsButton } from '@/components/RefreshDealsButton';
 import { Sparkline } from '@/components/Sparkline';
 import { getCurrentUser } from '@/lib/auth';
-import { FoundingBanner } from '@/components/FoundingBanner';
 import { OnboardingWizard } from '@/components/OnboardingWizard';
 import { OnboardingTour } from '@/components/OnboardingTour';
 import { EmptyState } from '@/components/EmptyState';
@@ -800,7 +799,6 @@ export default async function DashboardPage({ searchParams }: PageProps) {
       </section>
 
       {/* === KPI strip (overlaps hero) === */}
-      {sessionUser && <FoundingBanner userId={sessionUser.id} />}
       <FcKpiStrip items={[
         {
           label: t.kpiTracked,

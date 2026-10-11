@@ -30,12 +30,16 @@
 import { TIER_LIMITS, type TierLimit } from './db';
 import type { Channel } from './alertPolicy';
 
-export type TierId = 'free' | 'pro' | 'enterprise';
+/**
+ * Tier names that still appear in the `users.tier` column of installs that
+ * predate the open-source change. Nothing is gated on them any more —
+ * TIER_LIMITS answers every key with the same unlimited record — but the union
+ * stays so old rows keep typechecking instead of needing a migration.
+ */
+export type TierId = 'free' | 'pro' | 'enterprise' | 'open';
 
 export const TIER_LABEL: Record<TierId, string> = {
-  free: 'Free',
-  pro: 'Pro',
-  enterprise: 'Enterprise',
+  free: 'Open', pro: 'Open', enterprise: 'Open', open: 'Open',
 };
 
 const CHANNEL_LABEL: Record<Channel, string> = {
@@ -109,96 +113,15 @@ export function channelSentence(channels: readonly Channel[]): string {
   return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]}`;
 }
 
-export type PlanFeature = {
-  /** The bullet. */
-  text: string;
-  /** False renders as a struck-through "not on this plan" line. */
-  included: boolean;
-};
-
-/**
- * The bullets for one plan, every one of them derived.
+/*
+ * `PlanFeature`, `planFeatures()` and `upgradeReasons()` lived here and are
+ * gone. They described what one plan had that another did not, and there are no
+ * plans: FlyCheap is open source, every capability is on, and nothing is sold.
  *
- * `deliverable` is what the server can actually send on right now. Pass the
- * real thing; passing every channel would put the old lie straight back.
+ * What remains is the copy that is still true with one tier — the polling
+ * promise (a mechanism, never a cadence), the channel sentence, and `plural`.
+ * `tierChannels` keeps its signature because six callers pass a tier, and it
+ * still does the one thing that matters: advertise a channel only when a sender
+ * exists for it. `isConfigured` is not the same as enabled, which is the rule
+ * that outlived the pricing page it was written for.
  */
-export function planFeatures(tier: TierId, deliverable: readonly Channel[]): PlanFeature[] {
-  const t: TierLimit = TIER_LIMITS[tier] ?? TIER_LIMITS.free;
-  const out: PlanFeature[] = [];
-
-  out.push({
-    included: true,
-    text: t.maxRoutes >= 9999
-      ? 'Unlimited tracked routes'
-      : `${plural(t.maxRoutes, 'tracked route')}`,
-  });
-
-  out.push({ included: true, text: POLLING_PROMISE_SHORT });
-
-  const { channels: shown, measured } = resolveChannels(tier, deliverable);
-  out.push({
-    included: true,
-    text: measured
-      ? `Alerts by ${channelSentence(shown)}`
-      : `Alerts by ${channelSentence(shown)} (available on this plan)`,
-  });
-
-  out.push({
-    included: t.anyDates,
-    text: 'Flexible dates — we find the cheapest window, not just the dates you typed',
-  });
-
-  out.push({
-    included: true,
-    text: t.historyDays >= 3650
-      ? 'Complete price history'
-      : t.historyDays >= 365
-        ? `${Math.round(t.historyDays / 365)} year${t.historyDays >= 730 ? 's' : ''} of price history`
-        : `${plural(t.historyDays, 'day')} of price history`,
-  });
-
-  // Every tier alerts when a fare goes under your target. What Pro adds is an
-  // alert when a fare is unusually cheap for the route even if it has not.
-  out.push({ included: true, text: 'Alerts the moment a fare drops under your target' });
-  out.push({
-    included: t.priceDropAlerts,
-    text: 'Price-drop alerts when a fare is unusually cheap, even if it is not under your target',
-  });
-
-  out.push({ included: t.familyShare, text: 'Share a route with your household' });
-
-  return out;
-}
-
-/**
- * What a tier adds over the one below it — the upgrade case, derived.
- *
- * Returns only genuine differences, so a tier that adds nothing says nothing
- * rather than repeating the tier below with a bigger price on it.
- */
-export function upgradeReasons(from: TierId, to: TierId, deliverable: readonly Channel[]): string[] {
-  const a = TIER_LIMITS[from] ?? TIER_LIMITS.free;
-  const b = TIER_LIMITS[to] ?? TIER_LIMITS.free;
-  const out: string[] = [];
-
-  if (b.maxRoutes > a.maxRoutes) {
-    out.push(b.maxRoutes >= 9999
-      ? 'Unlimited routes instead of ' + a.maxRoutes.toLocaleString('en-US')
-      : `${b.maxRoutes.toLocaleString('en-US')} routes instead of ${a.maxRoutes.toLocaleString('en-US')}`);
-  }
-
-  const newChannels = tierChannels(to, deliverable)
-    .filter(c => !tierChannels(from, deliverable).includes(c));
-  if (newChannels.length) out.push(`Alerts by ${channelSentence(newChannels)}`);
-
-  if (b.anyDates && !a.anyDates) out.push('Flexible-date tracking');
-  if (b.historyDays > a.historyDays) {
-    out.push(b.historyDays >= 3650
-      ? 'Complete price history'
-      : `${plural(b.historyDays, 'day')} of price history instead of ${plural(a.historyDays, 'day')}`);
-  }
-  if (b.priceDropAlerts && !a.priceDropAlerts) out.push('Price-drop alerts, not just target alerts');
-  if (b.familyShare && !a.familyShare) out.push('Household sharing');
-
-  return out;
-}
