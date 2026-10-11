@@ -10,7 +10,6 @@ import { ProviderSettings } from '@/components/ProviderSettings';
 import { providerStatuses } from '@/lib/providers';
 import { ShareLinkCard } from '@/components/ShareLinkCard';
 import { DigestPreview } from '@/components/DigestPreview';
-import { WhiteLabelSettings } from '@/components/WhiteLabelSettings';
 import { DangerZone } from '@/components/DangerZone';
 import { getCurrentUser } from '@/lib/auth';
 import { redirect } from 'next/navigation';
@@ -142,7 +141,6 @@ export default async function SettingsPage() {
         verified={queries.getUserSetting(user.id, 'sms_verified') === 'true'}
       />
 
-      <WhiteLabelSettings />
 
       <ProviderSettings initial={providerStatuses()} />
 

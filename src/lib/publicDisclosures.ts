@@ -2,7 +2,6 @@ import 'server-only';
 import { getPublicMetrics } from './public-metrics';
 import { deliverableChannels } from './channelHealth';
 import { tierChannels, channelSentence } from './tierCopy';
-import { isPaypalConfigured } from './paypal';
 import { tpBrandConfigured } from './affiliate';
 
 /**
@@ -49,9 +48,16 @@ export function configuredAiProviders(): string[] {
   return out;
 }
 
-/** Payment processors that can actually take a subscription right now. */
+/**
+ * Payment processors. There are none, and that is the honest answer.
+ *
+ * FlyCheap is open source and takes no money, so no card processor is in the
+ * path and none should be disclosed. An empty list is the truth; naming Stripe
+ * here when nothing can be charged would be the same invented claim this
+ * module exists to prevent.
+ */
 export function paymentProcessors(): string[] {
-  return isPaypalConfigured() ? ['Stripe', 'PayPal'] : ['Stripe'];
+  return [];
 }
 
 /**

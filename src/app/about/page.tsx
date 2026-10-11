@@ -5,7 +5,6 @@ import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 import { getPublicMetrics } from '@/lib/public-metrics';
 import { deliverableChannels } from '@/lib/channelHealth';
 import { tierChannels, channelSentence } from '@/lib/tierCopy';
-import { isPaypalConfigured } from '@/lib/paypal';
 import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
 import { TIER_LIMITS } from '@/lib/db';
 import { affiliatePartners } from '@/lib/publicDisclosures';
@@ -44,7 +43,6 @@ export default function AboutPage() {
   const freeChannels = channelSentence(tierChannels('free', deliverable));
   const sessionDays = Math.round(COOKIE_MAX_AGE_SEC / 86_400);
   const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
-  const billing = isPaypalConfigured() ? 'Stripe and PayPal' : 'Stripe';
   const freeRoutes = TIER_LIMITS.free.maxRoutes;
   const partners = affiliatePartners();
   return (
@@ -117,7 +115,7 @@ export default function AboutPage() {
                 <li>Code-based sign-in only — no passwords stored.</li>
                 <li>Cookies are <code className="ed-code">httpOnly</code> + <code className="ed-code">Secure</code> + <code className="ed-code">SameSite=Lax</code>; a session expires after {sessionDays} days, and an optional device cookie lets you skip the code for {deviceDays} days.</li>
                 <li>Admin actions are recorded in an audit log (who / what / when / old and new values / IP).</li>
-                <li>No credit card data ever touches our servers — {billing} handle{isPaypalConfigured() ? '' : 's'} billing entirely.</li>
+                <li>No card data, no billing, no payment processor — FlyCheap is free and open source, and there is nothing to charge for.</li>
               </ul>
             </div>
 
