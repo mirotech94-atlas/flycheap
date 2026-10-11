@@ -199,7 +199,6 @@ const ALLOWED: Record<string, string> = {
   'app/explore/page.tsx':             'renders explore deeplink output',
   'app/share-handler/page.tsx':       'parses INBOUND shared partner URLs; emits none',
   'app/admin/integrations/page.tsx':  'admin console: partner dashboard links',
-  'app/admin/revenue/page.tsx':       'admin console: partner dashboard links',
   'app/api/v1/offers/route.ts':       'API response builds via /go helpers',
   'app/api/v1/fares/route.ts':        'API response builds via /go helpers',
   'app/api/v1/hotels/route.ts':       'API response builds via /go helpers',

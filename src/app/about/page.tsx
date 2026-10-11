@@ -1,13 +1,11 @@
 import Link from 'next/link';
 import { APP_VERSION_SHORT } from '@/lib/version';
-import { travelpayoutsReferralUrl } from '@/lib/affiliate';
 import { PublicTopbar, PublicFooter } from '@/components/PublicChrome';
 import { getPublicMetrics } from '@/lib/public-metrics';
 import { deliverableChannels } from '@/lib/channelHealth';
 import { tierChannels, channelSentence } from '@/lib/tierCopy';
 import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
 import { TIER_LIMITS } from '@/lib/db';
-import { affiliatePartners } from '@/lib/publicDisclosures';
 
 // Every number and every "we use X" on this page is read from the running
 // system (public-metrics, channelHealth, TIER_LIMITS, env gates), so the page
@@ -45,7 +43,6 @@ export default function AboutPage() {
   const alertChannels = channelSentence(tierChannels('open', deliverable));
   const sessionDays = Math.round(COOKIE_MAX_AGE_SEC / 86_400);
   const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
-  const partners = affiliatePartners();
   return (
     <div className="mk mk-bleed">
       <PublicTopbar
@@ -104,8 +101,8 @@ export default function AboutPage() {
               <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
                 No banner ads. No selling your data. No third-party tracking pixels — usage analytics are
                 first-party. The <Link href="/privacy">Privacy Policy</Link> names every outside service
-                that sees any of your data (fare providers, email, the AI assistant). We do earn
-                affiliate commission on bookings — see <a href="#affiliate-partners">how we make money</a> below.
+                that sees any of your data (fare providers, email, the AI assistant). Nothing here
+                earns money — no ads, no commission, no plans.
               </p>
             </div>
 
@@ -120,47 +117,26 @@ export default function AboutPage() {
               </ul>
             </div>
 
-            <div className="ed-legal-item ed-panel" id="affiliate-partners" style={{ padding: '20px 22px' }}>
+            <div className="ed-legal-item ed-panel" style={{ padding: '20px 22px' }}>
               <div className="ed-eyebrow">05</div>
-              <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>How the hosting is paid for — affiliate partnerships</h3>
+              <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>Nobody is paying for this</h3>
               <p>
-                FlyCheap is free and open source — every feature, no plans, no card, and no limit worth
-                mentioning on what you track. It costs money to run, so we partner with a handful
-                of established travel booking sites — when you click a <strong>&ldquo;Book →&rdquo;</strong> button
-                and complete a booking on their site, they pay us a small commission.
+                FlyCheap earns nothing. There are no plans, no ads, no affiliate commission and no
+                payment processor — the booking links are plain links to the airline or travel site,
+                with nothing appended to them.
               </p>
               <p style={{ marginTop: 10 }}>
-                You pay <strong>exactly the same price</strong> as if you visited the booking site directly —
-                the commission comes out of the booking site&apos;s margin, not your wallet. This is the same
-                model used by Wirecutter, NerdWallet, and most price-comparison tools.
+                It is open source under MIT, so the honest answer to &ldquo;what&apos;s the catch&rdquo;
+                is that you can read every line of it, and run your own copy if you would rather not
+                trust this one.
               </p>
-              <h4 className="ed-h2" style={{ fontSize: 15, marginTop: 18 }}>Our current partners</h4>
-              <ul style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
-                {partners.map(p => (
-                  <li key={p.name}>
-                    <strong><a href={p.name === 'Travelpayouts' ? travelpayoutsReferralUrl() : p.href} target="_blank" rel="noopener noreferrer">{p.name}</a></strong>
-                    {' '}— {p.note}{p.name === 'Travelpayouts' ? '. Also our primary data source for fare polling' : ''}.
-                  </li>
-                ))}
+              <ul style={{ margin: '12px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
+                <li>Fare rankings are not weighted toward anyone. The cheapest cached price wins.</li>
+                <li>Booking links go through <code className="ed-code">/go</code>, which checks the
+                    destination against a host allowlist and then redirects. It adds no identifiers.</li>
+                <li>You can always book directly with the airline — direct options are never hidden.</li>
+                <li>What each outside service sees is in the <Link href="/privacy">Privacy Policy</Link>.</li>
               </ul>
-              <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
-                Stays: hotel links go through Hotellook (Travelpayouts) and Trip.com, which pay a commission. <strong>Airbnb and Vrbo</strong> have no partner programme — those buttons are plain, prefilled searches that earn us nothing; we include them because many travelers prefer homes to hotels.
-              </p>
-              <p style={{ marginTop: 6, color: 'var(--muted-2)', fontSize: '12.5px' }}>
-                Note: Skyscanner appears in our cross-shop dropdown as a price-comparison option, but we are
-                <strong> not</strong> currently in their affiliate programme — clicks to Skyscanner earn us nothing.
-                We show it because the price comparison is useful to you.
-              </p>
-              <h4 className="ed-h2" style={{ fontSize: 15, marginTop: 18 }}>What this means for you</h4>
-              <ul style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
-                <li>Every booking link routes through our redirect endpoint <code className="ed-code">/go</code>, which logs the click for accounting and adds partner identifiers to the destination URL.</li>
-                <li>We do <strong>not</strong> manipulate fare rankings to favor any partner. The cheapest cached price wins; partner choice is yours.</li>
-                <li>You can always book directly with the airline — we include EgyptAir.com, Google Flights, etc. as non-affiliate comparison options. We never hide direct booking.</li>
-                <li>More detail in our <Link href="/privacy">Privacy Policy</Link> — the &ldquo;Sharing&rdquo; section covers exactly what each partner sees.</li>
-              </ul>
-              <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
-                FTC disclosure: FlyCheap earns commission on bookings made through our partner links — at no extra cost to you.
-              </p>
             </div>
           </div>
 

@@ -5,8 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { isBotUserAgent } from '@/lib/botDetect';
 import {
   isValidSurface, isValidProvider,
-  cjProviderForHost, cjTemplateFor, cjWrap,
-  tpBrandLink, tpMarkerChain, type TpBrand,
+  tpBrandLink, type TpBrand,
 } from '@/lib/affiliate';
 import { decodeSubId } from '@/lib/partnerLink';
 
@@ -327,26 +326,14 @@ export async function GET(req: Request) {
     console.warn(`[/go] unknown provider "${providerParam}" — recording anyway, but check the callsite`);
   }
 
-  // Attribution payload from buildPartnerLink(): alert id, verdict, price shown,
-  // cross-shop position. This is what makes commission-per-alert-type and
-  // alert->click->book conversion answerable.
+  // Which surface sent the user out, and for which route. Kept because it
+  // answers "is the alert any good" — did the fare the alert quoted still look
+  // right when they clicked it — which is a question about honesty, not
+  // earnings. What used to ride alongside it (commission-per-alert-type,
+  // alert-to-click-to-booking conversion) went with the monetisation.
   const clickCtx = readClickContext(url);
   const { sub_id2: _sub2, ...clickRow } = clickCtx;
 
-  // The marker Travelpayouts will receive, built ONCE here and reused at the
-  // attach site below. It used to be built only at attach time, after this
-  // insert had already run, so every click row logged a social sub-id or null
-  // while the outbound link was correctly attributed — the log described a
-  // different link from the one that was sent. An explicit ?marker already on
-  // the destination wins (the attach never overwrites one), so read that first.
-  const markerChain = target.searchParams.get('marker') ?? tpMarkerChain({
-    host: target.hostname,
-    baseMarker: process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER,
-    postMarker,
-    subId: clickCtx.sub_id,
-    subId2: clickCtx.sub_id2,
-    token,
-  });
   const originParamEarly = url.searchParams.get('origin');
   const destParamEarly = url.searchParams.get('destination');
 
@@ -362,7 +349,9 @@ export async function GET(req: Request) {
       return_date: url.searchParams.get('ret'),
       per_adult_usd: safeFloat(perRaw),
       provider: providerParam,
-      marker: markerChain ?? postMarker,
+      // No marker, because nothing is attributed to anyone any more. The column
+      // stays so existing rows keep their history rather than being rewritten.
+      marker: null,
       ip: truncIp(rawIp),
       user_agent: req.headers.get('user-agent') ?? null,
       surface: surfaceParam,
@@ -428,114 +417,27 @@ export async function GET(req: Request) {
     });
   }
 
-  // Append click token so partner-side postbacks can correlate later.
-  target.searchParams.set('cf_click', token);
-
   // ---------------------------------------------------------------------
-  // Server-side affiliate-param injection.
-  // CRITICAL: env vars must be applied here (server) because the URL
-  // builders may run in client-bundled code (BookButton.tsx is 'use client').
-  // process.env.X is undefined in the browser bundle for non-NEXT_PUBLIC_
-  // vars — so client-built URLs ship WITHOUT affiliate params.
-  // Adding marker/Allianceid/associateid here recovers attribution.
+  // No monetisation. This used to be the money: a Travelpayouts marker with a
+  // dotted sub-id chain, Trip.com's Allianceid, Booking's aid, Expedia's
+  // siteid, Skyscanner's associateid, per-network sub-id slots, a cf_click
+  // correlation token and a CJ wrapper around the lot — all injected
+  // server-side because the client bundle cannot see the env vars.
+  //
+  // FlyCheap earns nothing now, by decision rather than by accident, so every
+  // one of those is gone and the user is sent to the destination they asked
+  // for, unmodified. What survives is the part that was never about money:
+  //
+  //   the host allowlist, because an open redirector is an open redirector
+  //   whether or not anyone is paid for it;
+  //   the bot guard, so crawlers do not generate click rows;
+  //   and `strict-origin-when-cross-origin`, which sends our origin and never
+  //   the path or query.
+  //
+  // Nothing is appended to the URL at all, which is also why there is no
+  // longer a token to leak.
   // ---------------------------------------------------------------------
-
-  const host = target.hostname.toLowerCase().replace(/\.$/, '');
-
-  // CJ routing decision, made BEFORE the direct-program injections below.
-  // If an advertiser is running through CJ, its direct query-param program
-  // (Booking's ?aid=, Expedia's ?siteid=) must NOT also be applied — the two
-  // are competing attribution paths and stacking them attributes to neither.
-  const cjProvider = cjProviderForHost(host);
-  const cjTemplate = cjProvider ? cjTemplateFor(cjProvider) : null;
-
-  // Travelpayouts marker — applies to aviasales.com, hotellook.com,
-  // wayaway.io, tpk.lu (all share one marker pool). When a per-post social
-  // marker rode along (cookie or query), it becomes the first sub-id. The host
-  // list and the dotted scheme live in lib/affiliate.ts, and this is the exact
-  // string the click row above recorded, so log and link cannot drift.
-  if (markerChain && !target.searchParams.has('marker')) {
-    target.searchParams.set('marker', markerChain);
-  }
-
-  // Per-network sub-id slots (Trip.com, Booking, Expedia, Skyscanner).
-  applySubIds(target, host, clickCtx, token);
-
-  // Trip.com — Allianceid is the affiliate identifier; SID is sub-id.
-  if (host.endsWith('trip.com')) {
-    const allianceId = process.env.TRIPCOM_ALLIANCE_ID;
-    const sid = process.env.TRIPCOM_SID;
-    if (allianceId && !target.searchParams.has('Allianceid')) {
-      target.searchParams.set('Allianceid', allianceId);
-    }
-    if (sid && !target.searchParams.has('SID')) {
-      target.searchParams.set('SID', sid);
-    }
-    // Trip.com sub-id slots are filled by applySubIds() above, from the
-    // canonical scheme. Nothing to do here beyond the identifiers.
-  }
-
-  // Booking.com — aid is the affiliate identifier; label is the sub-tracker.
-  // Read both BOOKING_AID (server-side admin convention) and the public
-  // NEXT_PUBLIC_BOOKING_AID (so a single value in either slot works).
-  if (!cjTemplate && (host === 'booking.com' || host === 'www.booking.com')) {
-    const aid = process.env.BOOKING_AID || process.env.NEXT_PUBLIC_BOOKING_AID;
-    if (aid && !target.searchParams.has('aid')) {
-      target.searchParams.set('aid', aid);
-      const surface = url.searchParams.get('surface');
-      const routeIdParam = url.searchParams.get('route_id');
-      const label = [surface, routeIdParam].filter(Boolean).join('.') || 'hotels-grid';
-      if (!target.searchParams.has('label')) target.searchParams.set('label', label);
-    }
-  }
-
-  // Expedia — siteid is the affiliate identifier; clickref is the sub-tracker.
-  if (!cjTemplate && (host === 'expedia.com' || host === 'www.expedia.com')) {
-    const siteid = process.env.EXPEDIA_SITEID || process.env.NEXT_PUBLIC_EXPEDIA_SITEID;
-    if (siteid && !target.searchParams.has('siteid')) {
-      target.searchParams.set('siteid', siteid);
-      const surface = url.searchParams.get('surface');
-      const routeIdParam = url.searchParams.get('route_id');
-      const clickref = [surface, routeIdParam].filter(Boolean).join('.') || 'hotels-grid';
-      if (!target.searchParams.has('clickref')) target.searchParams.set('clickref', clickref);
-    }
-  }
-
-  // Skyscanner — associateid is the affiliate identifier.
-  if (host === 'skyscanner.com' || host === 'www.skyscanner.com') {
-    const associateId = process.env.SKYSCANNER_ASSOCIATE_ID;
-    if (associateId && !target.searchParams.has('associateid')) {
-      target.searchParams.set('associateid', associateId);
-      const surface = url.searchParams.get('surface');
-      const routeIdParam = url.searchParams.get('route_id');
-      // applySubIds() has already written the canonical sub_id scheme into
-      // `subid`. Only fall back to the older surface.route form if it didn't.
-      if (!target.searchParams.has('subid') && (surface || routeIdParam)) {
-        target.searchParams.set('subid', [surface, routeIdParam].filter(Boolean).join('.'));
-      }
-    }
-  }
-
-  // Referrer policy: send only the ORIGIN (https://my.flycheap.live) as the
-  // Referer header — no path, no query — so the cf_click token and affiliate
-  // params can never leak to third-party trackers on the partner's landing
-  // page. But the partner DOES see our domain, which is required by some
-  // affiliate fraud filters (notably Trip.com) to attribute clicks. The
-  // previous policy `no-referrer` stripped the header entirely, which caused
-  // Trip.com's dashboard to report 0 clicks despite our DB logging 11+ — their
-  // fraud system drops traffic that arrives with no referrer.
-  // CJ wrap — last step, so the encoded destination carries cf_click and
-  // every param set above. cjWrap returns null on a missing/malformed
-  // template, in which case we redirect direct and simply earn nothing,
-  // rather than breaking the user's click.
-  let finalUrl = target.toString();
-  if (cjTemplate) {
-    const sid = [url.searchParams.get('surface'), url.searchParams.get('route_id')]
-      .filter(Boolean).join('.') || token;
-    const wrapped = cjWrap({ template: cjTemplate, destination: finalUrl, sid });
-    if (wrapped) finalUrl = wrapped;
-    else console.warn(`[/go] CJ template for "${cjProvider}" is malformed — redirecting unattributed`);
-  }
+  const finalUrl = target.toString();
 
   const res = NextResponse.redirect(finalUrl, 302);
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
