@@ -39,11 +39,12 @@ export default function AboutPage() {
       ? `${m.providersTotal} provider integrations are built in; the ones enabled in Settings are searched in parallel and the cheapest valid offer wins.`
       : 'The provider integrations enabled in Settings are searched in parallel and the cheapest valid offer wins.';
   const deliverable = deliverableChannels();
-  const paidChannels = channelSentence(tierChannels('pro', deliverable));
-  const freeChannels = channelSentence(tierChannels('free', deliverable));
+  // One tier, so one sentence. These used to be two values ('pro' vs 'free')
+  // and the page contrasted them; with nothing sold there is nothing to
+  // contrast, and `tierChannels` now returns the same list for either name.
+  const alertChannels = channelSentence(tierChannels('open', deliverable));
   const sessionDays = Math.round(COOKIE_MAX_AGE_SEC / 86_400);
   const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
-  const freeRoutes = TIER_LIMITS.free.maxRoutes;
   const partners = affiliatePartners();
   return (
     <div className="mk mk-bleed">
@@ -75,7 +76,7 @@ export default function AboutPage() {
               <ol style={{ margin: 0, paddingLeft: 20, display: 'grid', gap: 10 }}>
                 <li><strong>Pick a route + dates.</strong> Add JFK→CAI on July 7, or anything else — any 3-letter IATA pair works.</li>
                 <li><strong>A scheduler runs continuously.</strong> {providerSentence} How often a given route is due depends on how much it matters — close to departure, close to your target, or moving fast means more often.</li>
-                <li><strong>Two alert triggers.</strong> Threshold-cross (the fare lands at or below your target) and price-drop (the fare falls more than your drop percentage below the route&apos;s own recent median — you set the percentage in Settings). Alerts go out by {freeChannels} on Free and by {paidChannels} on paid plans.</li>
+                <li><strong>Two alert triggers.</strong> Threshold-cross (the fare lands at or below your target) and price-drop (the fare falls more than your drop percentage below the route&apos;s own recent median — you set the percentage in Settings). Alerts go out by {alertChannels}.</li>
                 <li><strong>You decide when to book.</strong> We never charge cards. Every deal links straight to the airline / OTA.</li>
               </ol>
             </div>
@@ -103,7 +104,7 @@ export default function AboutPage() {
               <p style={{ marginTop: 10, color: 'var(--muted-2)', fontSize: '12.5px' }}>
                 No banner ads. No selling your data. No third-party tracking pixels — usage analytics are
                 first-party. The <Link href="/privacy">Privacy Policy</Link> names every outside service
-                that sees any of your data (fare providers, email, billing, the AI assistant). We do earn
+                that sees any of your data (fare providers, email, the AI assistant). We do earn
                 affiliate commission on bookings — see <a href="#affiliate-partners">how we make money</a> below.
               </p>
             </div>
@@ -121,9 +122,10 @@ export default function AboutPage() {
 
             <div className="ed-legal-item ed-panel" id="affiliate-partners" style={{ padding: '20px 22px' }}>
               <div className="ed-eyebrow">05</div>
-              <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>How we make money — affiliate partnerships</h3>
+              <h3 className="ed-h2" style={{ fontSize: 20, marginTop: 4 }}>How the hosting is paid for — affiliate partnerships</h3>
               <p>
-                FlyCheap&apos;s free tier is genuinely free ({freeRoutes} tracked routes, no card). Beyond subscriptions, we partner with a handful
+                FlyCheap is free and open source — every feature, no plans, no card, and no limit worth
+                mentioning on what you track. It costs money to run, so we partner with a handful
                 of established travel booking sites — when you click a <strong>&ldquo;Book →&rdquo;</strong> button
                 and complete a booking on their site, they pay us a small commission.
               </p>

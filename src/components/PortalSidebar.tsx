@@ -37,7 +37,6 @@ function buildSections(nav: AppNavDict): Section[] {
     ] },
     { group: nav.groupServices, items: [
       { href: '/integrations', label: nav.integrations, icon: 'integrations' },
-      { href: '/pricing', label: nav.pricing, icon: 'pricing' },
     ] },
     { group: nav.groupHelp, items: [
       { href: '/guides', label: nav.guides, icon: 'guides' },

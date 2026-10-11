@@ -64,9 +64,12 @@ export function paymentProcessors(): string[] {
  * Third parties an alert can be delivered through, by tier, measured against
  * the configured senders (the same rule the pricing page uses).
  */
-export function alertChannelSentences(): { free: string; paid: string } {
-  const d = deliverableChannels();
-  return { free: channelSentence(tierChannels('free', d)), paid: channelSentence(tierChannels('pro', d)) };
+export function alertChannelSentences(): { open: string } {
+  // One sentence, because there is one tier. This returned { free, paid } so
+  // the privacy page could contrast what each plan got; with nothing sold the
+  // two were about to render identically, which reads as a mistake rather than
+  // a policy.
+  return { open: channelSentence(tierChannels('open', deliverableChannels())) };
 }
 
 /** Vendors that carry alerts, when their sender is configured. */

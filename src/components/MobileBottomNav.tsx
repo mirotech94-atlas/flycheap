@@ -14,7 +14,7 @@ const TABS: Array<{ href: string; match: (p: string) => boolean; key: keyof AppN
   { href: '/searches', match: (p: string) => p.startsWith('/searches') || p.startsWith('/explore') || p.startsWith('/routes'), key: 'flights' },
   { href: '/hotels', match: (p: string) => p.startsWith('/hotels'), key: 'hotels' },
   { href: '/offers', match: (p: string) => p.startsWith('/offers') || p.startsWith('/compare'), key: 'offers' },
-  { href: '/settings', match: (p: string) => p.startsWith('/settings') || p.startsWith('/pricing') || p.startsWith('/contact') || p.startsWith('/help') || p.startsWith('/onboarding'), key: 'profile' },
+  { href: '/settings', match: (p: string) => p.startsWith('/settings') || p.startsWith('/contact') || p.startsWith('/help') || p.startsWith('/onboarding'), key: 'profile' },
 ];
 
 export function MobileBottomNav() {

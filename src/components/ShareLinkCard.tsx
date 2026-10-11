@@ -18,7 +18,6 @@ export function ShareLinkCard() {
         revoked at any time. Boards live under an organisation; if your account is not part of
         one yet, contact us to set it up.
       </p>
-      <a href="/org" className="ed-btn ed-btn-primary">Manage boards</a>
     </section>
   );
 }
