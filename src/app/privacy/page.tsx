@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
-import { travelpayoutsReferralUrl } from '@/lib/affiliate';
-import { enabledFareProviders, configuredAiProviders, alertChannelSentences, alertCarriers, affiliatePartners, listOf } from '@/lib/publicDisclosures';
+import { enabledFareProviders, configuredAiProviders, alertChannelSentences, alertCarriers, listOf } from '@/lib/publicDisclosures';
 import { COOKIE_MAX_AGE_SEC, DEVICE_MAX_AGE_SEC } from '@/lib/auth';
 
 // Vendor and channel lists below are read from the deployment per request,
@@ -21,7 +20,6 @@ export default function PrivacyPage() {
   const aiList = ai.length ? listOf(ai) : 'the AI provider configured at the time';
   const channels = alertChannelSentences();
   const carriers = alertCarriers();
-  const partners = affiliatePartners();
   const sessionDays = Math.round(COOKIE_MAX_AGE_SEC / 86_400);
   const deviceDays = Math.round(DEVICE_MAX_AGE_SEC / 86_400);
 
@@ -64,9 +62,10 @@ export default function PrivacyPage() {
                 </li>
                 <li>
                   <strong>Click logs:</strong> when you click a &quot;Book&quot; button we
-                  record a click token, the route, your account (if you&apos;re signed in),
-                  your IP address, and browser. Only the token — never your email or
-                  account — is passed on to the affiliate partner.
+                  record the route, your account (if you&apos;re signed in), your truncated
+                  IP address, and browser — so we can tell whether the fare an alert quoted
+                  still looked right when you clicked it. <strong>Nothing is passed on to the
+                  booking site.</strong> The link is plain: no token, no identifier, no marker.
                 </li>
                 <li>
                   <strong>Usage analytics:</strong> as you use the site we log page views,
@@ -84,12 +83,6 @@ export default function PrivacyPage() {
                 <li>
                   <strong>Support requests:</strong> if you contact us (in-app or by email),
                   we keep the message thread so we can help you and follow up.
-                </li>
-                <li>
-                  <strong>Marketing attribution:</strong> if you follow a link that includes
-                  a tracking marker from one of our posts, we forward that marker to the
-                  affiliate partner when you click &quot;Book&quot;, so we can attribute a
-                  resulting booking to that post.
                 </li>
                 <li>
                   <strong>Standard server logs:</strong> request paths, response codes, and
@@ -121,7 +114,6 @@ export default function PrivacyPage() {
               <ul className="text-left" style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>To query the flight-data providers enabled at the time — currently {providerList} — for the routes you track. Providers receive route parameters only.</li>
                 <li>To send you fare alerts, by {channels.open} if you enable those channels.</li>
-                <li>To attribute affiliate revenue back to the right partner and campaign.</li>
                 <li>To power the AI flight-chat assistant, if you use it.</li>
                 <li>To keep the service running, debug problems, and prevent abuse.</li>
               </ul>
@@ -136,31 +128,21 @@ export default function PrivacyPage() {
               <ul className="text-left" style={{ margin: '8px 0 0', paddingLeft: 20, display: 'grid', gap: 8 }}>
                 <li>
                   <strong>Fare-data partners</strong> (
-                  <a href={travelpayoutsReferralUrl()} target="_blank" rel="noopener noreferrer">
+                  {/* A plain link. This was a referral URL that earned credit for
+                      sign-ups, which has no business being inside a privacy policy
+                      explaining who sees your data. */}
+                  <a href="https://www.travelpayouts.com/" target="_blank" rel="noopener noreferrer">
                     Travelpayouts
                   </a>
                   {providers.labels.length > 1 ? ` and the other providers enabled at the time — currently ${listOf(providers.labels)}` : ' — the only provider enabled right now'}) — we forward route parameters only, never your
                   email or account ID.
                 </li>
                 <li>
-                  <strong>Affiliate networks</strong> — when you click &quot;Book&quot;
-                  or &ldquo;Compare on&rdquo;, you&apos;re sent to the partner site with
-                  a click token and, if present, an attribution marker. This lets us match
-                  any later commission payment back to your click. Current affiliate
-                  partners (see also our <Link href="/about#affiliate-partners">About page</Link>):
-                  <ul className="text-left" style={{ margin: '8px 0 0 24px', display: 'grid', gap: 6, fontSize: 13.5 }}>
-                    {partners.map(p => (
-                      <li key={p.name}>
-                        <strong>
-                          <a href={p.name === 'Travelpayouts' ? travelpayoutsReferralUrl() : p.href} target="_blank" rel="noopener noreferrer">{p.name}</a>
-                        </strong>{' '}
-                        — {p.note}.
-                      </li>
-                    ))}
-                  </ul>
-                  <p style={{ marginTop: 8, fontSize: 13, color: 'var(--muted)' }}>
-                    You pay exactly the same price as if you visited the partner site directly — commission comes from the partner&apos;s margin, not your wallet.
-                  </p>
+                  <strong>Booking sites</strong> — when you click &quot;Book&quot; or
+                  &ldquo;Compare on&rdquo;, you are sent to that site. We append nothing to
+                  the link, so all they receive is the ordinary request your browser makes
+                  plus our origin as the referrer. FlyCheap earns no commission and has no
+                  affiliate relationship with any of them.
                 </li>
                 <li>
                   <strong>AI providers</strong> — {aiList} — see messages you send the

@@ -11,23 +11,17 @@ const NAV: NavGroup[] = [
   { group: 'Overview', items: [
     { href: '/admin', label: 'Command centre', icon: 'overview', hint: 'Daily founder briefing' },
   ] },
-  // The three questions the admin portal has to answer, in the order they
-  // matter: is the engine honest, what does it cost against what it earns, and
-  // does the funnel work. Trust comes first because everything else is
-  // worthless if it fails.
+  // The question the portal has to answer is whether the engine is honest.
+  // Economics, Funnel, Revenue and Click stream went with the commercial layer
+  // — poll cost against commission earned, and alert-to-click-to-booking
+  // attribution, are questions a business asks. There is no business.
   { group: 'Analytics', items: [
     { href: '/admin/trust',     label: 'Fare truth', icon: 'trust',   hint: 'Alert-to-click delta, dead fares, verdict accuracy' },
-    { href: '/admin/economics', label: 'Economics',  icon: 'economics', hint: 'Poll cost against commission earned' },
-    { href: '/admin/funnel',    label: 'Funnel',     icon: 'funnel',  hint: 'Alert to click to booking to chain' },
-    { href: '/admin/model',     label: 'Fare model', icon: 'model',   hint: 'The neural network\'s verdict on every client route' },
+    { href: '/admin/model',     label: 'Fare model', icon: 'model',   hint: 'The neural network\'s verdict on every tracked route' },
   ] },
-  { group: 'Commercial', items: [
-    { href: '/admin/revenue', label: 'Revenue',      icon: 'revenue', hint: 'Earnings, balance and forecast' },
-    { href: '/admin/clicks',  label: 'Click stream',  icon: 'clicks',  hint: 'Traffic sources and attribution' },
-  ] },
-  { group: 'Customers', items: [
-    { href: '/admin/signups', label: 'Acquisition', icon: 'signups' },
-    { href: '/admin/users',   label: 'Accounts',    icon: 'users' },
+  { group: 'Accounts', items: [
+    { href: '/admin/signups', label: 'Sign-ups',  icon: 'signups' },
+    { href: '/admin/users',   label: 'Accounts',  icon: 'users' },
   ] },
   { group: 'Operations', items: [
     { href: '/admin/health',       label: 'Fare engine',  icon: 'health' },

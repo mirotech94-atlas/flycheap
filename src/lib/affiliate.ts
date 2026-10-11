@@ -48,40 +48,9 @@ export function isTpHost(host: string): boolean {
   return TP_HOSTS.includes(host.toLowerCase().replace(/\.$/, ''));
 }
 
-/**
- * The exact dotted marker string Travelpayouts receives, or null when this
- * destination is not a Travelpayouts host.
- *
- * Travelpayouts carries sub-ids as dotted suffixes on the marker, in the
- * scheme's order: sub_id (surface/product/alert type), sub_id2 (route), then
- * sub_id3 (the opaque click token). A social post marker, when one rode along,
- * sits first so per-post reporting keeps working.
- *
- * Pure and exported because /go needs the SAME string twice — once to attach
- * to the outbound URL and once to record on the click row. Building it in two
- * places is how the log ends up describing a link that was never sent.
- */
-export function tpMarkerChain(opts: {
-  host: string;
-  baseMarker?: string | null;
-  postMarker?: string | null;
-  subId?: string | null;
-  subId2?: string | null;
-  token?: string | null;
-}): string | null {
-  if (!opts.baseMarker || !isTpHost(opts.host)) return null;
-  return [opts.baseMarker, opts.postMarker, opts.subId, opts.subId2, opts.token]
-    .filter(Boolean).join('.');
-}
 
-export function travelpayoutsReferralUrl(): string {
-  const marker = TP_MARKER ?? '727998';
-  return `https://www.travelpayouts.com/?marker=${marker}`;
-}
 
-// Tuple form so we can both derive the type AND iterate at runtime
-// (for /go's validate-on-insert check). Adding a new surface requires
-// updating only this list.
+
 export const AFFILIATE_SURFACES = [
   'dashboard-cheapest-card',
   'dashboard-tracked-table',
@@ -777,68 +746,9 @@ const CJ_TEMPLATE_ENV: Partial<Record<AffiliateProvider, string>> = {
   expedia: 'CJ_LINK_EXPEDIA',
 };
 
-/** Which of our providers a destination host belongs to, for CJ routing. */
-export function cjProviderForHost(host: string): AffiliateProvider | null {
-  if (host === 'booking.com' || host === 'www.booking.com') return 'booking';
-  if (host === 'expedia.com' || host === 'www.expedia.com') return 'expedia';
-  return null;
-}
 
-/** The configured CJ template for a provider, or null if not signed up yet. */
-export function cjTemplateFor(provider: AffiliateProvider): string | null {
-  const key = CJ_TEMPLATE_ENV[provider];
-  if (!key) return null;
-  const raw = process.env[key];
-  return raw && raw.trim() ? raw.trim() : null;
-}
 
-/**
- * Wrap a destination URL in a CJ tracking link.
- *
- * Returns null — meaning "fall through to the direct program" — if the
- * template is missing, malformed, or doesn't point at a CJ domain. Never
- * throws: a broken template must not break the redirect.
- */
-export function cjWrap(opts: { template: string; destination: string; sid?: string }): string | null {
-  const { template, destination } = opts;
-  if (!template.includes('{url}')) return null;
 
-  // The template must itself be a valid https URL on a real CJ domain.
-  let base: URL;
-  try { base = new URL(template.replace('{url}', 'https://example.com').replace('{sid}', 'x')); }
-  catch { return null; }
-  if (base.protocol !== 'https:') return null;
-  if (!CJ_TRACKING_HOSTS.has(base.hostname.toLowerCase().replace(/\.$/, ''))) return null;
-
-  // CJ sub-ids are alphanumeric + a few separators; anything else is dropped
-  // rather than escaped, because CJ silently truncates on unexpected chars.
-  const sid = (opts.sid ?? '').replace(/[^A-Za-z0-9._-]/g, '').slice(0, 64) || 'flycheap';
-
-  return template
-    .replace('{url}', encodeURIComponent(destination))
-    .replace('{sid}', sid);
-}
-
-// ---------------------------------------------------------------------------
-// Travelpayouts attach brands (EKTA insurance, Kiwitaxi transfers).
-//
-// Same lesson as CJ: the SHAPE of a Travelpayouts click link is public
-//   https://cNNN.travelpayouts.com/click?shmarker=<marker>.<sub>
-//          &promo_id=<brand>&source_type=customlink&type=click&custom_url=<enc>
-// but the VALUES are not derivable — promo_id is per-brand and the cNNN host
-// varies per account/brand. A guessed promo_id yields a link that redirects
-// perfectly and pays nothing, so we don't guess. Copy one link per brand out
-// of the Travelpayouts dashboard and store it as a template:
-//
-//   TP_LINK_EKTA='https://c111.travelpayouts.com/click?shmarker=727998.{sub}&promo_id=XXXX&source_type=customlink&type=click&custom_url={url}'
-//
-// SECURITY: custom_url points anywhere, which makes these hosts open
-// redirectors by design. Templates therefore live in server env ONLY and the
-// final URL is always built by us — /go never accepts one as ?to=, and
-// *.travelpayouts.com is deliberately absent from its allowlist.
-// ---------------------------------------------------------------------------
-
-/** Attach brands we can monetise through the existing Travelpayouts account. */
 export type TpBrand = 'ekta' | 'kiwitaxi';
 
 const TP_BRAND_ENV: Record<TpBrand, string> = {

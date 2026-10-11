@@ -4,10 +4,11 @@ A self-hosted flight-price tracker. Watch the routes you care about, record
 every price seen, and get told when a fare drops below your target or looks
 anomalous — with a buy-or-wait verdict grounded in that route's own history.
 
-**Free and open source (MIT). No plans, no accounts to buy, no payment
-processor.** It is not a service being sold; it is a program you run. Every
-feature is on for everyone, and if the hosted instance ever disappears, your
-copy keeps working.
+**Free and open source (MIT). No plans, no payment processor, no ads, and no
+affiliate commission.** It is not a service being sold and it is not monetised
+at all — booking links are plain links to the airline or travel site, with
+nothing appended. Every feature is on for everyone, and if the hosted instance
+ever disappears, your copy keeps working.
 
 Package name is `egyptair-tracker` for historical reasons.
 

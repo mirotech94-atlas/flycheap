@@ -80,24 +80,10 @@ export function alertCarriers(): string[] {
   return out;
 }
 
-export type AffiliatePartner = { name: string; href: string; note: string };
-
-/**
- * Affiliate destinations a "Book" or attach-brand click can reach, gated on
- * the same env each link builder reads. Travelpayouts is listed whenever its
- * marker is set; the attach brands (EKTA insurance, Kiwitaxi transfers) ride
- * the same account but only render when their link template exists.
+/*
+ * `AffiliatePartner` and `affiliatePartners()` are gone. They enumerated who
+ * paid a commission and what each one paid for, which was the right disclosure
+ * to publish while that was true. Nothing pays now, and a list of affiliate
+ * partners for a project with no affiliate programme would be the invented
+ * claim this module exists to prevent.
  */
-export function affiliatePartners(): AffiliatePartner[] {
-  const out: AffiliatePartner[] = [];
-  if (process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER) {
-    const brands = ['Aviasales (flights)', 'Hotellook (hotels)', 'WayAway (cashback flights)'];
-    if (tpBrandConfigured('ekta')) brands.push('EKTA (travel insurance)');
-    if (tpBrandConfigured('kiwitaxi')) brands.push('Kiwitaxi (airport transfers)');
-    out.push({ name: 'Travelpayouts', href: 'https://www.travelpayouts.com/', note: `the affiliate network behind ${listOf(brands)}` });
-  }
-  if (process.env.TRIPCOM_ALLIANCE_ID) out.push({ name: 'Trip.com Partners', href: 'https://www.trip.com/partners/', note: 'flight and hotel bookings' });
-  if (process.env.NEXT_PUBLIC_BOOKING_AID) out.push({ name: 'Booking.com', href: 'https://www.booking.com/affiliate-program/', note: 'hotel bookings' });
-  if (process.env.NEXT_PUBLIC_EXPEDIA_SITEID) out.push({ name: 'Expedia', href: 'https://www.expedia.com/affiliates', note: 'hotel bookings' });
-  return out;
-}
