@@ -8,21 +8,22 @@
  *
  * WHY IT RETURNS A `/go` URL RATHER THAN A PARTNER URL
  * ----------------------------------------------------
- * The spec asks for one function that returns the final partner URL. This
- * codebase cannot do that safely, and the reason is load-bearing: link builders
- * run in client-bundled code (BookButton.tsx is 'use client'), where
- * `process.env.AVIASALES_MARKER` is `undefined`. A client-built partner URL
- * ships WITHOUT its marker — which is exactly the marker bug that has already
- * bitten this product once.
+ * The original reason was monetisation: link builders run in client-bundled
+ * code ('use client'), where `process.env.AVIASALES_MARKER` is undefined, so a
+ * client-built partner URL shipped without its marker — a bug that bit this
+ * product once. The marker is gone and nothing is appended to an outbound URL
+ * any more, so that reason has expired.
  *
- * So the single audited code path is two halves that are both server-truthful:
+ * The indirection stays for two reasons that have nothing to do with money:
  *
- *   buildPartnerLink()  →  /go?...           (safe anywhere, carries the context)
- *   app/go/route.ts     →  partner URL       (server-only, injects the marker)
+ *   buildPartnerLink()  →  /go?...        (safe anywhere, carries the context)
+ *   app/go/route.ts     →  partner URL    (server-only, checks the allowlist)
  *
- * `/go` is the only place a partner hostname receives affiliate parameters, and
- * this builder is the only place a `/go` link is constructed. The CI assertion
- * in tests/partner-links.test.ts enforces both halves.
+ * One place decides whether a destination hostname is allowed at all, which is
+ * what keeps this from being an open redirector; and one place records the
+ * click-out, so "did the fare the alert quoted survive the click" is still
+ * answerable. The CI assertion in tests/partner-links.test.ts enforces that no
+ * partner hostname is reached from anywhere else.
  *
  * SUB-ID SCHEME
  * -------------

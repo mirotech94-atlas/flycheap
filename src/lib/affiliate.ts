@@ -1,27 +1,20 @@
-// Non-Aviasales affiliate URL builders. Aviasales itself still goes through
-// bookingLink() in lib/utils.ts → /go, which appends marker server-side.
-// Brands covered here:
-//   - Hotellook  (hotel metasearch, same Travelpayouts marker pool)
-//   - WayAway    (cashback flights, same TP marker)
-//   - Trip.com   (Metasearch tier — Allianceid + SID per partner)
-//   - Skyscanner (DECLINED 2026-05; cross-shop link kept, no associate_id)
-//   - Booking.com (Affiliate Partner Programme — uses ?aid=<AID>&label=...)
-//     Sign-up: https://partner.booking.com/en-us/affiliate-program
-//     Env var: NEXT_PUBLIC_BOOKING_AID (client-readable, used in HotelsGrid
-//              chips). Server-side admin/integrations row reads BOOKING_AID
-//              as a convenience alias for the same value.
-//   - Expedia (Expedia Group Affiliate — uses ?siteid=<ID>&clickref=<sub>)
-//     Sign-up: https://www.expediagroup.com/affiliate-marketing/
-//     Env var: NEXT_PUBLIC_EXPEDIA_SITEID. Same client-readable convention.
-// Each builder reads its env-side identifier; when called from a client
-// component the value is `undefined` and /go fills it in server-side.
+// Partner deep links.
+//
+// This file used to be the monetisation layer: a Travelpayouts marker pool
+// across Aviasales / Hotellook / WayAway, Trip.com's Allianceid, Booking's
+// ?aid=, Expedia's ?siteid=, CJ wrappers, and a sub-id scheme threaded through
+// all of them. FlyCheap earns nothing now, so what is left is only the part
+// that was always useful: building a correct search URL for each site, so a
+// "Book" button lands on the right dates, route and passenger count instead of
+// that site's homepage.
+//
+// Nothing here appends an identifier of any kind.
 
 import {
   buildPartnerLink, routeIdFor,
   type PartnerProduct, type PartnerAlertType,
 } from './partnerLink';
 
-const TP_MARKER = process.env.AVIASALES_MARKER || process.env.TRAVELPAYOUTS_MARKER;
 
 /**
  * Travelpayouts referral link for footer/about/privacy mentions. Builds
@@ -270,8 +263,7 @@ export function hotellookLink(opts: {
   u.searchParams.set('checkIn', opts.checkIn);
   u.searchParams.set('checkOut', opts.checkOut);
   u.searchParams.set('adults', String(opts.adults ?? 2));
-  if (TP_MARKER) u.searchParams.set('marker', TP_MARKER);
-  u.searchParams.set('sub_id', buildSubId({ surface: opts.surface, routeId: opts.routeId }));
+  // No marker and no sub_id: this is a plain Hotellook search link now.
   return u.toString();
 }
 
@@ -403,8 +395,7 @@ export function waywayLink(opts: {
   path += String(opts.adults ?? 1);
 
   const u = new URL(`https://wayaway.io/flights/${path}`);
-  if (TP_MARKER) u.searchParams.set('marker', TP_MARKER);
-  u.searchParams.set('sub_id', buildSubId({ surface: opts.surface, routeId: opts.routeId }));
+  // No marker and no sub_id: a plain WayAway search link.
   return u.toString();
 }
 

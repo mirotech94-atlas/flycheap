@@ -3,12 +3,14 @@ import { buildPartnerLink, routeIdFor } from './partnerLink';
 import { aviasalesSearchLink } from './affiliate';
 
 /**
- * Build the canonical `/go` affiliate booking URL for a flight fare.
+ * Build the canonical `/go` booking URL for a flight fare.
  *
- * REVENUE INTEGRITY: the mobile app must NEVER construct Aviasales/Travelpayouts
- * URLs itself. It always opens this `/go?...` link, and the Travelpayouts `marker`
- * is injected server-side by the /go route (from AVIASALES_MARKER env) at redirect
- * time. This keeps a single source of truth for affiliate attribution.
+ * Everything still goes through `/go` rather than linking out directly, but the
+ * reason changed. It used to be revenue integrity — the marker was injected
+ * server-side so a client-built URL could not ship unattributed. Nothing is
+ * attributed now; what `/go` still provides is one place that checks the
+ * destination against the host allowlist and one place that records the
+ * click-out, so "did the alert's fare survive the click" stays answerable.
  */
 export function buildFareBookUrl(opts: {
   origin: string;

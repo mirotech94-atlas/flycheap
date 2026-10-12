@@ -8,29 +8,13 @@ export const dynamic = 'force-dynamic';
 const INTEGRATIONS = [
   { name: 'Travelpayouts (data API)',  env: 'TRAVELPAYOUTS_TOKEN',     category: 'Flight data' },
   { name: 'Travelpayouts (stats API)', env: 'TRAVELPAYOUTS_API_TOKEN', category: 'Flight data' },
-  { name: 'Travelpayouts (marker)',    env: 'TRAVELPAYOUTS_MARKER',    category: 'Flight data' },
   { name: 'Amadeus',                   env: 'AMADEUS_CLIENT_ID',       category: 'Flight data' },
   { name: 'Duffel',                    env: 'DUFFEL_API_KEY',          category: 'Flight data' },
   { name: 'SerpAPI (Google Flights)',  env: 'SERPAPI_KEY',             category: 'Flight data' },
-  // Hotellook is part of Travelpayouts — it uses TRAVELPAYOUTS_MARKER for
-  // affiliate links and TRAVELPAYOUTS_TOKEN for the data API. No separate key.
-  { name: 'Hotellook (uses Travelpayouts marker)', env: 'TRAVELPAYOUTS_MARKER',  category: 'Hotels' },
-  // Booking.com Affiliate Partner Programme — sign up at
-  // https://partner.booking.com/en-us/affiliate-program. The /go redirect
-  // accepts either BOOKING_AID (server-side) or NEXT_PUBLIC_BOOKING_AID
-  // (client-readable, used by HotelsGrid chips). Setting either populates
-  // ?aid= on outbound booking.com URLs.
-  { name: 'Booking.com (affiliate)',  env: 'NEXT_PUBLIC_BOOKING_AID',    category: 'Hotels' },
-  // Expedia Group Affiliate — sign up at
-  // https://www.expediagroup.com/affiliate-marketing/. Same dual-env pattern.
-  { name: 'Expedia (affiliate)',      env: 'NEXT_PUBLIC_EXPEDIA_SITEID', category: 'Hotels' },
-  // CJ Affiliate (Commission Junction) — publisher 7957203. CJ is NOT a
-  // query-param program: the direct ?aid= / ?siteid= paths above are mutually
-  // exclusive with it. After an advertiser approves, paste ONE deep link from
-  // its CJ link inventory into CJ_LINK_<ADVERTISER> using {url} and {sid}
-  // placeholders; /go wraps outbound clicks in it and skips the direct path.
-  { name: 'CJ — Booking.com link',    env: 'CJ_LINK_BOOKING',            category: 'Hotels' },
-  { name: 'CJ — Expedia link',        env: 'CJ_LINK_EXPEDIA',            category: 'Hotels' },
+  // Hotellook is part of Travelpayouts and shares TRAVELPAYOUTS_TOKEN for the
+  // data API. The marker row that sat here was the affiliate identifier, which
+  // no longer exists — hotel links are plain searches.
+  { name: 'Hotellook (uses the Travelpayouts token)', env: 'TRAVELPAYOUTS_TOKEN', category: 'Hotels' },
   // Travelpayouts attach brands — highest revenue per action available to us
   // (EKTA 20% of premium, Kiwitaxi 50% rev-share) and no new contract needed.
   // promo_id is per-brand and the cNNN host varies, so paste a whole link from
