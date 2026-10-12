@@ -62,7 +62,7 @@ function buildHotelUrl(p: Provider, opts: { destination: string; checkIn: string
       context: { surface: 'offers-page', routeId: cityForHotels || null },
     });
   }
-  // booking — buildBookingUrl appends ?aid=&label= when NEXT_PUBLIC_BOOKING_AID
+  // booking — a plain prefilled search; no ?aid= or &label= is appended
   // is set; otherwise sends a plain deeplink. Provider is always 'booking' so
   // the click dashboard reflects user preference even pre-affiliate-signup.
   const bookingUrl = buildBookingUrl({
