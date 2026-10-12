@@ -402,20 +402,13 @@ export function waywayLink(opts: {
 // ---------------------------------------------------------------------------
 // Trip.com (Metasearch tier — pay-per-booking, $5-15 per flight, 4-7% per hotel)
 // ---------------------------------------------------------------------------
-const TRIPCOM_ALLIANCE_ID = process.env.TRIPCOM_ALLIANCE_ID;
-const TRIPCOM_DEFAULT_SID = process.env.TRIPCOM_SID;
-
 function tripcomParams(opts: AffiliateLinkOptions): Record<string, string> {
-  const params: Record<string, string> = {};
-  if (TRIPCOM_ALLIANCE_ID) params.Allianceid = TRIPCOM_ALLIANCE_ID;
-  // Override the default SID with our per-surface tracking so we can see in
-  // the Trip.com dashboard which surface (dashboard / deals-table / FarePilot)
-  // drives bookings. Falls back to the env default if surface tracking
-  // isn't possible (e.g., legacy callers).
-  params.SID = TRIPCOM_DEFAULT_SID ?? '0';
-  params.trip_sub1 = opts.surface;
-  if (opts.routeId) params.trip_sub3 = opts.routeId;
-  return params;
+  // No Allianceid and no SID. Those were the Trip.com affiliate identifier and
+  // its per-surface sub-tracker, so the dashboard could attribute a booking to
+  // the dashboard / deals-table / FarePilot surface it came from.
+  // The sub-id slots (SID, trip_sub1, trip_sub3) went with it — they existed so
+  // the Trip.com dashboard could say which surface drove a booking.
+  return {};
 }
 
 /** Trip.com flight-search deeplink. Lands on their results page with the
@@ -468,7 +461,6 @@ export function tripcomFlightLink(opts: {
 // Also re-add Skyscanner to the affiliate disclosure lists in /about and
 // /privacy at that point.
 // ---------------------------------------------------------------------------
-const SKYSCANNER_ASSOCIATE_ID = process.env.SKYSCANNER_ASSOCIATE_ID;
 
 /** Skyscanner flight-search deeplink. URL pattern matches their public search
  *  form: /transport/flights/{ORIG}/{DEST}/{YYMMDD}/{YYMMDD}/?adults=N. When
@@ -494,11 +486,7 @@ export function skyscannerLink(opts: {
   // Direct-only filter for JFK (only nonstop JFK→CAI exists on EgyptAir);
   // disable for EWR which has no nonstops.
   u.searchParams.set('preferdirects', opts.origin === 'JFK' ? 'true' : 'false');
-  // Affiliate attribution — populated when the env var is set after approval
-  if (SKYSCANNER_ASSOCIATE_ID) {
-    u.searchParams.set('associateid', SKYSCANNER_ASSOCIATE_ID);
-    u.searchParams.set('subid', buildSubId({ surface: opts.surface, routeId: opts.routeId }));
-  }
+  // No associateid and no subid.
   return u.toString();
 }
 
@@ -690,45 +678,14 @@ export function vrboLink(opts: { destinationCity: string; checkIn: string; check
 }
 
 // ---------------------------------------------------------------------------
-// CJ Affiliate (Commission Junction) deep links.
+// CJ Affiliate (Commission Junction) is gone. What stood here was the reason
+// its links could not be derived — the tracking domain and link id are
+// assigned per advertiser out of CJ's inventory — plus the rotating-host
+// allowlist that stopped a malformed template turning /go into an open
+// redirect, and the provider -> env map for the templates themselves.
 //
-// CJ is NOT a query-param program. Booking.com via CJ does not use ?aid= —
-// that is Booking's own direct Affiliate Partner Programme and the two are
-// mutually exclusive. A CJ click only attributes if it traverses a CJ
-// tracking domain, and both that domain and the link id are assigned per
-// advertiser out of CJ's link inventory. There is no format we can derive.
-//
-// So we don't try. After approval, copy ONE working deep link out of CJ's
-// link inventory and store it as a template with {url} and {sid} markers:
-//
-//   CJ_LINK_BOOKING='https://www.anrdoezrs.net/links/7957203/type/dlg/sid/{sid}/{url}'
-//
-// The template lives in the server env only — never NEXT_PUBLIC_ — and is
-// applied at the /go boundary, consistent with every other partner.
+// None of it is needed by a project that earns nothing.
 // ---------------------------------------------------------------------------
-
-/** CJ's rotating tracking domains. A template must point at one of these —
- *  defence in depth so a malformed env value can't turn /go into an open
- *  redirect to an arbitrary host. */
-const CJ_TRACKING_HOSTS = new Set([
-  'anrdoezrs.net', 'www.anrdoezrs.net',
-  'tkqlhce.com', 'www.tkqlhce.com',
-  'jdoqocy.com', 'www.jdoqocy.com',
-  'kqzyfj.com', 'www.kqzyfj.com',
-  'dpbolvw.net', 'www.dpbolvw.net',
-  'emjcd.com', 'www.emjcd.com',
-  'ftjcfx.com', 'www.ftjcfx.com',
-  'awltovhc.com', 'www.awltovhc.com',
-  'lduhtrp.net', 'www.lduhtrp.net',
-  'tqlkg.com', 'www.tqlkg.com',
-  'qksrv.net', 'www.qksrv.net',
-]);
-
-/** Provider → env var holding that advertiser's CJ link template. */
-const CJ_TEMPLATE_ENV: Partial<Record<AffiliateProvider, string>> = {
-  booking: 'CJ_LINK_BOOKING',
-  expedia: 'CJ_LINK_EXPEDIA',
-};
 
 
 
