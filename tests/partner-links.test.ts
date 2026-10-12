@@ -204,7 +204,6 @@ const ALLOWED: Record<string, string> = {
   'app/api/v1/hotels/route.ts':       'API response builds via /go helpers',
   'app/api/offers/coverage/route.ts': 'provider coverage probe',
   'app/api/hotels/by-month/route.ts': 'hotel deeplink shapes, wrapped by /go',
-  'agents/revenue/index.ts':          'reads partner revenue reports',
   'agents/social-poster/index.ts':    'emits via buildPartnerLink',
   'agents/email-digest/index.ts':     'emits via buildPartnerLink',
 };

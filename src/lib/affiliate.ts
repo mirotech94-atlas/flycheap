@@ -531,14 +531,11 @@ export function buildBookingUrl(opts: {
   u.searchParams.set('checkout', opts.checkOut);
   u.searchParams.set('group_adults', String(opts.adults));
   if (opts.children && opts.children > 0) u.searchParams.set('group_children', String(opts.children));
-  // Read NEXT_PUBLIC_ prefix — these builders are imported by 'use client'
-  // components (HotelsGrid / HotelsSearchPanel), and bare process.env.X is
-  // undefined in the browser bundle for non-NEXT_PUBLIC_ vars.
-  const aid = process.env.NEXT_PUBLIC_BOOKING_AID;
-  if (aid) {
-    u.searchParams.set('aid', aid);
-    u.searchParams.set('label', opts.label ?? 'hotels-grid');
-  }
+  // No ?aid= and no &label=. These were read from NEXT_PUBLIC_BOOKING_AID
+  // because the builder is imported by 'use client' components and a bare
+  // process.env is undefined in the browser bundle — which also meant the
+  // affiliate id shipped to every visitor's browser. It earns nothing now and
+  // is not sent.
   return u.toString();
 }
 
@@ -557,11 +554,7 @@ export function buildExpediaUrl(opts: {
   u.searchParams.set('startDate', opts.checkIn);
   u.searchParams.set('endDate', opts.checkOut);
   u.searchParams.set('adults', String(opts.adults));
-  const siteid = process.env.NEXT_PUBLIC_EXPEDIA_SITEID;
-  if (siteid) {
-    u.searchParams.set('siteid', siteid);
-    u.searchParams.set('clickref', opts.clickref ?? 'hotels-grid');
-  }
+  // No ?siteid= and no &clickref=, for the same reason as Booking above.
   return u.toString();
 }
 
