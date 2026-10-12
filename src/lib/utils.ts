@@ -112,13 +112,13 @@ export function crossShopLinks(opts: {
   adults: number;
   infants: number;
   offerPath?: string | null;
-}): Array<{ name: string; short: string; href: string; color: string; earns?: boolean }> {
+}): Array<{ name: string; short: string; href: string; color: string }> {
   const { origin, destination, departDate, returnDate, adults, infants } = opts;
   const showEgyptair = egyptairFlies(origin, destination);
   return [
     {
       name: 'Aviasales (cached)', short: 'Aviasales',
-      color: '#7FB6CB', earns: true,   // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
+      color: '#7FB6CB', // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
       href: bookingLink(opts),
     },
     {
@@ -133,9 +133,7 @@ export function crossShopLinks(opts: {
     },
     {
       name: 'Skyscanner', short: 'Skyscanner',
-      // Affiliate programme exists; `associateid` is injected by /go once
-      // SKYSCANNER_ASSOCIATE_ID is set, so this ranks with the earning group.
-      color: '#0770E3', earns: true,
+      color: '#0770E3',
       href: `https://www.skyscanner.com/transport/flights/${origin.toLowerCase()}/${destination.toLowerCase()}/${departDate.slice(2,4)}${departDate.slice(5,7)}${departDate.slice(8,10)}/${returnDate.slice(2,4)}${returnDate.slice(5,7)}${returnDate.slice(8,10)}/?adults=${adults}&infants=${infants}&cabinclass=economy&preferdirects=${origin === 'JFK' ? 'true' : 'false'}`,
     },
     {
@@ -151,14 +149,17 @@ export function crossShopLinks(opts: {
     // is issued by Aviasales' GDS partner that does the OTA booking.
     ...(showEgyptair ? [{
       name: 'EgyptAir flights', short: 'EgyptAir',
-      color: '#7FB6CB', earns: true,   // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
+      color: '#7FB6CB', // house blue, light end -- a 6px dot needs the legible end (see PIE_COLORS)
       href: `https://www.aviasales.com/search/${origin}${(() => { const [, m, d] = departDate.split('-'); return d + m; })()}${destination}${(() => { const [, m, d] = returnDate.split('-'); return d + m; })()}${adults}?currency=usd&airlines=MS`,
     }] : []),
-  ]
-    // Partners that pay a commission lead; pure comparison sites (Google,
-    // Kayak, Momondo) follow. Deliberately a REORDER, not a removal — the
-    // compare options are a trust feature, and a user who feels steered is
-    // worth less than the click, since one Pro subscriber ≈ 90 flight clicks.
-    .sort((a, b) => Number(b.earns ?? false) - Number(a.earns ?? false));
+  ];
+  // No sort. This list used to be reordered so the sites that paid a
+  // commission led and the pure comparison sites (Google, Kayak, Momondo)
+  // followed — defended at the time as "a reorder, not a removal", with the
+  // arithmetic of a subscriber against a click written next to it.
+  //
+  // Nothing pays now, so there is nothing to rank by, and /about's promise that
+  // rankings are not weighted toward any partner is finally just true. The
+  // order is the order they are declared in.
 }
 
